@@ -1,16 +1,15 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import navigation hook
+import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
+import API_URL from '../config';
 
 const Events = () => {
   const { token, userEvents } = useContext(UserContext);
   const [events, setEvents] = useState(userEvents || []);
   const [loading, setLoading] = useState(userEvents ? false : true);
-  const navigation = useNavigation(); // Access navigation
-
-  console.log('events: ---> ', events)
+  const navigation = useNavigation();
 
   const localImages = {
     '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
@@ -46,13 +45,10 @@ const Events = () => {
     '/img/holyday/TwelfthOfRidvan.jpg': require('../assets/img/holyday/TwelfthOfRidvan.jpg')
   };
 
-  const devAPI = 'http://localhost:5005';
-  const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
-
   // useEffect(() => {
   //   const fetchEvents = async () => {
   //     try {
-  //       const response = await fetch(`${stagingAPI}/api/events`, {
+  //       const response = await fetch(`${API_URL}/api/events`, {
   //         method: 'GET',
   //         headers: {
   //           'Content-Type': 'application/json',

@@ -10,23 +10,18 @@ import {
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
-
-const devAPI = 'http://localhost:5005';
-const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+import API_URL from '../config';
 
 const Activities = ({ navigation }) => {
   const { token, userActivities } = useContext(UserContext);
   const [activities, setActivities] = useState(userActivities);
   const [loading, setLoading] = useState(true);
 
-  console.log('activities: ---> ', activities)
-
-
   // // Fetch activities data from the backend
   // useEffect(() => {
   //   const fetchActivities = async () => {
   //     try {
-  //       const response = await fetch(`${stagingAPI}/api/activities`, {
+  //       const response = await fetch(`${API_URL}/api/activities`, {
   //         method: 'GET',
   //         headers: {
   //           'Content-Type': 'application/json',

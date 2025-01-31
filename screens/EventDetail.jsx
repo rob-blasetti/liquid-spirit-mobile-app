@@ -3,11 +3,8 @@ import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import themeVariables from '../styles/theme';
 
 const EventDetail = ({ route }) => {
-  // Get event data from navigation parameters
   const { event } = route.params;
-  console.log('event detail: ---->', event);
 
-  // Local images fallback for event images
   const localImages = {
     '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
     '/img/feast/Feast of Dominion.jpg': require('../assets/img/feast/Feast_of_Dominion.jpg'),
@@ -44,7 +41,6 @@ const EventDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Event Banner */}
       <Image
         source={
           localImages[event.imageUrl] || require('../assets/img/placeholder.png')
@@ -52,7 +48,6 @@ const EventDetail = ({ route }) => {
         style={styles.banner}
       />
 
-      {/* Event Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.date}>
@@ -102,7 +97,7 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 16,
-    color: themeVariables.greyColor,
+    color: themeVariables.primaryColor,
     marginBottom: 20,
   },
   descriptionHeader: {

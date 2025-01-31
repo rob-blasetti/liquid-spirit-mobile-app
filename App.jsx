@@ -10,6 +10,7 @@ import { UserProvider } from './contexts/UserContext';
 import Welcome from './screens/Welcome';
 import Login from './screens/Login';
 import Register from './screens/Register';
+import Verification from './screens/Verification';
 import EventDetail from './screens/EventDetail';
 import ActivityDetail from './screens/ActivityDetail';
 
@@ -51,6 +52,7 @@ const App = () => {
               <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
               <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
               <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
+              <Stack.Screen name="Verification" component={Verification} />
 
               {/* Detail Screens */}
               <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }} />

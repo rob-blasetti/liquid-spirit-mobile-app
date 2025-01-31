@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
+import API_URL from '../config';
 
 const devAPI = 'http://localhost:5005';
 const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
@@ -29,7 +30,7 @@ const Login = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${stagingAPI}/api/auth/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

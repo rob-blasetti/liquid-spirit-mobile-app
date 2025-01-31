@@ -4,7 +4,6 @@ import themeVariables from '../styles/theme';
 
 const ActivityDetail = ({ route, navigation }) => {
   const { activity } = route.params; // Get activity data from navigation parameters
-  console.log('activity detail: ----->>>', activity);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -83,12 +82,12 @@ const styles = StyleSheet.create({
   },
   schedule: {
     fontSize: 16,
-    color: themeVariables.greyColor,
+    color: themeVariables.primaryColor,
     marginBottom: 5,
   },
   location: {
     fontSize: 16,
-    color: themeVariables.greyColor,
+    color: themeVariables.primaryColor,
     marginBottom: 20,
   },
   descriptionHeader: {

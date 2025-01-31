@@ -11,8 +11,7 @@ import {
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
 import { colors } from '../styles/colours';
-
-const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+import API_URL from '../config';
 
 export default function Post({ onPostCreated }) {
   const [title, setTitle] = useState('');
@@ -106,7 +105,7 @@ export default function Post({ onPostCreated }) {
     }
 
     try {
-      const response = await fetch(`${stagingAPI}/api/posts/create`, {
+      const response = await fetch(`${API_URL}/api/posts/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

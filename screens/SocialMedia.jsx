@@ -1,10 +1,9 @@
 import React, { useEffect, useContext, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import FastImage from 'react-native-fast-image';
+import API_URL from '../config';
 
 import { UserContext } from '../contexts/UserContext';
-
-const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 
 const SocialMedia = () => {
     const { token, communityId, userPosts } = useContext(UserContext);
@@ -12,10 +11,12 @@ const SocialMedia = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
+    console.log('POSTS: ---> ', posts);
+
     const fetchPosts = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await fetch(`${stagingAPI}/api/posts/community-feed/${communityId}`, {
+            const response = await fetch(`${API_URL}/api/posts/community-feed/${communityId}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,20 +46,26 @@ const SocialMedia = () => {
 
     const RenderPost = React.memo(({ item }) => {
         const authorName = `${item.author?.firstName || 'Unknown'} ${item.author?.lastName || 'Author'}`;
+        const authorCommunity = `${item.community?.name || 'Unknown'}`;
         const profilePic = item.author?.profilePicture || 'https://via.placeholder.com/50';
         const mediaUrl = item.media?.[0] || 'https://via.placeholder.com/200';
         const likeCount = item.likes?.length || 0;
         const commentCount = item.comments?.length || 0;
-
+    
         return (
             <View style={styles.postContainer}>
-                <View style={styles.userInfo}>
-                    <FastImage
-                        source={{ uri: profilePic }}
-                        style={styles.profilePic}
-                        resizeMode={FastImage.resizeMode.cover}
-                    />
-                    <Text style={styles.username}>{authorName}</Text>
+                <View style={styles.userInfoContainer}>
+                    <View style={styles.userInfo}>
+                        <FastImage
+                            source={{ uri: profilePic }}
+                            style={styles.profilePic}
+                            resizeMode={FastImage.resizeMode.cover}
+                        />
+                        <Text style={styles.username}>{authorName}</Text>
+                    </View>
+                    <View style={styles.communityChip}>
+                        <Text style={styles.communityText}>{authorCommunity}</Text>
+                    </View>
                 </View>
                 <FastImage
                     source={{ uri: mediaUrl }} 
@@ -74,6 +81,7 @@ const SocialMedia = () => {
             </View>
         );
     });
+    
 
     return (
         <View style={styles.container}>
@@ -122,10 +130,15 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5,
     },
+    userInfoContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',  // Aligns items on opposite sides
+        alignItems: 'center',
+        marginBottom: 10,
+    },
     userInfo: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
     },
     profilePic: {
         width: 50,
@@ -136,6 +149,18 @@ const styles = StyleSheet.create({
     username: {
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    communityChip: {
+        backgroundColor: '#312783',  // Matches primary color
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+    },
+    communityText: {
+        fontSize: 14,
+        color: '#fff',
+        fontWeight: '600',
     },
     postImage: {
         width: '100%',

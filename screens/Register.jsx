@@ -8,16 +8,15 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const Register = ({ navigation }) => {
+const Register = () => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [bahaiId, setBahaiId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const devAPI = 'http://localhost:5005';
-  const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 
   const handleRegister = async () => {
     if (!email || !bahaiId || !password || !confirmPassword) {
@@ -33,7 +32,7 @@ const Register = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${stagingAPI}/api/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,8 +43,9 @@ const Register = ({ navigation }) => {
       const result = await response.json();
 
       if (response.ok) {
-        Alert.alert('Success', 'Account created successfully!');
-        navigation.navigate('Login');
+        Alert.alert('Success', 'Verification code sent to your email.');
+        
+        navigation.navigate('Verification', { bahaiId, email });
       } else {
         Alert.alert('Error', result.message || 'Registration failed.');
       }
@@ -71,9 +71,10 @@ const Register = ({ navigation }) => {
       />
       <TextInput
         style={styles.input}
-        placeholder="Baha'i Id"
+        placeholder="Bahá'í ID"
         value={bahaiId}
         onChangeText={setBahaiId}
+        keyboardType="numeric"
       />
       <TextInput
         style={styles.input}
@@ -90,7 +91,7 @@ const Register = ({ navigation }) => {
         secureTextEntry
       />
       {loading ? (
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color="#312783" />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <Text style={styles.buttonText}>Register</Text>
