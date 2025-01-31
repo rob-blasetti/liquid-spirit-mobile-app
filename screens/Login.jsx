@@ -63,7 +63,6 @@ const Login = ({ navigation }) => {
           });
         setToken(result.token);
         setCommunityId(result.user.community?._id);
-        Alert.alert('Success', 'Login successful!');
         navigation.navigate('Main', { screen: 'Home' });
       } else {
         Alert.alert('Error', result.message || 'Login failed.');
