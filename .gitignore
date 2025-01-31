@@ -51,6 +51,10 @@ yarn-error.log
 **/fastlane/Preview.html
 **/fastlane/screenshots
 **/fastlane/test_output
+**/fastlane/metadata
+**/fastlane/Deliverfile
+**/fastlane/fastlane_session
+**/fastlane/appstoreconnect_api_key.json
 
 # Bundle artifact
 *.jsbundle
@@ -71,3 +75,8 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Ignore dSYM files
+*.dSYM.zip
+*.dSYM
+ios/build/
