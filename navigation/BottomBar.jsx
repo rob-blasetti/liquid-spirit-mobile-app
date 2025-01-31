@@ -1,25 +1,21 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
-// Import Screens
 import SocialMediaScreen from '../screens/SocialMedia';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
 import ProfileScreen from '../screens/Profile';
 import PostScreen from '../screens/Post';
 
-// Create Bottom Tab Navigator
 const Tab = createBottomTabNavigator();
 
-// Define tab icon mapping
 const tabIcons = {
-  Profile: 'person',
-  SocialMedia: 'dynamic-feed',
-  PostScreen: 'camera',
-  Events: 'event',
-  Activities: 'fitness-center',
-  Settings: 'settings',
+  Profile: 'user',
+  SocialMedia: 'compass',
+  Camera: 'camera',
+  Events: 'calendar',
+  Activities: 'square-check',
 };
 
 const BottomBar = () => {
@@ -27,18 +23,11 @@ const BottomBar = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarIcon: ({ focused, color, size }) => {
-          const iconName = tabIcons[route.name]; // Get the corresponding icon name
-          return (
-            <Icon
-              name={iconName} // Use the icon name
-              size={size}
-              color={focused ? '#0485e2' : 'gray'}
-            />
-          );
-        },
-        tabBarActiveTintColor: '#0485e2', // Active icon color
-        tabBarInactiveTintColor: 'gray',  // Inactive icon color
+        tabBarIcon: ({ focused, color, size }) => (
+          <FontAwesomeIcon icon={tabIcons[route.name]} size={size} color={color} />
+        ),
+        tabBarActiveTintColor: '#0485e2',
+        tabBarInactiveTintColor: 'gray',
       })}
     >
       <Tab.Screen name="SocialMedia" component={SocialMediaScreen} options={{ title: 'Feed' }} />
