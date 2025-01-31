@@ -1,17 +1,18 @@
 import React, { useEffect, useContext, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, ActivityIndicator, RefreshControl } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 import { UserContext } from '../contexts/UserContext';
 
 const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 
 const SocialMedia = () => {
-    const { token, communityId } = useContext(UserContext);
-    const [posts, setPosts] = useState([]);
+    const { token, communityId, userPosts } = useContext(UserContext);
+    const [posts, setPosts] = useState(userPosts || []);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const fetchPosts = async () => {
+    const fetchPosts = useCallback(async () => {
         try {
             setLoading(true);
             const response = await fetch(`${stagingAPI}/api/posts/community-feed/${communityId}`, {
@@ -31,31 +32,39 @@ const SocialMedia = () => {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, [token, communityId]);
 
     useEffect(() => {
         fetchPosts();
-    }, [communityId, token]);
+    }, [fetchPosts]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchPosts();
-    }, []);
+    }, [fetchPosts]);
 
     const RenderPost = React.memo(({ item }) => {
         const authorName = `${item.author?.firstName || 'Unknown'} ${item.author?.lastName || 'Author'}`;
         const profilePic = item.author?.profilePicture || 'https://via.placeholder.com/50';
-        const mediaUrl = item.media[0] || 'https://via.placeholder.com/200';
+        const mediaUrl = item.media?.[0] || 'https://via.placeholder.com/200';
         const likeCount = item.likes?.length || 0;
         const commentCount = item.comments?.length || 0;
 
         return (
             <View style={styles.postContainer}>
                 <View style={styles.userInfo}>
-                    <Image source={{ uri: profilePic }} style={styles.profilePic} />
+                    <FastImage
+                        source={{ uri: profilePic }}
+                        style={styles.profilePic}
+                        resizeMode={FastImage.resizeMode.cover}
+                    />
                     <Text style={styles.username}>{authorName}</Text>
                 </View>
-                <Image source={{ uri: mediaUrl }} style={styles.postImage} />
+                <FastImage
+                    source={{ uri: mediaUrl }} 
+                    style={styles.postImage}
+                    resizeMode={FastImage.resizeMode.cover}
+                />
                 <Text style={styles.postTitle}>{item.title}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <View style={styles.postFooter}>
@@ -74,7 +83,7 @@ const SocialMedia = () => {
                 <FlatList
                     data={posts}
                     renderItem={({ item }) => <RenderPost item={item} />}
-                    keyExtractor={(item) => item._id.toString()}
+                    keyExtractor={(item, index) => item._id ? item._id.toString() : index.toString()}
                     contentContainerStyle={styles.list}
                     initialNumToRender={5}
                     maxToRenderPerBatch={5}

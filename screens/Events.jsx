@@ -1,14 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Import navigation hook
+import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
 
 const Events = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { token } = useContext(UserContext);
+  const { token, userEvents } = useContext(UserContext);
+  const [events, setEvents] = useState(userEvents || []);
+  const [loading, setLoading] = useState(userEvents ? false : true);
   const navigation = useNavigation(); // Access navigation
-  console.log('EVENTS ----->>>   ', events);
+
+  console.log('events: ---> ', events)
 
   const localImages = {
     '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
@@ -47,29 +49,29 @@ const Events = () => {
   const devAPI = 'http://localhost:5005';
   const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await fetch(`${stagingAPI}/api/events`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const result = await response.json();
-        if (result.success) {
-          setEvents(result.data);
-        }
-      } catch (error) {
-        console.error('Error fetching events:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchEvents = async () => {
+  //     try {
+  //       const response = await fetch(`${stagingAPI}/api/events`, {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //       const result = await response.json();
+  //       if (result.success) {
+  //         setEvents(result.data);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching events:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    fetchEvents();
-  }, []);
+  //   fetchEvents();
+  // }, []);
 
   // Render each event (memoized for performance)
   const RenderEvent = ({ item }) => (
@@ -77,9 +79,10 @@ const Events = () => {
       style={styles.eventItem}
       onPress={() => navigation.navigate('EventDetail', { event: item })} // Navigate to EventDetail with event data
     >
-      <Image
-        source={localImages[item.imageUrl] || require('../assets/img/placeholder.png')}
+      <FastImage
+        source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
         style={styles.eventImage}
+        resizeMode={FastImage.resizeMode.cover}
       />
       <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
       <Text style={styles.eventDate}>

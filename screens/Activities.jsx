@@ -9,38 +9,42 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
+import FastImage from 'react-native-fast-image';
 
 const devAPI = 'http://localhost:5005';
 const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 
 const Activities = ({ navigation }) => {
-  const [activities, setActivities] = useState([]);
+  const { token, userActivities } = useContext(UserContext);
+  const [activities, setActivities] = useState(userActivities);
   const [loading, setLoading] = useState(true);
-  const { token } = useContext(UserContext);
 
-  // Fetch activities data from the backend
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const response = await fetch(`${stagingAPI}/api/activities`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`, // Include the token here
-          },
-        });
-        const data = await response.json();
-        console.log('Fetched activities: ', data);
-        setActivities(data);
-      } catch (error) {
-        console.error('Error fetching activities:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  console.log('activities: ---> ', activities)
 
-    fetchActivities();
-  }, []);
+
+  // // Fetch activities data from the backend
+  // useEffect(() => {
+  //   const fetchActivities = async () => {
+  //     try {
+  //       const response = await fetch(`${stagingAPI}/api/activities`, {
+  //         method: 'GET',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           Authorization: `Bearer ${token}`, // Include the token here
+  //         },
+  //       });
+  //       const data = await response.json();
+  //       console.log('Fetched activities: ', data);
+  //       setActivities(data);
+  //     } catch (error) {
+  //       console.error('Error fetching activities:', error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchActivities();
+  // }, []);
 
   // Render activity item
   const renderActivity = ({ item }) => (
@@ -48,7 +52,11 @@ const Activities = ({ navigation }) => {
       style={styles.activityItem}
       onPress={() => navigation.navigate('ActivityDetail', { activity: item })}
     >
-      <Image source={{ uri: item.imageUrl }} style={styles.activityImage} />
+      <FastImage
+        source={{ uri: item.imageUrl }} 
+        style={styles.activityImage}
+        resizeMode={FastImage.resizeMode.cover}
+      />
       <Text style={styles.activityTitle}>{item.title}</Text>
       <Text style={styles.activityType}>{item.activityType?.name || 'N/A'}</Text>
       <Text style={styles.activityDetails}>
@@ -65,15 +73,15 @@ const Activities = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Upcoming Activities</Text>
-      {loading ? (
+      {/* {loading ? (
         <ActivityIndicator size="large" color="#0485e2" />
-      ) : (
+      ) : ( */}
         <FlatList
           data={activities}
           keyExtractor={(item) => item._id.toString()} // Use `_id` instead of `id`
           renderItem={renderActivity}
         />
-      )}
+      {/* )} */}
     </View>
   );
 };

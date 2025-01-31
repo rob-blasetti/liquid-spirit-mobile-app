@@ -45,7 +45,7 @@ const Register = ({ navigation }) => {
 
       if (response.ok) {
         Alert.alert('Success', 'Account created successfully!');
-        navigation.navigate('Login'); // Navigate back to the login screen
+        navigation.navigate('Login');
       } else {
         Alert.alert('Error', result.message || 'Registration failed.');
       }
@@ -74,7 +74,6 @@ const Register = ({ navigation }) => {
         placeholder="Baha'i Id"
         value={bahaiId}
         onChangeText={setBahaiId}
-        secureTextEntry
       />
       <TextInput
         style={styles.input}
