@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
-const API_URL = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+import API_URL from '../config';
 
 const Verification = ({ route }) => {
   const navigation = useNavigation();

@@ -11,9 +11,6 @@ import {
 import { UserContext } from '../contexts/UserContext';
 import API_URL from '../config';
 
-const devAPI = 'http://localhost:5005';
-const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
-
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
