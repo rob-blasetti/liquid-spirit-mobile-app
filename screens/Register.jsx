@@ -11,12 +11,16 @@ import {
 
 const Register = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [bahaiId, setBahaiId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const devAPI = 'http://localhost:5005';
+  const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !bahaiId || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill all fields.');
       return;
     }
@@ -29,12 +33,12 @@ const Register = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5005/api/auth/register', {
+      const response = await fetch(`${stagingAPI}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, bahaiId, password }),
       });
 
       const result = await response.json();
@@ -64,6 +68,13 @@ const Register = ({ navigation }) => {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Baha'i Id"
+        value={bahaiId}
+        onChangeText={setBahaiId}
+        secureTextEntry
       />
       <TextInput
         style={styles.input}
@@ -107,7 +118,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: '#312783',
     marginBottom: 32,
   },
   input: {
@@ -120,7 +131,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#312783',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -136,7 +147,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   linkText: {
-    color: '#4CAF50',
+    color: '#0485e2',
     fontSize: 14,
     textDecorationLine: 'underline',
   },

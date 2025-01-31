@@ -8,12 +8,9 @@ import {
   StyleSheet,
   Alert 
 } from 'react-native';
-
-import { 
-  launchCamera, 
-  launchImageLibrary 
-} from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
+import { colors } from '../styles/colours';
 
 const stagingAPI = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
 

@@ -12,6 +12,12 @@
 
 #import "RCTModulesConformingToProtocolsProvider.h"
 #import "RCTThirdPartyComponentsProvider.h"
+#import "react/renderer/components/pagerview/ComponentDescriptors.h"
+#import "react/renderer/components/pagerview/EventEmitters.h"
+#import "react/renderer/components/pagerview/Props.h"
+#import "react/renderer/components/pagerview/RCTComponentViewHelpers.h"
+#import "react/renderer/components/pagerview/ShadowNodes.h"
+#import "react/renderer/components/pagerview/States.h"
 #import "react/renderer/components/rnscreens/ComponentDescriptors.h"
 #import "react/renderer/components/rnscreens/EventEmitters.h"
 #import "react/renderer/components/rnscreens/Props.h"

@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#0485e2',
+    color: '#312783',
     marginBottom: 32,
   },
   input: {
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   button: {
-    backgroundColor: '#0485e2',
+    backgroundColor: '#312783',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

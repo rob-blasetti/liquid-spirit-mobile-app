@@ -9,8 +9,8 @@ import {
 const Welcome = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Liquid Spirit</Text>
-      <Text style={styles.subtitle}>Connect and grow with your community.</Text>
+      <Text style={styles.title}>Liquid Spirit</Text>
+      <Text style={styles.subtitle}>Join the Baha'i vibe.</Text>
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('Login')}
@@ -21,7 +21,7 @@ const Welcome = ({ navigation }) => {
         style={[styles.button, styles.registerButton]}
         onPress={() => navigation.navigate('Register')}
       >
-        <Text style={styles.buttonText}>Register</Text>
+        <Text style={styles.registerButtonText}>Register</Text>
       </TouchableOpacity>
     </View>
   );
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#0485e2',
+    color: '#312783',
     marginBottom: 16,
   },
   subtitle: {
@@ -48,15 +48,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: '#0485e2',
+    backgroundColor: '#312783',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
     width: '100%',
     marginBottom: 16,
   },
   registerButton: {
-    backgroundColor: '#4CAF50', // Green color for register button
+    backgroundColor: '#fff',
+    borderColor: '#312783',
+    borderWidth: 1
+  },
+  registerButtonText: {
+    color: '#312783',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   buttonText: {
     color: '#fff',
