@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import API_URL from '../config';
 import { useNavigation } from '@react-navigation/native';
 
 const Register = () => {
@@ -45,7 +46,7 @@ const Register = () => {
       if (response.ok) {
         Alert.alert('Success', 'Verification code sent to your email.');
         
-        navigation.navigate('Verification', { bahaiId, email });
+        navigation.navigate('Verification', { bahaiId, email, password });
       } else {
         Alert.alert('Error', result.message || 'Registration failed.');
       }

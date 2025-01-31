@@ -5,7 +5,7 @@ import API_URL from '../config';
 
 const Verification = ({ route }) => {
   const navigation = useNavigation();
-  const { bahaiId, email } = route.params; // Get Bahá'í ID and email from registration screen
+  const { bahaiId, email, password } = route.params; // Get Bahá'í ID and email from registration screen
 
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +28,7 @@ const Verification = ({ route }) => {
         body: JSON.stringify({
           bahaiId,
           verificationCode,
+          password
         }),
       });
 
