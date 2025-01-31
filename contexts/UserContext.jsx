@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
 import { fetchCommunityFeed } from '../services/PostService.jsx';
@@ -13,6 +14,25 @@ export const UserProvider = ({ children }) => {
   const [userEvents, setUserEvents] = useState(null);
   const [userPosts, setUserPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCachedData = async () => {
+      try {
+        const cachedActivities = await AsyncStorage.getItem('userActivities');
+        const cachedEvents = await AsyncStorage.getItem('userEvents');
+        const cachedPosts = await AsyncStorage.getItem('userPosts');
+
+        if (cachedActivities) setUserActivities(JSON.parse(cachedActivities));
+        if (cachedEvents) setUserEvents(JSON.parse(cachedEvents));
+        if (cachedPosts) setUserPosts(JSON.parse(cachedPosts));
+
+      } catch (error) {
+        console.error("Error loading cached data:", error);
+      }
+    };
+
+    loadCachedData();
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -30,6 +50,11 @@ export const UserProvider = ({ children }) => {
         setUserPosts(posts);
         setUserActivities(activities);
         setUserEvents(events.data);
+
+        await AsyncStorage.setItem('userActivities', JSON.stringify(activities));
+        await AsyncStorage.setItem('userEvents', JSON.stringify(events));
+        await AsyncStorage.setItem('userPosts', JSON.stringify(posts));
+
       } catch (error) {
         console.error("Error loading user data:", error);
       } finally {
