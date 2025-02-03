@@ -101,7 +101,7 @@ const ActivityDetail = ({ route, navigation }) => {
         <View style={styles.badgesContainer}>
           {activity.participants?.length > 0 ? (
             activity.participants.map((participant, index) => (
-              <UserBadge key={index} user={participant} userCertifications={{}} />
+              <UserBadge key={index} user={participant.details} userCertifications={participant.certifications} />
             ))
           ) : (
             <Text style={styles.noBadgesText}>No participants yet.</Text>

@@ -1,12 +1,14 @@
-import React, { useState, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  Button, 
-  Image, 
+import React, { useState, useContext, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
   StyleSheet,
-  Alert 
+  Alert,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
@@ -18,25 +20,34 @@ export default function Post({ onPostCreated }) {
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [mediaType, setMediaType] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { communityId, token } = useContext(UserContext);
+
+  // Automatically open the camera on mount
+  useEffect(() => {
+    openCamera();
+  }, []);
 
   const uploadToS3 = async (fileUri) => {
     try {
       const fileName = `post-media-${Date.now()}.jpg`;
       const fileType = mediaType === 'video' ? 'video/mp4' : 'image/jpeg';
-      const signedUrlResponse = await fetch(`${stagingAPI}/api/upload/s3-url?fileName=${fileName}&fileType=${fileType}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const signedUrlResponse = await fetch(
+        `${API_URL}/api/upload/s3-url?fileName=${fileName}&fileType=${fileType}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const { url } = await signedUrlResponse.json();
       if (!url) throw new Error('Failed to get signed URL');
 
       const uploadResponse = await fetch(url, {
         method: 'PUT',
-        body: await fetch(fileUri).then(res => res.blob()),
+        body: await fetch(fileUri).then((res) => res.blob()),
         headers: {
           'Content-Type': fileType,
         },
@@ -100,11 +111,14 @@ export default function Post({ onPostCreated }) {
     let mediaUrl = null;
     if (mediaUri) {
       Alert.alert('Uploading Media', 'Please wait while your media is uploaded.');
+      setIsUploading(true);
       mediaUrl = await uploadToS3(mediaUri);
+      setIsUploading(false);
       if (!mediaUrl) return;
     }
 
     try {
+      setIsUploading(true);
       const response = await fetch(`${API_URL}/api/posts/create`, {
         method: 'POST',
         headers: {
@@ -118,6 +132,7 @@ export default function Post({ onPostCreated }) {
           community: communityId,
         }),
       });
+      setIsUploading(false);
 
       if (!response.ok) {
         const data = await response.json();
@@ -134,73 +149,132 @@ export default function Post({ onPostCreated }) {
         onPostCreated();
       }
     } catch (error) {
+      setIsUploading(false);
       console.error('Error creating post:', error);
       Alert.alert('Error', `Create post error: ${error.message}`);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create a New Post</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.header}>Create a New Post</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter title..."
-        value={title}
-        onChangeText={setTitle}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Write content..."
-        value={content}
-        onChangeText={setContent}
-        multiline
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter title..."
+          placeholderTextColor="#999"
+          value={title}
+          onChangeText={setTitle}
+        />
+      </View>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Write content..."
+          placeholderTextColor="#999"
+          value={content}
+          onChangeText={setContent}
+          multiline
+        />
+      </View>
 
       <View style={styles.buttonRow}>
-        <Button title="Open Camera" onPress={openCamera} />
-        <Button title="Open Library" onPress={openLibrary} />
+        <TouchableOpacity style={styles.actionButton} onPress={openCamera}>
+          <Text style={styles.buttonText}>Camera</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton} onPress={openLibrary}>
+          <Text style={styles.buttonText}>Gallery</Text>
+        </TouchableOpacity>
       </View>
 
       {mediaUri && mediaType === 'image' && (
         <Image source={{ uri: mediaUri }} style={styles.mediaPreview} />
       )}
       {mediaUri && mediaType === 'video' && (
-        <Text style={{ marginVertical: 10 }}>Video selected: {mediaUri}</Text>
+        <Text style={styles.videoText}>Video selected: {mediaUri}</Text>
       )}
 
-      <Button title="Post" onPress={handlePost} color="#007BFF" />
-    </View>
+      <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
+        {isUploading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Post</Text>
+        )}
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    backgroundColor: '#fff',
+    padding: 20,
+    backgroundColor: '#f7f7f7',
+    flexGrow: 1,
+    justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    marginBottom: 10,
-    fontWeight: '600',
+  header: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: colors.primary || '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 15,
   },
   input: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#CCC',
-    padding: 10,
-    marginBottom: 15,
+    borderColor: '#ddd',
+    padding: 12,
+    fontSize: 16,
+    color: '#333',
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  actionButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  buttonText: {
+    color: colors.primary,
+    fontWeight: '600',
   },
   mediaPreview: {
     width: '100%',
     height: 200,
-    resizeMode: 'contain',
-    marginBottom: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  videoText: {
+    marginVertical: 10,
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#555',
+  },
+  submitButton: {
+    backgroundColor: colors.primary || '#28a745',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
