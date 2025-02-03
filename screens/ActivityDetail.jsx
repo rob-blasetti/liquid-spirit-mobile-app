@@ -29,6 +29,16 @@ const ActivityDetail = ({ route, navigation }) => {
     fetchDetails();
   }, [activityId]);
 
+  const handleJoinAsFacilitator = () => {
+    alert('Request to Join as Facilitator Sent!');
+    // TODO: Implement API call for requesting to join as a facilitator
+  };
+
+  const handleJoinAsParticipant = () => {
+    alert('Request to Join as Participant Sent!');
+    // TODO: Implement API call for requesting to join as a participant
+  };
+
   if (loading) {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} style={styles.loading} />;
   }
@@ -36,6 +46,18 @@ const ActivityDetail = ({ route, navigation }) => {
   if (error) {
     return <Text style={styles.errorText}>{error}</Text>;
   }
+
+  if (!activity) {
+    return <Text style={styles.errorText}>Activity details not available.</Text>;
+  }
+
+  const userId = user?._id;
+
+  const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator._id === userId);
+  const isUserAParticipant = activity.participants?.some(participant => participant._id === userId);
+
+  const hasFacilitatorSpace = activity.facilitators.length < activity.facilitatorLimit;
+  const hasParticipantSpace = activity.participants.length < activity.participantLimit;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -67,6 +89,13 @@ const ActivityDetail = ({ route, navigation }) => {
           )}
         </View>
 
+        {/* Request to Join as Facilitator */}
+        {hasFacilitatorSpace && !isUserAFacilitator && !isUserAParticipant && (
+          <TouchableOpacity style={styles.joinButton} onPress={handleJoinAsFacilitator}>
+            <Text style={styles.joinButtonText}>Request to Join as Facilitator</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Participants List */}
         <Text style={styles.descriptionHeader}>Participants:</Text>
         <View style={styles.badgesContainer}>
@@ -79,13 +108,12 @@ const ActivityDetail = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Join Button */}
-        <TouchableOpacity
-          style={styles.joinButton}
-          onPress={() => alert('You have joined this activity!')}
-        >
-          <Text style={styles.joinButtonText}>Request To Join</Text>
-        </TouchableOpacity>
+        {/* Request to Join as Participant */}
+        {hasParticipantSpace && !isUserAParticipant && !isUserAFacilitator && (
+          <TouchableOpacity style={styles.joinButton} onPress={handleJoinAsParticipant}>
+            <Text style={styles.joinButtonText}>Request to Join as Participant</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </ScrollView>
   );
@@ -161,6 +189,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 10,
   },
   joinButtonText: {
     color: themeVariables.whiteColor,

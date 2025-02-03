@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>
@@ -42,7 +43,7 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
           {avatarUri ? (
             <FastImage source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
-            <Icon name="account" size={30} color="#aaa" /> // Default User Icon
+            <FontAwesomeIcon icon="user" size={30} color="#aaa" />            
           )}
         </View>
 
