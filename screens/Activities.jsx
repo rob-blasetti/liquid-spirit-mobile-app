@@ -17,35 +17,10 @@ const Activities = ({ navigation }) => {
   const [activities, setActivities] = useState(userActivities);
   const [loading, setLoading] = useState(true);
 
-  // // Fetch activities data from the backend
-  // useEffect(() => {
-  //   const fetchActivities = async () => {
-  //     try {
-  //       const response = await fetch(`${API_URL}/api/activities`, {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: `Bearer ${token}`, // Include the token here
-  //         },
-  //       });
-  //       const data = await response.json();
-  //       console.log('Fetched activities: ', data);
-  //       setActivities(data);
-  //     } catch (error) {
-  //       console.error('Error fetching activities:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchActivities();
-  // }, []);
-
-  // Render activity item
   const renderActivity = ({ item }) => (
     <TouchableOpacity
       style={styles.activityItem}
-      onPress={() => navigation.navigate('ActivityDetail', { activity: item })}
+      onPress={() => navigation.navigate('ActivityDetail', { activityId: item._id })}
     >
       <FastImage
         source={{ uri: item.imageUrl }} 
@@ -73,7 +48,7 @@ const Activities = ({ navigation }) => {
       ) : ( */}
         <FlatList
           data={activities}
-          keyExtractor={(item) => item._id.toString()} // Use `_id` instead of `id`
+          keyExtractor={(item) => item._id.toString()}
           renderItem={renderActivity}
         />
       {/* )} */}
@@ -117,7 +92,7 @@ const styles = StyleSheet.create({
   },
   activityType: {
     fontSize: 16,
-    color: '#666',
+    color: '#312783',
   },
   activityDetails: {
     fontSize: 14,

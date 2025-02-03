@@ -266,6 +266,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				ENABLE_BITCODE = NO;
+				ENABLE_TESTING_SEARCH_PATHS = NO;
 				INFOPLIST_FILE = liquid_spirit_mobile_app/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Liquid Spirit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
@@ -296,6 +297,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
+				ENABLE_TESTING_SEARCH_PATHS = NO;
 				INFOPLIST_FILE = liquid_spirit_mobile_app/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Liquid Spirit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
