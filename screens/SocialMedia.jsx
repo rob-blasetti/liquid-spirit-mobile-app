@@ -1,5 +1,11 @@
-import React, { useEffect, useContext, useState, useCallback, useRef } from 'react';
-import {
+import React, {
+    useEffect,
+    useContext,
+    useState,
+    useCallback,
+    useRef
+  } from 'react';
+  import {
     View,
     Text,
     FlatList,
@@ -11,374 +17,448 @@ import {
     Modal,
     Button,
     Alert
-} from 'react-native';
-import FastImage from 'react-native-fast-image';
-import API_URL from '../config';
-import { likePost, commentOnPost } from '../services/PostService';
-import { UserContext } from '../contexts/UserContext';
-
-const DOUBLE_TAP_DELAY = 300; // max delay (ms) between taps for a double-tap
-
-const SocialMedia = () => {
-    const { token, communityId, userPosts } = useContext(UserContext);
-    const [posts, setPosts] = useState(userPosts || []);
+  } from 'react-native';
+  import FastImage from 'react-native-fast-image';
+  import {
+    likePost,
+    commentOnPost,
+    fetchExploreFeed,
+    fetchForYouFeed,
+  } from '../services/PostService';
+  import { UserContext } from '../contexts/UserContext';
+  
+  const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
+  
+  const SocialMedia = () => {
+    const { token, communityId } = useContext(UserContext);
+  
+    // Track which tab is active: 'explore' (default) or 'foryou'
+    const [activeTab, setActiveTab] = useState('explore');
+  
+    // Separate states for Explore and For You posts
+    const [explorePosts, setExplorePosts] = useState([]);
+    const [forYouPosts, setForYouPosts] = useState([]);
+  
+    // Loading and refresh states
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-
+  
     // Comment modal state
     const [commentModalVisible, setCommentModalVisible] = useState(false);
     const [currentPostId, setCurrentPostId] = useState(null);
     const [commentText, setCommentText] = useState('');
-
-    // Fetch posts
-    const fetchPosts = useCallback(async () => {
-        try {
-            setLoading(true);
-            const response = await fetch(`${API_URL}/api/posts/community-feed/${communityId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            const result = await response.json();
-            if (result.success) {
-                setPosts(result.data);
-            }
-        } catch (error) {
-            console.error('Error fetching posts:', error);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    }, [token, communityId]);
-
+  
+    // ─────────────────────────────────────────────────────────────────────────────
+    // FETCH POSTS
+    // ─────────────────────────────────────────────────────────────────────────────
+  
+    // Explore feed
+    const fetchExplorePosts = useCallback(async () => {
+      try {
+        const exploreData = await fetchExploreFeed(token);
+        setExplorePosts(exploreData);
+      } catch (error) {
+        console.error('Error fetching explore feed:', error);
+      }
+    }, [token]);
+  
+    // For You feed
+    const fetchForYouPosts = useCallback(async () => {
+      try {
+        const forYouData = await fetchForYouFeed(communityId, token);
+        setForYouPosts(forYouData);
+      } catch (error) {
+        console.error('Error fetching for you feed:', error);
+      }
+    }, [communityId, token]);
+  
+    // On initial load, fetch both feeds in parallel
     useEffect(() => {
-        fetchPosts();
-    }, [fetchPosts]);
-
-    const onRefresh = useCallback(() => {
-        setRefreshing(true);
-        fetchPosts();
-    }, [fetchPosts]);
-
+      (async () => {
+        setLoading(true);
+        await Promise.all([fetchExplorePosts(), fetchForYouPosts()]);
+        setLoading(false);
+      })();
+    }, [fetchExplorePosts, fetchForYouPosts]);
+  
+    // Refresh control
+    const onRefresh = useCallback(async () => {
+      setRefreshing(true);
+      if (activeTab === 'explore') {
+        await fetchExplorePosts();
+      } else {
+        await fetchForYouPosts();
+      }
+      setRefreshing(false);
+    }, [activeTab, fetchExplorePosts, fetchForYouPosts]);
+  
+    // ─────────────────────────────────────────────────────────────────────────────
+    // LIKE / COMMENT
+    // ─────────────────────────────────────────────────────────────────────────────
+  
+    // Helper: get active array based on tab
+    const getActivePosts = () => {
+      return activeTab === 'explore' ? explorePosts : forYouPosts;
+    };
+  
+    // Helper: set active array
+    const setActivePosts = (updater) => {
+      if (activeTab === 'explore') {
+        setExplorePosts((prev) => (typeof updater === 'function' ? updater(prev) : updater));
+      } else {
+        setForYouPosts((prev) => (typeof updater === 'function' ? updater(prev) : updater));
+      }
+    };
+  
     // Like handler
     const handleLike = useCallback(
-        async (postId) => {
-            try {
-                const updatedPost = await likePost(postId, token);
-                setPosts((prevPosts) =>
-                    prevPosts.map((p) => (p._id === postId ? updatedPost : p))
-                );
-            } catch (error) {
-                console.error('Error liking post:', error);
-                Alert.alert('Error', 'An error occurred while liking the post');
-            }
-        },
-        [token]
+      async (postId) => {
+        try {
+          const updatedPost = await likePost(postId, token);
+          setActivePosts((prev) =>
+            prev.map((p) => (p._id === postId ? updatedPost : p))
+          );
+        } catch (error) {
+          console.error('Error liking post:', error);
+          Alert.alert('Error', 'An error occurred while liking the post');
+        }
+      },
+      [token, activeTab]
     );
-
+  
     // Open comment modal
     const openCommentModal = (postId) => {
-        setCurrentPostId(postId);
-        setCommentText('');
-        setCommentModalVisible(true);
+      setCurrentPostId(postId);
+      setCommentText('');
+      setCommentModalVisible(true);
     };
-
+  
     // Submit comment
     const submitComment = useCallback(() => {
-        if (!commentText.trim()) {
-            return Alert.alert('Error', 'Comment cannot be empty');
+      if (!commentText.trim()) {
+        return Alert.alert('Error', 'Comment cannot be empty');
+      }
+      (async () => {
+        try {
+          const updatedPost = await commentOnPost(currentPostId, commentText, token);
+          setActivePosts((prev) =>
+            prev.map((p) => (p._id === currentPostId ? updatedPost : p))
+          );
+          setCommentModalVisible(false);
+          setCommentText('');
+        } catch (error) {
+          console.error('Error commenting on post:', error);
+          Alert.alert('Error', 'An error occurred while commenting on the post');
         }
-        (async () => {
-            try {
-                const updatedPost = await commentOnPost(currentPostId, commentText, token);
-                setPosts((prevPosts) =>
-                    prevPosts.map((p) => (p._id === currentPostId ? updatedPost : p))
-                );
-                setCommentModalVisible(false);
-                setCommentText('');
-            } catch (error) {
-                console.error('Error commenting on post:', error);
-                Alert.alert('Error', 'An error occurred while commenting on the post');
-            }
-        })();
-    }, [currentPostId, token, commentText]);
-
-    // Render each post
+      })();
+    }, [currentPostId, token, commentText, activeTab]);
+  
+    // ─────────────────────────────────────────────────────────────────────────────
+    // RENDER
+    // ─────────────────────────────────────────────────────────────────────────────
     const RenderPost = React.memo(({ item }) => {
-        const authorName = `${item.author?.firstName || 'Unknown'} ${item.author?.lastName || 'Author'}`;
-        const authorCommunity = `${item.community?.name || 'Unknown'}`;
-        const profilePic = item.author?.profilePicture || 'https://via.placeholder.com/50';
-        const mediaUrl = item.media?.[0] || 'https://via.placeholder.com/200';
-        const likeCount = item.likes?.length || 0;
-        const commentCount = item.comments?.length || 0;
-
-        // For double-tap to like
-        const lastTapRef = useRef(0);
-        const handlePostPress = () => {
-            const now = Date.now();
-            if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-                handleLike(item._id); // double tap => like
-            }
-            lastTapRef.current = now;
-        };
-
-        // Local state for showing/hiding comments
-        const [showComments, setShowComments] = useState(false);
-        const toggleComments = () => setShowComments((prev) => !prev);
-
-        return (
-            <TouchableOpacity
-                style={styles.postContainer}
-                activeOpacity={1}
-                onPress={handlePostPress}
-            >
-                <View style={styles.userInfoContainer}>
-                    <View style={styles.userInfo}>
-                        <FastImage
-                            source={{ uri: profilePic }}
-                            style={styles.profilePic}
-                            resizeMode={FastImage.resizeMode.cover}
-                        />
-                        <Text style={styles.username}>{authorName}</Text>
-                    </View>
-                    <View style={styles.communityChip}>
-                        <Text style={styles.communityText}>{authorCommunity}</Text>
-                    </View>
-                </View>
-
-                <FastImage
-                    source={{ uri: mediaUrl }}
-                    style={styles.postImage}
-                    resizeMode={FastImage.resizeMode.cover}
-                />
-
-                <Text style={styles.postTitle}>{item.title}</Text>
-                <Text style={styles.postContent}>{item.content}</Text>
-
-                {/* Footer: like and comment actions */}
-                <View style={styles.postFooter}>
-                    <TouchableOpacity onPress={() => handleLike(item._id)}>
-                        <Text style={styles.footerText}>❤️ {likeCount} Likes</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={() => openCommentModal(item._id)}>
-                        <Text style={styles.footerText}>💬 {commentCount} Comments</Text>
-                    </TouchableOpacity>
-
-                    {/* Show/Hide Comments button */}
-                    <TouchableOpacity onPress={toggleComments}>
-                        <Text style={styles.footerText}>
-                            {showComments ? 'Hide Comments' : 'Show All Comments'}
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Conditionally render the comment list */}
-                {showComments && (
-                    <View style={styles.commentsContainer}>
-                        {item.comments?.map((comment) => (
-                            <View style={styles.commentItem} key={comment._id}>
-                                <Text style={styles.commentAuthor}>
-                                    {comment.user?.firstName || 'Unknown'}{' '}
-                                    {comment.user?.lastName || ''}
-                                </Text>
-                                <Text style={styles.commentText}>{comment.comment}</Text>
-                            </View>
-                        ))}
-                    </View>
-                )}
+      const authorName = `${item.author?.firstName || 'Unknown'} ${item.author?.lastName || 'Author'}`;
+      const authorCommunity = item.community?.name || 'Unknown';
+      const profilePic = item.author?.profilePicture || 'https://via.placeholder.com/50';
+      const mediaUrl = item.media?.[0] || 'https://via.placeholder.com/200';
+      const likeCount = item.likes?.length || 0;
+      const commentCount = item.comments?.length || 0;
+  
+      // Double-tap logic
+      const lastTapRef = useRef(0);
+      const handlePostPress = () => {
+        const now = Date.now();
+        if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+          handleLike(item._id);
+        }
+        lastTapRef.current = now;
+      };
+  
+      // Show/hide comments
+      const [showComments, setShowComments] = useState(false);
+      const toggleComments = () => setShowComments((prev) => !prev);
+  
+      return (
+        <TouchableOpacity
+          style={styles.postContainer}
+          activeOpacity={1}
+          onPress={handlePostPress}
+        >
+          <View style={styles.userInfoContainer}>
+            <View style={styles.userInfo}>
+              <FastImage
+                source={{ uri: profilePic }}
+                style={styles.profilePic}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+              <Text style={styles.username}>{authorName}</Text>
+            </View>
+            <View style={styles.communityChip}>
+              <Text style={styles.communityText}>{authorCommunity}</Text>
+            </View>
+          </View>
+  
+          <FastImage
+            source={{ uri: mediaUrl }}
+            style={styles.postImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+  
+          <Text style={styles.postTitle}>{item.title}</Text>
+          <Text style={styles.postContent}>{item.content}</Text>
+  
+          {/* Footer: like and comment actions */}
+          <View style={styles.postFooter}>
+            <TouchableOpacity onPress={() => handleLike(item._id)}>
+              <Text style={styles.footerText}>❤️ {likeCount} Likes</Text>
             </TouchableOpacity>
-        );
-    });
-
-    return (
-        <View style={styles.container}>
-            {loading ? (
-                <ActivityIndicator size="large" color="#0485e2" />
-            ) : (
-                <FlatList
-                    data={posts}
-                    renderItem={({ item }) => <RenderPost item={item} />}
-                    keyExtractor={(item, index) =>
-                        (item._id ? item._id.toString() : index.toString())
-                    }
-                    contentContainerStyle={styles.list}
-                    initialNumToRender={5}
-                    maxToRenderPerBatch={5}
-                    windowSize={10}
-                    removeClippedSubviews
-                    getItemLayout={(data, index) => ({
-                        length: 300,
-                        offset: 300 * index,
-                        index,
-                    })}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            colors={['#0485e2']}
-                        />
-                    }
-                />
-            )}
-
-            {/* Comment Modal */}
-            <Modal
-                visible={commentModalVisible}
-                animationType="slide"
-                transparent
-            >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalTitle}>Add a Comment</Text>
-                        <TextInput
-                            style={styles.commentInput}
-                            placeholder="Write your comment..."
-                            value={commentText}
-                            onChangeText={setCommentText}
-                            multiline
-                        />
-                        <View style={styles.modalButtonRow}>
-                            <Button title="Cancel" onPress={() => setCommentModalVisible(false)} />
-                            <Button title="Submit" onPress={submitComment} />
-                        </View>
-                    </View>
+  
+            <TouchableOpacity onPress={() => openCommentModal(item._id)}>
+              <Text style={styles.footerText}>💬 {commentCount} Comments</Text>
+            </TouchableOpacity>
+  
+            {/* Show/Hide Comments button */}
+            <TouchableOpacity onPress={toggleComments}>
+              <Text style={styles.footerText}>
+                {showComments ? 'Hide Comments' : 'Show All Comments'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+  
+          {/* Conditionally render the comment list */}
+          {showComments && (
+            <View style={styles.commentsContainer}>
+              {item.comments?.map((comment) => (
+                <View style={styles.commentItem} key={comment._id}>
+                  <Text style={styles.commentAuthor}>
+                    {comment.user?.firstName || 'Unknown'} {comment.user?.lastName || ''}
+                  </Text>
+                  <Text style={styles.commentText}>{comment.comment}</Text>
                 </View>
-            </Modal>
+              ))}
+            </View>
+          )}
+        </TouchableOpacity>
+      );
+    });
+  
+    // Determine which posts to render
+    const postsToRender = getActivePosts();
+  
+    return (
+      <View style={styles.container}>
+        {/* Tabs */}
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]}
+            onPress={() => setActiveTab('explore')}
+          >
+            <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
+              Explore
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]}
+            onPress={() => setActiveTab('foryou')}
+          >
+            <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
+              For You
+            </Text>
+          </TouchableOpacity>
         </View>
+  
+        {/* Main content */}
+        {loading ? (
+          <ActivityIndicator size='large' color='#0485e2' style={{ marginTop: 20 }} />
+        ) : (
+          <FlatList
+            data={postsToRender}
+            renderItem={({ item }) => <RenderPost item={item} />}
+            keyExtractor={(item, index) => (item._id ? item._id.toString() : index.toString())}
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#0485e2']}
+              />
+            }
+          />
+        )}
+  
+        {/* Comment Modal */}
+        <Modal visible={commentModalVisible} animationType='slide' transparent>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Add a Comment</Text>
+              <TextInput
+                style={styles.commentInput}
+                placeholder='Write your comment...'
+                value={commentText}
+                onChangeText={setCommentText}
+                multiline
+              />
+              <View style={styles.modalButtonRow}>
+                <Button title='Cancel' onPress={() => setCommentModalVisible(false)} />
+                <Button title='Submit' onPress={submitComment} />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
     );
-};
-
-const styles = StyleSheet.create({
+  };
+  
+  export default SocialMedia;
+  
+  const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
+      flex: 1,
+      backgroundColor: '#f5f5f5',
+    },
+    tabRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      backgroundColor: '#fff',
+      elevation: 2,
+    },
+    tabItem: {
+      flex: 1,
+      paddingVertical: 12,
+      alignItems: 'center',
+    },
+    tabText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#333',
+    },
+    activeTab: {
+      borderBottomWidth: 3,
+      borderBottomColor: '#312783',
+    },
+    activeTabText: {
+      color: '#312783',
     },
     list: {
-        padding: 10,
+      padding: 10,
     },
     postContainer: {
-        marginBottom: 20,
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-        elevation: 5,
+      marginBottom: 20,
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+      elevation: 5,
     },
     userInfoContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 10,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
     },
     userInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
+      flexDirection: 'row',
+      alignItems: 'center',
     },
     profilePic: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        marginRight: 10,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      marginRight: 10,
     },
     username: {
-        fontSize: 16,
-        fontWeight: 'bold',
+      fontSize: 16,
+      fontWeight: 'bold',
     },
     communityChip: {
-        backgroundColor: '#312783',
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 20,
-        alignSelf: 'flex-start',
+      backgroundColor: '#312783',
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+      borderRadius: 20,
+      alignSelf: 'flex-start',
     },
     communityText: {
-        fontSize: 14,
-        color: '#fff',
-        fontWeight: '600',
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '600',
     },
     postImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 10,
-        marginBottom: 10,
-        resizeMode: 'cover',
+      width: '100%',
+      height: 200,
+      borderRadius: 10,
+      marginBottom: 10,
+      resizeMode: 'cover',
     },
     postTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 5,
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333',
+      marginBottom: 5,
     },
     postContent: {
-        fontSize: 14,
-        color: '#555',
+      fontSize: 14,
+      color: '#555',
     },
     postFooter: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 10,
-        flexWrap: 'wrap', // in case we want all buttons on the same line
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 10,
+      flexWrap: 'wrap',
     },
     footerText: {
-        fontSize: 14,
-        color: '#777',
-        marginRight: 10,
-        marginVertical: 5,
+      fontSize: 14,
+      color: '#777',
+      marginRight: 10,
+      marginVertical: 5,
     },
-    // Comments styles
     commentsContainer: {
-        marginTop: 10,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 5,
-        padding: 10,
+      marginTop: 10,
+      backgroundColor: '#f9f9f9',
+      borderRadius: 5,
+      padding: 10,
     },
     commentItem: {
-        marginBottom: 8,
+      marginBottom: 8,
     },
     commentAuthor: {
-        fontWeight: 'bold',
-        marginBottom: 2,
+      fontWeight: 'bold',
+      marginBottom: 2,
     },
     commentText: {
-        marginLeft: 5,
+      marginLeft: 5,
     },
-    // Modal styles
     modalBackground: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContainer: {
-        width: '80%',
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 20,
+      width: '80%',
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      padding: 20,
     },
     modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 10,
     },
     commentInput: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        padding: 10,
-        height: 100,
-        marginBottom: 10,
-        textAlignVertical: 'top',
+      borderWidth: 1,
+      borderColor: '#ccc',
+      borderRadius: 5,
+      padding: 10,
+      height: 100,
+      marginBottom: 10,
+      textAlignVertical: 'top',
     },
     modalButtonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
+      flexDirection: 'row',
+      justifyContent: 'space-around',
     },
-});
-
-export default SocialMedia;
+  });
+  

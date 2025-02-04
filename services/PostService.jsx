@@ -2,9 +2,9 @@ import API_URL from '../config';
 import { UserContext } from '../contexts/UserContext';
 import { useContext } from 'react';
 
-export const fetchCommunityFeed = async (userCommunityId, token) => {
+export const fetchExploreFeed = async (token) => {
   try {
-      const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
+      const response = await fetch(`${API_URL}/api/posts/explore-feed`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -12,16 +12,37 @@ export const fetchCommunityFeed = async (userCommunityId, token) => {
       });
   
       if (!response.ok) {
-        throw new Error('Failed to fetch posts');
+        throw new Error('Failed to fetch explore posts');
       }
   
       const responseData = await response.json();
       return responseData.data;
     } catch (error) {
-      console.error('Error fetching community feed:', error);
-      throw new Error(`Fetch community feed error: ${error.message}`);
+      console.error('Error fetching explore feed:', error);
+      throw new Error(`Fetch explore feed error: ${error.message}`);
     }
   };
+
+  export const fetchForYouFeed = async (userCommunityId, token) => {
+    try {
+        const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to fetch For You posts');
+        }
+    
+        const responseData = await response.json();
+        return responseData.data;
+      } catch (error) {
+        console.error('Error fetching For You (community feed):', error);
+        throw new Error(`Fetch For You (community feed) error: ${error.message}`);
+      }
+    };
   
   export const fetchRecentCommunityPosts = async (userCommunityId, token) => {
     try {

@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
-import { fetchCommunityFeed } from '../services/PostService.jsx';
+import { fetchExploreFeed } from '../services/PostService.jsx';
 
 export const UserContext = createContext();
 
@@ -41,8 +41,8 @@ export const UserProvider = ({ children }) => {
       try {
         setIsLoading(true);
 
-        const [posts, activities, events] = await Promise.all([
-          fetchCommunityFeed(communityId, token),
+        const [posts, activities, events] = await Promise.all([          
+          fetchExploreFeed(token),
           fetchActivities(token),
           fetchEvents(token),
         ]);

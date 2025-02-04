@@ -8,6 +8,7 @@ import { UserProvider } from './contexts/UserContext';
 
 // Import Screens
 import Welcome from './screens/Welcome';
+import SocialMedia from './screens/SocialMedia';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Verification from './screens/Verification';
