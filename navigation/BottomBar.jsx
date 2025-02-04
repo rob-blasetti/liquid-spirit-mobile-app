@@ -13,9 +13,9 @@ const Tab = createBottomTabNavigator();
 const tabIcons = {
   Profile: 'user',
   SocialMedia: 'compass',
-  Camera: 'camera',
-  Events: 'calendar',
-  Activities: 'square-check',
+  Camera: 'fa-square-plus',
+  Events: 'bahai',
+  Activities: 'fa-align-left',
 };
 
 const BottomBar = () => {
@@ -26,7 +26,7 @@ const BottomBar = () => {
         tabBarIcon: ({ focused, color, size }) => (
           <FontAwesomeIcon icon={tabIcons[route.name]} size={size} color={color} />
         ),
-        tabBarActiveTintColor: '#0485e2',
+        tabBarActiveTintColor: '#312783',
         tabBarInactiveTintColor: 'gray',
       })}
     >

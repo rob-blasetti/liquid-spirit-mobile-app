@@ -22,8 +22,7 @@ export default function Post({ onPostCreated }) {
   const [mediaType, setMediaType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const { communityId, token } = useContext(UserContext);
-
-  // Automatically open the camera on mount
+  
   useEffect(() => {
     openCamera();
   }, []);

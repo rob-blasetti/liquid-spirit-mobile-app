@@ -19,16 +19,15 @@ import BottomBar from './navigation/BottomBar';
 // in App.js
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fab } from '@fortawesome/free-brands-svg-icons';
-import { faMugSaucer, faSquareCheck, faCompass, faUser, faCalendar, faCamera } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
   fab, 
-  faMugSaucer, 
-  faSquareCheck, 
-  faCompass, 
   faUser, 
-  faCalendar, 
-  faCamera
+  faCompass,
+  faSquarePlus,
+  faBahai,
+  faAlignLeft
 );
 
 const Stack = createNativeStackNavigator();
