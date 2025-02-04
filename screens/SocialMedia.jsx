@@ -14,9 +14,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import API_URL from '../config';
-// Example service functions (assuming these are already implemented in PostService)
 import { likePost, commentOnPost } from '../services/PostService';
-
 import { UserContext } from '../contexts/UserContext';
 
 const DOUBLE_TAP_DELAY = 300; // max delay (ms) between taps for a double-tap
@@ -32,6 +30,7 @@ const SocialMedia = () => {
     const [currentPostId, setCurrentPostId] = useState(null);
     const [commentText, setCommentText] = useState('');
 
+    // Fetch posts
     const fetchPosts = useCallback(async () => {
         try {
             setLoading(true);
@@ -63,21 +62,14 @@ const SocialMedia = () => {
         fetchPosts();
     }, [fetchPosts]);
 
-    // Handle liking a post
+    // Like handler
     const handleLike = useCallback(
         async (postId) => {
             try {
-                const response = await likePost(postId, token);
-                if (response.success) {
-                    // We assume response.data contains the updated post
-                    const updatedPost = response.data;
-                    // Update the post in our local state
-                    setPosts((prevPosts) =>
-                        prevPosts.map((p) => (p._id === postId ? updatedPost : p))
-                    );
-                } else {
-                    Alert.alert('Like Failed', response.message || 'Unable to like post');
-                }
+                const updatedPost = await likePost(postId, token);
+                setPosts((prevPosts) =>
+                    prevPosts.map((p) => (p._id === postId ? updatedPost : p))
+                );
             } catch (error) {
                 console.error('Error liking post:', error);
                 Alert.alert('Error', 'An error occurred while liking the post');
@@ -86,7 +78,7 @@ const SocialMedia = () => {
         [token]
     );
 
-    // Handle showing the comment modal
+    // Open comment modal
     const openCommentModal = (postId) => {
         setCurrentPostId(postId);
         setCommentText('');
@@ -94,33 +86,26 @@ const SocialMedia = () => {
     };
 
     // Submit comment
-    const submitComment = useCallback(
-        async () => {
-            if (!commentText.trim()) {
-                return Alert.alert('Error', 'Comment cannot be empty');
-            }
+    const submitComment = useCallback(() => {
+        if (!commentText.trim()) {
+            return Alert.alert('Error', 'Comment cannot be empty');
+        }
+        (async () => {
             try {
-                const response = await commentOnPost(currentPostId, commentText, token);
-                if (response.success) {
-                    // We assume response.data contains the updated post with new comment
-                    const updatedPost = response.data;
-                    // Update the post in our local state
-                    setPosts((prevPosts) =>
-                        prevPosts.map((p) => (p._id === currentPostId ? updatedPost : p))
-                    );
-                    setCommentModalVisible(false);
-                    setCommentText('');
-                } else {
-                    Alert.alert('Comment Failed', response.message || 'Unable to comment on post');
-                }
+                const updatedPost = await commentOnPost(currentPostId, commentText, token);
+                setPosts((prevPosts) =>
+                    prevPosts.map((p) => (p._id === currentPostId ? updatedPost : p))
+                );
+                setCommentModalVisible(false);
+                setCommentText('');
             } catch (error) {
                 console.error('Error commenting on post:', error);
                 Alert.alert('Error', 'An error occurred while commenting on the post');
             }
-        },
-        [currentPostId, token, commentText]
-    );
+        })();
+    }, [currentPostId, token, commentText]);
 
+    // Render each post
     const RenderPost = React.memo(({ item }) => {
         const authorName = `${item.author?.firstName || 'Unknown'} ${item.author?.lastName || 'Author'}`;
         const authorCommunity = `${item.community?.name || 'Unknown'}`;
@@ -129,17 +114,19 @@ const SocialMedia = () => {
         const likeCount = item.likes?.length || 0;
         const commentCount = item.comments?.length || 0;
 
-        // For double-tap detection
+        // For double-tap to like
         const lastTapRef = useRef(0);
-
         const handlePostPress = () => {
             const now = Date.now();
             if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-                // Double tap detected
-                handleLike(item._id);
+                handleLike(item._id); // double tap => like
             }
             lastTapRef.current = now;
         };
+
+        // Local state for showing/hiding comments
+        const [showComments, setShowComments] = useState(false);
+        const toggleComments = () => setShowComments((prev) => !prev);
 
         return (
             <TouchableOpacity
@@ -170,17 +157,38 @@ const SocialMedia = () => {
                 <Text style={styles.postTitle}>{item.title}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
 
+                {/* Footer: like and comment actions */}
                 <View style={styles.postFooter}>
-                    {/* Like button & count (single press)*/}
                     <TouchableOpacity onPress={() => handleLike(item._id)}>
                         <Text style={styles.footerText}>❤️ {likeCount} Likes</Text>
                     </TouchableOpacity>
 
-                    {/* Comment button & count */}
                     <TouchableOpacity onPress={() => openCommentModal(item._id)}>
                         <Text style={styles.footerText}>💬 {commentCount} Comments</Text>
                     </TouchableOpacity>
+
+                    {/* Show/Hide Comments button */}
+                    <TouchableOpacity onPress={toggleComments}>
+                        <Text style={styles.footerText}>
+                            {showComments ? 'Hide Comments' : 'Show All Comments'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
+
+                {/* Conditionally render the comment list */}
+                {showComments && (
+                    <View style={styles.commentsContainer}>
+                        {item.comments?.map((comment) => (
+                            <View style={styles.commentItem} key={comment._id}>
+                                <Text style={styles.commentAuthor}>
+                                    {comment.user?.firstName || 'Unknown'}{' '}
+                                    {comment.user?.lastName || ''}
+                                </Text>
+                                <Text style={styles.commentText}>{comment.comment}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
             </TouchableOpacity>
         );
     });
@@ -193,12 +201,14 @@ const SocialMedia = () => {
                 <FlatList
                     data={posts}
                     renderItem={({ item }) => <RenderPost item={item} />}
-                    keyExtractor={(item, index) => (item._id ? item._id.toString() : index.toString())}
+                    keyExtractor={(item, index) =>
+                        (item._id ? item._id.toString() : index.toString())
+                    }
                     contentContainerStyle={styles.list}
                     initialNumToRender={5}
                     maxToRenderPerBatch={5}
                     windowSize={10}
-                    removeClippedSubviews={true}
+                    removeClippedSubviews
                     getItemLayout={(data, index) => ({
                         length: 300,
                         offset: 300 * index,
@@ -208,7 +218,7 @@ const SocialMedia = () => {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            colors={["#0485e2"]}
+                            colors={['#0485e2']}
                         />
                     }
                 />
@@ -218,7 +228,7 @@ const SocialMedia = () => {
             <Modal
                 visible={commentModalVisible}
                 animationType="slide"
-                transparent={true}
+                transparent
             >
                 <View style={styles.modalBackground}>
                     <View style={styles.modalContainer}>
@@ -313,10 +323,30 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 10,
+        flexWrap: 'wrap', // in case we want all buttons on the same line
     },
     footerText: {
         fontSize: 14,
         color: '#777',
+        marginRight: 10,
+        marginVertical: 5,
+    },
+    // Comments styles
+    commentsContainer: {
+        marginTop: 10,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 5,
+        padding: 10,
+    },
+    commentItem: {
+        marginBottom: 8,
+    },
+    commentAuthor: {
+        fontWeight: 'bold',
+        marginBottom: 2,
+    },
+    commentText: {
+        marginLeft: 5,
     },
     // Modal styles
     modalBackground: {
