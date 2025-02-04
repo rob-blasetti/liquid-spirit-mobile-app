@@ -263,13 +263,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				ENABLE_BITCODE = NO;
 				ENABLE_TESTING_SEARCH_PATHS = NO;
 				INFOPLIST_FILE = liquid_spirit_mobile_app/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Liquid Spirit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -295,13 +296,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				ENABLE_TESTING_SEARCH_PATHS = NO;
 				INFOPLIST_FILE = liquid_spirit_mobile_app/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Liquid Spirit";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -369,6 +371,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -441,7 +444,9 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
