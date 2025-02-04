@@ -1,25 +1,28 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
-
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
 default_platform(:ios)
 
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    increment_build_number(xcodeproj: "liquid_spirit_mobile_app.xcodeproj")
-    build_app(workspace: "liquid_spirit_mobile_app.xcworkspace", scheme: "liquid_spirit_mobile_app")
+    # 1. Pull down/update provisioning profiles & certificates from your signing repo
+    match(
+      type: "appstore",  # or "ad-hoc" / "development", depending on your needs
+      git_url: "git@github.com:rob-blasetti/signing-repo.git",
+      app_identifier: "org.reactjs.native.example.liquid-spirit-mobile-app"
+    )
+
+    # 2. Increment build number
+    increment_build_number(
+      xcodeproj: "liquid_spirit_mobile_app.xcodeproj"
+    )
+
+    # 3. Build the app
+    build_app(
+      workspace: "liquid_spirit_mobile_app.xcworkspace",
+      scheme: "liquid_spirit_mobile_app",
+      export_method: "app-store"  # or match your certificate type
+    )
+
+    # 4. Upload to TestFlight
     upload_to_testflight
   end
 end

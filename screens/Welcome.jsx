@@ -11,18 +11,29 @@ const Welcome = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Liquid Spirit</Text>
       <Text style={styles.subtitle}>Join the Baha'i vibe.</Text>
+
       <TouchableOpacity
         style={styles.button}
         onPress={() => navigation.navigate('Login')}
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={[styles.button, styles.registerButton]}
         onPress={() => navigation.navigate('Register')}
       >
         <Text style={styles.registerButtonText}>Register</Text>
       </TouchableOpacity>
+
+      {/* Forgot Password Button */}
+      <TouchableOpacity
+        style={styles.forgotPasswordButton}
+        onPress={() => navigation.navigate('ForgotPassword')}
+      >
+        <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
+      </TouchableOpacity>
+
     </View>
   );
 };
@@ -58,7 +69,7 @@ const styles = StyleSheet.create({
   registerButton: {
     backgroundColor: '#fff',
     borderColor: '#312783',
-    borderWidth: 1
+    borderWidth: 1,
   },
   registerButtonText: {
     color: '#312783',
@@ -69,6 +80,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  forgotPasswordButton: {
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: '#312783',
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
 });
 

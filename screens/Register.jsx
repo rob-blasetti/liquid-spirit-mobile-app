@@ -8,7 +8,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import API_URL from '../config';
+
+// Import your custom hook
+import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
 
 const Register = () => {
@@ -18,6 +20,9 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Destructure 'signUp' from your custom hook
+  const { signUp } = useAuthService();
 
   const handleRegister = async () => {
     if (!email || !bahaiId || !password || !confirmPassword) {
@@ -33,22 +38,15 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, bahaiId, password }),
-      });
+      // Use the signUp method from the hook
+      const { ok, data } = await signUp(email, bahaiId, password);
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (ok) {
         Alert.alert('Success', 'Verification code sent to your email.');
-        
+        // Navigate to Verification screen
         navigation.navigate('Verification', { bahaiId, email, password });
       } else {
-        Alert.alert('Error', result.message || 'Registration failed.');
+        Alert.alert('Error', data?.message || 'Registration failed.');
       }
     } catch (error) {
       Alert.alert('Error', 'Something went wrong. Please try again later.');
@@ -63,11 +61,11 @@ const Register = () => {
       <Text style={styles.title}>Register</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder='Email'
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        keyboardType='email-address'
+        autoCapitalize='none'
         autoCorrect={false}
       />
       <TextInput
@@ -75,24 +73,24 @@ const Register = () => {
         placeholder="Bahá'í ID"
         value={bahaiId}
         onChangeText={setBahaiId}
-        keyboardType="numeric"
+        keyboardType='numeric'
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder='Password'
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
         style={styles.input}
-        placeholder="Confirm Password"
+        placeholder='Confirm Password'
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
       {loading ? (
-        <ActivityIndicator size="large" color="#312783" />
+        <ActivityIndicator size='large' color='#312783' />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <Text style={styles.buttonText}>Register</Text>
@@ -108,7 +106,10 @@ const Register = () => {
   );
 };
 
+export default Register;
+
 const styles = StyleSheet.create({
+  // same styles as in your code
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -153,5 +154,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-export default Register;

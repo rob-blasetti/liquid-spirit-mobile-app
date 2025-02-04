@@ -1,15 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert, 
+  StyleSheet 
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import API_URL from '../config';
+
+// Import the custom hook
+import { useAuthService } from '../services/AuthService';
 
 const Verification = ({ route }) => {
   const navigation = useNavigation();
-  const { bahaiId, email, password } = route.params; // Get Bahá'í ID and email from registration screen
+  const { bahaiId, email, password } = route.params; 
 
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Destructure `verify` from `useAuthService`
+  const { verify } = useAuthService();
 
   const handleVerification = async () => {
     if (!verificationCode) {
@@ -20,30 +33,19 @@ const Verification = ({ route }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bahaiId,
-          verificationCode,
-          password
-        }),
-      });
+      // Call `verify` from the hook instead of using fetch
+      const { ok, data } = await verify(bahaiId, verificationCode, password);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Invalid verification code.');
+      if (!ok) {
+        // If the server responded with an error
+        throw new Error(data?.message || 'Invalid verification code.');
       }
 
+      // If everything is OK:
       Alert.alert('Success', 'Your email has been verified!');
-
-      // Navigate to Home Screen after successful verification
       navigation.navigate('Main', { screen: 'Home' });
-
     } catch (error) {
+      // Catch network or error response
       setMessage(error.message);
     } finally {
       setLoading(false);
@@ -53,25 +55,36 @@ const Verification = ({ route }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Verify Your Email</Text>
-      <Text style={styles.description}>Enter the 6-digit code sent to your email: {email}</Text>
+      <Text style={styles.description}>
+        Enter the 6-digit code sent to your email: {email}
+      </Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Enter Verification Code"
+        placeholder='Enter Verification Code'
         value={verificationCode}
         onChangeText={setVerificationCode}
-        keyboardType="numeric"
+        keyboardType='numeric'
         maxLength={6}
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleVerification} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleVerification} 
+        disabled={loading}
+      >
+        {loading 
+          ? <ActivityIndicator color='#fff' /> 
+          : <Text style={styles.buttonText}>Verify</Text>
+        }
       </TouchableOpacity>
 
       {message ? <Text style={styles.errorText}>{message}</Text> : null}
     </View>
   );
 };
+
+export default Verification;
 
 const styles = StyleSheet.create({
   container: {
@@ -121,5 +134,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-export default Verification;

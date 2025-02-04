@@ -8,15 +8,21 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+
+// Import the custom hook
+import { useAuthService } from '../services/AuthService';
 import { UserContext } from '../contexts/UserContext';
-import API_URL from '../config';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // We still use these from UserContext if we want to store extra details or do additional logic
   const { setUser, setToken, setCommunityId } = useContext(UserContext);
+  
+  // Get the signIn method (and others if needed) from useAuthService
+  const { signIn } = useAuthService();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,43 +33,38 @@ const Login = ({ navigation }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
+      // Use the signIn method from useAuthService
+      const { ok, data } = await signIn(email, password);
+      
+      if (ok && data) {
+        // Because your backend returns user and token,
+        // you can store them in context like before
         setUser({
-            id: result.user.id,
-            firstName: result.user.firstName,
-            lastName: result.user.lastName,
-            email: result.user.email,
-            phoneNumber: result.user.phoneNumber,
-            address: result.user.address,
-            occupation: result.user.occupation,
-            preferredLanguage: result.user.preferredLanguage,
-            roles: result.user.roles,
-            skills: result.user.skills,
-            profilePicture: result.user.profilePicture,
-            bahaiId: result.user.bahaiId,
-            birthday: result.user.birthday,
-            community: {
-              id: result.user.community?._id,
-              name: result.user.community?.name,
-              description: result.user.community?.description,
-              bannerImage: result.user.community?.bannerImage,
-            },
-          });
-        setToken(result.token);
-        setCommunityId(result.user.community?._id);
+          id: data.user.id,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          email: data.user.email,
+          phoneNumber: data.user.phoneNumber,
+          address: data.user.address,
+          occupation: data.user.occupation,
+          preferredLanguage: data.user.preferredLanguage,
+          roles: data.user.roles,
+          skills: data.user.skills,
+          profilePicture: data.user.profilePicture,
+          bahaiId: data.user.bahaiId,
+          birthday: data.user.birthday,
+          community: {
+            id: data.user.community?._id,
+            name: data.user.community?.name,
+            description: data.user.community?.description,
+            bannerImage: data.user.community?.bannerImage,
+          },
+        });
+        setToken(data.token);
+        setCommunityId(data.user.community?._id);
         navigation.navigate('Main', { screen: 'Home' });
       } else {
-        Alert.alert('Error', result.message || 'Login failed.');
+        Alert.alert('Error', data?.message || 'Login failed.');
       }
     } catch (error) {
       Alert.alert('Error', 'Something went wrong. Please try again later.');
@@ -78,22 +79,22 @@ const Login = ({ navigation }) => {
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder='Email'
         value={email}
         onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        keyboardType='email-address'
+        autoCapitalize='none'
         autoCorrect={false}
       />
       <TextInput
         style={styles.input}
-        placeholder="Password"
+        placeholder='Password'
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       {loading ? (
-        <ActivityIndicator size="large" color="#0485e2" />
+        <ActivityIndicator size='large' color='#0485e2' />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>
@@ -109,7 +110,10 @@ const Login = ({ navigation }) => {
   );
 };
 
+export default Login;
+
 const styles = StyleSheet.create({
+  // (same styles as before)
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -154,5 +158,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-export default Login;
