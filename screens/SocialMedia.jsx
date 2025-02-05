@@ -55,7 +55,7 @@ import React, {
     // Explore feed
     const fetchExplorePosts = useCallback(async () => {
       try {
-        const exploreData = await fetchExploreFeed(token);
+        const exploreData = await fetchExploreFeed();
         setExplorePosts(exploreData);
       } catch (error) {
         console.error('Error fetching explore feed:', error);
@@ -64,22 +64,26 @@ import React, {
   
     // For You feed
     const fetchForYouPosts = useCallback(async () => {
-      try {
-        const forYouData = await fetchForYouFeed(communityId, token);
-        setForYouPosts(forYouData);
-      } catch (error) {
-        console.error('Error fetching for you feed:', error);
-      }
-    }, [communityId, token]);
+        if (!token) return; // Skip fetching if user is not logged in
+        try {
+          const forYouData = await fetchForYouFeed(communityId, token);
+          setForYouPosts(forYouData);
+        } catch (error) {
+          console.error('Error fetching for you feed:', error);
+        }
+      }, [communityId, token]);
   
     // On initial load, fetch both feeds in parallel
     useEffect(() => {
-      (async () => {
-        setLoading(true);
-        await Promise.all([fetchExplorePosts(), fetchForYouPosts()]);
-        setLoading(false);
-      })();
-    }, [fetchExplorePosts, fetchForYouPosts]);
+        (async () => {
+          setLoading(true);
+          await fetchExplorePosts();
+          if (token) {
+            await fetchForYouPosts(); // Only fetch if user is logged in
+          }
+          setLoading(false);
+        })();
+      }, [fetchExplorePosts, fetchForYouPosts, token]);
   
     // Refresh control
     const onRefresh = useCallback(async () => {

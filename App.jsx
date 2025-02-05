@@ -42,7 +42,7 @@ const App = () => {
           <StatusBar barStyle="dark-content" backgroundColor="#fff" />
           <NavigationContainer>
             <Stack.Navigator
-              initialRouteName="Welcome"
+              initialRouteName="Main"
               screenOptions={{
                 headerStyle: { backgroundColor: '#312783' },
                 headerTintColor: '#fff',
@@ -50,6 +50,7 @@ const App = () => {
               }}
             >
               {/* Authentication Screens */}
+              <Stack.Screen name="SocialMedia" component={SocialMedia} />
               <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
               <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
               <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />

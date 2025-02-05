@@ -2,14 +2,15 @@ import API_URL from '../config';
 import { UserContext } from '../contexts/UserContext';
 import { useContext } from 'react';
 
-export const fetchExploreFeed = async (token) => {
+export const fetchExploreFeed = async () => {
   try {
       const response = await fetch(`${API_URL}/api/posts/explore-feed`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
       });
+
+      console.log(response);
   
       if (!response.ok) {
         throw new Error('Failed to fetch explore posts');

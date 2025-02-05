@@ -28,6 +28,16 @@ const BottomBar = () => {
         ),
         tabBarActiveTintColor: '#312783',
         tabBarInactiveTintColor: 'gray',
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 60, // Adjust height if needed
+          backgroundColor: '#fff', // Ensure it's visible
+          borderTopWidth: 1,
+          borderTopColor: '#ddd', // Optional for a border
+        },
       })}
     >
       <Tab.Screen name="SocialMedia" component={SocialMediaScreen} options={{ title: 'Feed' }} />
