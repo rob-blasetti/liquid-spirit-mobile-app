@@ -5,8 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const Welcome = ({ navigation }) => {
+const Welcome = ({ closeModal }) => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Liquid Spirit</Text>
@@ -14,14 +17,20 @@ const Welcome = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Login')}
+        onPress={() => {
+          navigation.navigate('Login');
+          if (closeModal) closeModal(); // ✅ Close modal on navigation
+        }}
       >
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, styles.registerButton]}
-        onPress={() => navigation.navigate('Register')}
+        onPress={() => {
+          navigation.navigate('Register');
+          if (closeModal) closeModal(); // ✅ Close modal on navigation
+        }}
       >
         <Text style={styles.registerButtonText}>Register</Text>
       </TouchableOpacity>
@@ -29,11 +38,13 @@ const Welcome = ({ navigation }) => {
       {/* Forgot Password Button */}
       <TouchableOpacity
         style={styles.forgotPasswordButton}
-        onPress={() => navigation.navigate('ForgotPassword')}
+        onPress={() => {
+          navigation.navigate('ForgotPassword');
+          if (closeModal) closeModal(); // ✅ Close modal on navigation
+        }}
       >
         <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
       </TouchableOpacity>
-
     </View>
   );
 };
@@ -87,6 +98,15 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: '#312783',
     fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+  },
+  closeButtonText: {
+    color: '#312783',
+    fontSize: 16,
     textDecorationLine: 'underline',
   },
 });

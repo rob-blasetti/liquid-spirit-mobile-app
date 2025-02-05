@@ -42,7 +42,7 @@ const App = () => {
           <StatusBar barStyle="dark-content" backgroundColor="#fff" />
           <NavigationContainer>
             <Stack.Navigator
-              initialRouteName="Main"
+              initialRouteName="Main" // ✅ Ensure Main (BottomBar) is the initial route
               screenOptions={{
                 headerStyle: { backgroundColor: '#312783' },
                 headerTintColor: '#fff',
@@ -50,7 +50,6 @@ const App = () => {
               }}
             >
               {/* Authentication Screens */}
-              <Stack.Screen name="SocialMedia" component={SocialMedia} />
               <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
               <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
               <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
@@ -61,7 +60,7 @@ const App = () => {
               <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }} />
               <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }} />
 
-              {/* Main Navigation */}
+              {/* Main Navigation - Bottom Bar */}
               <Stack.Screen name="Main" component={BottomBar} options={{ headerShown: false }} />
             </Stack.Navigator>
           </NavigationContainer>

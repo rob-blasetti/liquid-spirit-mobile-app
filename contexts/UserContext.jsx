@@ -65,6 +65,10 @@ export const UserProvider = ({ children }) => {
     loadUserData();
   }, [communityId, token])
 
+  const isLoggedIn = () => {
+    return !!token; // Returns true if token exists, otherwise false
+  };
+
   return (
     <UserContext.Provider 
       value={{ 
@@ -79,7 +83,8 @@ export const UserProvider = ({ children }) => {
         token, 
         setToken, 
         communityId, 
-        setCommunityId
+        setCommunityId,
+        isLoggedIn
       }}>
       {children}
     </UserContext.Provider>

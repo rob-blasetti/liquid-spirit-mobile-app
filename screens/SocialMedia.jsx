@@ -26,6 +26,7 @@ import React, {
     fetchForYouFeed,
   } from '../services/PostService';
   import { UserContext } from '../contexts/UserContext';
+  import WelcomeScreen from '../screens/Welcome';
   
   const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
   
@@ -48,6 +49,8 @@ import React, {
     const [currentPostId, setCurrentPostId] = useState(null);
     const [commentText, setCommentText] = useState('');
   
+    const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
+
     // ─────────────────────────────────────────────────────────────────────────────
     // FETCH POSTS
     // ─────────────────────────────────────────────────────────────────────────────
@@ -156,6 +159,20 @@ import React, {
         }
       })();
     }, [currentPostId, token, commentText, activeTab]);
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // HANDLE TAB SWITCHING
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    const handleTabPress = (tabName) => {
+        if (tabName === 'foryou' && !token) {
+        // ✅ Show Welcome modal if user is not logged in
+        setWelcomeModalVisible(true);
+        } else {
+        // ✅ Switch tabs normally
+        setActiveTab(tabName);
+        }
+    };
   
     // ─────────────────────────────────────────────────────────────────────────────
     // RENDER
@@ -250,26 +267,26 @@ import React, {
     const postsToRender = getActivePosts();
   
     return (
-      <View style={styles.container}>
-        {/* Tabs */}
-        <View style={styles.tabRow}>
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]}
-            onPress={() => setActiveTab('explore')}
-          >
-            <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
-              Explore
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]}
-            onPress={() => setActiveTab('foryou')}
-          >
-            <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
-              For You
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <View style={styles.container}>
+          {/* Tabs */}
+          <View style={styles.tabRow}>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]}
+              onPress={() => handleTabPress('explore')} // ✅ Updated to handleTabPress
+            >
+              <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
+                Explore
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]}
+              onPress={() => handleTabPress('foryou')} // ✅ Updated to handleTabPress
+            >
+              <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
+                For You
+              </Text>
+            </TouchableOpacity>
+          </View>
   
         {/* Main content */}
         {loading ? (
@@ -289,6 +306,19 @@ import React, {
             }
           />
         )}
+
+        {/* Welcome Modal */}
+        <Modal visible={welcomeModalVisible} animationType="slide" transparent>
+            <TouchableOpacity
+            style={styles.modalBackground}
+            activeOpacity={1}
+            onPress={() => setWelcomeModalVisible(false)}
+            >
+            <View style={styles.modalContainer}>
+                <WelcomeScreen closeModal={() => setWelcomeModalVisible(false)} />
+            </View>
+            </TouchableOpacity>
+        </Modal>
   
         {/* Comment Modal */}
         <Modal visible={commentModalVisible} animationType='slide' transparent>
@@ -314,7 +344,6 @@ import React, {
   };
   
   export default SocialMedia;
-  
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -410,13 +439,11 @@ import React, {
       flexDirection: 'row',
       justifyContent: 'space-between',
       marginTop: 10,
-      flexWrap: 'wrap',
     },
     footerText: {
       fontSize: 14,
       color: '#777',
       marginRight: 10,
-      marginVertical: 5,
     },
     commentsContainer: {
       marginTop: 10,
@@ -441,28 +468,38 @@ import React, {
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContainer: {
-      width: '80%',
+      width: '90%',
+      height: '90%',
+      padding: 24,
       backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 20,
+      borderRadius: 12,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+      elevation: 5,
     },
     modalTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 10,
+      marginBottom: 12,
     },
     commentInput: {
+      width: '100%',
       borderWidth: 1,
       borderColor: '#ccc',
-      borderRadius: 5,
-      padding: 10,
-      height: 100,
-      marginBottom: 10,
+      borderRadius: 8,
+      padding: 12,
+      height: 80,
       textAlignVertical: 'top',
+      backgroundColor: '#f9f9f9',
     },
     modalButtonRow: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
+      justifyContent: 'space-between',
+      width: '100%',
+      marginTop: 10,
     },
   });
   
