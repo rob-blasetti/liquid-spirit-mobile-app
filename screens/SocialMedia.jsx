@@ -231,7 +231,7 @@ import React, {
           {/* Footer: like and comment actions */}
           <View style={styles.postFooter}>
             <TouchableOpacity onPress={() => handleLike(item._id)}>
-              <Text style={styles.footerText}>❤️ {likeCount} Likes</Text>
+              <Text style={styles.footerText}>💙 {likeCount} Likes</Text>
             </TouchableOpacity>
   
             <TouchableOpacity onPress={() => openCommentModal(item._id)}>
@@ -272,7 +272,7 @@ import React, {
           <View style={styles.tabRow}>
             <TouchableOpacity
               style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]}
-              onPress={() => handleTabPress('explore')} // ✅ Updated to handleTabPress
+              onPress={() => handleTabPress('explore')}
             >
               <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
                 Explore
@@ -280,7 +280,7 @@ import React, {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]}
-              onPress={() => handleTabPress('foryou')} // ✅ Updated to handleTabPress
+              onPress={() => handleTabPress('foryou')}
             >
               <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
                 For You
@@ -374,6 +374,7 @@ import React, {
     },
     list: {
       padding: 10,
+      paddingBottom: 60,
     },
     postContainer: {
       marginBottom: 20,
@@ -420,8 +421,8 @@ import React, {
     },
     postImage: {
       width: '100%',
-      height: 200,
-      borderRadius: 10,
+      height: 300,
+      borderRadius: 20,
       marginBottom: 10,
       resizeMode: 'cover',
     },

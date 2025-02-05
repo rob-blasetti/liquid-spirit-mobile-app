@@ -132,8 +132,8 @@ const styles = StyleSheet.create({
   },
   eventImage: {
     width: '100%',
-    height: 150,
-    borderRadius: 8,
+    height: 200,
+    borderRadius: 20,
     marginBottom: 8,
   },
   eventTitle: {

@@ -1,5 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
 import themeVariables from '../styles/theme';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
@@ -29,14 +38,12 @@ const ActivityDetail = ({ route, navigation }) => {
     fetchDetails();
   }, [activityId]);
 
-  const handleJoinAsFacilitator = () => {
-    alert('Request to Join as Facilitator Sent!');
-    // TODO: Implement API call for requesting to join as a facilitator
-  };
-
-  const handleJoinAsParticipant = () => {
-    alert('Request to Join as Participant Sent!');
-    // TODO: Implement API call for requesting to join as a participant
+  const openGoogleMaps = () => {
+    if (!activity.address) return;
+    const address = `${activity.address.streetAddress}, ${activity.address.suburb}, ${activity.address.city}`;
+    const encodedAddress = encodeURIComponent(address);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    Linking.openURL(mapsUrl);
   };
 
   if (loading) {
@@ -52,10 +59,8 @@ const ActivityDetail = ({ route, navigation }) => {
   }
 
   const userId = user?._id;
-
   const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator._id === userId);
   const isUserAParticipant = activity.participants?.some(participant => participant._id === userId);
-
   const hasFacilitatorSpace = activity.facilitators.length < activity.facilitatorLimit;
   const hasParticipantSpace = activity.participants.length < activity.participantLimit;
 
@@ -67,18 +72,20 @@ const ActivityDetail = ({ route, navigation }) => {
       {/* Activity Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
-        <Text style={styles.type}>Type: {activity.activityType?.name || 'Unknown'}</Text>
+        <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
         <Text style={styles.date}>📅 Starts: {new Date(activity.startDate).toLocaleDateString()}</Text>
         <Text style={styles.schedule}>
           ⏰ {activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} (
           {activity.groupDetails?.frequency || 'One-time'})
         </Text>
-        <Text style={styles.location}>
-          📍 {activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}
-        </Text>
+
+        {/* Clickable Location */}
+        <TouchableOpacity onPress={openGoogleMaps}>
+          <Text style={styles.location}>📍 {activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
+        </TouchableOpacity>
 
         {/* Facilitators List */}
-        <Text style={styles.descriptionHeader}>Facilitators:</Text>
+        <Text style={styles.sectionHeader}>Facilitators:</Text>
         <View style={styles.badgesContainer}>
           {activity.facilitators?.length > 0 ? (
             activity.facilitators.map((facilitator, index) => (
@@ -89,15 +96,15 @@ const ActivityDetail = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Request to Join as Facilitator */}
+        {/* Join as Facilitator */}
         {hasFacilitatorSpace && !isUserAFacilitator && !isUserAParticipant && (
-          <TouchableOpacity style={styles.joinButton} onPress={handleJoinAsFacilitator}>
+          <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Facilitator Sent!')}>
             <Text style={styles.joinButtonText}>Request to Join as Facilitator</Text>
           </TouchableOpacity>
         )}
 
         {/* Participants List */}
-        <Text style={styles.descriptionHeader}>Participants:</Text>
+        <Text style={styles.sectionHeader}>Participants:</Text>
         <View style={styles.badgesContainer}>
           {activity.participants?.length > 0 ? (
             activity.participants.map((participant, index) => (
@@ -108,9 +115,9 @@ const ActivityDetail = ({ route, navigation }) => {
           )}
         </View>
 
-        {/* Request to Join as Participant */}
+        {/* Join as Participant */}
         {hasParticipantSpace && !isUserAParticipant && !isUserAFacilitator && (
-          <TouchableOpacity style={styles.joinButton} onPress={handleJoinAsParticipant}>
+          <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Participant Sent!')}>
             <Text style={styles.joinButtonText}>Request to Join as Participant</Text>
           </TouchableOpacity>
         )}
@@ -123,6 +130,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: themeVariables.whiteColor,
     flexGrow: 1,
+    paddingBottom: 20,
   },
   loading: {
     marginTop: 50,
@@ -135,39 +143,42 @@ const styles = StyleSheet.create({
   },
   banner: {
     width: '100%',
-    height: 200,
-    resizeMode: 'cover',
+    height: 220,
+    resizeMode: 'cover'
   },
   detailsContainer: {
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   type: {
-    fontSize: 16,
+    fontSize: 18,
     color: themeVariables.primaryColor,
-    marginBottom: 5,
+    marginBottom: 8,
+    fontWeight: '600',
   },
   date: {
-    fontSize: 16,
-    color: themeVariables.primaryColor,
-    marginBottom: 5,
+    fontSize: 18,
+    color: themeVariables.blackColor,
+    marginBottom: 6,
   },
   schedule: {
     fontSize: 16,
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     marginBottom: 5,
   },
   location: {
     fontSize: 16,
     color: themeVariables.primaryColor,
     marginBottom: 20,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
-  descriptionHeader: {
+  sectionHeader: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,

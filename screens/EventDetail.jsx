@@ -1,6 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
-import themeVariables from '../styles/theme';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Linking,
+} from 'react-native';import themeVariables from '../styles/theme';
 
 const EventDetail = ({ route }) => {
   const { event } = route.params;
@@ -39,26 +46,56 @@ const EventDetail = ({ route }) => {
     '/img/holyday/TwelfthOfRidvan.jpg': require('../assets/img/holyday/TwelfthOfRidvan.jpg')
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+
+    const suffix = (day) => {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+    return `${day}${suffix(day)} ${month}`;
+  };
+
+  const openGoogleMaps = () => {
+    if (!event.venue) return;
+    const encodedAddress = encodeURIComponent(event.venue);
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+    Linking.openURL(mapsUrl);
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      {/* Event Image */}
       <Image
-        source={
-          localImages[event.imageUrl] || require('../assets/img/placeholder.png')
-        }
+        source={localImages[event.imageUrl] || require('../assets/img/placeholder.png')}
         style={styles.banner}
       />
 
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.date}>
-          📅 {new Date(event.date).toLocaleDateString()}
-        </Text>
+        <Text style={styles.type}>{event.eventType || 'Unknown Event'}</Text>
+
+        {/* Event Date & Time */}
+        <Text style={styles.date}>📅 {formatDate(event.date)}</Text>
         <Text style={styles.time}>
           ⏰ {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
           {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </Text>
-        <Text style={styles.location}>📍 {event.venue}</Text>
 
+        {/* Location (Clickable) */}
+        <TouchableOpacity onPress={openGoogleMaps}>
+          <Text style={styles.location}>📍 {event.venue}</Text>
+        </TouchableOpacity>
+
+        {/* Event Description */}
         <Text style={styles.descriptionHeader}>Description:</Text>
         <Text style={styles.description}>{event.description}</Text>
       </View>
@@ -70,35 +107,46 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: themeVariables.whiteColor,
     flexGrow: 1,
+    paddingBottom: 20,
   },
   banner: {
     width: '100%',
-    height: 200,
+    height: 220,
     resizeMode: 'cover',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   detailsContainer: {
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  type: {
+    fontSize: 18,
+    color: themeVariables.primaryColor,
+    marginBottom: 8,
+    fontWeight: '600',
   },
   date: {
     fontSize: 18,
-    color: themeVariables.primaryColor,
-    marginBottom: 5,
+    color: themeVariables.blackColor,
+    marginBottom: 6,
   },
   time: {
     fontSize: 16,
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     marginBottom: 10,
   },
   location: {
     fontSize: 16,
     color: themeVariables.primaryColor,
     marginBottom: 20,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   descriptionHeader: {
     fontSize: 18,
@@ -109,7 +157,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: themeVariables.blackColor,
-    lineHeight: 22,
+    lineHeight: 24,
   },
 });
 
