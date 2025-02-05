@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
 import API_URL from '../config';
 
 const Events = () => {
-  const { token, userEvents } = useContext(UserContext);
+  const { userEvents } = useContext(UserContext);
   const [events, setEvents] = useState(userEvents || []);
   const [loading, setLoading] = useState(userEvents ? false : true);
   const navigation = useNavigation();
@@ -45,35 +45,10 @@ const Events = () => {
     '/img/holyday/TwelfthOfRidvan.jpg': require('../assets/img/holyday/TwelfthOfRidvan.jpg')
   };
 
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     try {
-  //       const response = await fetch(`${API_URL}/api/events`, {
-  //         method: 'GET',
-  //         headers: {
-  //           'Content-Type': 'application/json',
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-  //       const result = await response.json();
-  //       if (result.success) {
-  //         setEvents(result.data);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching events:', error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchEvents();
-  // }, []);
-
-  // Render each event (memoized for performance)
   const RenderEvent = ({ item }) => (
     <TouchableOpacity
       style={styles.eventItem}
-      onPress={() => navigation.navigate('EventDetail', { event: item })} // Navigate to EventDetail with event data
+      onPress={() => navigation.navigate('EventDetail', { event: item })}
     >
       <FastImage
         source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
@@ -93,13 +68,12 @@ const Events = () => {
 
   return (
     <View style={styles.container}>
-    <Text style={styles.header}>Upcoming Events</Text>
     {loading ? (
       <ActivityIndicator size="large" color="#0485e2" />
     ) : (
       <FlatList
         data={events}
-        keyExtractor={(item) => item._id.toString()} // Ensure each item has a unique `_id`
+        keyExtractor={(item) => item._id.toString()}
         renderItem={({ item }) => <RenderEvent item={item} />}
       />
     )}
@@ -112,12 +86,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-  },
-  header: {
-    fontSize: 24,
-    color: '#0485e2',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   eventItem: {
     padding: 16,

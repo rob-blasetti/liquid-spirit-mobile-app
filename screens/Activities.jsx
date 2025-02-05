@@ -35,13 +35,12 @@ const Activities = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch activities and update state
   useEffect(() => {
     if (userActivities && userActivities.length > 0) {
       setActivities(userActivities);
-      setLoading(false); // ✅ Stop loading once data is available
+      setLoading(false);
     } else {
-      setLoading(false); // ✅ Avoid infinite loading state
+      setLoading(false);
     }
   }, [userActivities]);
 
