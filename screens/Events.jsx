@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
-import API_URL from '../config';
+import { API_URL } from '../config';
 
 const Events = () => {
   const { userEvents } = useContext(UserContext);

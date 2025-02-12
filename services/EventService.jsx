@@ -1,7 +1,7 @@
 import { getCurrentUserId } from '../services/AuthService';
 import NotificationService from '../services/NotificationService';
 
-import API_URL from '../config';
+import { API_URL } from '../config';
 import { UserContext } from '../contexts/UserContext';
 import { useContext } from 'react';
 
@@ -21,7 +21,7 @@ export const fetchEvents = async (token) => {
     }
 
     const eventsData = await response.json();
-    return eventsData;
+    return eventsData.data;
   } catch (error) {
     console.error('Error fetching events:', error);
     throw error;

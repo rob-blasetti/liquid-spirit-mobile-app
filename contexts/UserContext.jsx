@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
+import { parseJwt } from '../utils/parseJwt';
+import { API_URL } from '../config';
 
 export const UserContext = createContext();
 
@@ -14,10 +16,21 @@ export const UserProvider = ({ children }) => {
   const [userEvents, setUserEvents] = useState(null);
   const [userPosts, setUserPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(null);
 
   useEffect(() => {
     const loadCachedData = async () => {
       try {
+        const storedToken = await AsyncStorage.getItem('authToken');
+        const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+        const storedUser = await AsyncStorage.getItem('user');
+        const storedCommunityId = await AsyncStorage.getItem('communityId');
+
+        if (storedToken) setToken(storedToken);
+        if (storedRefreshToken) setRefreshToken(storedRefreshToken);
+        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedCommunityId) setCommunityId(storedCommunityId); 
+
         const cachedActivities = await AsyncStorage.getItem('userActivities');
         const cachedEvents = await AsyncStorage.getItem('userEvents');
         const cachedPosts = await AsyncStorage.getItem('userPosts');
@@ -36,6 +49,11 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (!token) return;
+    
+    if (isTokenExpired(token)) {
+      refreshSession();
+      return;
+    }
 
     const loadUserData = async () => {
       try {
@@ -49,7 +67,7 @@ export const UserProvider = ({ children }) => {
 
         setUserPosts(posts);
         setUserActivities(activities);
-        setUserEvents(events.data);
+        setUserEvents(events);
 
         await AsyncStorage.setItem('userActivities', JSON.stringify(activities));
         await AsyncStorage.setItem('userEvents', JSON.stringify(events));
@@ -63,11 +81,92 @@ export const UserProvider = ({ children }) => {
     };
 
     loadUserData();
-  }, [communityId, token])
+  }, [communityId, token]);
 
-  const isLoggedIn = () => {
-    return !!token; // Returns true if token exists, otherwise false
+  const login = async (userData, authToken, refreshToken) => {
+    try {
+      setUser(userData);
+      setToken(authToken);
+      setRefreshToken(refreshToken);
+      setCommunityId(userData.community?._id);
+
+      await AsyncStorage.setItem('authToken', authToken);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      await AsyncStorage.setItem('communityId', userData?.community?._id || '');
+      await AsyncStorage.setItem('refreshToken', refreshToken);
+
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
+
+  const logout = async () => {
+    try {
+      setUser(null);
+      setToken(null);
+      setCommunityId(null);
+      setUserActivities(null);
+      setUserEvents(null);
+      setUserPosts(null);
+
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('communityId');
+      await AsyncStorage.removeItem('userActivities');
+      await AsyncStorage.removeItem('userEvents');
+      await AsyncStorage.removeItem('userPosts');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  function isTokenExpired(token) {
+    try {
+      const { exp } = parseJwt(token);
+  
+      // If 'exp' doesn't exist or decoding fails, treat token as invalid
+      if (!exp) return true;
+  
+      // Check if the current time is past the token's expiration time
+      return Date.now() >= exp * 1000;
+    } catch (error) {
+      console.error('Error decoding JWT:', error);
+      return true; // Consider invalid if decode fails
+    }
+  }
+
+  const isLoggedIn = () => !!token;
+
+  const refreshSession = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+  
+      // parse the JSON body once
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Here 'data.message' might be 'No refresh token provided' or something else
+        throw new Error(data.message || 'Refresh token invalid');
+      }
+  
+      // Extract tokens
+      const { accessToken, newRefreshToken } = data;
+      
+      await AsyncStorage.setItem('authToken', accessToken);
+      await AsyncStorage.setItem('refreshToken', newRefreshToken);
+      setToken(accessToken);
+      setRefreshToken(newRefreshToken);
+    } catch (error) {
+      // Refresh token failed, force logout
+      console.error('Refresh error:', error);
+      logout();
+    }
+  };
+  
 
   return (
     <UserContext.Provider 
@@ -84,7 +183,11 @@ export const UserProvider = ({ children }) => {
         setToken, 
         communityId, 
         setCommunityId,
-        isLoggedIn
+        isLoggedIn,
+        login,
+        logout,
+        isTokenExpired,
+        refreshSession
       }}>
       {children}
     </UserContext.Provider>

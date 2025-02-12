@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import { jwtDecode } from 'jwt-decode';
-import API_URL from '../config';
+import { API_URL } from '../config';
 
 // By wrapping our functions into a custom hook, we can retrieve 'token' and 'setToken' only once at the top.
 // Then we can reuse them in the exported methods without repeating useContext calls.

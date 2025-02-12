@@ -1,12 +1,7 @@
-import API_URL from '../config';
-import { UserContext } from '../contexts/UserContext';
-import { useContext } from 'react';
-
-console.log('API_URL: ', API_URL);
+import { API_URL } from '../config';
 
 const makeRequest = async (url, method, token, body = null, config = {}) => {
   try {
-    // Append query parameters if provided
     if (config.params) {
       const queryString = new URLSearchParams(config.params).toString();
       url += `?${queryString}`;
@@ -17,14 +12,13 @@ const makeRequest = async (url, method, token, body = null, config = {}) => {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Content-Type': 'application/json',
-        ...config.headers, // Allow additional headers if provided
+        ...config.headers,
       },
       body: body ? JSON.stringify(body) : null,
     });
 
     if (!response.ok) {
       const data = await response.json();
-      console.log(data);
       throw new Error(data.message);
     }
 

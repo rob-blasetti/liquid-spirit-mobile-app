@@ -1,11 +1,20 @@
 default_platform(:ios)
 
+require 'dotenv' # ✅ Require the dotenv gem
+Dotenv.load(File.join(File.dirname(__FILE__), "fastlane/.env.beta")) # ✅ Load environment variables
+
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
+    # Print environment variables to verify they load correctly
+    UI.message "🚀 Using API_URL: #{ENV['API_URL']}"
+
+    sh "mkdir -p ios"
+    sh "touch ios/Config.xcconfig"
+    
     # 1. Pull down/update provisioning profiles & certificates from your signing repo
     match(
-      type: "appstore",  # or "ad-hoc" / "development", depending on your needs
+      type: "appstore",
       git_url: "git@github.com:rob-blasetti/signing-repo.git",
       app_identifier: "org.reactjs.native.example.liquid-spirit-mobile-app"
     )
@@ -15,14 +24,20 @@ platform :ios do
       xcodeproj: "liquid_spirit_mobile_app.xcodeproj"
     )
 
-    # 3. Build the app
+    # 3. Inject Environment Variables into Xcode
+    sh "echo 'API_URL=#{ENV['API_URL']}' > ios/Config.xcconfig"
+    sh "echo 'AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']}' >> ios/Config.xcconfig"
+    sh "echo 'AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']}' >> ios/Config.xcconfig"
+    sh "echo 'AWS_REGION=#{ENV['AWS_REGION']}' >> ios/Config.xcconfig"
+
+    # 4. Build the app
     build_app(
       workspace: "liquid_spirit_mobile_app.xcworkspace",
       scheme: "liquid_spirit_mobile_app",
-      export_method: "app-store"  # or match your certificate type
+      export_method: "app-store"
     )
 
-    # 4. Upload to TestFlight
+    # 5. Upload to TestFlight
     upload_to_testflight
   end
 end

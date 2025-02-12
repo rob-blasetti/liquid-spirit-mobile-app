@@ -1,4 +1,4 @@
-import API_URL from '../config';
+import { API_URL } from '../config';
 import { UserContext } from '../contexts/UserContext';
 import { useContext } from 'react';
 
@@ -9,8 +9,6 @@ export const fetchExploreFeed = async () => {
           'Content-Type': 'application/json'
         },
       });
-
-      console.log(response);
   
       if (!response.ok) {
         throw new Error('Failed to fetch explore posts');

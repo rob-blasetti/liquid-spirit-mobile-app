@@ -8,13 +8,12 @@ import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
-import ProfileScreen from '../screens/Profile';
 import PostScreen from '../screens/Post';
 import WelcomeScreen from '../screens/Welcome';
+import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
 const Tab = createBottomTabNavigator();
 
-// ✅ Fix: Use actual FontAwesome icons instead of strings
 const tabIcons = {
   Profile: faUser,
   SocialMedia: faCompass,
@@ -61,7 +60,7 @@ const BottomBar = () => {
         <Tab.Screen name="Activities" component={ActivitiesScreen} />
         <Tab.Screen name="Camera" component={PostScreen} />
         <Tab.Screen name="Events" component={EventsScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
 
       {/* Welcome Modal */}

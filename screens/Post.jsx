@@ -13,7 +13,7 @@ import {
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
 import { colors } from '../styles/colours';
-import API_URL from '../config';
+import { API_URL } from '../config';
 
 export default function Post({ onPostCreated }) {
   const [title, setTitle] = useState('');

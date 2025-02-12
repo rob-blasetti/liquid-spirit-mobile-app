@@ -31,7 +31,7 @@ import React, {
   const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
   
   const SocialMedia = () => {
-    const { token, communityId } = useContext(UserContext);
+    const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);
   
     // Track which tab is active: 'explore' (default) or 'foryou'
     const [activeTab, setActiveTab] = useState('explore');
@@ -51,11 +51,6 @@ import React, {
   
     const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // FETCH POSTS
-    // ─────────────────────────────────────────────────────────────────────────────
-  
-    // Explore feed
     const fetchExplorePosts = useCallback(async () => {
       try {
         const exploreData = await fetchExploreFeed();
@@ -67,14 +62,23 @@ import React, {
   
     // For You feed
     const fetchForYouPosts = useCallback(async () => {
-        if (!token) return; // Skip fetching if user is not logged in
-        try {
-          const forYouData = await fetchForYouFeed(communityId, token);
-          setForYouPosts(forYouData);
-        } catch (error) {
-          console.error('Error fetching for you feed:', error);
+      if (!token) return;
+      
+      if (isTokenExpired(token)) {
+        await refreshSession();
+    
+        if (!token || isTokenExpired(token)) {
+          return;
         }
-      }, [communityId, token]);
+      }
+    
+      try {
+        const forYouData = await fetchForYouFeed(communityId, token);
+        setForYouPosts(forYouData);
+      } catch (error) {
+        console.error('Error fetching for you feed:', error);
+      }
+    }, [communityId, token, refreshSession]);
   
     // On initial load, fetch both feeds in parallel
     useEffect(() => {

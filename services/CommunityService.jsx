@@ -61,7 +61,6 @@ export const fetchHolyDaysCommittee = async (communityId) => {
 };
 
 export const fetchLocalSpiritualAssembly = async (communityId) => {
-  console.log(communityId);
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/api/community/${communityId}/lsa`, {
