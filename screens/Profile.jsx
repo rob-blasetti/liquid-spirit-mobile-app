@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   FlatList,
   ImageBackground,
   Dimensions,
@@ -11,12 +10,11 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
-import AWS from 'aws-sdk';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUserEdit, faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import s3 from '../awsConfig';
@@ -31,7 +29,6 @@ const ProfileScreen = ({ navigation }) => {
     { key: 'activities', title: 'My Activities' },
     { key: 'events', title: 'My Events' },
   ]);
-
 
   const [posts, setPosts] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -71,10 +68,8 @@ const ProfileScreen = ({ navigation }) => {
         const { uri, fileName, type } = asset;
 
         try {
-          // 1) Convert local image URI to a Blob
           const imageBlob = await getBlob(uri);
 
-          // 2) Upload the blob to S3
           const s3Key = `profile-images/${fileName || Date.now()}`;
           const params = {
             Bucket: 'liquid-spirit',
@@ -85,13 +80,11 @@ const ProfileScreen = ({ navigation }) => {
           const s3Upload = await s3.upload(params).promise();
           console.log('S3 upload success =>', s3Upload.Location);
 
-          // 3) Build the updated user object
           const updatedUserFields = {
-            ...user, // preserve all existing user fields
+            ...user,
             profilePicture: s3Upload.Location,
           };
 
-          // 4) Update on the backend via updateMe
           const { ok, data } = await updateMe(updatedUserFields);
           if (!ok) {
             console.log('Error updating user profile:', data);
@@ -99,10 +92,7 @@ const ProfileScreen = ({ navigation }) => {
             return;
           }
 
-          // 5) If server update is successful, reflect changes locally
           setUser(data); 
-          // or if your server returns only partial data, do:
-          // setUser(prev => ({ ...prev, ...data }));
 
         } catch (err) {
           console.error('Error uploading to S3 =>', err);
@@ -111,13 +101,11 @@ const ProfileScreen = ({ navigation }) => {
     });
   };
 
-  // Helper to fetch file as blob
   const getBlob = async (uri) => {
     const response = await fetch(uri);
     return await response.blob();
   };
 
-  // Render Items Using FlatList
   const renderList = (data, type) => {
     if (isLoading) {
       return <ActivityIndicator size="large" color="#312783" />;
