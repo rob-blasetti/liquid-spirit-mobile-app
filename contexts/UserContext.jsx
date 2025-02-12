@@ -93,7 +93,7 @@ export const UserProvider = ({ children }) => {
       await AsyncStorage.setItem('authToken', authToken);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       await AsyncStorage.setItem('communityId', userData?.community?._id || '');
-      await AsyncStorage.setItem('refreshToken', refreshToken);
+      await AsyncStorage.setItem('refreshToken', refreshToken|| '');
 
     } catch (error) {
       console.error("Login error:", error);
@@ -157,7 +157,8 @@ export const UserProvider = ({ children }) => {
       const { accessToken, newRefreshToken } = data;
       
       await AsyncStorage.setItem('authToken', accessToken);
-      await AsyncStorage.setItem('refreshToken', newRefreshToken);
+      await AsyncStorage.setItem('refreshToken', newRefreshToken || '');
+
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
     } catch (error) {
