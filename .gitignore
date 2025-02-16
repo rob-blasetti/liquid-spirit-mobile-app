@@ -58,6 +58,9 @@ yarn-error.log
 **/fastlane/.env.beta
 **/fastlane/.env.production
 
+#fastlane keys
+banyulebahai-6a21c0929211.json
+
 # Bundle artifact
 *.jsbundle
 
