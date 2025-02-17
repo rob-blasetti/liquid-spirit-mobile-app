@@ -138,6 +138,13 @@ export const UserProvider = ({ children }) => {
   const isLoggedIn = () => !!token;
 
   const refreshSession = async () => {
+    const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+    if (!storedRefreshToken) {
+      console.error('No stored refresh token.');
+      logout();
+      return;
+    }
+    
     try {
       const response = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
