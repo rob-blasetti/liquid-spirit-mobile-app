@@ -1,2 +1,2 @@
-json_key_file("../../banyulebahai-6a21c0929211.json") # Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
+json_key_file("../banyulebahai-6a21c0929211.json") # Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
 package_name("com.liquid_spirit_mobile_app") # e.g. com.krausefx.app
