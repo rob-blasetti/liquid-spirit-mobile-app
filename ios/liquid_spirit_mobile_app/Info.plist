@@ -23,7 +23,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>23</string>
+	<string>24</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -34,13 +34,13 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>App would like to understand your general area to curate content relevant to your uer experience.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow this app to use the camera</string>
+	<string>App would like to have access to your camera in order to allow you to post realtime content to the social feed.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Allow this app to access photos</string>
+	<string>App would like to have access to your photos in order to allow you to post content from your device to the social feed.</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>
