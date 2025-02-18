@@ -15,6 +15,7 @@ import Verification from './screens/Verification';
 import EventDetail from './screens/EventDetail';
 import ActivityDetail from './screens/ActivityDetail';
 import ForgotPassword from './screens/ForgotPassword';
+import Eula from './screens/Eula';
 
 import BottomBar from './navigation/BottomBar';
 
@@ -55,6 +56,7 @@ const App = () => {
               <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
               <Stack.Screen name="Verification" component={Verification} />
               <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+              <Stack.Screen name="EULA" component={Eula} /> 
 
               {/* Detail Screens */}
               <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }} />

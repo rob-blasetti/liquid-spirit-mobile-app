@@ -25,10 +25,10 @@ const Settings = ({ navigation }) => {
       <Text style={styles.title}>Settings</Text>
 
       {/* Edit Profile Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EditProfile')}>
+      {/* <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('EditProfile')}>
         <FontAwesomeIcon icon={faUserEdit} size={20} color="#312783" />
         <Text style={styles.buttonText}>Edit Profile</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       {/* Logout Button */}
       <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={handleLogout}>

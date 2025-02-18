@@ -8,8 +8,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-
-// Import your custom hook
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCheckSquare, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
 
@@ -19,9 +19,9 @@ const Register = () => {
   const [bahaiId, setBahaiId] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isEulaAccepted, setIsEulaAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Destructure 'signUp' from your custom hook
   const { signUp } = useAuthService();
 
   const handleRegister = async () => {
@@ -35,15 +35,17 @@ const Register = () => {
       return;
     }
 
+    if (!isEulaAccepted) {
+      Alert.alert('Error', 'You must accept the EULA before registering.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Use the signUp method from the hook
       const { ok, data } = await signUp(email, bahaiId, password);
-
       if (ok) {
         Alert.alert('Success', 'Verification code sent to your email.');
-        // Navigate to Verification screen
         navigation.navigate('Verification', { bahaiId, email, password });
       } else {
         Alert.alert('Error', data?.message || 'Registration failed.');
@@ -59,13 +61,14 @@ const Register = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
+
       <TextInput
         style={styles.input}
-        placeholder='Email'
+        placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        keyboardType='email-address'
-        autoCapitalize='none'
+        keyboardType="email-address"
+        autoCapitalize="none"
         autoCorrect={false}
       />
       <TextInput
@@ -73,33 +76,51 @@ const Register = () => {
         placeholder="Bahá'í ID"
         value={bahaiId}
         onChangeText={setBahaiId}
-        keyboardType='numeric'
+        keyboardType="numeric"
       />
       <TextInput
         style={styles.input}
-        placeholder='Password'
+        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
       <TextInput
         style={styles.input}
-        placeholder='Confirm Password'
+        placeholder="Confirm Password"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
       />
+
+      {/* ✅ Custom Checkbox Using FontAwesome */}
+      <TouchableOpacity
+        style={styles.checkboxContainer}
+        onPress={() => setIsEulaAccepted(!isEulaAccepted)}
+      >
+        <FontAwesomeIcon
+          icon={isEulaAccepted ? faCheckSquare : faSquare}
+          size={24}
+          color={isEulaAccepted ? '#312783' : '#aaa'}
+        />
+        <TouchableOpacity onPress={() => navigation.navigate('EULA')}>
+          <Text style={styles.eulaText}>I agree to the EULA</Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
+
       {loading ? (
-        <ActivityIndicator size='large' color='#312783' />
+        <ActivityIndicator size="large" color="#312783" />
       ) : (
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <TouchableOpacity
+          style={[styles.button, !isEulaAccepted && styles.buttonDisabled]}
+          onPress={handleRegister}
+          disabled={!isEulaAccepted}
+        >
           <Text style={styles.buttonText}>Register</Text>
         </TouchableOpacity>
       )}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Login')}
-        style={styles.link}
-      >
+
+      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.link}>
         <Text style={styles.linkText}>Already have an account? Login</Text>
       </TouchableOpacity>
     </View>
@@ -109,7 +130,6 @@ const Register = () => {
 export default Register;
 
 const styles = StyleSheet.create({
-  // same styles as in your code
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -132,6 +152,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  eulaText: {
+    color: '#0485e2',
+    textDecorationLine: 'underline',
+    marginLeft: 8,
+  },
   button: {
     backgroundColor: '#312783',
     padding: 16,
@@ -139,6 +169,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginBottom: 16,
+  },
+  buttonDisabled: {
+    backgroundColor: '#aaa',
   },
   buttonText: {
     color: '#fff',
