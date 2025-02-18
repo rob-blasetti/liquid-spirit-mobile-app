@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { 
   View, 
   Text, 
@@ -9,10 +9,13 @@ import {
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faEllipsisV, faFlag, faVolumeMute, faBan } from '@fortawesome/free-solid-svg-icons';
+import { UserContext } from '../contexts/UserContext';
+import WelcomeModal from '../modal/WelcomeModal';
 
 const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => { 
+  const { token } = useContext(UserContext);
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || 'Author'}`;
   const authorCommunity = post.community?.name || 'Unknown';
   const profilePic = post.author?.profilePicture?.trim() 
@@ -38,8 +41,15 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
   const kebabRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
 
   const handleToggleMenu = () => {
+
+    if (!token) {
+      setWelcomeModalVisible(true);
+      return;
+    }
+
     if (menuVisible) {
       setMenuVisible(false);
       return;
@@ -131,6 +141,11 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
           ))}
         </View>
       )}
+
+      <WelcomeModal 
+        visible={welcomeModalVisible} 
+        onClose={() => setWelcomeModalVisible(false)} 
+      />
 
       {menuVisible && (
         <>

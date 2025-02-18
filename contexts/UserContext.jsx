@@ -25,6 +25,7 @@ export const UserProvider = ({ children }) => {
         const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
         const storedUser = await AsyncStorage.getItem('user');
         const storedCommunityId = await AsyncStorage.getItem('communityId');
+        console.log('storedCommunityId: ', storedCommunityId);
 
         if (storedToken) setToken(storedToken);
         if (storedRefreshToken) setRefreshToken(storedRefreshToken);

@@ -18,6 +18,8 @@ import { blockUser, muteUser } from '../services/UserService';
 
 import { UserContext } from '../contexts/UserContext';
 import Post from '../components/Post';
+import WelcomeModal from '../modal/WelcomeModal';
+import CommentModal from '../modal/CommentModal';
 
 const SocialMedia = () => {
   const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);
@@ -80,10 +82,23 @@ const SocialMedia = () => {
     setRefreshing(false);
   }, [activeTab, fetchExplorePosts, fetchForYouPosts]);
 
+  const handleTabPress = (tab) => {
+    if (tab === 'foryou' && !token) {
+      setWelcomeModalVisible(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   // -------------------------
   //    Post action handlers
   // -------------------------
   const handleLike = async (postId) => {
+    if (!token) {
+      setWelcomeModalVisible(true);
+      return;
+    }
+
     try {
       const updatedPost = await likePost(postId, token);
       // Update both feeds if the post is present in them
@@ -95,6 +110,10 @@ const SocialMedia = () => {
   };
 
   const openCommentModal = (postId) => {
+    if (!token) {
+      setWelcomeModalVisible(true);
+      return;
+    }
     setCurrentPostId(postId);
     setCommentText('');
     setCommentModalVisible(true);
@@ -155,7 +174,7 @@ const SocialMedia = () => {
       <View style={styles.tabRow}>
         <TouchableOpacity 
           style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]} 
-          onPress={() => setActiveTab('explore')}
+          onPress={() => handleTabPress('explore')}
         >
           <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
             Explore
@@ -163,7 +182,7 @@ const SocialMedia = () => {
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]} 
-          onPress={() => setActiveTab('foryou')}
+          onPress={() => handleTabPress('foryou')}
         >
           <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
             For You
@@ -197,20 +216,18 @@ const SocialMedia = () => {
         />
       )}
 
-      {/* Example: a modal for adding comments */}
-      <Modal visible={commentModalVisible} animationType="slide" onRequestClose={() => setCommentModalVisible(false)}>
-        <View style={{ flex: 1, justifyContent: 'center', padding: 20 }}>
-          <Text style={{ fontSize: 18, marginBottom: 10 }}>Add a comment</Text>
-          <TextInput
-            style={{ borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 10 }}
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-          />
-          <Button title="Submit" onPress={submitComment} />
-          <Button title="Cancel" onPress={() => setCommentModalVisible(false)} color="red" />
-        </View>
-      </Modal>
+      <WelcomeModal 
+        visible={welcomeModalVisible} 
+        onClose={() => setWelcomeModalVisible(false)} 
+      />
+
+      <CommentModal
+        visible={commentModalVisible}
+        onClose={() => setCommentModalVisible(false)}
+        commentText={commentText}
+        setCommentText={setCommentText}
+        onSubmit={submitComment}
+      />
     </View>
   );
 };
