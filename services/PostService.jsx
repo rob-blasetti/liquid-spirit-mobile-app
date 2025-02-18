@@ -140,3 +140,26 @@ export const fetchExploreFeed = async () => {
       throw new Error(`Create post error: ${error.message}`);
     }
   };
+
+  export const flagPost = async (postId, token) => { 
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}/flag`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to flag post.');
+      }
+  
+      const responseData = await response.json();
+      return responseData.data;
+    } catch (error) {
+      console.error('Error flagging post:', error);
+      throw new Error(`Flag post error: ${error.message}`);
+    }
+  };

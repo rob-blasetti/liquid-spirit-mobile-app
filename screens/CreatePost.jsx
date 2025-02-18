@@ -15,7 +15,7 @@ import { UserContext } from '../contexts/UserContext';
 import { colors } from '../styles/colours';
 import { API_URL } from '../config';
 
-export default function Post({ onPostCreated }) {
+export default function CreatePost({ onPostCreated }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);

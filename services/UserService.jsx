@@ -1,4 +1,4 @@
-const API_URL = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+import { API_URL } from '../config';
 
 export const fetchUser = async (userId) => {
   const token = localStorage.getItem('token');
@@ -105,5 +105,51 @@ export const helloUsers = async () => {
     return data;
   } catch (error) {
     throw new Error(`Fetch user error: ${error.message}`);
+  }
+};
+
+export const blockUser = async (userId, token) => { 
+  try {
+    const response = await fetch(`${API_URL}/api/users/${userId}/blockUser`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  
+    const jsonResponse = await response.json();
+  
+    if (!response.ok) {
+      throw new Error(jsonResponse.message || 'Failed to block user.');
+    }
+  
+    return jsonResponse.data;
+  } catch (error) {
+    console.error('Error blocking user:', error);
+    throw new Error(`Block user error: ${error.message}`);
+  }
+};
+
+export const muteUser = async (userId, token) => { 
+  try {
+    const response = await fetch(`${API_URL}/api/users/${userId}/muteUser`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      }
+    });
+  
+    const jsonResponse = await response.json();
+  
+    if (!response.ok) {
+      throw new Error(jsonResponse.message || 'Failed to mute user.');
+    }
+  
+    return jsonResponse.data;
+  } catch (error) {
+    console.error('Error muting user:', error);
+    throw new Error(`Mute user error: ${error.message}`);
   }
 };

@@ -1,4 +1,4 @@
-const API_URL = 'https://liquid-spirit-backend-staging-2a7049350332.herokuapp.com';
+import { API_URL } from '../config';
 
 export const fetchCommunity = async (communityId) => {
   try {

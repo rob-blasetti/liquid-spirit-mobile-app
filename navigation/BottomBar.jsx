@@ -8,7 +8,7 @@ import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
-import PostScreen from '../screens/Post';
+import CreatePostScreen from '../screens/CreatePost';
 import WelcomeScreen from '../screens/Welcome';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
@@ -58,7 +58,7 @@ const BottomBar = () => {
       >
         <Tab.Screen name="SocialMedia" component={SocialMediaScreen} options={{ title: 'Feed' }} />
         <Tab.Screen name="Activities" component={ActivitiesScreen} />
-        <Tab.Screen name="Camera" component={PostScreen} />
+        <Tab.Screen name="Camera" component={CreatePostScreen} />
         <Tab.Screen name="Events" component={EventsScreen} />
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
