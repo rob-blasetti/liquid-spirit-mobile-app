@@ -12,10 +12,12 @@ import { faEllipsisV, faFlag, faVolumeMute, faBan } from '@fortawesome/free-soli
 
 const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
 
-const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {  
+const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => { 
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || 'Author'}`;
   const authorCommunity = post.community?.name || 'Unknown';
-  const profilePic = post.author?.profilePicture || 'https://via.placeholder.com/50';
+  const profilePic = post.author?.profilePicture?.trim() 
+  ? post.author.profilePicture.trim() 
+  : 'https://via.placeholder.com/50';
   const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
   const likeCount = post.likes?.length || 0;
   const commentCount = post.comments?.length || 0;
@@ -198,6 +200,7 @@ const styles = StyleSheet.create({
       height: 46,
       borderRadius: 23,
       marginRight: 10,
+      backgroundColor: 'grey',
     },
     username: {
       fontSize: 16,

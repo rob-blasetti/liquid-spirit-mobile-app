@@ -63,7 +63,7 @@ export default function CreatePost({ onPostCreated }) {
 
   const openCamera = async () => {
     const options = {
-      mediaType: 'mixed',
+      mediaType: 'photo',
       quality: 0.7,
       includeBase64: false,
     };

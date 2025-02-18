@@ -34,6 +34,8 @@ const ProfileScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [events, setEvents] = useState([]);
 
+  console.log('posts: ====>>> ', posts);
+
   useEffect(() => {
     setPosts(userPosts || []);
     setActivities(userActivities || []);
@@ -106,40 +108,88 @@ const ProfileScreen = ({ navigation }) => {
     return await response.blob();
   };
 
-  const renderList = (data, type) => {
-    if (isLoading) {
-      return <ActivityIndicator size="large" color="#312783" />;
-    }
-    if (!data.length) {
-      return <Text style={styles.noDataText}>No {type} available.</Text>;
-    }
+// Function to handle navigation based on item type
+const handleItemPress = (type, item) => {
+  console.log('ITEM: ', item);
+  if (type === 'posts') {
+    navigation.navigate('SocialMedia', { post: item });
+  } else if (type === 'activities') {
+    navigation.navigate('ActivityDetail', { activityId: item._id });
+  } else if (type === 'events') {
+    navigation.navigate('EventDetail', { event: item });
+  }
+};
 
-    return (
-      <FlatList
-        data={data}
-        keyExtractor={(item, index) =>
-          item._id ? item._id.toString() : index.toString()
-        }
-        renderItem={({ item }) => {
-          let rawDate;
-          if (type === 'events') rawDate = item.date || item.startTime;
-          else if (type === 'activities') rawDate = item.startDate || item.createdAt;
-          else if (type === 'posts') rawDate = item.createdAt || item.updatedAt;
+const renderList = (data, type) => {
+  if (isLoading) {
+    return <ActivityIndicator size="large" color="#312783" />;
+  }
+  if (!data.length) {
+    return <Text style={styles.noDataText}>No {type} available.</Text>;
+  }
 
-          let formattedDate = rawDate
-            ? new Date(rawDate).toLocaleDateString()
-            : 'N/A';
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item, index) =>
+        item._id ? item._id.toString() : index.toString()
+      }
+      renderItem={({ item }) => {
+        let rawDate;
+        if (type === 'events') rawDate = item.date || item.startTime;
+        else if (type === 'activities') rawDate = item.startDate || item.createdAt;
+        else if (type === 'posts') rawDate = item.createdAt || item.updatedAt;
 
-          return (
-            <View style={styles.listItem}>
-              <Text style={styles.listTitle}>{item.title || item.name}</Text>
-              <Text style={styles.listDate}>{formattedDate}</Text>
-            </View>
-          );
-        }}
-      />
-    );
-  };
+        let formattedDate = rawDate
+          ? new Date(rawDate).toLocaleDateString()
+          : 'N/A';
+
+        return (
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => handleItemPress(type, item)}
+          >
+            <Text style={styles.listTitle}>{item.title || item.name}</Text>
+
+            {type === 'posts' && item.content && (
+              <Text style={styles.listContent}>
+                {item.content.length > 100
+                  ? `${item.content.slice(0, 100)}...`
+                  : item.content}
+              </Text>
+            )}
+
+            {type === 'activities' && item.description && (
+              <Text style={styles.listContent}>
+                {item.description.length > 100
+                  ? `${item.description.slice(0, 100)}...`
+                  : item.description}
+              </Text>
+            )}
+
+            {type === 'events' && (
+              <>
+                {item.venue && (
+                  <Text style={styles.listContent}>Venue: {item.venue}</Text>
+                )}
+                {item.description && (
+                  <Text style={styles.listContent}>
+                    {item.description.length > 100
+                      ? `${item.description.slice(0, 100)}...`
+                      : item.description}
+                  </Text>
+                )}
+              </>
+            )}
+
+            <Text style={styles.listDate}>{formattedDate}</Text>
+          </TouchableOpacity>
+        );
+      }}
+    />
+  );
+};
+
 
   const renderScene = ({ route }) => {
     switch (route.key) {
@@ -212,11 +262,11 @@ const ProfileScreen = ({ navigation }) => {
         renderScene={({ route }) => {
           switch (route.key) {
             case 'posts':
-              return <Text style={styles.placeholderText}>My Posts</Text>;
+              return renderList(posts, 'posts');
             case 'activities':
-              return <Text style={styles.placeholderText}>My Activities</Text>;
+              return renderList(activities, 'activities');
             case 'events':
-              return <Text style={styles.placeholderText}>My Events</Text>;
+              return renderList(events, 'events');
             default:
               return null;
           }
@@ -276,6 +326,41 @@ const styles = StyleSheet.create({
     color: '#312783',
   },
   placeholderText: { textAlign: 'center', padding: 20, fontSize: 16, color: '#999' },
+  noDataText: {
+    textAlign: 'center',
+    marginVertical: 20,
+    fontSize: 16,
+    color: '#999',
+  },
+  listItem: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    // Android elevation
+    elevation: 2,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#312783',
+  },
+  listContent: {
+    fontSize: 14,
+    color: '#777',
+    marginTop: 8,
+  },
+  listDate: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
+  },
 });
 
 export default ProfileScreen;

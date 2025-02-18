@@ -28,11 +28,13 @@ export const fetchEvents = async (token) => {
   }
 };
 
-export const joinEvent = async (eventId, eventName, user, community, token) => {
+export const joinEvent = async (eventId, token) => {
+  console.log('EVENT ID:', eventId);
+  console.log('TOKEN:', token);
   try {
-    const userId = getCurrentUserId();
-    const userName = user.firstName + ' ' + user.lastName;
-    const userCommunityId = (community && community.data && community.data._id) ? community.data._id : 'Your Community ID';
+    // const userId = getCurrentUserId();
+    // const userName = user.firstName + ' ' + user.lastName;
+    // const userCommunityId = (community && community.data && community.data._id) ? community.data._id : 'Your Community ID';
 
     const response = await fetch(`${API_URL}/api/events/${eventId}/join`, {
       method: 'PUT',
@@ -46,14 +48,14 @@ export const joinEvent = async (eventId, eventName, user, community, token) => {
       throw new Error('Failed to join the event. Please try again.');
     }
 
-    // Simulate a Notification Service call
-    await NotificationService.userJoinedEventNotification(
-      userId,
-      eventId,
-      userCommunityId,
-      eventName,
-      userName
-    );
+    // // Simulate a Notification Service call
+    // await NotificationService.userJoinedEventNotification(
+    //   userId,
+    //   eventId,
+    //   userCommunityId,
+    //   eventName,
+    //   userName
+    // );
 
     return response; // Ensure that the response is returned
   } catch (error) {

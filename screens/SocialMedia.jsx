@@ -17,7 +17,6 @@ import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost } 
 import { blockUser, muteUser } from '../services/UserService';
 
 import { UserContext } from '../contexts/UserContext';
-import WelcomeScreen from '../screens/Welcome';
 import Post from '../components/Post';
 
 const SocialMedia = () => {
