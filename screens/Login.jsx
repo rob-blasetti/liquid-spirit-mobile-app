@@ -38,6 +38,8 @@ const Login = ({ navigation }) => {
 
       const result = await response.json();
 
+      console.log('result: ', result);
+
       if (response.ok) {
         await login(result.user, result.token, result.refreshToken);
         navigation.navigate('Main', { screen: 'Home' });
