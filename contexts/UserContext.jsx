@@ -149,7 +149,7 @@ export const UserProvider = ({ children }) => {
       const response = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({ storedRefreshToken }),
       });
   
       // parse the JSON body once
