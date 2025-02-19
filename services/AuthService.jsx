@@ -205,6 +205,30 @@ export const useAuthService = () => {
     }
   };
 
+  const deleteAccount = async (userId, token) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/delete-user/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.status === 204) {
+        return { ok: true };
+      } else if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete account');
+      }
+  
+      return { ok: true };
+    } catch (error) {
+      console.error('Delete account error:', error);
+      return { ok: false, message: error.message };
+    }
+  };
+
   return {
     token,
     signIn,
@@ -217,5 +241,6 @@ export const useAuthService = () => {
     checkTokenExpiration,
     googleSignIn,
     fetchGoogleUserInfo,
+    deleteAccount,
   };
 };

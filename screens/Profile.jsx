@@ -37,22 +37,26 @@ const ProfileScreen = ({ navigation }) => {
   // ======= FILTER HELPERS =======
 
   const filterUserPosts = (allPosts, userId) => {
-    // Only posts where the post's author is the user
-    return (allPosts || []).filter(post => post.author === userId);
+    return (allPosts || []).filter(post => post.author._id === userId);
   };
 
   const filterUserActivities = (allActivities, userId) => {
     // Activities the user created (createdBy) OR is a participant or facilitator
+    console.log(allActivities);
     return (allActivities || []).filter(activity => {
-      const isCreator = activity.createdBy === userId;
       const isFacilitator =
         activity.facilitators &&
-        activity.facilitators.some(fac => fac.refId === userId);
+        activity.facilitators.some(
+          fac => fac.refId && fac.refId === userId
+        );
+
       const isParticipant =
         activity.participants &&
-        activity.participants.some(part => part.refId === userId);
+        activity.participants.some(
+          part => part.refId && part.refId === userId
+        );
 
-      return isCreator || isFacilitator || isParticipant;
+      return isFacilitator || isParticipant;
     });
   };
 
