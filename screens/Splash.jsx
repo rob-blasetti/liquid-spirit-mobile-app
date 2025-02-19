@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import splashLogo from '../assets/img/LiquidSpirit.png';
+import splashLogo from '../assets/img/LS_Splash.png';
 
 const Splash = () => {
   return (
