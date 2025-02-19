@@ -259,7 +259,7 @@ const renderList = (data, type) => {
           <Text style={styles.actionText}>Settings</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={handleShareProfile(user)}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => handleShareProfile(user)}>
           <FontAwesomeIcon icon={faShareAlt} size={20} color="#312783" />
           <Text style={styles.actionText}>Share Profile</Text>
         </TouchableOpacity>
