@@ -21,12 +21,12 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 
-const SocialMedia = () => {
+const SocialMedia = ({ initialPosts }) => {
   const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('explore');
-  const [explorePosts, setExplorePosts] = useState([]);
+  const [explorePosts, setExplorePosts] = useState(initialPosts || []);
   const [forYouPosts, setForYouPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const [commentModalVisible, setCommentModalVisible] = useState(false);
@@ -42,13 +42,13 @@ const SocialMedia = () => {
     } catch (error) {
       console.error('Error fetching explore feed:', error);
     }
-  }, [token]);
+  }, []);
 
   const fetchForYouPosts = useCallback(async () => {
     if (!token) return;
+    // Check token + refresh if needed
     if (isTokenExpired(token)) {
       await refreshSession();
-      // If refresh failed or still expired, bail out
       if (!token || isTokenExpired(token)) return;
     }
     try {
@@ -57,20 +57,18 @@ const SocialMedia = () => {
     } catch (error) {
       console.error('Error fetching for you feed:', error);
     }
-  }, [communityId, token, refreshSession]);
+  }, [communityId, token, refreshSession, isTokenExpired]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      await fetchExplorePosts();
-      if (token) {
+    const loadData = async () => {
+      if (activeTab === 'explore') {
+        await fetchExplorePosts();
+      } else if (activeTab === 'foryou' && token) {
         await fetchForYouPosts();
       }
-      setLoading(false);
     };
-  
-    fetchData();
-  }, [activeTab]);
+    loadData();
+  }, [activeTab, fetchExplorePosts, fetchForYouPosts, token]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

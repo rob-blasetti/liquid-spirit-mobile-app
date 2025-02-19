@@ -23,7 +23,7 @@ const tabIcons = {
   Activities: faAlignLeft,
 };
 
-const BottomBar = () => {
+const BottomBar = ({ initialPosts }) => {
   const { isLoggedIn } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -58,11 +58,9 @@ const BottomBar = () => {
           },
         })}
       >
-        <Tab.Screen 
-          name="SocialMedia" 
-          component={SocialMediaScreen} 
-          options={{ title: 'Feed' }} 
-        />
+        <Tab.Screen name="SocialMedia">
+          {() => <SocialMediaScreen initialPosts={initialPosts} />}
+        </Tab.Screen>
         <Tab.Screen 
           name="Activities" 
           component={ActivitiesScreen} 

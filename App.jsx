@@ -6,13 +6,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { UserProvider } from './contexts/UserContext';
+import { fetchExploreFeed } from './services/PostService';
 
 // Import your splash screen
 import Splash from './screens/Splash';
 
 // Import Screens
 import Welcome from './screens/Welcome';
-import SocialMedia from './screens/SocialMedia';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import Verification from './screens/Verification';
@@ -35,6 +35,7 @@ const Stack = createNativeStackNavigator();
 const App = () => {
   // Local state to control the splash visibility
   const [appIsReady, setAppIsReady] = useState(false);
+  const [initialPosts, setInitialPosts] = useState([]);
 
   // Example: you could store any pre-fetched data here if needed
   // const [initialPosts, setInitialPosts] = useState([]);
@@ -44,11 +45,11 @@ const App = () => {
     const prepareApp = async () => {
       try {
         // e.g. Fetch some data that you want ready for the first screen
-        // const fetchedPosts = await fetchExploreFeed();
-        // setInitialPosts(fetchedPosts);
+        const fetchedPosts = await fetchExploreFeed();
+        setInitialPosts(fetchedPosts);
 
         // 2) Keep splash an extra second for demonstration:
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
@@ -107,9 +108,10 @@ const App = () => {
               {/* Main Navigation - Bottom Bar */}
               <Stack.Screen
                 name="Main"
-                component={BottomBar}
                 options={{ headerShown: false }}
-              />
+              >
+                {() => <BottomBar initialPosts={initialPosts} />}
+              </Stack.Screen>
             </Stack.Navigator>
           </NavigationContainer>
         </SafeAreaView>
