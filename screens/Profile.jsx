@@ -205,15 +205,11 @@ const renderList = (data, type) => {
   const handleShareProfile = async (user) => {
     try {
       const profileLink = `https://liquidspirit.org/user/${user?.id}`;
-      console.log(profileLink);
-      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile!\n${profileLink}`;
-      console.log(message);
-      // This opens the system share sheet, from which the user
-      // can pick WhatsApp, Messages, Mail, etc.
+      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile!`;
+
       await Share.share({
         message,
-        // If you want, you can also include a URL or subject here:
-        subject: 'Profile Link', // iOS usage only
+        subject: 'Profile Link',
         url: profileLink,
       });
     } catch (error) {
