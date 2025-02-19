@@ -234,7 +234,8 @@ const SocialMedia = ({ initialPosts }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f5f5f5' 
+    backgroundColor: '#f5f5f5',
+    marginBottom: 50
   },
   tabRow: { 
     flexDirection: 'row', 

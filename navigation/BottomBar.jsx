@@ -46,7 +46,7 @@ const BottomBar = ({ initialPosts }) => {
             height: 60,
             backgroundColor: '#fff',
             borderTopWidth: 1,
-            borderTopColor: '#ddd',
+            borderTopColor: '#ddd'
           },
         })}
         screenListeners={({ route }) => ({
