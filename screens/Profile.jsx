@@ -205,8 +205,9 @@ const renderList = (data, type) => {
   const handleShareProfile = async (user) => {
     try {
       const profileLink = `https://liquidspirit.org/user/${user?.id}`;
+      console.log(profileLink);
       const message = `Check out ${user?.firstName} ${user?.lastName}'s profile!\n${profileLink}`;
-  
+      console.log(message);
       // This opens the system share sheet, from which the user
       // can pick WhatsApp, Messages, Mail, etc.
       await Share.share({
@@ -258,7 +259,7 @@ const renderList = (data, type) => {
           <Text style={styles.actionText}>Settings</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton} onPress={handleShareProfile}>
+        <TouchableOpacity style={styles.actionButton} onPress={handleShareProfile(user)}>
           <FontAwesomeIcon icon={faShareAlt} size={20} color="#312783" />
           <Text style={styles.actionText}>Share Profile</Text>
         </TouchableOpacity>
