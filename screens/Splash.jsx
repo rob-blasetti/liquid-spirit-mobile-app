@@ -1,17 +1,15 @@
-// Splash.jsx
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-
-// If you have a local logo/image, import it like this:
-// import splashLogo from '../assets/logo.png';
+import splashLogo from '../assets/img/LiquidSpirit.png';
 
 const Splash = () => {
   return (
     <View style={styles.container}>
-      {/* Uncomment the Image component below and use your own logo */}
-      {/* <Image source={splashLogo} style={styles.logo} /> */}
-
-      <Text style={styles.title}>My App Splash</Text>
+      <Image 
+        source={splashLogo} 
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 };
@@ -26,14 +24,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-    resizeMode: 'contain',
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    resizeMode: 'cover',
   },
   title: {
     color: '#fff',
     fontSize: 24,
     fontWeight: '700',
+    zIndex: 1,
   },
 });
+
