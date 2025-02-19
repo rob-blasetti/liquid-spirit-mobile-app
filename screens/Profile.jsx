@@ -34,8 +34,6 @@ const ProfileScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [events, setEvents] = useState([]);
 
-  console.log('posts: ====>>> ', posts);
-
   useEffect(() => {
     setPosts(userPosts || []);
     setActivities(userActivities || []);
@@ -204,10 +202,19 @@ const renderList = (data, type) => {
     }
   };
 
-  const handleShareProfile = async () => {
+  const handleShareProfile = async (user) => {
     try {
-      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile in our community!`;
-      await Share.share({ message });
+      const profileLink = `https://liquidspirit.org/user/${user?.id}`;
+      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile!\n${profileLink}`;
+  
+      // This opens the system share sheet, from which the user
+      // can pick WhatsApp, Messages, Mail, etc.
+      await Share.share({
+        message,
+        // If you want, you can also include a URL or subject here:
+        subject: 'Profile Link', // iOS usage only
+        url: profileLink,
+      });
     } catch (error) {
       console.error('Error sharing profile:', error);
     }
