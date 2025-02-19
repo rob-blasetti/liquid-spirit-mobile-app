@@ -34,21 +34,49 @@ const ProfileScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [events, setEvents] = useState([]);
 
+  // ======= FILTER HELPERS =======
+
+  const filterUserPosts = (allPosts, userId) => {
+    // Only posts where the post's author is the user
+    return (allPosts || []).filter(post => post.author === userId);
+  };
+
+  const filterUserActivities = (allActivities, userId) => {
+    // Activities the user created (createdBy) OR is a participant or facilitator
+    return (allActivities || []).filter(activity => {
+      const isCreator = activity.createdBy === userId;
+      const isFacilitator =
+        activity.facilitators &&
+        activity.facilitators.some(fac => fac.refId === userId);
+      const isParticipant =
+        activity.participants &&
+        activity.participants.some(part => part.refId === userId);
+
+      return isCreator || isFacilitator || isParticipant;
+    });
+  };
+
+  const filterUserEvents = (allEvents, userId) => {
+    // Events the user is attending = where attendees.some(...) matches userId
+    return (allEvents || []).filter(event => {
+      if (!event.attendees) return false;
+      return event.attendees.some(att => att.refId === userId);
+    });
+  };
+
+  // On mount or whenever the context changes, filter the data
   useEffect(() => {
-    setPosts(userPosts || []);
-    setActivities(userActivities || []);
-    if (userEvents && user?.id) {
+    if (user?.id) {
+      setPosts(filterUserPosts(userPosts, user.id));
+      setActivities(filterUserActivities(userActivities, user.id));
       setEvents(filterUserEvents(userEvents, user.id));
     } else {
+      // If user is undefined or no ID, just clear them out
+      setPosts([]);
+      setActivities([]);
       setEvents([]);
     }
   }, [userPosts, userActivities, userEvents, user?.id]);
-
-  const filterUserEvents = (eventsData, userId) => {
-    return eventsData?.filter(
-      event => event.attendees && event.attendees.some(attendee => attendee.refId === userId)
-    );
-  };
 
   const handleProfilePicturePress = async () => {
     const options = {
