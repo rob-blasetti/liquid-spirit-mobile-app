@@ -222,6 +222,7 @@ const SocialMedia = ({ initialPosts }) => {
       <CommentModal
         visible={commentModalVisible}
         onClose={() => setCommentModalVisible(false)}
+        comments={explorePosts.find(p => p._id === currentPostId)?.comments}
         commentText={commentText}
         setCommentText={setCommentText}
         onSubmit={submitComment}

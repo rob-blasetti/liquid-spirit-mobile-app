@@ -1,50 +1,97 @@
-import React, { useState, useRef, useContext } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Dimensions 
+import React, { useState, useRef, useContext, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faEllipsisV, faFlag, faVolumeMute, faBan } from '@fortawesome/free-solid-svg-icons';
+import {
+  faEllipsisV,
+  faFlag,
+  faVolumeMute,
+  faBan,
+  faHeart as solidHeart,
+  faComment
+} from '@fortawesome/free-solid-svg-icons';
+import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 
 const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
 
-const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => { 
+/**
+ * This component enforces the following behavior:
+ * 1. If the post is not currently liked (isLiked = false), a double-tap anywhere on the post will like it.
+ * 2. If the post is liked, another double-tap does nothing (i.e., you cannot re-like it a second time).
+ * 3. The heart icon toggles between like and unlike.
+ *    - If isLiked = false, tapping the heart increments the count and sets isLiked = true.
+ *    - If isLiked = true, tapping the heart decrements the count and sets isLiked = false.
+ */
+
+const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
   const { token } = useContext(UserContext);
+
+  // We'll assume there's a boolean "post.isLiked" from the server.
+  // We'll also track the local like count so we can update immediately.
+
+  const [isLiked, setIsLiked] = useState(!!post?.isLiked);
+  const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
+
+  // Whenever "post" changes, sync our local states.
+  useEffect(() => {
+    setIsLiked(!!post?.isLiked);
+    setLocalLikeCount(post.likes?.length || 0);
+  }, [post]);
+
+  // Expand/collapse content.
+  const [expanded, setExpanded] = useState(false);
+
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || 'Author'}`;
   const authorCommunity = post.community?.name || 'Unknown';
-  const profilePic = post.author?.profilePicture?.trim() 
-  ? post.author.profilePicture.trim() 
-  : 'https://via.placeholder.com/50';
+  const profilePic = post.author?.profilePicture?.trim()
+    ? post.author.profilePicture.trim()
+    : 'https://via.placeholder.com/50';
   const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
-  const likeCount = post.likes?.length || 0;
   const commentCount = post.comments?.length || 0;
 
+  // Called whenever we manually want to toggle the like state.
+  // E.g., pressing the heart.
+  const toggleLike = () => {
+    if (isLiked) {
+      // If already liked, we unlike.
+      setLocalLikeCount((count) => Math.max(0, count - 1));
+      setIsLiked(false);
+    } else {
+      // If not liked, we like.
+      setLocalLikeCount((count) => count + 1);
+      setIsLiked(true);
+    }
+    // Trigger the parent function to handle the actual like/unlike on server.
+    // We assume it updates "post.isLiked" eventually.
+    onLike(post._id);
+  };
+
+  // Double-tap logic.
   const lastTapRef = useRef(0);
   const handlePostPress = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      onLike(post._id);
+    // If user double-taps quickly, we only like if it's currently unliked.
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY && !isLiked) {
+      toggleLike();
     }
     lastTapRef.current = now;
   };
 
-  const [showComments, setShowComments] = useState(false);
-  const toggleComments = () => setShowComments((prev) => !prev);
-
-  // Dropdown menu states and ref
+  // Dropdown menu states and ref.
   const kebabRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
 
   const handleToggleMenu = () => {
-
     if (!token) {
       setWelcomeModalVisible(true);
       return;
@@ -72,24 +119,25 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
       if (left < 0) {
         left = 8;
       }
-      
+
       setMenuPosition({ top, left });
       setMenuVisible(true);
     });
   };
-  
+
   return (
-    <TouchableOpacity 
-      style={styles.postContainer} 
-      activeOpacity={1} 
+    <TouchableOpacity
+      style={styles.postContainer}
+      activeOpacity={1}
       onPress={handlePostPress}
     >
+      {/* User and Community Info */}
       <View style={styles.userInfoContainer}>
         <View style={styles.userInfo}>
-          <FastImage 
-            source={{ uri: profilePic }} 
-            style={styles.profilePic} 
-            resizeMode={FastImage.resizeMode.cover} 
+          <FastImage
+            source={{ uri: profilePic }}
+            style={styles.profilePic}
+            resizeMode={FastImage.resizeMode.cover}
             onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
           />
           <Text style={styles.username}>{authorName}</Text>
@@ -106,75 +154,105 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
         </View>
       </View>
 
-      <FastImage 
-        source={{ uri: mediaUrl }} 
-        style={styles.postImage} 
-        resizeMode={FastImage.resizeMode.cover} 
-        onError={(e) => console.error('Post image failed to load:', e.nativeEvent.error)}
-      />
-      <Text style={styles.postTitle}>{post.title}</Text>
-      <Text style={styles.postContent}>{post.content}</Text>
+      {/* Image */}
+      <View style={styles.imageContainer}>
+        <FastImage
+          source={{ uri: mediaUrl }}
+          style={styles.postImage}
+          resizeMode={FastImage.resizeMode.cover}
+          onError={(e) => console.error('Post image failed to load:', e.nativeEvent.error)}
+        />
+        {/* Overlayed Title & Description */}
+        <View style={styles.overlayContainer}>
+          <Text style={styles.postTitle}>{post.title}</Text>
+          {expanded ? (
+            // Expanded mode: multiline description + See Less on the right
+            <View>
+              <Text style={styles.postContent}>{post.content}</Text>
+              <TouchableOpacity style={styles.seeMoreRightContainer} onPress={() => setExpanded(false)}>
+                <Text style={styles.seeMoreText}>See Less</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // Collapsed mode: single-line description + See More on the right in the same row
+            <View style={styles.descriptionRow}>
+              <Text
+                style={[styles.postContent, { flex: 1 }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {post.content}
+              </Text>
+              <TouchableOpacity style={styles.seeMoreRightContainer} onPress={() => setExpanded(true)}>
+                <Text style={styles.seeMoreText}>See More</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
 
+      {/* Footer Icons */}
       <View style={styles.postFooter}>
-        <TouchableOpacity onPress={() => onLike(post._id)}>
-          <Text style={styles.footerText}>💙 {likeCount} Likes</Text>
+        {/* Heart toggles like/unlike every time it is pressed */}
+        <TouchableOpacity style={styles.postFooterIcon} onPress={toggleLike}>
+          <Text style={styles.footerIconText}>
+            <FontAwesomeIcon
+              icon={isLiked ? solidHeart : regularHeart}
+              size={18}
+              color="#312783"
+            />{' '}
+            {localLikeCount}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onComment(post._id)}>
-          <Text style={styles.footerText}>💬 {commentCount} Comments</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={toggleComments}>
-          <Text style={styles.footerText}>
-            {showComments ? 'Hide Comments' : 'Show All Comments'}
+        <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
+          <Text style={styles.footerIconText}>
+            <FontAwesomeIcon icon={faComment} size={18} color="#312783" /> {commentCount}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {showComments && (
-        <View style={styles.commentsContainer}>
-          {post.comments?.map((comment) => (
-            <View style={styles.commentItem} key={comment._id}>
-              <Text style={styles.commentAuthor}>
-                {comment.user?.firstName || 'Unknown'} {comment.user?.lastName || ''}
-              </Text>
-              <Text style={styles.commentText}>{comment.comment}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <WelcomeModal 
-        visible={welcomeModalVisible} 
-        onClose={() => setWelcomeModalVisible(false)} 
+      <WelcomeModal
+        visible={welcomeModalVisible}
+        onClose={() => setWelcomeModalVisible(false)}
       />
 
       {menuVisible && (
         <>
           {/* Overlay to capture touches outside the dropdown */}
-          <TouchableOpacity 
-            style={styles.dropdownOverlay} 
-            activeOpacity={1} 
-            onPress={() => setMenuVisible(false)} 
+          <TouchableOpacity
+            style={styles.dropdownOverlay}
+            activeOpacity={1}
+            onPress={() => setMenuVisible(false)}
           />
           <View style={[styles.dropdownMenu, { top: menuPosition.top, left: menuPosition.left }]}>
-            <TouchableOpacity 
-              style={styles.dropdownItem} 
-              onPress={() => { onFlag(post._id); setMenuVisible(false); }}
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                onFlag(post._id);
+                setMenuVisible(false);
+              }}
             >
               <Text style={styles.menuItem}>
                 <FontAwesomeIcon icon={faFlag} size={16} color="#d9534f" /> Report Post
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.dropdownItem} 
-              onPress={() => { onBlock(post.author?._id); setMenuVisible(false); }}
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                onBlock(post.author?._id);
+                setMenuVisible(false);
+              }}
             >
               <Text style={styles.menuItem}>
                 <FontAwesomeIcon icon={faBan} size={16} color="#d9534f" /> Block User
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.dropdownItem} 
-              onPress={() => { onMute(post.author?._id); setMenuVisible(false); }}
+            <TouchableOpacity
+              style={styles.dropdownItem}
+              onPress={() => {
+                onMute(post.author?._id);
+                setMenuVisible(false);
+              }}
             >
               <Text style={styles.menuItem}>
                 <FontAwesomeIcon icon={faVolumeMute} size={16} color="#d9534f" /> Mute User
@@ -188,129 +266,144 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
 };
 
 const styles = StyleSheet.create({
-    postContainer: {
-      marginBottom: 16,
-      backgroundColor: '#fff',
-      borderRadius: 10,
-      padding: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 4,
-      position: 'relative',
-    },
-    userInfoContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 10,
-    },
-    userInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    profilePic: {
-      width: 46,
-      height: 46,
-      borderRadius: 23,
-      marginRight: 10,
-      backgroundColor: 'grey',
-    },
-    username: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#333',
-    },
-    communityContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    communityChip: {
-      backgroundColor: '#312783',
-      paddingVertical: 4,
-      paddingHorizontal: 10,
-      borderRadius: 14,
-      marginRight: 8,
-    },
-    communityText: {
-      fontSize: 14,
-      color: '#fff',
-    },
-    postImage: {
-      width: '100%',
-      height: 250,
-      borderRadius: 10,
-      marginBottom: 10,
-    },
-    postTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      color: '#222',
-      marginBottom: 4,
-    },
-    postContent: {
-      fontSize: 15,
-      color: '#555',
-      lineHeight: 20,
-      marginBottom: 10,
-    },
-    postFooter: {
-      flexDirection: 'row',
-      justifyContent: 'space-around',
-      borderTopWidth: 1,
-      borderTopColor: '#eee',
-      paddingTop: 10,
-    },
-    footerText: {
-      fontSize: 14,
-      color: '#007BFF',
-    },
-    commentsContainer: {
-      marginTop: 10,
-      borderTopWidth: 1,
-      borderTopColor: '#eee',
-      paddingTop: 10,
-    },
-    commentItem: {
-      marginBottom: 10,
-    },
-    commentAuthor: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#333',
-    },
-    commentText: {
-      fontSize: 14,
-      color: '#555',
-      marginLeft: 10,
-    },
-    // Dropdown overlay + menu remain the same
-    dropdownOverlay: {
-      position: 'absolute',
-      top: 0, left: 0, right: 0, bottom: 0,
-      zIndex: 1,
-    },
-    dropdownMenu: {
-      position: 'absolute',
-      backgroundColor: '#fff',
-      borderRadius: 8,
-      paddingVertical: 5,
-      paddingHorizontal: 10,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 5,
-      elevation: 10,
-      zIndex: 2,
-    },
-    dropdownItem: {
-      paddingVertical: 8,
-    },
-    menuItem: {
-      fontSize: 16,
-      color: '#333',
-    },
-  });  
+  postContainer: {
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+    position: 'relative',
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profilePic: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    marginRight: 10,
+    backgroundColor: 'grey',
+  },
+  username: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  communityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  communityChip: {
+    backgroundColor: '#312783',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    marginRight: 8,
+  },
+  communityText: {
+    fontSize: 14,
+    color: '#fff',
+  },
+  imageContainer: {
+    position: 'relative',
+  },
+  postImage: {
+    width: '100%',
+    height: 350,
+    borderRadius: 10,
+  },
+  overlayContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    padding: 10,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  postTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  descriptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  postContent: {
+    fontSize: 15,
+    color: '#fff',
+    lineHeight: 20,
+  },
+  seeMoreRightContainer: {
+    marginLeft: 8,
+    justifyContent: 'center',
+  },
+  seeMoreText: {
+    color: '#fff',
+    textDecorationLine: 'underline',
+    fontSize: 14,
+  },
+  postFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 10,
+    marginTop: 10,
+  },
+  postFooterIcon: {
+    paddingLeft: 15,
+    marginRight: 10,
+  },
+  footerIconText: {
+    color: '#312783',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  dropdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 10,
+    zIndex: 2,
+  },
+  dropdownItem: {
+    paddingVertical: 8,
+  },
+  menuItem: {
+    fontSize: 16,
+    color: '#333',
+  },
+});
 
 export default Post;

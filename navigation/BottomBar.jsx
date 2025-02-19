@@ -17,7 +17,7 @@ const Tab = createBottomTabNavigator();
 
 const tabIcons = {
   Profile: faUser,
-  SocialMedia: faCompass,
+  Feed: faCompass,
   Camera: faSquarePlus,
   Events: faBahai,
   Activities: faAlignLeft,
@@ -51,14 +51,14 @@ const BottomBar = ({ initialPosts }) => {
         })}
         screenListeners={({ route }) => ({
           tabPress: (e) => {
-            if (!isLoggedIn() && route.name !== 'SocialMedia') {
+            if (!isLoggedIn() && route.name !== 'Feed') {
               e.preventDefault();
               setModalVisible(true);
             }
           },
         })}
       >
-        <Tab.Screen name="SocialMedia">
+        <Tab.Screen name="Feed">
           {() => <SocialMediaScreen initialPosts={initialPosts} />}
         </Tab.Screen>
         <Tab.Screen 
