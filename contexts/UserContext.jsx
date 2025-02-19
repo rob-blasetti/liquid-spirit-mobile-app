@@ -149,14 +149,13 @@ export const UserProvider = ({ children }) => {
       const response = await fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storedRefreshToken }),
+        body: JSON.stringify({ refreshToken: storedRefreshToken }),
       });
   
       // parse the JSON body once
       const data = await response.json();
       
       if (!response.ok) {
-        // Here 'data.message' might be 'No refresh token provided' or something else
         throw new Error(data.message || 'Refresh token invalid');
       }
   
