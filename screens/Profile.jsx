@@ -166,7 +166,7 @@ const renderList = (data, type) => {
       renderItem={({ item }) => {
         let rawDate;
         if (type === 'events') rawDate = item.date || item.startTime;
-        else if (type === 'activities') rawDate = item.startDate || item.createdAt;
+        else if (type === 'activities') rawDate = item.date || item.createdAt;
         else if (type === 'posts') rawDate = item.createdAt || item.updatedAt;
 
         let formattedDate = rawDate
