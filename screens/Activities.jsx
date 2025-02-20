@@ -58,7 +58,7 @@ const Activities = ({ navigation }) => {
       <Text style={styles.activityType}>{item.activityType?.name || 'N/A'}</Text>
       <Text style={styles.activityDetails}>
         {item.groupDetails?.day || 'N/A'}, {' '}
-        {formatDate(item.startDate)}, {' '}
+        {formatDate(item.date)}, {' '}
         {item.groupDetails?.time || 'N/A'}
       </Text>
       <Text style={styles.activityAddress}>

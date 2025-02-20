@@ -73,7 +73,7 @@ const ActivityDetail = ({ route, navigation }) => {
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
-        <Text style={styles.date}>📅 Starts: {new Date(activity.startDate).toLocaleDateString()}</Text>
+        <Text style={styles.date}>📅 Starts: {new Date(activity.date).toLocaleDateString()}</Text>
         <Text style={styles.schedule}>
           ⏰ {activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} (
           {activity.groupDetails?.frequency || 'One-time'})
