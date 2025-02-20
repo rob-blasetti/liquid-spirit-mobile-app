@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
+import { Ionicons } from '@expo/vector-icons'; // For location icon
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faMapLocation } from '@fortawesome/free-solid-svg-icons';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -46,25 +49,33 @@ const Activities = ({ navigation }) => {
 
   const renderActivity = ({ item }) => (
     <TouchableOpacity
-      style={styles.activityItem}
+      style={styles.activityCard}
       onPress={() => navigation.navigate('ActivityDetail', { activityId: item._id })}
     >
+      {/* Image */}
       <FastImage
-        source={{ uri: item.imageUrl || 'https://via.placeholder.com/200' }} 
+        source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
         style={styles.activityImage}
         resizeMode={FastImage.resizeMode.cover}
       />
-      <Text style={styles.activityTitle}>{item.title}</Text>
-      <Text style={styles.activityType}>{item.activityType?.name || 'N/A'}</Text>
-      <Text style={styles.activityDetails}>
-        {item.groupDetails?.day || 'N/A'}, {' '}
-        {formatDate(item.date)}, {' '}
-        {item.groupDetails?.time || 'N/A'}
-      </Text>
-      <Text style={styles.activityAddress}>
-        {item.address?.streetAddress || 'No Address'},{' '}
-        {item.address?.suburb || 'No Suburb'}
-      </Text>
+
+      {/* Card Content */}
+      <View style={styles.cardContent}>
+        <Text style={styles.activityTitle}>{item.title}</Text>
+        <Text style={styles.activityType}>{item.activityType?.name || 'N/A'}</Text>
+        <Text style={styles.activityDetails}>
+          {item.groupDetails?.day || 'N/A'}, {formatDate(item.date)}, {item.groupDetails?.time || 'N/A'}
+        </Text>
+
+        {/* Address with Location Icon */}
+        <View style={styles.locationRow}>
+          <FontAwesomeIcon icon={faMapLocation} size={16} color="#666" />
+          <Text style={styles.activityAddress}>
+            {item.address?.streetAddress || 'No Address'},{' '}
+            {item.address?.suburb || 'No Suburb'}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -98,50 +109,57 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
-  activityItem: {
-    paddingVertical: 20,
-    paddingHorizontal: 18,
-    marginVertical: 10,
-    backgroundColor: '#f9f9f9',
+  activityCard: {
+    backgroundColor: '#fff',
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-    elevation: 3,
+    overflow: 'hidden',
+    marginBottom: 14,
+
+    // Custom Box Shadow
+    shadowColor: 'rgba(0, 0, 0, 0.16)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.36,
+    shadowRadius: 36,
+    
+    elevation: 6, // For Android shadow
+
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)', // Soft border effect
   },
   activityImage: {
     width: '100%',
-    height: 220,
-    borderRadius: 16,
-    marginBottom: 12,
+    height: 200,
+  },
+  cardContent: {
+    padding: 16,
   },
   activityTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 6,
-    lineHeight: 26,
   },
   activityType: {
     fontSize: 16,
     color: '#312783',
     fontWeight: '600',
     marginBottom: 6,
-    lineHeight: 22, 
   },
   activityDetails: {
     fontSize: 15,
     color: '#666',
     marginBottom: 6,
-    lineHeight: 22,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
   },
   activityAddress: {
     fontSize: 15,
     color: '#666',
-    marginTop: 8,
     fontWeight: '500',
-    lineHeight: 22,
+    marginLeft: 6,
   },
 });
 

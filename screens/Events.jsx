@@ -2,6 +2,8 @@ import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCalendar, faMapLocation, faMapMarker } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 
 const Events = () => {
@@ -46,37 +48,52 @@ const Events = () => {
 
   const RenderEvent = ({ item }) => (
     <TouchableOpacity
-      style={styles.eventItem}
+      style={styles.eventCard}
       onPress={() => navigation.navigate('EventDetail', { event: item })}
     >
+      {/* Event Image */}
       <FastImage
         source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
         style={styles.eventImage}
         resizeMode={FastImage.resizeMode.cover}
       />
-      <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
-      <Text style={styles.eventDate}>
-        {new Date(item.date).toLocaleDateString()} -{' '}
-        {item.startTime
-          ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : 'No Time'}
-      </Text>
-      <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
+
+      {/* Card Content */}
+      <View style={styles.cardContent}>
+        <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
+
+        {/* Date */}
+        <View style={styles.infoRow}>
+          <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
+          <Text style={styles.eventDate}>
+            {new Date(item.date).toLocaleDateString()} -{' '}
+            {item.startTime
+              ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : 'No Time'}
+          </Text>
+        </View>
+
+        {/* Location */}
+        <View style={styles.infoRow}>
+          <FontAwesomeIcon icon={faMapMarker} size={16} color="#666" />
+          <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-    {loading ? (
-      <ActivityIndicator size="large" color="#0485e2" />
-    ) : (
-      <FlatList
-        data={events}
-        keyExtractor={(item) => item._id.toString()}
-        renderItem={({ item }) => <RenderEvent item={item} />}
-      />
-    )}
-  </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0485e2" />
+      ) : (
+        <FlatList
+          data={events}
+          keyExtractor={(item) => item._id.toString()}
+          renderItem={({ item }) => <RenderEvent item={item} />}
+        />
+      )}
+    </View>
   );
 };
 
@@ -87,37 +104,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 45,
   },
-  eventItem: {
-    padding: 16,
-    marginVertical: 8,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+  eventCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 14,
+
+    // Custom Box Shadow
+    shadowColor: 'rgba(0, 0, 0, 0.16)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.36,
+    shadowRadius: 36,
+    elevation: 6, // For Android
+
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.06)',
   },
   eventImage: {
     width: '100%',
     height: 200,
-    borderRadius: 20,
-    marginBottom: 8,
+  },
+  cardContent: {
+    padding: 16,
   },
   eventTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
+    marginBottom: 6,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
   },
   eventDate: {
-    fontSize: 14,
-    color: '#555',
-    marginVertical: 4,
+    fontSize: 15,
+    color: '#666',
+    marginLeft: 6,
   },
   eventAddress: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
-    marginTop: 4,
+    marginLeft: 6,
+    fontWeight: '500',
   },
 });
 
