@@ -9,29 +9,8 @@ import {
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
-import { Ionicons } from '@expo/vector-icons'; // For location icon
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faMapLocation } from '@fortawesome/free-solid-svg-icons';
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-
-  const date = new Date(dateString);
-  const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' });
-
-  const suffix = (day) => {
-    if (day > 3 && day < 21) return 'th';
-    switch (day % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
-    }
-  };
-
-  return `${day}${suffix(day)} ${month}`;
-};
+import { faMapLocation, faCalendar } from '@fortawesome/free-solid-svg-icons';
 
 const Activities = ({ navigation }) => {
   const { token, userActivities } = useContext(UserContext);
@@ -47,28 +26,68 @@ const Activities = ({ navigation }) => {
     }
   }, [userActivities]);
 
+  const formatDate = (dateString, timeString) => {
+    if (!dateString) return 'N/A';
+
+    const date = new Date(dateString);
+
+    // Convert time to 12-hour format with AM/PM
+    let formattedTime = 'No Time';
+    if (timeString) {
+      const [hours, minutes] = timeString.split(':');
+      const dateObj = new Date();
+      dateObj.setHours(parseInt(hours, 10));
+      dateObj.setMinutes(parseInt(minutes, 10));
+
+      formattedTime = dateObj.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    return `${date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })} | ${formattedTime}`;
+  };
+
   const renderActivity = ({ item }) => (
     <TouchableOpacity
       style={styles.activityCard}
       onPress={() => navigation.navigate('ActivityDetail', { activityId: item._id })}
     >
-      {/* Image */}
-      <FastImage
-        source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
-        style={styles.activityImage}
-        resizeMode={FastImage.resizeMode.cover}
-      />
+      {/* Image Container with Overlayed Tag */}
+      <View style={styles.imageContainer}>
+        <FastImage
+          source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
+          style={styles.activityImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {item.activityType?.name && (
+          <View style={styles.activityTag}>
+            <Text style={styles.activityTagText}>{item.activityType.name}</Text>
+          </View>
+        )}
+      </View>
 
       {/* Card Content */}
       <View style={styles.cardContent}>
+        {/* Title */}
         <Text style={styles.activityTitle}>{item.title}</Text>
-        <Text style={styles.activityType}>{item.activityType?.name || 'N/A'}</Text>
-        <Text style={styles.activityDetails}>
-          {item.groupDetails?.day || 'N/A'}, {formatDate(item.date)}, {item.groupDetails?.time || 'N/A'}
-        </Text>
+
+        {/* Date */}
+        <View style={styles.infoRow}>
+          <FontAwesomeIcon icon={faCalendar} size={16} color="#666" />
+          <Text style={styles.activityDetails}>
+            {formatDate(item.date, item.groupDetails?.time)}
+          </Text>
+        </View>
 
         {/* Address with Location Icon */}
-        <View style={styles.locationRow}>
+        <View style={styles.infoRow}>
           <FontAwesomeIcon icon={faMapLocation} size={16} color="#666" />
           <Text style={styles.activityAddress}>
             {item.address?.streetAddress || 'No Address'},{' '}
@@ -82,7 +101,7 @@ const Activities = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#0485e2" />
+        <ActivityIndicator size="large" color="#312783" />
       ) : activities.length > 0 ? (
         <FlatList
           data={activities}
@@ -114,21 +133,37 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 14,
-
-    // Custom Box Shadow
     shadowColor: 'rgba(0, 0, 0, 0.16)',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.36,
     shadowRadius: 36,
-    
     elevation: 6, // For Android shadow
-
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.06)', // Soft border effect
+  },
+  imageContainer: {
+    position: 'relative',
   },
   activityImage: {
     width: '100%',
     height: 200,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  activityTag: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: '#58DB33', // Bright green tag
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    opacity: 0.9, // Slight transparency for a modern feel
+  },
+  activityTagText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1C5C0E', // Darker green for contrast
   },
   cardContent: {
     padding: 16,
@@ -136,30 +171,26 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#312783', // Primary color
+    flexShrink: 1,
     marginBottom: 6,
   },
-  activityType: {
-    fontSize: 16,
-    color: '#312783',
-    fontWeight: '600',
-    marginBottom: 6,
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 4,
   },
   activityDetails: {
     fontSize: 15,
     color: '#666',
-    marginBottom: 6,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
+    marginLeft: 6,
   },
   activityAddress: {
     fontSize: 15,
     color: '#666',
-    fontWeight: '500',
     marginLeft: 6,
+    fontWeight: '500',
   },
 });
 

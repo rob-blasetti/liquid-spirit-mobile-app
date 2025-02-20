@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity }
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faMapLocation, faMapMarker } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faMapMarker } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 
 const Events = () => {
@@ -11,6 +11,35 @@ const Events = () => {
   const [events, setEvents] = useState(userEvents || []);
   const [loading, setLoading] = useState(userEvents ? false : true);
   const navigation = useNavigation();
+
+  const formatDate = (dateString, timeString) => {
+    if (!dateString) return 'N/A';
+
+    const date = new Date(dateString);
+
+    // Convert time to 12-hour format with AM/PM
+    let formattedTime = 'No Time';
+    if (timeString) {
+      const [hours, minutes] = timeString.split(':');
+      const dateObj = new Date();
+      dateObj.setHours(parseInt(hours, 10));
+      dateObj.setMinutes(parseInt(minutes, 10));
+
+      formattedTime = dateObj.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+    }
+
+    return `${date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })} | ${formattedTime}`;
+  };
+
 
   const localImages = {
     '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
@@ -51,25 +80,30 @@ const Events = () => {
       style={styles.eventCard}
       onPress={() => navigation.navigate('EventDetail', { event: item })}
     >
-      {/* Event Image */}
-      <FastImage
-        source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
-        style={styles.eventImage}
-        resizeMode={FastImage.resizeMode.cover}
-      />
+      {/* Image Container with Overlayed Tag */}
+      <View style={styles.imageContainer}>
+        <FastImage
+          source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
+          style={styles.eventImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {item.eventType && (
+          <View style={styles.eventTag}>
+            <Text style={styles.eventTagText}>{item.eventType}</Text>
+          </View>
+        )}
+      </View>
 
       {/* Card Content */}
       <View style={styles.cardContent}>
+        {/* Title */}
         <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
 
         {/* Date */}
         <View style={styles.infoRow}>
           <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
           <Text style={styles.eventDate}>
-            {new Date(item.date).toLocaleDateString()} -{' '}
-            {item.startTime
-              ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'No Time'}
+            {formatDate(item.date, item.startTime)}
           </Text>
         </View>
 
@@ -85,13 +119,15 @@ const Events = () => {
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#0485e2" />
-      ) : (
+        <ActivityIndicator size="large" color="#312783" />
+      ) : events.length > 0 ? (
         <FlatList
           data={events}
           keyExtractor={(item) => item._id.toString()}
-          renderItem={({ item }) => <RenderEvent item={item} />}
+          renderItem={RenderEvent}
         />
+      ) : (
+        <Text style={styles.noEvents}>No upcoming events.</Text>
       )}
     </View>
   );
@@ -104,25 +140,48 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     marginBottom: 45,
   },
+  noEvents: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+  },
   eventCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 14,
-
-    // Custom Box Shadow
     shadowColor: 'rgba(0, 0, 0, 0.16)',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.36,
     shadowRadius: 36,
-    elevation: 6, // For Android
-
+    elevation: 6, // For Android shadow
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
+    borderColor: 'rgba(0, 0, 0, 0.06)', // Soft border effect
+  },
+  imageContainer: {
+    position: 'relative',
   },
   eventImage: {
     width: '100%',
     height: 200,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  eventTag: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: '#58DB33', // Bright green tag for event type
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    opacity: 0.9, // Slight transparency for modern look
+  },
+  eventTagText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1C5C0E', // Darker green for contrast
   },
   cardContent: {
     padding: 16,
@@ -130,13 +189,15 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#312783', // Primary color
+    flexShrink: 1,
     marginBottom: 6,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
+    marginBottom: 4,
   },
   eventDate: {
     fontSize: 15,
