@@ -140,10 +140,7 @@ const ProfileScreen = ({ navigation }) => {
 
 // Function to handle navigation based on item type
 const handleItemPress = (type, item) => {
-  console.log('ITEM: ', item);
-  if (type === 'posts') {
-    navigation.navigate('SocialMedia', { post: item });
-  } else if (type === 'activities') {
+  if (type === 'activities') {
     navigation.navigate('ActivityDetail', { activityId: item._id });
   } else if (type === 'events') {
     navigation.navigate('EventDetail', { event: item });
