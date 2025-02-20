@@ -13,10 +13,9 @@ import {
   faFlag,
   faVolumeMute,
   faBan,
-  faHeart as solidHeart,
-  faComment
+  faHeart as solidHeart
 } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
+import { faHeart as regularHeart, faComment } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 
@@ -42,10 +41,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
 
   // Whenever "post" changes, sync our local states.
   useEffect(() => {
-    setIsLiked(!!post?.isLiked);
+    if (post.isLiked !== isLiked) {
+      setIsLiked(post.isLiked);
+    }
     setLocalLikeCount(post.likes?.length || 0);
-  }, [post]);
-
+  }, [post.isLiked, post.likes]);
+  
   // Expand/collapse content.
   const [expanded, setExpanded] = useState(false);
 
@@ -57,22 +58,18 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
   const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
   const commentCount = post.comments?.length || 0;
 
-  // Called whenever we manually want to toggle the like state.
-  // E.g., pressing the heart.
-  const toggleLike = () => {
-    if (isLiked) {
-      // If already liked, we unlike.
-      setLocalLikeCount((count) => Math.max(0, count - 1));
-      setIsLiked(false);
-    } else {
-      // If not liked, we like.
-      setLocalLikeCount((count) => count + 1);
-      setIsLiked(true);
+  const toggleLike = async () => {
+    try {
+      const newIsLiked = await onLike(post._id); // Get latest like state from the server
+  
+      if (newIsLiked !== null) {
+        setIsLiked(newIsLiked);
+        setLocalLikeCount((count) => newIsLiked ? count + 1 : Math.max(0, count - 1));
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
     }
-    // Trigger the parent function to handle the actual like/unlike on server.
-    // We assume it updates "post.isLiked" eventually.
-    onLike(post._id);
-  };
+  };  
 
   // Double-tap logic.
   const lastTapRef = useRef(0);
@@ -233,7 +230,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
               }}
             >
               <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faFlag} size={16} color="#d9534f" /> Report Post
+                <FontAwesomeIcon icon={faFlag} size={16} color="#312783" /> Report Post
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -244,7 +241,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
               }}
             >
               <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faBan} size={16} color="#d9534f" /> Block User
+                <FontAwesomeIcon icon={faBan} size={16} color="#312783" /> Block User
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -255,7 +252,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
               }}
             >
               <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faVolumeMute} size={16} color="#d9534f" /> Mute User
+                <FontAwesomeIcon icon={faVolumeMute} size={16} color="#312783" /> Mute User
               </Text>
             </TouchableOpacity>
           </View>

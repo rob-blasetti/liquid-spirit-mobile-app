@@ -88,22 +88,23 @@ const SocialMedia = ({ initialPosts }) => {
     }
   };
 
-  // -------------------------
-  //    Post action handlers
-  // -------------------------
   const handleLike = async (postId) => {
     if (!token) {
       setWelcomeModalVisible(true);
       return;
     }
-
+  
     try {
       const updatedPost = await likePost(postId, token);
-      // Update both feeds if the post is present in them
+  
+      // Ensure we update all instances of the post in state
       setExplorePosts(prev => prev.map(p => (p._id === postId ? updatedPost : p)));
       setForYouPosts(prev => prev.map(p => (p._id === postId ? updatedPost : p)));
+  
+      return updatedPost.isLiked;  // Ensure correct like status is returned
     } catch (error) {
       Alert.alert('Error', 'An error occurred while liking the post');
+      return null;
     }
   };
 
