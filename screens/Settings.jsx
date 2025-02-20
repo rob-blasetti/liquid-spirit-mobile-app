@@ -26,7 +26,7 @@ const Settings = ({ navigation }) => {
     await logout(); // Ensure logout process completes
     navigation.reset({
       index: 0,
-      routes: [{ name: 'SocialMedia' }], // Adjust to your actual screen name
+      routes: [{ name: 'Feed' }], // Adjust to your actual screen name
     });
   };
 
