@@ -156,6 +156,9 @@ export const UserProvider = ({ children }) => {
       const data = await response.json();
       
       if (!response.ok) {
+        console.error("Invalid refresh token, logging out...");
+        await AsyncStorage.removeItem('refreshToken');
+        logout();
         throw new Error(data.message || 'Refresh token invalid');
       }
   
