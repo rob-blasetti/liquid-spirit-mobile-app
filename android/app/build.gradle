@@ -72,10 +72,20 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+def envProperties = new Properties()
+def envFile = rootProject.file("local.properties")
+if (envFile.exists()) {
+    envFile.withReader("UTF-8") { reader ->
+        envProperties.load(reader)
+    }
+}
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
+
+    
 
     namespace "com.liquid_spirit_mobile_app"
     defaultConfig {
@@ -83,7 +93,10 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.2"
+        buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
+        buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
+        buildConfigField "String", "AWS_REGION", "\"${envProperties.getProperty('AWS_REGION', '')}\""
     }
     signingConfigs {
         debug {
@@ -93,7 +106,7 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file(MYAPP_RELEASE_STORE_FILE)
+            storeFile file(rootProject.file(MYAPP_RELEASE_STORE_FILE))
             storePassword MYAPP_RELEASE_STORE_PASSWORD
             keyAlias MYAPP_RELEASE_KEY_ALIAS
             keyPassword MYAPP_RELEASE_KEY_PASSWORD

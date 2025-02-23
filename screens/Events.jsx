@@ -14,32 +14,34 @@ const Events = () => {
 
   const formatDate = (dateString, timeString) => {
     if (!dateString) return 'N/A';
-
-    const date = new Date(dateString);
-
-    // Convert time to 12-hour format with AM/PM
+  
+    let date = new Date(dateString);
+  
     let formattedTime = 'No Time';
+    
     if (timeString) {
-      const [hours, minutes] = timeString.split(':');
-      const dateObj = new Date();
-      dateObj.setHours(parseInt(hours, 10));
-      dateObj.setMinutes(parseInt(minutes, 10));
-
-      formattedTime = dateObj.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      });
+      let timeDate = new Date(timeString); // Convert full ISO string to Date
+      if (!isNaN(timeDate.getTime())) {
+        date.setHours(timeDate.getHours(), timeDate.getMinutes()); // Set the correct time
+        formattedTime = date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+        });
+      } else {
+        console.warn('Invalid startTime format:', timeString);
+      }
+    } else {
+      console.warn('Missing startTime for event:', dateString);
     }
-
+  
     return `${date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     })} | ${formattedTime}`;
-  };
-
+  };  
 
   const localImages = {
     '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
