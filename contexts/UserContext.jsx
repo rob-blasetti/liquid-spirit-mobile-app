@@ -139,6 +139,7 @@ export const UserProvider = ({ children }) => {
 
   const refreshSession = async () => {
     const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+    console.log("Retrieved refresh token from storage:", storedRefreshToken);
     if (!storedRefreshToken) {
       console.error('No stored refresh token.');
       logout();

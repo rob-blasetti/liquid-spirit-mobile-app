@@ -1,28 +1,73 @@
-import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useContext, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+  Animated,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faMapMarker } from '@fortawesome/free-solid-svg-icons';
+import {
+  faFilter,
+  faSort,
+  faFire,
+  faPrayingHands,
+  faUserShield,
+  faCalendar,
+  faMapMarker,
+} from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../contexts/UserContext';
+import localImages from '../utils/localImages';
 
 const Events = () => {
   const { userEvents } = useContext(UserContext);
   const [events, setEvents] = useState(userEvents || []);
   const [loading, setLoading] = useState(userEvents ? false : true);
+
+  // Sorting & Filtering
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedEventType, setSelectedEventType] = useState(null); // null means "show all events" by default
+
   const navigation = useNavigation();
+
+  // Animation setup for the filter drawer
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const toggleDrawer = () => {
+    Animated.timing(slideAnim, {
+      toValue: drawerOpen ? 0 : 1,
+      duration: 300,
+      useNativeDriver: false,
+    }).start(() => setDrawerOpen(!drawerOpen));
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
+  useEffect(() => {
+    setEvents((prevEvents) =>
+      [...prevEvents].sort((a, b) =>
+        sortOrder === 'asc'
+          ? new Date(a.date) - new Date(b.date)
+          : new Date(b.date) - new Date(a.date)
+      )
+    );
+  }, [sortOrder]);
 
   const formatDate = (dateString, timeString) => {
     if (!dateString) return 'N/A';
-  
     let date = new Date(dateString);
-  
     let formattedTime = 'No Time';
-    
     if (timeString) {
-      let timeDate = new Date(timeString); // Convert full ISO string to Date
+      let timeDate = new Date(timeString);
       if (!isNaN(timeDate.getTime())) {
-        date.setHours(timeDate.getHours(), timeDate.getMinutes()); // Set the correct time
+        date.setHours(timeDate.getHours(), timeDate.getMinutes());
         formattedTime = date.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
@@ -34,47 +79,12 @@ const Events = () => {
     } else {
       console.warn('Missing startTime for event:', dateString);
     }
-  
     return `${date.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     })} | ${formattedTime}`;
-  };  
-
-  const localImages = {
-    '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
-    '/img/feast/Feast of Dominion.jpg': require('../assets/img/feast/Feast_of_Dominion.jpg'),
-    '/img/feast/Feast of Glory.jpg': require('../assets/img/feast/Feast_of_Glory.jpg'),
-    '/img/feast/Feast of Grandeur.jpg': require('../assets/img/feast/Feast_of_Grandeur.jpg'),
-    '/img/feast/Feast of Knowledge.jpg': require('../assets/img/feast/Feast_of_Knowledge.jpg'),
-    '/img/feast/Feast of Light.jpg': require('../assets/img/feast/Feast_of_Light.jpg'),
-    '/img/feast/Feast of Loftiness.png': require('../assets/img/feast/Feast_of_Loftiness.png'),
-    '/img/feast/Feast of Mercy.jpg': require('../assets/img/feast/Feast_of_Mercy.jpg'),
-    '/img/feast/Feast of Might.jpg': require('../assets/img/feast/Feast_of_Might.jpg'),
-    '/img/feast/Feast of Names.jpg': require('../assets/img/feast/Feast_of_Names.jpg'),
-    '/img/feast/Feast of Perfection.jpg': require('../assets/img/feast/Feast_of_Perfection.jpg'),
-    '/img/feast/Feast of Power.jpg': require('../assets/img/feast/Feast_of_Power.jpg'),
-    '/img/feast/Feast of Questions.jpg': require('../assets/img/feast/Feast_of_Questions.jpg'),
-    '/img/feast/Feast of Speech.jpg': require('../assets/img/feast/Feast_of_Speech.jpg'),
-    '/img/feast/Feast of Splendour.jpg': require('../assets/img/feast/Feast_of_Splendour.jpg'),
-    '/img/feast/Feast of Will.jpg': require('../assets/img/feast/Feast_of_Will.jpg'),
-    '/img/feast/Feast of Words.jpg': require('../assets/img/feast/Feast_of_Words.jpg'),
-    '/img/feast/Feast of Honor.jpg': require('../assets/img/feast/Feast_of_Honor.jpg'),
-    '/img/feast/Feast of Sovereignty.jpg': require('../assets/img/feast/Feast_of_Sovereignty.jpg'),
-    '/img/holyday/AscentionOfAbdul.jpg': require('../assets/img/holyday/AscentionOfAbdul.jpg'),
-    '/img/holyday/AscentionOfBaha.jpg': require('../assets/img/holyday/AscentionOfBaha.jpg'),
-    '/img/holyday/AyyamIHa.png': require('../assets/img/holyday/AyyamIHa.png'),
-    '/img/holyday/BirthOfBab.jpeg': require('../assets/img/holyday/BirthOfBab.jpeg'),
-    '/img/holyday/BirthOfBaha.jpeg': require('../assets/img/holyday/BirthOfBaha.jpeg'),
-    '/img/holyday/DayOfTheCovenant.jpg': require('../assets/img/holyday/DayOfTheCovenant.jpg'),
-    '/img/holyday/DeclarationOfBab.png': require('../assets/img/holyday/DeclarationOfBab.png'),
-    '/img/holyday/FirstOfRidvan.jpeg': require('../assets/img/holyday/FirstOfRidvan.jpeg'),
-    '/img/holyday/MartyrdomOfBab.jpg': require('../assets/img/holyday/MartyrdomOfBab.jpg'),
-    '/img/holyday/NawRuz.jpg': require('../assets/img/holyday/NawRuz.jpg'),
-    '/img/holyday/NinthOfRidvan.jpg': require('../assets/img/holyday/NinthOfRidvan.jpg'),
-    '/img/holyday/TwelfthOfRidvan.jpg': require('../assets/img/holyday/TwelfthOfRidvan.jpg')
   };
 
   const RenderEvent = ({ item }) => (
@@ -82,7 +92,6 @@ const Events = () => {
       style={styles.eventCard}
       onPress={() => navigation.navigate('EventDetail', { event: item })}
     >
-      {/* Image Container with Overlayed Tag */}
       <View style={styles.imageContainer}>
         <FastImage
           source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
@@ -95,21 +104,12 @@ const Events = () => {
           </View>
         )}
       </View>
-
-      {/* Card Content */}
       <View style={styles.cardContent}>
-        {/* Title */}
         <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
-
-        {/* Date */}
         <View style={styles.infoRow}>
           <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
-          <Text style={styles.eventDate}>
-            {formatDate(item.date, item.startTime)}
-          </Text>
+          <Text style={styles.eventDate}>{formatDate(item.date, item.startTime)}</Text>
         </View>
-
-        {/* Location */}
         <View style={styles.infoRow}>
           <FontAwesomeIcon icon={faMapMarker} size={16} color="#666" />
           <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
@@ -118,13 +118,63 @@ const Events = () => {
     </TouchableOpacity>
   );
 
+  const toggleEventType = (type) => {
+    setSelectedEventType(selectedEventType === type ? null : type);
+    setDrawerOpen(false);
+    Animated.timing(slideAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const filteredEvents = selectedEventType
+    ? events.filter((e) => e.eventType === selectedEventType)
+    : events;
+
   return (
     <View style={styles.container}>
+      {/* Control Bar with Filter & Sort */}
+      <View style={styles.controlContainer}>
+        <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
+          <FontAwesomeIcon icon={faFilter} size={16} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
+          <FontAwesomeIcon icon={faSort} size={16} color="#fff" />
+          <Text style={styles.buttonText}>
+            {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Animated Filter Drawer */}
+      <Animated.View style={[styles.drawerContainer, { height: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 90] }), opacity: slideAnim }]}>
+        <View style={styles.gridContainer}>
+          {['Feast', 'Holy Day', 'Admin'].map((type) => (
+            <TouchableOpacity
+              key={type}
+              style={[styles.filterButtonSquare, selectedEventType === type && styles.selectedFilter]}
+              onPress={() => toggleEventType(type)}
+            >
+              <FontAwesomeIcon
+                icon={type === 'Feast' ? faFire : type === 'Holy Day' ? faPrayingHands : faUserShield}
+                size={20}
+                color={selectedEventType === type ? '#fff' : '#312783'}
+              />
+              <Text style={[styles.filterText, selectedEventType === type && styles.selectedFilterText]}>
+                {type}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.View>
+
+      {/* Event List */}
       {loading ? (
         <ActivityIndicator size="large" color="#312783" />
-      ) : events.length > 0 ? (
+      ) : filteredEvents.length > 0 ? (
         <FlatList
-          data={events}
+          data={filteredEvents}
           keyExtractor={(item) => item._id.toString()}
           renderItem={RenderEvent}
         />
@@ -138,9 +188,76 @@ const Events = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
+    padding: 16,
     marginBottom: 45,
+  },
+  controlContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    zIndex: 2,
+  },
+  buttonBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#312783',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    marginLeft: 6,
+  },
+  drawerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    elevation: 3,
+    marginBottom: 10,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 5,
+    marginTop: 10,
+  },
+  filterButtonSquare: {
+    width: '30%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderColor: '#312783',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    marginHorizontal: 4,
+
+    // Shadow for iOS
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  
+    // Elevation for Android
+    elevation: 5,
+  },
+  selectedFilter: {
+    backgroundColor: '#312783',
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#312783',
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  selectedFilterText: {
+    color: '#fff',
   },
   noEvents: {
     fontSize: 18,
@@ -157,9 +274,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.36,
     shadowRadius: 36,
-    elevation: 6, // For Android shadow
+    elevation: 6,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)', // Soft border effect
+    borderColor: 'rgba(0, 0, 0, 0.06)',
   },
   imageContainer: {
     position: 'relative',
@@ -174,16 +291,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: '#58DB33', // Bright green tag for event type
+    backgroundColor: '#58DB33',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    opacity: 0.9, // Slight transparency for modern look
+    opacity: 0.9,
   },
   eventTagText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1C5C0E', // Darker green for contrast
+    color: '#1C5C0E',
   },
   cardContent: {
     padding: 16,
@@ -191,15 +308,14 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#312783', // Primary color
+    color: '#312783',
     flexShrink: 1,
     marginBottom: 6,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 4,
+    marginVertical: 4,
   },
   eventDate: {
     fontSize: 15,
@@ -214,4 +330,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Events;
+export default Events

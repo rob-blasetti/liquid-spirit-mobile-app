@@ -148,7 +148,7 @@ const Activities = ({ navigation }) => {
         style={[
           styles.drawerContainer,
           {
-            height: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 180] }),
+            height: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 210] }),
             opacity: slideAnim,
           },
         ]}
@@ -192,7 +192,6 @@ const styles = StyleSheet.create({
   controlContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 10,
     zIndex: 2, // Ensure it stays above other elements
   },
   buttonBase: {
@@ -218,7 +217,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     paddingHorizontal: 5, // Ensures even spacing
-    marginTop: 10,
+    marginTop: 20,
   },
   filterButtonSquare: {
     width: '30%',
@@ -246,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#312783', // Purple highlight for selected filters
   },
   flatListContainer: {
-    marginTop: 30,
+    marginTop: 20,
   },
   filterText: {
     fontSize: 12,
