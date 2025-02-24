@@ -83,7 +83,6 @@ const Activities = ({ navigation }) => {
 
   const handleFilterSelection = (type) => {
     setSelectedType(prevType => prevType === type ? 'All' : type);
-    toggleDrawer();
   };
 
   const toggleSortOrder = () => {

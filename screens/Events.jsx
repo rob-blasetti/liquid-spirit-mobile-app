@@ -118,16 +118,7 @@ const Events = () => {
     </TouchableOpacity>
   );
 
-  const toggleEventType = (type) => {
-    setSelectedEventType(selectedEventType === type ? null : type);
-    setDrawerOpen(false);
-    Animated.timing(slideAnim, {
-      toValue: 0,
-      duration: 300,
-      useNativeDriver: false,
-    }).start();
-  };
-
+  // Filter events if an event type is selected; otherwise show all.
   const filteredEvents = selectedEventType
     ? events.filter((e) => e.eventType === selectedEventType)
     : events;
@@ -148,24 +139,90 @@ const Events = () => {
       </View>
 
       {/* Animated Filter Drawer */}
-      <Animated.View style={[styles.drawerContainer, { height: slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 90] }), opacity: slideAnim }]}>
+      <Animated.View
+        style={[
+          styles.drawerContainer,
+          {
+            height: slideAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 90],
+            }),
+            opacity: slideAnim,
+          },
+        ]}
+      >
         <View style={styles.gridContainer}>
-          {['Feast', 'Holy Day', 'Admin'].map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.filterButtonSquare, selectedEventType === type && styles.selectedFilter]}
-              onPress={() => toggleEventType(type)}
-            >
-              <FontAwesomeIcon
-                icon={type === 'Feast' ? faFire : type === 'Holy Day' ? faPrayingHands : faUserShield}
-                size={20}
-                color={selectedEventType === type ? '#fff' : '#312783'}
-              />
-              <Text style={[styles.filterText, selectedEventType === type && styles.selectedFilterText]}>
-                {type}
-              </Text>
-            </TouchableOpacity>
-          ))}
+        <TouchableOpacity
+          style={[
+            styles.filterButtonSquare,
+            selectedEventType === 'Feast' && styles.selectedFilter,
+          ]}
+          onPress={() => {
+            setSelectedEventType(selectedEventType === 'Feast' ? null : 'Feast');
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faFire}
+            size={20}
+            color={selectedEventType === 'Feast' ? '#fff' : '#312783'}
+          />
+          <Text
+            style={[
+              styles.filterText,
+              selectedEventType === 'Feast' && styles.selectedFilterText,
+            ]}
+          >
+            Feast
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButtonSquare,
+            selectedEventType === 'Holy Day' && styles.selectedFilter,
+          ]}
+          onPress={() => {
+            setSelectedEventType(selectedEventType === 'Holy Day' ? null : 'Holy Day');
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faPrayingHands}
+            size={20}
+            color={selectedEventType === 'Holy Day' ? '#fff' : '#312783'}
+          />
+          <Text
+            style={[
+              styles.filterText,
+              selectedEventType === 'Holy Day' && styles.selectedFilterText,
+            ]}
+          >
+            Holy Day
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButtonSquare,
+            selectedEventType === 'Admin' && styles.selectedFilter,
+          ]}
+          onPress={() => {
+            setSelectedEventType(selectedEventType === 'Admin' ? null : 'Admin');
+          }}
+        >
+          <FontAwesomeIcon
+            icon={faUserShield}
+            size={20}
+            color={selectedEventType === 'Admin' ? '#fff' : '#312783'}
+          />
+          <Text
+            style={[
+              styles.filterText,
+              selectedEventType === 'Admin' && styles.selectedFilterText,
+            ]}
+          >
+            Admin
+          </Text>
+        </TouchableOpacity>
         </View>
       </Animated.View>
 
