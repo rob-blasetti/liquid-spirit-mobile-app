@@ -1,11 +1,14 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { StatusBar } from 'react-native';
+import { View, Text, Button, Alert, StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import socket from './socket'; // Import the socket instance
+import { useNotifications } from './hooks/useNotifications';
+import NotificationHandler from './components/notificationHandler';
 
-import { UserProvider } from './contexts/UserContext';
+import { UserProvider, useUser } from './contexts/UserContext';
 import { fetchExploreFeed } from './services/PostService';
 
 // Import your splash screen
@@ -36,6 +39,24 @@ const App = () => {
   // Local state to control the splash visibility
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
+  const { notification, sendNotification } = useNotifications();
+
+  useEffect(() => {
+    socket.on('connect', () => {
+        console.log('✅ Connected to WebSocket:', socket.id);
+    });
+
+    socket.on('receiveNotification', (data) => {
+        console.log('🔔 Received Notification:', data);
+        setNotification(data);
+        Alert.alert('Notification', data.message);
+    });
+
+    return () => {
+        socket.off('receiveNotification');
+        socket.off('connect');
+    };
+  }, []);
 
   // Example: you could store any pre-fetched data here if needed
   // const [initialPosts, setInitialPosts] = useState([]);
@@ -116,6 +137,7 @@ const App = () => {
           </NavigationContainer>
         </SafeAreaView>
       </SafeAreaProvider>
+      <NotificationHandler />
     </UserProvider>
   );
 };

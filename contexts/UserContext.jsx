@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
@@ -17,6 +17,11 @@ export const UserProvider = ({ children }) => {
   const [userPosts, setUserPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
+    const addNotification = (newNotification) => {
+        setNotifications((prev) => [...prev, newNotification]);
+    };
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -198,9 +203,13 @@ export const UserProvider = ({ children }) => {
         login,
         logout,
         isTokenExpired,
-        refreshSession
+        refreshSession,
+        notifications, 
+        addNotification
       }}>
       {children}
     </UserContext.Provider>
   );
 };
+
+export const useUser = () => useContext(UserContext);
