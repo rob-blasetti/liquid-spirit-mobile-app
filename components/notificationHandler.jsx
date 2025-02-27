@@ -4,26 +4,45 @@ import socket from '../socket';
 import { useUser } from '../contexts/UserContext';
 
 const NotificationHandler = () => {
-    const { addNotification } = useUser(); // ✅ Use context to store notifications
+    const { user, addNotification } = useUser();
+    const communityId = user?.community?._id;
+    
+    console.log('user.community?._id: ', user?.community?._id);
 
     useEffect(() => {
+        if (!user) {
+            console.error('❌ User missing:', user);
+            return;
+        }
+
+        console.log(`🔗 NotificationHandler: Attempting to join WebSocket community room: community-${communityId}`);
+        socket.emit('joinCommunityRoom', communityId);
+
         socket.on('connect', () => {
-            console.log('✅ Connected to WebSocket:', socket.id);
+            console.log('✅ NotificationHandler: Connected to WebSocket:', socket.id);
         });
 
         socket.on('receiveNotification', (data) => {
-            console.log('🔔 Received Notification:', data);
-            addNotification(data); // ✅ Store in context
-            Alert.alert('Notification', data.message);
+            console.log('🔔 NotificationHandler: Received Notification:', data);
+            addNotification(data);
+            Alert.alert('NotificationHandler: Test Notification', data.additionalData.caption);
+        });
+
+        socket.onAny((event, data) => {
+            console.log(`🔍 NotificationHandler: Received WebSocket event: ${event}`, data);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ NotificationHandler: WebSocket disconnected.');
         });
 
         return () => {
             socket.off('receiveNotification');
-            socket.off('connect');
+            socket.offAny();
         };
-    }, []);
+    }, [user]);
 
-    return null; // No UI needed, just handles background WebSocket logic
+    return null;
 };
 
 export default NotificationHandler;
