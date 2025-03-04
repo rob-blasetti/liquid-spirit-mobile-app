@@ -7,40 +7,41 @@ const NotificationHandler = () => {
     const { user, addNotification } = useUser();
     const communityId = user?.community?._id;
     
-    console.log('user.community?._id: ', user?.community?._id);
-
     useEffect(() => {
-        if (!user) {
-            console.error('❌ User missing:', user);
+        if (!user || !communityId) {
+            console.warn('❌ User or Community ID missing:', user, communityId);
             return;
         }
-
-        console.log(`🔗 NotificationHandler: Attempting to join WebSocket community room: community-${communityId}`);
-        socket.emit('joinCommunityRoom', communityId);
-
+    
+        console.log(`🔗 Attempting to join WebSocket community room: community-${communityId}`);
+        
+        socket.emit('joinCommunityRoom', communityId, (response) => {
+            console.log('🟢 Server acknowledged room join:', response);
+        });
+    
         socket.on('connect', () => {
-            console.log('✅ NotificationHandler: Connected to WebSocket:', socket.id);
+            console.log('✅ Connected to WebSocket:', socket.id);
         });
-
+    
         socket.on('receiveNotification', (data) => {
-            console.log('🔔 NotificationHandler: Received Notification:', data);
+            console.log('🔔 Received Notification:', data);
             addNotification(data);
-            Alert.alert('NotificationHandler: Test Notification', data.additionalData.caption);
+            Alert.alert('Notification', data?.additionalData?.caption || "No caption available");
         });
-
+    
         socket.onAny((event, data) => {
-            console.log(`🔍 NotificationHandler: Received WebSocket event: ${event}`, data);
+            console.log(`🔍 Received WebSocket event: ${event}`, data);
         });
-
+    
         socket.on('disconnect', () => {
-            console.log('❌ NotificationHandler: WebSocket disconnected.');
+            console.log('❌ WebSocket disconnected.');
         });
-
+    
         return () => {
             socket.off('receiveNotification');
             socket.offAny();
         };
-    }, [user]);
+    }, [user, communityId]);       
 
     return null;
 };

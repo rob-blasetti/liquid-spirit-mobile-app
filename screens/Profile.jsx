@@ -34,15 +34,11 @@ const ProfileScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [events, setEvents] = useState([]);
 
-  // ======= FILTER HELPERS =======
-
   const filterUserPosts = (allPosts, userId) => {
     return (allPosts || []).filter(post => post.author._id === userId);
   };
 
   const filterUserActivities = (allActivities, userId) => {
-    // Activities the user created (createdBy) OR is a participant or facilitator
-    console.log(allActivities);
     return (allActivities || []).filter(activity => {
       const isFacilitator =
         activity.facilitators &&

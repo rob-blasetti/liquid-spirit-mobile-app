@@ -132,10 +132,16 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
       <View style={styles.userInfoContainer}>
         <View style={styles.userInfo}>
           <FastImage
-            source={{ uri: profilePic }}
+            source={{ 
+              uri: profilePic 
+                ? profilePic 
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName || 'User')}&background=random&color=fff` 
+            }}
             style={styles.profilePic}
             resizeMode={FastImage.resizeMode.cover}
-            onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
+            onError={(e) => {
+              console.warn('Profile picture failed to load:', e?.nativeEvent?.error || 'Unknown error');
+            }}
           />
           <Text style={styles.username}>{authorName}</Text>
         </View>
