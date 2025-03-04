@@ -8,8 +8,9 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-  ActivityIndicator,
+  ActivityIndicator
 } from 'react-native';
+import Video from 'react-native-video'; // ✅ Import Video Component
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
 import { colors } from '../styles/colours';
@@ -27,33 +28,31 @@ export default function CreatePost({ onPostCreated }) {
     openCamera();
   }, []);
 
-  const uploadToS3 = async (fileUri) => {
+  const uploadToS3 = async (fileUri, fileType) => {
     try {
-      const fileName = `post-media-${Date.now()}.jpg`;
-      const fileType = mediaType === 'video' ? 'video/mp4' : 'image/jpeg';
+      const fileName = `post-media-${Date.now()}.${fileType.includes('video') ? 'mp4' : 'jpg'}`;
+      
+      // ✅ Request signed URL from backend
       const signedUrlResponse = await fetch(
-        `${API_URL}/api/upload/s3-url?fileName=${fileName}&fileType=${fileType}`,
+        `${API_URL}/api/upload/s3-video-url?fileName=${fileName}&fileType=${fileType}`,
         {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       const { url } = await signedUrlResponse.json();
       if (!url) throw new Error('Failed to get signed URL');
 
+      // ✅ Upload to S3
       const uploadResponse = await fetch(url, {
         method: 'PUT',
-        body: await fetch(fileUri).then((res) => res.blob()),
-        headers: {
-          'Content-Type': fileType,
-        },
+        body: await fetch(fileUri).then(res => res.blob()),
+        headers: { 'Content-Type': fileType },
       });
 
       if (!uploadResponse.ok) throw new Error('Failed to upload to S3');
-      return url.split('?')[0]; // Return the URL without query params
+      return url.split('?')[0]; // ✅ Return the public URL
     } catch (error) {
       console.error('S3 Upload Error:', error);
       Alert.alert('Upload Failed', 'Could not upload media');
@@ -62,41 +61,31 @@ export default function CreatePost({ onPostCreated }) {
   };
 
   const openCamera = async () => {
-    const options = {
-      mediaType: 'photo',
-      quality: 0.7,
-      includeBase64: false,
-    };
+    const options = { mediaType: 'mixed', quality: 0.7 };
 
     launchCamera(options, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled camera picker');
-      } else if (response.errorCode) {
+      if (response.didCancel) return;
+      if (response.errorCode) {
         Alert.alert('Camera Error', response.errorMessage || 'Unknown error');
       } else if (response.assets && response.assets.length > 0) {
         const asset = response.assets[0];
         setMediaUri(asset.uri);
-        setMediaType(asset.type && asset.type.startsWith('video') ? 'video' : 'image');
+        setMediaType(asset.type);
       }
     });
   };
 
   const openLibrary = async () => {
-    const options = {
-      mediaType: 'mixed',
-      quality: 0.7,
-      includeBase64: false,
-    };
+    const options = { mediaType: 'mixed', quality: 0.7 };
 
     launchImageLibrary(options, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
+      if (response.didCancel) return;
+      if (response.errorCode) {
         Alert.alert('Library Error', response.errorMessage || 'Unknown error');
       } else if (response.assets && response.assets.length > 0) {
         const asset = response.assets[0];
         setMediaUri(asset.uri);
-        setMediaType(asset.type && asset.type.startsWith('video') ? 'video' : 'image');
+        setMediaType(asset.type);
       }
     });
   };
@@ -111,7 +100,7 @@ export default function CreatePost({ onPostCreated }) {
     if (mediaUri) {
       Alert.alert('Uploading Media', 'Please wait while your media is uploaded.');
       setIsUploading(true);
-      mediaUrl = await uploadToS3(mediaUri);
+      mediaUrl = await uploadToS3(mediaUri, mediaType);
       setIsUploading(false);
       if (!mediaUrl) return;
     }
@@ -187,11 +176,18 @@ export default function CreatePost({ onPostCreated }) {
         </TouchableOpacity>
       </View>
 
-      {mediaUri && mediaType === 'image' && (
+      {mediaUri && mediaType.includes('image') && (
         <Image source={{ uri: mediaUri }} style={styles.mediaPreview} />
       )}
-      {mediaUri && mediaType === 'video' && (
-        <Text style={styles.videoText}>Video selected: {mediaUri}</Text>
+      {mediaUri && mediaType.includes('video') && (
+        <Video
+          source={{ uri: mediaUri }}
+          style={styles.video}
+          controls
+          resizeMode="contain"
+          paused={false}
+          repeat
+        />
       )}
 
       <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
@@ -240,36 +236,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginBottom: 20,
   },
-  actionButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  buttonText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
   mediaPreview: {
     width: '100%',
     height: 200,
     borderRadius: 8,
     marginBottom: 20,
   },
-  videoText: {
-    marginVertical: 10,
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#555',
+  video: {
+    width: '100%',
+    height: 300,
+    borderRadius: 8,
+    marginBottom: 20,
   },
   submitButton: {
     backgroundColor: colors.primary || '#28a745',
     paddingVertical: 15,
     borderRadius: 25,
     alignItems: 'center',
-    marginBottom: 30,
   },
   submitButtonText: {
     color: '#fff',
@@ -277,3 +260,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+

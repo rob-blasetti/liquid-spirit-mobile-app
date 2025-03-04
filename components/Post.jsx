@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import Video from 'react-native-video';
 import {
   faEllipsisV,
   faFlag,
@@ -56,6 +57,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
     ? post.author.profilePicture.trim()
     : 'https://via.placeholder.com/50';
   const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
+
+  const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
+
   const commentCount = post.comments?.length || 0;
 
   const toggleLike = async () => {
@@ -152,14 +156,19 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
       </View>
 
       {/* Image */}
-      <View style={styles.imageContainer}>
-        <FastImage
-          source={{ uri: mediaUrl }}
-          style={styles.postImage}
-          resizeMode={FastImage.resizeMode.cover}
-          onError={(e) => console.error('Post image failed to load:', e.nativeEvent.error)}
-        />
-        {/* Overlayed Title & Description */}
+      <View style={styles.mediaContainer}>
+        {isVideo ? (
+          <Video
+            source={{ uri: mediaUrl }}
+            style={styles.video}
+            controls
+            resizeMode="contain"
+            paused={false}
+            repeat
+          />
+        ) : (
+          <FastImage source={{ uri: mediaUrl }} style={styles.postImage} resizeMode={FastImage.resizeMode.cover} />
+        )}
         <View style={styles.overlayContainer}>
           <Text style={styles.postTitle}>{post.title}</Text>
           {expanded ? (
@@ -319,6 +328,21 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 350,
     borderRadius: 10,
+  },
+  mediaContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 350,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  postImage: {
+    width: '100%',
+    height: '100%',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
   },
   overlayContainer: {
     position: 'absolute',

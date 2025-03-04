@@ -5,8 +5,6 @@ if (!Config.AWS_ACCESS_KEY_ID || !Config.AWS_SECRET_ACCESS_KEY) {
   console.warn('Missing AWS credentials. Ensure they are set in environment variables.');
 }
 
-console.log('AWS_ACCESS_KEY_ID: ', Config.AWS_ACCESS_KEY_ID);
-
 AWS.config.update({
   accessKeyId: Config.AWS_ACCESS_KEY_ID,
   secretAccessKey: Config.AWS_SECRET_ACCESS_KEY,

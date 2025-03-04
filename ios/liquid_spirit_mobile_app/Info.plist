@@ -41,6 +41,10 @@
 	<string>App would like to have access to your camera in order to allow you to post realtime content to the social feed.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>App would like to have access to your photos in order to allow you to post content from your device to the social feed.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save uploaded media.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access for video recording and playback.</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>

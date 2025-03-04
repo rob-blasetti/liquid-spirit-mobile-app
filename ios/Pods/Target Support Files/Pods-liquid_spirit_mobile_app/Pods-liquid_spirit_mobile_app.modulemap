@@ -1,0 +1,6 @@
+module Pods_liquid_spirit_mobile_app {
+  umbrella header "Pods-liquid_spirit_mobile_app-umbrella.h"
+
+  export *
+  module * { export * }
+}
