@@ -20,27 +20,14 @@ import { faHeart as regularHeart, faComment } from '@fortawesome/free-regular-sv
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 
-const DOUBLE_TAP_DELAY = 300; // ms between taps for a double-tap
-
-/**
- * This component enforces the following behavior:
- * 1. If the post is not currently liked (isLiked = false), a double-tap anywhere on the post will like it.
- * 2. If the post is liked, another double-tap does nothing (i.e., you cannot re-like it a second time).
- * 3. The heart icon toggles between like and unlike.
- *    - If isLiked = false, tapping the heart increments the count and sets isLiked = true.
- *    - If isLiked = true, tapping the heart decrements the count and sets isLiked = false.
- */
+const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
   const { token } = useContext(UserContext);
 
-  // We'll assume there's a boolean "post.isLiked" from the server.
-  // We'll also track the local like count so we can update immediately.
-
   const [isLiked, setIsLiked] = useState(!!post?.isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
 
-  // Whenever "post" changes, sync our local states.
   useEffect(() => {
     if (post.isLiked !== isLiked) {
       setIsLiked(post.isLiked);
@@ -48,7 +35,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
     setLocalLikeCount(post.likes?.length || 0);
   }, [post.isLiked, post.likes]);
   
-  // Expand/collapse content.
   const [expanded, setExpanded] = useState(false);
 
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || 'Author'}`;
@@ -64,7 +50,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
 
   const toggleLike = async () => {
     try {
-      const newIsLiked = await onLike(post._id); // Get latest like state from the server
+      const newIsLiked = await onLike(post._id);
   
       if (newIsLiked !== null) {
         setIsLiked(newIsLiked);
@@ -75,11 +61,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
     }
   };  
 
-  // Double-tap logic.
   const lastTapRef = useRef(0);
   const handlePostPress = () => {
     const now = Date.now();
-    // If user double-taps quickly, we only like if it's currently unliked.
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY && !isLiked) {
       toggleLike();
     }
@@ -132,7 +116,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
       activeOpacity={1}
       onPress={handlePostPress}
     >
-      {/* User and Community Info */}
       <View style={styles.userInfoContainer}>
         <View style={styles.userInfo}>
           <FastImage
@@ -170,9 +153,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
           <FastImage source={{ uri: mediaUrl }} style={styles.postImage} resizeMode={FastImage.resizeMode.cover} />
         )}
         <View style={styles.overlayContainer}>
-          <Text style={styles.postTitle}>{post.title}</Text>
           {expanded ? (
-            // Expanded mode: multiline description + See Less on the right
             <View>
               <Text style={styles.postContent}>{post.content}</Text>
               <TouchableOpacity style={styles.seeMoreRightContainer} onPress={() => setExpanded(false)}>
@@ -180,7 +161,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            // Collapsed mode: single-line description + See More on the right in the same row
             <View style={styles.descriptionRow}>
               <Text
                 style={[styles.postContent, { flex: 1 }]}
@@ -197,9 +177,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
         </View>
       </View>
 
-      {/* Footer Icons */}
       <View style={styles.postFooter}>
-        {/* Heart toggles like/unlike every time it is pressed */}
         <TouchableOpacity style={styles.postFooterIcon} onPress={toggleLike}>
           <Text style={styles.footerIconText}>
             <FontAwesomeIcon
@@ -224,7 +202,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
 
       {menuVisible && (
         <>
-          {/* Overlay to capture touches outside the dropdown */}
           <TouchableOpacity
             style={styles.dropdownOverlay}
             activeOpacity={1}
@@ -353,13 +330,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
-  },
-  postTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-    color: '#fff',
-    marginBottom: 4,
   },
   descriptionRow: {
     flexDirection: 'row',

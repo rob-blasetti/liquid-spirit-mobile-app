@@ -54,6 +54,8 @@
 #import "rngesturehandler_codegenJSI.h"
 #import "RNImagePickerSpec/RNImagePickerSpec.h"
 #import "RNImagePickerSpecJSI.h"
+#import "RNKeychainSpec/RNKeychainSpec.h"
+#import "RNKeychainSpecJSI.h"
 #import "rnreanimated/rnreanimated.h"
 #import "rnreanimatedJSI.h"
 #import "rnscreens/rnscreens.h"

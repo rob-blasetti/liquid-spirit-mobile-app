@@ -26,7 +26,8 @@ const tabIcons = {
 const BottomBar = ({ initialPosts }) => {
   const { isLoggedIn } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
-
+  console.log('!isLoggedIn: ', !isLoggedIn);
+  
   return (
     <>
       {/* 2. Wrap the navigator in a fragment so we can place the modal afterwards */}
@@ -51,7 +52,7 @@ const BottomBar = ({ initialPosts }) => {
         })}
         screenListeners={({ route }) => ({
           tabPress: (e) => {
-            if (!isLoggedIn() && route.name !== 'Feed') {
+            if (!isLoggedIn && route.name !== 'Feed') {
               e.preventDefault();
               setModalVisible(true);
             }

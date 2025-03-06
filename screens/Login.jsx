@@ -1,13 +1,5 @@
 import React, { useContext, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import { API_URL } from '../config';
 import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +9,7 @@ const Login = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login } = useContext(UserContext);
+  const { login, biometricLogin } = useContext(UserContext);
 
   const handleLogin = async () => {
     if (!email || !password) {

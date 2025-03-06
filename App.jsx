@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { UserProvider } from './contexts/UserContext';
+import { UserProvider, UserContext } from './contexts/UserContext';
 import { fetchExploreFeed } from './services/PostService';
 
 // Import your splash screen
@@ -33,12 +33,9 @@ library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft);
 const Stack = createNativeStackNavigator();
 
 const App = () => {
-  // Local state to control the splash visibility
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
-
-  // Example: you could store any pre-fetched data here if needed
-  // const [initialPosts, setInitialPosts] = useState([]);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     // 1) Simulate data fetching (and keep splash for an extra second)
@@ -66,48 +63,32 @@ const App = () => {
     return <Splash />;
   }
 
+  // if (checkingSession || isLoading) {
+  //   return (
+  //     <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  //       <ActivityIndicator size="large" color="#0485e2" />
+  //     </SafeAreaView>
+  //   );
+  // }
+
   // Once ready, render your normal app
   return (
     <UserProvider>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+
           <NavigationContainer>
-            <Stack.Navigator
-              initialRouteName="Main"
-              screenOptions={{
-                headerStyle: { backgroundColor: '#312783' },
-                headerTintColor: '#fff',
-                headerTitleStyle: { fontWeight: 'bold' },
-              }}
-            >
-              {/* Authentication Screens */}
-              <Stack.Screen
-                name="Welcome"
-                component={Welcome}
-                options={{ headerShown: false }}
-              />
+            <Stack.Navigator initialRouteName="Main" screenOptions={{ headerStyle: { backgroundColor: '#312783' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: 'bold' } }}>
+              <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }}/>
               <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
               <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
               <Stack.Screen name="Verification" component={Verification} />
               <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
               <Stack.Screen name="EULA" component={Eula} /> 
-
-              {/* Detail Screens */}
-              <Stack.Screen
-                name="EventDetail"
-                component={EventDetail}
-                options={{ title: 'Event Details' }}
-              />
-              <Stack.Screen
-                name="ActivityDetail"
-                component={ActivityDetail}
-                options={{ title: 'Activity Details' }}
-              />
-
-              {/* Main Navigation - Bottom Bar */}
-              <Stack.Screen
-                name="Main"
+              <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
+              <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
+              <Stack.Screen name="Main"
                 options={{ headerShown: false }}
               >
                 {() => <BottomBar initialPosts={initialPosts} />}

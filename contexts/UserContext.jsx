@@ -135,8 +135,6 @@ export const UserProvider = ({ children }) => {
     }
   }
 
-  const isLoggedIn = () => !!token;
-
   const refreshSession = async () => {
     const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
     console.log("Retrieved refresh token from storage:", storedRefreshToken);
@@ -194,9 +192,9 @@ export const UserProvider = ({ children }) => {
         setToken, 
         communityId, 
         setCommunityId,
-        isLoggedIn,
         login,
         logout,
+        isLoggedIn: !!token,
         isTokenExpired,
         refreshSession
       }}>
