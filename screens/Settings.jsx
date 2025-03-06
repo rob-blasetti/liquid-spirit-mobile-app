@@ -1,48 +1,29 @@
 import React, { useContext, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ScrollView, Switch } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUserEdit, faSignOutAlt, faTrash } from '@fortawesome/free-solid-svg-icons'; // add faTrash icon
+import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
   const { deleteAccount } = useAuthService();
 
-  // State for delete account modal
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  // State to store the user’s input text
   const [deleteText, setDeleteText] = useState('');
 
   const handleLogout = async () => {
-    await logout(); // Ensure logout process completes
+    await logout();
     navigation.reset({
       index: 0,
-      routes: [{ name: 'Feed' }], // Adjust to your actual screen name
+      routes: [{ name: 'Feed' }],
     });
   };
 
-  const handleDeleteAccountButton = () => {
-    // Open the modal
-    setDeleteModalVisible(true);
-  };
-
   const handleConfirmDelete = async () => {
-    // Check if user typed "DELETE"
     if (deleteText === 'DELETE') {
       try {
         await deleteAccount(user.id, token);
-        // Optionally log user out or navigate them away:
-        // - If the account is gone, there's no reason to stay in the app:
-        //   e.g., you could log them out or reset navigation.
         
         await logout(); 
         navigation.reset({
@@ -61,139 +42,133 @@ const Settings = ({ navigation }) => {
     }
   };
 
+  const openModal = () => setDeleteModalVisible(true);
   const closeModal = () => {
     setDeleteModalVisible(false);
     setDeleteText('');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
+    <ScrollView style={styles.container}>
+      <Text style={styles.header}>Settings</Text>
 
-      <TouchableOpacity 
-        style={[styles.button, styles.deleteButton]} 
-        onPress={handleDeleteAccountButton}
-      >
-        <FontAwesomeIcon icon={faTrash} size={20} color="#fff" />
-        <Text style={[styles.buttonText, styles.deleteButtonText]}>
-          Delete Account
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
+          <FontAwesomeIcon icon={faUser} size={20} color="#312783" />
+          <Text style={styles.itemText}>Edit Profile</Text>
+          <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
+        </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={[styles.button, styles.logoutButton]} 
-        onPress={handleLogout}
-      >
-        <FontAwesomeIcon icon={faSignOutAlt} size={20} color="#fff" />
-        <Text style={[styles.buttonText, styles.logoutText]}>Logout</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.item}>
+          <FontAwesomeIcon icon={faLock} size={20} color="#312783" />
+          <Text style={styles.itemText}>Change Password</Text>
+          <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
+        </TouchableOpacity>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={deleteModalVisible}
-        onRequestClose={closeModal}
-      >
+        {/* <View style={styles.item}>
+          <FontAwesomeIcon icon={faBell} size={20} color="#312783" />
+          <Text style={styles.itemText}>Notifications</Text>
+          <Switch value={true} />
+        </View> */}
+      </View>
+
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.item} onPress={handleLogout}>
+          <FontAwesomeIcon icon={faSignOutAlt} size={20} color="#d9534f" />
+          <Text style={[styles.itemText, { color: '#d9534f' }]}>Logout</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.item} onPress={openModal}>
+          <FontAwesomeIcon icon={faTrash} size={20} color="#e74c3c" />
+          <Text style={[styles.itemText, { color: '#e74c3c' }]}>Delete Account</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal animationType="fade" transparent visible={deleteModalVisible}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>
-              Enter "DELETE" to permanently delete the account.
-            </Text>
+            <Text style={styles.modalTitle}>Confirm Account Deletion</Text>
+            <Text style={styles.modalMessage}>Type "DELETE" to permanently delete your account.</Text>
             <TextInput
-              style={styles.textInput}
-              placeholder="Type DELETE here"
-              placeholderTextColor="#999"
+              style={styles.modalInput}
+              placeholder="DELETE"
               value={deleteText}
               onChangeText={setDeleteText}
+              autoCapitalize="characters"
             />
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleConfirmDelete}
-              >
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleConfirmDelete}>
                 <Text style={styles.modalButtonText}>Confirm</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={closeModal}
-              >
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={closeModal}>
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
     padding: 20,
-    backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
+  header: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#312783',
-    marginBottom: 20,
+    marginVertical: 20,
   },
-  button: {
+  section: {
+    marginBottom: 30,
+  },
+  item: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    width: '80%',
-    justifyContent: 'center',
-    marginVertical: 10,
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 10,
     elevation: 2,
+    marginBottom: 10,
   },
-  buttonText: {
-    marginLeft: 10,
+  itemText: {
+    flex: 1,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#312783',
+    marginLeft: 15,
+    color: '#333',
   },
-  logoutButton: {
-    backgroundColor: '#d9534f',
-  },
-  logoutText: {
-    color: '#fff',
-  },
-  // New styling for Delete Account
-  deleteButton: {
-    backgroundColor: '#e74c3c',
-  },
-  deleteButtonText: {
-    color: '#fff',
-  },
-  // Modal styling
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
-    width: '80%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
+    width: '80%',
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#312783',
+    fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#312783',
   },
-  textInput: {
+  modalMessage: {
+    fontSize: 14,
+    marginBottom: 20,
+    color: '#555',
+    textAlign: 'center',
+  },
+  modalInput: {
     width: '100%',
     borderWidth: 1,
     borderColor: '#ccc',
@@ -201,30 +176,29 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 20,
     textAlign: 'center',
-    fontSize: 16,
   },
-  modalButtonContainer: {
+  modalActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
   },
   modalButton: {
     flex: 1,
-    marginHorizontal: 5,
     paddingVertical: 12,
     borderRadius: 5,
+    marginHorizontal: 5,
     alignItems: 'center',
   },
-  confirmButton: {
-    backgroundColor: '#e74c3c',
+  confirmButton: { 
+    backgroundColor: '#e74c3c', 
+    borderRadius: 20 
   },
-  cancelButton: {
-    backgroundColor: '#999',
+  cancelButton: { 
+    backgroundColor: '#312783',
+    borderRadius: 20 
   },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  modalButtonText: { 
+    color: '#fff', 
+    fontWeight: '600' 
+  }
 });
 
 export default Settings;
