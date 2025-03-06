@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext } from 'react';
-import { StatusBar } from 'react-native';
+import { StatusBar, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -8,10 +8,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { UserProvider, UserContext } from './contexts/UserContext';
 import { fetchExploreFeed } from './services/PostService';
 
-// Import your splash screen
 import Splash from './screens/Splash';
 
-// Import Screens
 import Welcome from './screens/Welcome';
 import Login from './screens/Login';
 import Register from './screens/Register';
@@ -32,10 +30,22 @@ library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft);
 
 const Stack = createNativeStackNavigator();
 
-const App = () => {
+const MainApp = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
   const [checkingSession, setCheckingSession] = useState(true);
+  const { biometricLogin, isLoading, isLoggedIn } = useContext(UserContext);
+
+  useEffect(() => {
+    const attemptBiometricLogin = async () => {
+      if (!isLoggedIn) {
+        await biometricLogin();
+      }
+      setCheckingSession(false);
+    };
+
+    attemptBiometricLogin();
+  }, []);
 
   useEffect(() => {
     // 1) Simulate data fetching (and keep splash for an extra second)
@@ -63,42 +73,46 @@ const App = () => {
     return <Splash />;
   }
 
-  // if (checkingSession || isLoading) {
-  //   return (
-  //     <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  //       <ActivityIndicator size="large" color="#0485e2" />
-  //     </SafeAreaView>
-  //   );
-  // }
+  if (checkingSession || isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0485e2" />
+      </SafeAreaView>
+    );
+  }
 
   // Once ready, render your normal app
   return (
-    <UserProvider>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-          <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
-          <NavigationContainer>
-            <Stack.Navigator initialRouteName="Main" screenOptions={{ headerStyle: { backgroundColor: '#312783' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: 'bold' } }}>
-              <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }}/>
-              <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
-              <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
-              <Stack.Screen name="Verification" component={Verification} />
-              <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-              <Stack.Screen name="EULA" component={Eula} /> 
-              <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
-              <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
-              <Stack.Screen name="Main"
-                options={{ headerShown: false }}
-              >
-                {() => <BottomBar initialPosts={initialPosts} />}
-              </Stack.Screen>
-            </Stack.Navigator>
-          </NavigationContainer>
-        </SafeAreaView>
-      </SafeAreaProvider>
-    </UserProvider>
+        <NavigationContainer>
+          <Stack.Navigator initialRouteName="Main" screenOptions={{ headerStyle: { backgroundColor: '#312783' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: 'bold' } }}>
+            <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }}/>
+            <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
+            <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
+            <Stack.Screen name="Verification" component={Verification} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+            <Stack.Screen name="EULA" component={Eula} /> 
+            <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
+            <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
+            <Stack.Screen name="Main"
+              options={{ headerShown: false }}
+            >
+              {() => <BottomBar initialPosts={initialPosts} />}
+            </Stack.Screen>
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
+
+const App = () => (
+  <UserProvider>
+    <MainApp />
+  </UserProvider>
+);
 
 export default App;

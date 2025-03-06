@@ -45,6 +45,8 @@
 	<string>We need access to save uploaded media.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need microphone access for video recording and playback.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Authenticate to login to Liquid Spirit quickly and securely.</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>

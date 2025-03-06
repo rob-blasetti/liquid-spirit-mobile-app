@@ -26,11 +26,9 @@ const tabIcons = {
 const BottomBar = ({ initialPosts }) => {
   const { isLoggedIn } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
-  console.log('!isLoggedIn: ', !isLoggedIn);
   
   return (
     <>
-      {/* 2. Wrap the navigator in a fragment so we can place the modal afterwards */}
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,

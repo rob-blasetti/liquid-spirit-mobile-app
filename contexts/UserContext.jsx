@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
@@ -83,20 +84,33 @@ export const UserProvider = ({ children }) => {
     loadUserData();
   }, [communityId, token]);
 
-  const login = async (userData, authToken, refreshToken) => {
+  const login = async (userData, authToken, refreshToken, email, password) => {
     try {
       setUser(userData);
       setToken(authToken);
       setRefreshToken(refreshToken);
       setCommunityId(userData.community?._id);
+  
+      await AsyncStorage.multiSet([
+        ['authToken', authToken],
+        ['refreshToken', refreshToken],
+        ['user', JSON.stringify(userData)],
+        ['communityId', userData.community?._id || ''],
+      ]);
 
       await AsyncStorage.setItem('authToken', authToken);
       await AsyncStorage.setItem('user', JSON.stringify(userData));
       await AsyncStorage.setItem('communityId', userData?.community?._id || '');
       await AsyncStorage.setItem('refreshToken', refreshToken|| '');
-
+  
+      if (email && password) {
+        await Keychain.setGenericPassword(email, password, {
+          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+        });
+        console.log('Credentials securely stored.');
+      }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
     }
   };
 
@@ -175,7 +189,47 @@ export const UserProvider = ({ children }) => {
       logout();
     }
   };
+
+  const biometricLogin = async () => {
+    try {
+      const credentials = await Keychain.getGenericPassword({
+        authenticationPrompt: {
+          title: 'Login to Liquid Spirit',
+          subtitle: 'Authenticate using Face ID / Touch ID',
+        },
+      });
   
+      if (credentials) {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: credentials.username,
+            password: credentials.password,
+          }),
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          await login(
+            data.user,
+            data.token,
+            data.refreshToken,
+            credentials.username,
+            credentials.password
+          );
+          console.log('Biometric login successful!');
+        } else {
+          console.error('Login failed:', data.message);
+        }
+      } else {
+        console.warn('No credentials found for biometric login.');
+      }
+    } catch (error) {
+      console.error('Biometric login exception:', error);
+    }
+  };  
 
   return (
     <UserContext.Provider 
@@ -195,6 +249,7 @@ export const UserProvider = ({ children }) => {
         login,
         logout,
         isLoggedIn: !!token,
+        biometricLogin,
         isTokenExpired,
         refreshSession
       }}>

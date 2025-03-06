@@ -1,15 +1,15 @@
-import React, { useContext, useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
+import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login, biometricLogin } = useContext(UserContext);
+  const { login } = useContext(UserContext);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -22,18 +22,17 @@ const Login = ({ navigation }) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       const result = await response.json();
 
-      console.log('result: ', result);
-
       if (response.ok) {
-        await login(result.user, result.token, result.refreshToken);
+        await login(result.user, result.token, result.refreshToken, email, password);
+        await Keychain.setGenericPassword(email, password, {
+          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+        });
         navigation.navigate('Main', { screen: 'Home' });
       } else {
         Alert.alert('Error', result.message || 'Login failed.');
