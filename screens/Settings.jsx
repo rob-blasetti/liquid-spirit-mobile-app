@@ -58,12 +58,12 @@ const Settings = ({ navigation }) => {
           <Text style={styles.itemText}>Edit Profile</Text>
           <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.item}>
+{/* 
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
           <FontAwesomeIcon icon={faLock} size={20} color="#312783" />
           <Text style={styles.itemText}>Change Password</Text>
           <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* <View style={styles.item}>
           <FontAwesomeIcon icon={faBell} size={20} color="#312783" />
