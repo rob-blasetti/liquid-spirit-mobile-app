@@ -34,14 +34,11 @@ const ProfileScreen = ({ navigation }) => {
   const [activities, setActivities] = useState([]);
   const [events, setEvents] = useState([]);
 
-  // ======= FILTER HELPERS =======
-
   const filterUserPosts = (allPosts, userId) => {
     return (allPosts || []).filter(post => post.author._id === userId);
   };
 
   const filterUserActivities = (allActivities, userId) => {
-    // Activities the user created (createdBy) OR is a participant or facilitator
     console.log(allActivities);
     return (allActivities || []).filter(activity => {
       const isFacilitator =
@@ -61,21 +58,18 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const filterUserEvents = (allEvents, userId) => {
-    // Events the user is attending = where attendees.some(...) matches userId
     return (allEvents || []).filter(event => {
       if (!event.attendees) return false;
       return event.attendees.some(att => att.refId === userId);
     });
   };
 
-  // On mount or whenever the context changes, filter the data
   useEffect(() => {
     if (user?.id) {
       setPosts(filterUserPosts(userPosts, user.id));
       setActivities(filterUserActivities(userActivities, user.id));
       setEvents(filterUserEvents(userEvents, user.id));
     } else {
-      // If user is undefined or no ID, just clear them out
       setPosts([]);
       setActivities([]);
       setEvents([]);
@@ -138,7 +132,6 @@ const ProfileScreen = ({ navigation }) => {
     return await response.blob();
   };
 
-// Function to handle navigation based on item type
 const handleItemPress = (type, item) => {
   if (type === 'posts') {
     navigation.navigate('Feed', { post: item });
@@ -178,8 +171,6 @@ const renderList = (data, type) => {
             style={styles.listItem}
             onPress={() => handleItemPress(type, item)}
           >
-            <Text style={styles.listTitle}>{item.title || item.name}</Text>
-
             {type === 'posts' && item.content && (
               <Text style={styles.listContent}>
                 {item.content.length > 100
@@ -189,15 +180,19 @@ const renderList = (data, type) => {
             )}
 
             {type === 'activities' && item.description && (
-              <Text style={styles.listContent}>
-                {item.description.length > 100
-                  ? `${item.description.slice(0, 100)}...`
-                  : item.description}
-              </Text>
+              <>
+                <Text style={styles.listTitle}>{item.title || item.name}</Text>
+                <Text style={styles.listContent}>
+                  {item.description.length > 100
+                    ? `${item.description.slice(0, 100)}...`
+                    : item.description}
+                </Text>
+              </>
             )}
 
             {type === 'events' && (
               <>
+                <Text style={styles.listTitle}>{item.title || item.name}</Text>
                 {item.venue && (
                   <Text style={styles.listContent}>Venue: {item.venue}</Text>
                 )}

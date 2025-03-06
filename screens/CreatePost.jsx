@@ -17,7 +17,6 @@ import { colors } from '../styles/colours';
 import { API_URL } from '../config';
 
 export default function CreatePost({ onPostCreated }) {
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [mediaType, setMediaType] = useState(null);
@@ -91,7 +90,7 @@ export default function CreatePost({ onPostCreated }) {
   };
 
   const handlePost = async () => {
-    if (!title || !content || !communityId) {
+    if ( !content || !communityId) {
       Alert.alert('Missing Fields', 'Please fill in all required fields.');
       return;
     }
@@ -114,7 +113,6 @@ export default function CreatePost({ onPostCreated }) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          title,
           content,
           media: mediaUrl ? [mediaUrl] : [],
           community: communityId,
@@ -128,7 +126,6 @@ export default function CreatePost({ onPostCreated }) {
       }
 
       Alert.alert('Success', 'Your post has been created!');
-      setTitle('');
       setContent('');
       setMediaUri(null);
       setMediaType(null);
@@ -147,15 +144,6 @@ export default function CreatePost({ onPostCreated }) {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.header}>Create a New Post</Text>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter title..."
-          placeholderTextColor="#999"
-          value={title}
-          onChangeText={setTitle}
-        />
-      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={[styles.input, styles.textArea]}
