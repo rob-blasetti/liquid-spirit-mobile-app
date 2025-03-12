@@ -88,3 +88,7 @@ ios/build/
 
 #env
 .env
+
+# Google Play credentials
+android/fastlane/playstore_credentials.json
+upload_certificate.pem
