@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     fontSize: 14,
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   closeButton: {
     marginTop: 20,
