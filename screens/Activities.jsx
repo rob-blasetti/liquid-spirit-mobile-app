@@ -132,12 +132,12 @@ const Activities = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
-          <FontAwesomeIcon icon={faFilter} size={16} color="#312783" />
+          <FontAwesomeIcon icon={faFilter} size={16} color="#fff" />
           <Text style={styles.buttonText}>Filter</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
-          <FontAwesomeIcon icon={faSort} size={16} color="#312783" />
+          <FontAwesomeIcon icon={faSort} size={16} color="#fff" />
           <Text style={styles.buttonText}>
             {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
           </Text>
@@ -193,21 +193,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    backgroundColor: '#312783', // Dark background to visually group buttons
+    backgroundColor: '#fff', // Dark background to visually group buttons
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12, // Rounded edges to make them feel unified
     marginBottom: 4,
     elevation: 3, // Adds shadow for depth (Android)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
   },
   buttonBase: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff', // White buttons contrast well on the dark background
+    backgroundColor: '#312783', // White buttons contrast well on the dark background
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20, // Rounded buttons for modern UI
@@ -219,9 +215,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   buttonText: {
-    color: '#312783', 
+    color: '#fff', 
     fontWeight: 'bold',
     marginLeft: 6,
   },
