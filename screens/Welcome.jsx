@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Platform
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -62,12 +63,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#312783',
     marginBottom: 16,
+    textAlign: 'center',
+    width: Platform.select({ ios: 180, android: 200 })
   },
   subtitle: {
     fontSize: 18,
     color: '#555',
     marginBottom: 32,
     textAlign: 'center',
+    width: Platform.select({ ios: 180, android: 180 })
   },
   button: {
     backgroundColor: '#312783',
@@ -86,14 +90,20 @@ const styles = StyleSheet.create({
     color: '#312783',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
+    width: Platform.select({ ios: 180, android: 180 })
   },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
+    width: Platform.select({ ios: 180, android: 180 })
   },
   forgotPasswordButton: {
     marginBottom: 16,
+    textAlign: 'center',
+    width: Platform.select({ ios: 180, android: 180 })
   },
   forgotPasswordText: {
     color: '#312783',

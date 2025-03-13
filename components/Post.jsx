@@ -297,6 +297,7 @@ const styles = StyleSheet.create({
   communityText: {
     fontSize: 14,
     color: '#fff',
+    textAlign: 'center'
   },
   imageContainer: {
     position: 'relative',
