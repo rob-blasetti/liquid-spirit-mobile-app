@@ -98,7 +98,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.2"
+        versionName "1.0.5"
         
         buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
         buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
