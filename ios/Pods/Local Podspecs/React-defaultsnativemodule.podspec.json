@@ -22,32 +22,14 @@
     "DEFINES_MODULE": "YES"
   },
   "dependencies": {
-    "RCT-Folly": [
-
-    ],
-    "React-jsi": [
-
-    ],
-    "React-jsiexecutor": [
-
-    ],
-    "hermes-engine": [
-
-    ],
-    "React-domnativemodule": [
-
-    ],
-    "React-featureflagsnativemodule": [
-
-    ],
-    "React-microtasksnativemodule": [
-
-    ],
-    "React-idlecallbacksnativemodule": [
-
-    ],
-    "React-RCTFBReactNativeSpec": [
-
-    ]
+    "RCT-Folly": [],
+    "React-jsi": [],
+    "React-jsiexecutor": [],
+    "hermes-engine": [],
+    "React-domnativemodule": [],
+    "React-featureflagsnativemodule": [],
+    "React-microtasksnativemodule": [],
+    "React-idlecallbacksnativemodule": [],
+    "React-RCTFBReactNativeSpec": []
   }
 }

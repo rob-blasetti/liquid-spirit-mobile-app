@@ -87,36 +87,41 @@ const Events = () => {
     })} | ${formattedTime}`;
   };
 
-  const RenderEvent = ({ item }) => (
-    <TouchableOpacity
-      style={styles.eventCard}
-      onPress={() => navigation.navigate('EventDetail', { event: item })}
-    >
-      <View style={styles.imageContainer}>
-        <FastImage
-          source={localImages[item.imageUrl] ?? require('../assets/img/placeholder.png')}
-          style={styles.eventImage}
-          resizeMode={FastImage.resizeMode.cover}
-        />
-        {item.eventType && (
-          <View style={styles.eventTag}>
-            <Text style={styles.eventTagText}>{item.eventType}</Text>
+  const RenderEvent = ({ item }) => {
+    console.log(item.imageUrl)
+    const imageSource = localImages[item.imageUrl] || localImages['/img/events/Event_Placeholder.png'];
+  
+    return (
+      <TouchableOpacity
+        style={styles.eventCard}
+        onPress={() => navigation.navigate('EventDetail', { event: item })}
+      >
+        <View style={styles.imageContainer}>
+          <FastImage
+            source={imageSource}
+            style={styles.eventImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          {item.eventType && (
+            <View style={styles.eventTag}>
+              <Text style={styles.eventTagText}>{item.eventType}</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.cardContent}>
+          <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
+          <View style={styles.infoRow}>
+            <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
+            <Text style={styles.eventDate}>{formatDate(item.date, item.startTime)}</Text>
           </View>
-        )}
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
-        <View style={styles.infoRow}>
-          <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
-          <Text style={styles.eventDate}>{formatDate(item.date, item.startTime)}</Text>
+          <View style={styles.infoRow}>
+            <FontAwesomeIcon icon={faMapMarker} size={16} color="#666" />
+            <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
+          </View>
         </View>
-        <View style={styles.infoRow}>
-          <FontAwesomeIcon icon={faMapMarker} size={16} color="#666" />
-          <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };  
 
   // Filter events if an event type is selected; otherwise show all.
   const filteredEvents = selectedEventType

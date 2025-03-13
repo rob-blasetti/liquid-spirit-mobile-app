@@ -1,37 +1,43 @@
-// localImages.js
 const localImages = {
-    '/img/feast/Feast of Beauty.png': require('../assets/img/feast/Feast_of_Beauty.png'),
-    '/img/feast/Feast of Dominion.jpg': require('../assets/img/feast/Feast_of_Dominion.jpg'),
-    '/img/feast/Feast of Glory.jpg': require('../assets/img/feast/Feast_of_Glory.jpg'),
-    '/img/feast/Feast of Grandeur.jpg': require('../assets/img/feast/Feast_of_Grandeur.jpg'),
-    '/img/feast/Feast of Knowledge.jpg': require('../assets/img/feast/Feast_of_Knowledge.jpg'),
-    '/img/feast/Feast of Light.jpg': require('../assets/img/feast/Feast_of_Light.jpg'),
-    '/img/feast/Feast of Loftiness.png': require('../assets/img/feast/Feast_of_Loftiness.png'),
-    '/img/feast/Feast of Mercy.jpg': require('../assets/img/feast/Feast_of_Mercy.jpg'),
-    '/img/feast/Feast of Might.jpg': require('../assets/img/feast/Feast_of_Might.jpg'),
-    '/img/feast/Feast of Names.jpg': require('../assets/img/feast/Feast_of_Names.jpg'),
-    '/img/feast/Feast of Perfection.jpg': require('../assets/img/feast/Feast_of_Perfection.jpg'),
-    '/img/feast/Feast of Power.jpg': require('../assets/img/feast/Feast_of_Power.jpg'),
-    '/img/feast/Feast of Questions.jpg': require('../assets/img/feast/Feast_of_Questions.jpg'),
-    '/img/feast/Feast of Speech.jpg': require('../assets/img/feast/Feast_of_Speech.jpg'),
-    '/img/feast/Feast of Splendour.jpg': require('../assets/img/feast/Feast_of_Splendour.jpg'),
-    '/img/feast/Feast of Will.jpg': require('../assets/img/feast/Feast_of_Will.jpg'),
-    '/img/feast/Feast of Words.jpg': require('../assets/img/feast/Feast_of_Words.jpg'),
-    '/img/feast/Feast of Honor.jpg': require('../assets/img/feast/Feast_of_Honor.jpg'),
-    '/img/feast/Feast of Sovereignty.jpg': require('../assets/img/feast/Feast_of_Sovereignty.jpg'),
-    '/img/holyday/AscentionOfAbdul.jpg': require('../assets/img/holyday/AscentionOfAbdul.jpg'),
-    '/img/holyday/AscentionOfBaha.jpg': require('../assets/img/holyday/AscentionOfBaha.jpg'),
-    '/img/holyday/AyyamIHa.png': require('../assets/img/holyday/AyyamIHa.png'),
-    '/img/holyday/BirthOfBab.jpeg': require('../assets/img/holyday/BirthOfBab.jpeg'),
-    '/img/holyday/BirthOfBaha.jpeg': require('../assets/img/holyday/BirthOfBaha.jpeg'),
-    '/img/holyday/DayOfTheCovenant.jpg': require('../assets/img/holyday/DayOfTheCovenant.jpg'),
-    '/img/holyday/DeclarationOfBab.png': require('../assets/img/holyday/DeclarationOfBab.png'),
-    '/img/holyday/FirstOfRidvan.jpeg': require('../assets/img/holyday/FirstOfRidvan.jpeg'),
-    '/img/holyday/MartyrdomOfBab.jpg': require('../assets/img/holyday/MartyrdomOfBab.jpg'),
-    '/img/holyday/NawRuz.jpg': require('../assets/img/holyday/NawRuz.jpg'),
-    '/img/holyday/NinthOfRidvan.jpg': require('../assets/img/holyday/NinthOfRidvan.jpg'),
-    '/img/holyday/TwelfthOfRidvan.jpg': require('../assets/img/holyday/TwelfthOfRidvan.jpg')
-  };
-  
-  export default localImages;
-  
+  // Feast Events
+  '/img/events/Beauty.png': require('../assets/img/events/Beauty.png'),
+  // '/img/events/Dominion.png': require('../assets/img/events/Dominion.png'),
+  '/img/events/Glory.png': require('../assets/img/events/Glory.png'),
+  '/img/events/Grandeur.png': require('../assets/img/events/Grandeur.png'),
+  '/img/events/Knowledge.png': require('../assets/img/events/Knowledge.png'),
+  '/img/events/Light.png': require('../assets/img/events/Light.png'),
+  // '/img/events/Loftiness.png': require('../assets/img/events/Loftiness.png'),
+  '/img/events/Mercy.png': require('../assets/img/events/Mercy.png'),
+  '/img/events/Might.png': require('../assets/img/events/Might.png'),
+  '/img/events/Names.png': require('../assets/img/events/Names.png'),
+  '/img/events/Perfection.png': require('../assets/img/events/Perfection.png'),
+  '/img/events/Power.png': require('../assets/img/events/Power.png'),
+  '/img/events/Questions.png': require('../assets/img/events/Questions.png'),
+  '/img/events/Speech.png': require('../assets/img/events/Speech.png'),
+  '/img/events/Splendour.png': require('../assets/img/events/Splendour.png'),
+  '/img/events/Will.png': require('../assets/img/events/Will.png'),
+  '/img/events/Words.png': require('../assets/img/events/Words.png'),
+  '/img/events/Honor.png': require('../assets/img/events/Honor.png'),
+  // '/img/events/Sovereignty.png': require('../assets/img/events/Sovereignty.png'),
+
+  // Holy Day Events
+  '/img/events/AscAbdul.png': require('../assets/img/events/AscAbdul.png'),
+  '/img/events/AscBaha.png': require('../assets/img/events/AscBaha.png'),
+  // '/img/events/AyyamIHa.png': require('../assets/img/events/AyyamIHa.png'),
+  '/img/events/BirthBab.png': require('../assets/img/events/BirthBab.png'),
+  '/img/events/BirthBaha.png': require('../assets/img/events/BirthBaha.png'),
+  '/img/events/DayCov.png': require('../assets/img/events/DayCov.png'),
+  '/img/events/DecBab.png': require('../assets/img/events/DecBab.png'),
+  '/img/events/Ridvan1.png': require('../assets/img/events/Ridvan1.png'),
+  '/img/events/MartBab.png': require('../assets/img/events/MartBab.png'),
+  '/img/events/Nawruz.png': require('../assets/img/events/Nawruz.png'),
+  '/img/events/Ridvan9.png': require('../assets/img/events/Ridvan9.png'),
+  '/img/events/Ridvan12.png': require('../assets/img/events/Ridvan12.png'),
+
+  '/img/events/AGM.png': require('../assets/img/events/AGM.png'),
+
+  // Placeholder Image (if an event has no image)
+  '/img/events/Event_Placeholder.png': require('../assets/img/events/Event_Placeholder.png'),
+};
+
+export default localImages;
