@@ -133,15 +133,17 @@ const Events = () => {
       {/* Control Bar with Filter & Sort */}
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
-          <FontAwesomeIcon icon={faFilter} size={16} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
-          <FontAwesomeIcon icon={faSort} size={16} color="#fff" />
-          <Text style={styles.buttonText}>
-            {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <FontAwesomeIcon icon={faFilter} size={16} color="#312783" />
+        <Text style={styles.buttonText}>Filter</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
+        <FontAwesomeIcon icon={faSort} size={16} color="#312783" />
+        <Text style={styles.buttonText}>
+          {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
+        </Text>
+      </TouchableOpacity>
+    </View>
 
       {/* Animated Filter Drawer */}
       <Animated.View
@@ -256,23 +258,40 @@ const styles = StyleSheet.create({
   },
   controlContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-    zIndex: 2,
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    backgroundColor: '#312783', // Dark background to visually group buttons
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12, // Rounded edges to make them feel unified
+    marginBottom: 12,
+    elevation: 3, // Adds shadow for depth (Android)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   buttonBase: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#312783',
+    backgroundColor: '#ffffff', // White buttons contrast well on the dark background
     paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20, // Rounded buttons for modern UI
+    flex: 1, // Makes both buttons take equal space
+    justifyContent: 'center',
+    marginHorizontal: 5, // Adds space between buttons
+    elevation: 2, // Shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   buttonText: {
-    color: '#fff',
+    color: '#312783', 
     fontWeight: 'bold',
     marginLeft: 6,
-  },
+  },  
   drawerContainer: {
     backgroundColor: '#fff',
     borderRadius: 8,
