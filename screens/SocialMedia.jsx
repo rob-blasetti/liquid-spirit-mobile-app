@@ -13,7 +13,7 @@ import {
   Text 
 } from 'react-native';
 
-import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost } from '../services/PostService';
+import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost, deletePost } from '../services/PostService';
 import { blockUser, muteUser } from '../services/UserService';
 
 import { UserContext } from '../contexts/UserContext';
@@ -28,6 +28,7 @@ const SocialMedia = ({ initialPosts }) => {
   const [forYouPosts, setForYouPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
@@ -168,6 +169,19 @@ const SocialMedia = ({ initialPosts }) => {
     }
   };
 
+  const handleDelete = async (postId) => {
+    try {
+      await deletePost(postId, token);
+      Alert.alert('Delete Post', 'Post has been deleted.');
+  
+      // filter by post id instead of author id
+      setExplorePosts(prev => prev.filter(p => p._id !== postId));
+      setForYouPosts(prev => prev.filter(p => p._id !== postId));
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while deleting the post.');
+    }
+  };  
+
   return (
     <View style={styles.container}>
       <View style={styles.tabRow}>
@@ -194,6 +208,8 @@ const SocialMedia = ({ initialPosts }) => {
       ) : (
         <FlatList
           data={activeTab === 'explore' ? explorePosts : forYouPosts}
+          scrollEnabled={scrollEnabled}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <Post
               post={item}
@@ -202,16 +218,11 @@ const SocialMedia = ({ initialPosts }) => {
               onFlag={handleFlag}
               onBlock={handleBlock}
               onMute={handleMute}
+              onDelete={handleDelete}
+              setScrollEnabled={setScrollEnabled} // ✅ Add this
             />
           )}
-          keyExtractor={(item, index) => item._id || index.toString()}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={onRefresh} 
-              colors={['#0485e2']} 
-            />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         />
       )}
 

@@ -28,36 +28,71 @@ export default function CreatePost({ onPostCreated }) {
   }, []);
 
   const uploadToS3 = async (fileUri, fileType) => {
+    console.log('fileUri:', fileUri);
+    console.log('fileType:', fileType);
+  
     try {
-      const fileName = `post-media-${Date.now()}.${fileType.includes('video') ? 'mp4' : 'jpg'}`;
-      
-      // ✅ Request signed URL from backend
+      const isVideo = fileType.includes('video');
+      const fileExtension = isVideo ? 'mp4' : 'jpg';
+      const fileName = `post-media-${Date.now()}.${fileExtension}`;
+  
+      // ✅ Choose the correct endpoint based on file type
+      const endpoint = isVideo ? 's3-video-url' : 's3-url';
+  
+      // Request signed URL
       const signedUrlResponse = await fetch(
-        `${API_URL}/api/upload/s3-video-url?fileName=${fileName}&fileType=${fileType}`,
+        `${API_URL}/api/upload/${endpoint}?fileName=${fileName}&fileType=${fileType}`,
         {
           method: 'GET',
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+  
+      if (!signedUrlResponse.ok) {
+        const errorResponse = await signedUrlResponse.json();
+        console.error('Signed URL Error Response:', errorResponse);
+        throw new Error('Failed to get signed URL');
+      }
+  
       const { url } = await signedUrlResponse.json();
-      if (!url) throw new Error('Failed to get signed URL');
-
-      // ✅ Upload to S3
+      if (!url) throw new Error('Signed URL was empty');
+  
+      // Properly fetch the file as blob
+      const fileBlob = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function() {
+          const blob = xhr.response;
+          resolve(blob);
+        };
+        xhr.onerror = function(e) {
+          reject(new Error('Failed to read file'));
+        };
+        xhr.responseType = 'blob';
+        xhr.open('GET', fileUri, true);
+        xhr.send(null);
+      });
+  
+      // Upload blob to S3
       const uploadResponse = await fetch(url, {
         method: 'PUT',
-        body: await fetch(fileUri).then(res => res.blob()),
-        headers: { 'Content-Type': fileType },
+        body: fileBlob,
+        headers: {
+          'Content-Type': fileType,
+        },
       });
-
-      if (!uploadResponse.ok) throw new Error('Failed to upload to S3');
-      return url.split('?')[0]; // ✅ Return the public URL
+  
+      if (!uploadResponse.ok) {
+        console.error('S3 Upload failed:', uploadResponse.status, uploadResponse.statusText);
+        throw new Error('Failed to upload to S3');
+      }
+  
+      return url.split('?')[0];
     } catch (error) {
       console.error('S3 Upload Error:', error);
       Alert.alert('Upload Failed', 'Could not upload media');
       return null;
     }
-  };
+  };  
 
   const openCamera = async () => {
     const options = { mediaType: 'mixed', quality: 0.7 };
@@ -103,6 +138,10 @@ export default function CreatePost({ onPostCreated }) {
       setIsUploading(false);
       if (!mediaUrl) return;
     }
+
+    console.log('content: ', content);
+    console.log('mediaUrl: ', mediaUrl);
+    console.log('community: ', communityId);
 
     try {
       setIsUploading(true);

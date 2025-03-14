@@ -4,25 +4,22 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Dimensions
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import Video from 'react-native-video';
 import {
   faEllipsisV,
-  faFlag,
-  faVolumeMute,
-  faBan,
   faHeart as solidHeart
 } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart, faComment } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
+import DropdownMenu from './DropdownMenu';
 
 const DOUBLE_TAP_DELAY = 300;
 
-const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
+const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token } = useContext(UserContext);
 
   const [isLiked, setIsLiked] = useState(!!post?.isLiked);
@@ -47,6 +44,41 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
 
   const commentCount = post.comments?.length || 0;
+  const handleToggleMenu = () => {
+    if (!token) {
+      setWelcomeModalVisible(true);
+      return;
+    }
+
+    const newMenuVisible = !menuVisible;
+    setMenuVisible(newMenuVisible);
+    setScrollEnabled(!newMenuVisible);
+  };
+
+  const handleCloseMenu = () => {
+    setMenuVisible(false);
+    setScrollEnabled(true);
+  };
+
+  const handleFlag = () => {
+    onFlag(post._id);
+    handleCloseMenu();
+  };
+
+  const handleBlock = () => {
+    onBlock(post.author._id);
+    handleCloseMenu();
+  };
+
+  const handleMute = () => {
+    onMute(post.author._id);
+    handleCloseMenu();
+  };
+  
+  const handleDeletePost = () => {
+    onDelete(post._id);
+    handleCloseMenu();
+  };
 
   const toggleLike = async () => {
     try {
@@ -70,45 +102,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
     lastTapRef.current = now;
   };
 
-  // Dropdown menu states and ref.
   const kebabRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
-
-  const handleToggleMenu = () => {
-    if (!token) {
-      setWelcomeModalVisible(true);
-      return;
-    }
-
-    if (menuVisible) {
-      setMenuVisible(false);
-      return;
-    }
-    kebabRef.current?.measure((fx, fy, width, height, px, py) => {
-      const menuWidth = 140;
-      const menuHeight = 100;
-
-      let top = fy + height;
-      let left = fx;
-
-      const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-      if (top + menuHeight > screenHeight) {
-        top = fy - menuHeight;
-      }
-      if (left + menuWidth > screenWidth) {
-        left = screenWidth - menuWidth - 8;
-      }
-      if (left < 0) {
-        left = 8;
-      }
-
-      setMenuPosition({ top, left });
-      setMenuVisible(true);
-    });
-  };
 
   return (
     <TouchableOpacity
@@ -201,48 +197,13 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute }) => {
       />
 
       {menuVisible && (
-        <>
-          <TouchableOpacity
-            style={styles.dropdownOverlay}
-            activeOpacity={1}
-            onPress={() => setMenuVisible(false)}
-          />
-          <View style={[styles.dropdownMenu, { top: menuPosition.top, left: menuPosition.left }]}>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                onFlag(post._id);
-                setMenuVisible(false);
-              }}
-            >
-              <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faFlag} size={16} color="#312783" /> Report Post
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                onBlock(post.author?._id);
-                setMenuVisible(false);
-              }}
-            >
-              <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faBan} size={16} color="#312783" /> Block User
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.dropdownItem}
-              onPress={() => {
-                onMute(post.author?._id);
-                setMenuVisible(false);
-              }}
-            >
-              <Text style={styles.menuItem}>
-                <FontAwesomeIcon icon={faVolumeMute} size={16} color="#312783" /> Mute User
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
+        <DropdownMenu
+          onFlag={handleFlag}
+          onBlock={handleBlock}
+          onMute={handleMute}
+          onClose={handleCloseMenu}
+          onDelete={handleDeletePost}
+        />
       )}
     </TouchableOpacity>
   );

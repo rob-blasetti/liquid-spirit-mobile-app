@@ -8,17 +8,25 @@ import {
   TextInput,
   ScrollView,
   Image,
-  Pressable
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 
 const CommentModal = ({
   visible,
   onClose,
-  comments = [], // array of existing comments
+  comments = [],
   commentText,
   setCommentText,
-  onSubmit
+  onSubmit,
 }) => {
+  const handleSubmit = () => {
+    if (commentText.trim() === '') return;
+    onSubmit();
+    setCommentText('');
+  };
+
   return (
     <Modal
       visible={visible}
@@ -26,16 +34,11 @@ const CommentModal = ({
       transparent
       onRequestClose={onClose}
     >
-      <TouchableOpacity
-        style={styles.modalBackground}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <TouchableOpacity
+      <View style={styles.modalBackground}>
+        <KeyboardAvoidingView
           style={styles.modalContainer}
-          activeOpacity={1}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {/* Existing Comments */}
           <Text style={styles.title}>Comments</Text>
           <ScrollView style={styles.commentsList}>
             {comments.length === 0 && (
@@ -67,7 +70,6 @@ const CommentModal = ({
             ))}
           </ScrollView>
 
-          {/* Create New Comment */}
           <TextInput
             style={styles.textInput}
             value={commentText}
@@ -77,15 +79,15 @@ const CommentModal = ({
           />
 
           <View style={styles.buttonRow}>
-            <Pressable style={styles.submitButton} onPress={onSubmit}>
+            <Pressable style={styles.submitButton} onPress={handleSubmit}>
               <Text style={styles.submitButtonText}>Submit</Text>
             </Pressable>
             <Pressable style={styles.cancelButton} onPress={onClose}>
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </Pressable>
           </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
@@ -99,11 +101,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
-    width: '100%',
     backgroundColor: '#fff',
+    padding: 20,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    padding: 20,
     maxHeight: '80%',
   },
   title: {
@@ -113,23 +114,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   commentsList: {
-    maxHeight: 200,
+    flexGrow: 0,
+    maxHeight: 250,
     marginBottom: 12,
   },
   noCommentsText: {
     textAlign: 'center',
     color: '#888',
-    marginTop: 10,
+    marginVertical: 10,
   },
   commentItem: {
     marginBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#ddd',
     paddingBottom: 8,
   },
   commentHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
   },
   profilePic: {
     width: 40,
@@ -143,19 +144,17 @@ const styles = StyleSheet.create({
   commentTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 4,
   },
   commentAuthor: {
     fontWeight: '600',
   },
   commentDate: {
-    fontSize: 12,
     color: '#666',
+    fontSize: 12,
   },
   commentContent: {
     fontSize: 14,
-    color: '#333',
   },
   textInput: {
     borderColor: '#ccc',
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    marginBottom: 16,
+    marginBottom: 12,
     textAlignVertical: 'top',
     minHeight: 60,
   },

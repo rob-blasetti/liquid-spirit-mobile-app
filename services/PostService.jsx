@@ -163,3 +163,29 @@ export const fetchExploreFeed = async () => {
       throw new Error(`Flag post error: ${error.message}`);
     }
   };
+
+  export const deletePost = async (postId, token) => { 
+    try {
+      const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('response: ', response);
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to delete post.');
+      }
+  
+      const responseData = await response.json();
+      return responseData;
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      throw new Error(`Delete post error: ${error.message}`);
+    }
+  };
+  
