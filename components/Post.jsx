@@ -41,9 +41,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
 
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
-
+  const userId = user?.id || user?._id;
   const commentCount = post.comments?.length || 0;
-  const isOwn = post.author._id == user.id;
+  const isOwn = post.author._id == userId;
 
   const handleToggleMenu = () => {
     if (!token) {
@@ -143,7 +143,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             style={styles.video}
             controls
             resizeMode="contain"
-            paused={false}
+            paused
           />
         ) : (
           <FastImage source={{ uri: mediaUrl }} style={styles.postImage} resizeMode={FastImage.resizeMode.cover} />
