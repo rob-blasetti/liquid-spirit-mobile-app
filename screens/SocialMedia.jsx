@@ -17,6 +17,7 @@ import { UserContext } from '../contexts/UserContext';
 import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
+import localImage from '../assets/img/IMG_0347.jpg';
 
 const SocialMedia = ({ initialPosts, scrollToTop }) => {
   const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);

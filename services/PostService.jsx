@@ -22,26 +22,46 @@ export const fetchExploreFeed = async () => {
     }
   };
 
-  export const fetchForYouFeed = async (userCommunityId, token) => {
-    try {
-        const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+  // export const fetchForYouFeed = async (userCommunityId, token) => {
+  //   try {
+  //       const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': `Bearer ${token}`,
+  //         },
+  //       });
     
-        if (!response.ok) {
-          throw new Error('Failed to fetch For You posts');
-        }
+  //       if (!response.ok) {
+  //         throw new Error('Failed to fetch For You posts');
+  //       }
     
-        const responseData = await response.json();
-        return responseData.data;
-      } catch (error) {
-        console.error('Error fetching For You (community feed):', error);
-        throw new Error(`Fetch For You (community feed) error: ${error.message}`);
+  //       const responseData = await response.json();
+  //       return responseData.data;
+  //     } catch (error) {
+  //       console.error('Error fetching For You (community feed):', error);
+  //       throw new Error(`Fetch For You (community feed) error: ${error.message}`);
+  //     }
+  //   };
+
+
+export const fetchForYouFeed = async (userCommunityId, token) => {
+  try {
+    return [
+      {
+        _id: 'static-post',
+        media: ['https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/post-media-1741928527423.jpg'], // ✅ Wrap in an object
+        content: 'A special post just for you!',
+        author: { firstName: 'Coming', lastName: 'Soon', profilePicture: 'https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/earth.png' },
+        community: { name: 'Global Community' },
+        likes: [],
+        comments: [],
       }
-    };
+    ];
+  } catch (error) {
+    console.error('Error fetching For You (community feed):', error);
+    throw new Error(`Fetch For You (community feed) error: ${error.message}`);
+  }
+};
   
   export const fetchRecentCommunityPosts = async (userCommunityId, token) => {
     try {
