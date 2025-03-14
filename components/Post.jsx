@@ -20,8 +20,7 @@ import DropdownMenu from './DropdownMenu';
 const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
-  const { token } = useContext(UserContext);
-
+  const { token, user } = useContext(UserContext);
   const [isLiked, setIsLiked] = useState(!!post?.isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
 
@@ -44,6 +43,8 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
 
   const commentCount = post.comments?.length || 0;
+  const isOwn = post.author._id == user.id;
+
   const handleToggleMenu = () => {
     if (!token) {
       setWelcomeModalVisible(true);
@@ -143,7 +144,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             controls
             resizeMode="contain"
             paused={false}
-            repeat
           />
         ) : (
           <FastImage source={{ uri: mediaUrl }} style={styles.postImage} resizeMode={FastImage.resizeMode.cover} />
@@ -203,6 +203,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           onMute={handleMute}
           onClose={handleCloseMenu}
           onDelete={handleDeletePost}
+          isOwnPost={isOwn}
         />
       )}
     </TouchableOpacity>

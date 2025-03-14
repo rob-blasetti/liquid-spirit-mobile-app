@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, Image, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
-
+import { API_URL } from '../config';
+import localImages from '../utils/localImages'
 const { width } = Dimensions.get('window'); // Get device width
 const ITEM_SIZE = width / 2 - 15; // Adjust for 2-column layout
 
@@ -10,7 +11,6 @@ const PostGallery = ({ posts }) => {
   const navigation = useNavigation();
 
   const handlePress = (item) => {
-    console.log('item: ', item);
     if (item.content) {
       // ✅ Navigate to the social feed if it's a post
       navigation.navigate('Feed', { post: item });
@@ -32,13 +32,23 @@ const PostGallery = ({ posts }) => {
       numColumns={2} // ✅ Display in 2 columns
       contentContainerStyle={styles.galleryContainer}
       renderItem={({ item }) => {
-        const mediaUrl = item.media?.[0] || item.imageUrl;
+        let mediaUrl = item.media?.[0] || item.imageUrl;
         const isVideo = mediaUrl?.endsWith('.mp4') || mediaUrl?.includes('video');
+        let imageSource;
+        if (mediaUrl) {
+          if (localImages[mediaUrl]) {
+            imageSource = localImages[mediaUrl]; // Local image (require)
+          } else if (!mediaUrl.startsWith('http')) {
+            imageSource = { uri: `${API_URL}/${mediaUrl}` }; // Convert relative to absolute
+          } else {
+            imageSource = { uri: mediaUrl }; // Absolute URL
+          }
+        }
 
         return (
           <TouchableOpacity style={styles.postContainer} onPress={() => handlePress(item)}>
             {/* Render Image, Video, or Placeholder */}
-            {mediaUrl && !isVideo && <Image source={{ uri: mediaUrl }} style={styles.postImage} />}
+            {mediaUrl && !isVideo && <Image source={imageSource} style={styles.postImage} resizeMode="cover" />}
             {mediaUrl && isVideo && (
               <Video
                 source={{ uri: mediaUrl }}
@@ -56,7 +66,11 @@ const PostGallery = ({ posts }) => {
                 {item.content.length > 50 ? `${item.content.slice(0, 50)}...` : item.content}
               </Text>
             ) : (
-              <Text style={styles.listTitle}>{item.title}</Text>
+              <View>
+                <Text style={styles.listTitle}>{item.title}</Text>
+                { item.activityType && <Text style={styles.listTitle}>{item.activityType?.name}</Text> }
+                { item.eventType && <Text style={styles.listType}>{item.eventType}</Text> }
+              </View>
             )}
           </TouchableOpacity>
         );
@@ -83,9 +97,15 @@ const styles = StyleSheet.create({
   },
   postImage: {
     width: '100%',
-    height: 120, // Set fixed height for images
+    height: 120,
     borderRadius: 8,
     marginBottom: 8,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
+    // Add these properties to prioritize top-left:
+    position: 'relative',
+    top: 0,
+    left: 0,
   },
   postVideo: {
     width: '100%',
@@ -104,6 +124,11 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
+  listType: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+  }
 });
 
 export default PostGallery;

@@ -13,6 +13,8 @@ import themeVariables from '../styles/theme';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
 
 const ActivityDetail = ({ route, navigation }) => {
   const { user } = useContext(UserContext);
@@ -58,9 +60,9 @@ const ActivityDetail = ({ route, navigation }) => {
     return <Text style={styles.errorText}>Activity details not available.</Text>;
   }
 
-  const userId = user?._id;
-  const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator._id === userId);
-  const isUserAParticipant = activity.participants?.some(participant => participant._id === userId);
+  const userId = user?.id;
+  const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator.details._id === userId);
+  const isUserAParticipant = activity.participants?.some(participant => participant.details._id === userId);
   const hasFacilitatorSpace = activity.facilitators.length < activity.facilitatorLimit;
   const hasParticipantSpace = activity.participants.length < activity.participantLimit;
 
@@ -73,15 +75,15 @@ const ActivityDetail = ({ route, navigation }) => {
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
-        <Text style={styles.date}>📅 Starts: {new Date(activity.date).toLocaleDateString()}</Text>
+        <Text style={styles.date}><FontAwesomeIcon icon={faCalendar} size={16} color="#312783" /> Starts: {new Date(activity.date).toLocaleDateString()}</Text>
         <Text style={styles.schedule}>
-          ⏰ {activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} (
+        <FontAwesomeIcon icon={faClock} size={16} color="#312783" /> {activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} (
           {activity.groupDetails?.frequency || 'One-time'})
         </Text>
 
         {/* Clickable Location */}
         <TouchableOpacity onPress={openGoogleMaps}>
-          <Text style={styles.location}>📍 {activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
+          <Text style={styles.location}><FontAwesomeIcon icon={faCarSide} size={16} color="#312783" /> {activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
         </TouchableOpacity>
 
         {/* Facilitators List */}
@@ -99,7 +101,7 @@ const ActivityDetail = ({ route, navigation }) => {
         {/* Join as Facilitator */}
         {hasFacilitatorSpace && !isUserAFacilitator && !isUserAParticipant && (
           <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Facilitator Sent!')}>
-            <Text style={styles.joinButtonText}>Request to Join as Facilitator</Text>
+            <Text style={styles.joinButtonText}>Request Join</Text>
           </TouchableOpacity>
         )}
 
@@ -118,7 +120,7 @@ const ActivityDetail = ({ route, navigation }) => {
         {/* Join as Participant */}
         {hasParticipantSpace && !isUserAParticipant && !isUserAFacilitator && (
           <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Participant Sent!')}>
-            <Text style={styles.joinButtonText}>Request to Join as Participant</Text>
+            <Text style={styles.joinButtonText}>Request Join</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -198,9 +200,10 @@ const styles = StyleSheet.create({
   joinButton: {
     backgroundColor: themeVariables.primaryColor,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
     marginTop: 10,
+    marginBottom: 10,
   },
   joinButtonText: {
     color: themeVariables.whiteColor,

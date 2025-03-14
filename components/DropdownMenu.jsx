@@ -5,7 +5,7 @@ import { faFlag, faBan, faVolumeMute, faTrash } from '@fortawesome/free-solid-sv
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose }) => {
+const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost }) => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-20)).current;
 
@@ -35,12 +35,16 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose }) => {
             <FontAwesomeIcon icon={faVolumeMute} size={16} color="#312783" /> Mute User
           </Text>
         </TouchableOpacity>
-        <View style={styles.seperator} />
-        <TouchableOpacity style={styles.item} onPress={onDelete}>
-          <Text style={styles.menuText}>
-            <FontAwesomeIcon icon={faTrash} size={16} color="#312783" /> Delete Post
-          </Text>
-        </TouchableOpacity>
+        {isOwnPost && (
+        <>
+            <View style={styles.seperator} />
+            <TouchableOpacity style={styles.item} onPress={onDelete}>
+            <Text style={styles.menuText}>
+                <FontAwesomeIcon icon={faTrash} size={16} color="#312783" /> Delete Post
+            </Text>
+            </TouchableOpacity>
+        </>
+        )}
       </Animated.View>
     </View>
   );

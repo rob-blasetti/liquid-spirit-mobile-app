@@ -12,6 +12,8 @@ import {
 import { UserContext } from '../contexts/UserContext';
 import { joinEvent } from '../services/EventService'; // adjust the path as needed
 import localImages from '../utils/localImages';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
 
 const EventDetail = ({ route }) => {
   const { event } = route.params;
@@ -83,15 +85,25 @@ const EventDetail = ({ route }) => {
         <Text style={styles.type}>{event.eventType || 'Unknown Event'}</Text>
 
         {/* Event Date & Time */}
-        <Text style={styles.date}>📅 {formatDate(event.date)}</Text>
+        <Text style={styles.date}>
+          <FontAwesomeIcon icon={faCalendar} size={16} color="#312783" />
+          <Text style={styles.iconText}>{formatDate(event.date)}</Text>
+        </Text>
+
         <Text style={styles.time}>
-          ⏰ {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
-          {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <FontAwesomeIcon icon={faClock} size={16} color="#312783" />
+          <Text style={styles.iconText}>
+            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
+            {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
         </Text>
 
         {/* Location (Clickable) */}
         <TouchableOpacity onPress={openGoogleMaps}>
-          <Text style={styles.location}>📍 {event.venue}</Text>
+          <Text style={styles.location}>
+            <FontAwesomeIcon icon={faCarSide} size={16} color="#312783" />
+            <Text style={styles.iconText}>{event.venue}</Text>
+          </Text>
         </TouchableOpacity>
 
         {/* Event Description */}
@@ -143,14 +155,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   date: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
     fontSize: 18,
     color: themeVariables.blackColor,
     marginBottom: 6,
   },
   time: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
     fontSize: 16,
     color: themeVariables.blackColor,
     marginBottom: 10,
+  },
+  iconText: {
+    marginLeft: 10, // This adds space after the icon
   },
   location: {
     fontSize: 16,
@@ -158,6 +179,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontWeight: '600',
     textDecorationLine: 'underline',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
   },
   descriptionHeader: {
     fontSize: 18,
@@ -173,7 +197,7 @@ const styles = StyleSheet.create({
   joinButton: {
     backgroundColor: themeVariables.primaryColor,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
     marginTop: 20,
   },

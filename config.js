@@ -1,8 +1,7 @@
 import Config from 'react-native-config';
 
 //Set the API URL
-// export const API_URL = Config.DEV_API;
-export const API_URL = 'http://192.168.1.119:5005';
+export const API_URL = Config.PROD_API;
 
 console.log(API_URL);
 

@@ -40,7 +40,6 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const filterUserActivities = (allActivities, userId) => {
-    console.log(allActivities);
     return (allActivities || []).filter(activity => {
       const isFacilitator =
         activity.facilitators &&
