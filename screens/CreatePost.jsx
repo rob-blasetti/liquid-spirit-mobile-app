@@ -34,18 +34,15 @@ export default function CreatePost({ onPostCreated }) {
   }, []);
 
   const uploadToS3 = async (fileUri, fileType) => {
-    console.log('fileUri:', fileUri);
-    console.log('fileType:', fileType);
-  
     try {
       const isVideo = fileType.includes('video');
       const fileExtension = isVideo ? 'mp4' : 'jpg';
       const fileName = `post-media-${Date.now()}.${fileExtension}`;
   
-      // ✅ Choose the correct endpoint based on file type
+      // ✅ Choose correct S3 endpoint
       const endpoint = isVideo ? 's3-video-url' : 's3-url';
   
-      // Request signed URL
+      // ✅ Step 1: Request Signed URL from backend
       const signedUrlResponse = await fetch(
         `${API_URL}/api/upload/${endpoint}?fileName=${fileName}&fileType=${fileType}`,
         {
@@ -54,45 +51,22 @@ export default function CreatePost({ onPostCreated }) {
         }
       );
   
-      if (!signedUrlResponse.ok) {
-        const errorResponse = await signedUrlResponse.json();
-        console.error('Signed URL Error Response:', errorResponse);
-        throw new Error('Failed to get signed URL');
-      }
-  
       const { url } = await signedUrlResponse.json();
-      if (!url) throw new Error('Signed URL was empty');
+      if (!url) throw new Error('Failed to get signed URL');
   
-      // Properly fetch the file as blob
-      const fileBlob = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-          const blob = xhr.response;
-          resolve(blob);
-        };
-        xhr.onerror = function(e) {
-          reject(new Error('Failed to read file'));
-        };
-        xhr.responseType = 'blob';
-        xhr.open('GET', fileUri, true);
-        xhr.send(null);
-      });
+      // ✅ Step 2: Convert `fileUri` into a Blob
+      const fileBlob = await fetch(fileUri).then(res => res.blob());
   
-      // Upload blob to S3
+      // ✅ Step 3: Upload file to S3
       const uploadResponse = await fetch(url, {
         method: 'PUT',
         body: fileBlob,
-        headers: {
-          'Content-Type': fileType,
-        },
+        headers: { 'Content-Type': fileType },
       });
   
-      if (!uploadResponse.ok) {
-        console.error('S3 Upload failed:', uploadResponse.status, uploadResponse.statusText);
-        throw new Error('Failed to upload to S3');
-      }
+      if (!uploadResponse.ok) throw new Error('Failed to upload to S3');
   
-      return url.split('?')[0];
+      return url.split('?')[0]; // ✅ Return the public URL of the uploaded file
     } catch (error) {
       console.error('S3 Upload Error:', error);
       Alert.alert('Upload Failed', 'Could not upload media');
@@ -289,6 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     alignItems: 'center',
     width: '90%',
+    borderColor: '#312783',
     borderWidth: 1,
     borderStyle: 'solid',
     borderColor: '#312783',

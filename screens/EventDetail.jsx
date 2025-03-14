@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   joinButtonDisabled: {
     backgroundColor: '#aaa',
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 20,
     alignItems: 'center',
     marginTop: 20,
   },
