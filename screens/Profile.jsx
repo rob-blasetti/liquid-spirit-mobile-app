@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
+import PostGallery from '../components/PostGallery';
 import { useAuthService } from '../services/AuthService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
@@ -215,18 +216,18 @@ const renderList = (data, type) => {
 };
 
 
-  const renderScene = ({ route }) => {
-    switch (route.key) {
-      case 'posts':
-        return renderList(posts, 'posts');
-      case 'activities':
-        return renderList(activities, 'activities');
-      case 'events':
-        return renderList(events, 'events');
-      default:
-        return null;
-    }
-  };
+const renderScene = ({ route }) => {
+  switch (route.key) {
+    case 'posts':
+      return <PostGallery posts={posts} />; // ✅ Use PostGallery component
+    case 'activities':
+      return <PostGallery posts={activities} />;
+    case 'events':
+      return <PostGallery posts={events} />;
+    default:
+      return null;
+  }
+};
 
   const handleShareProfile = async (user) => {
     try {
@@ -289,18 +290,7 @@ const renderList = (data, type) => {
 
       <TabView
         navigationState={{ index, routes }}
-        renderScene={({ route }) => {
-          switch (route.key) {
-            case 'posts':
-              return renderList(posts, 'posts');
-            case 'activities':
-              return renderList(activities, 'activities');
-            case 'events':
-              return renderList(events, 'events');
-            default:
-              return null;
-          }
-        }}
+        renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={props => (
@@ -342,12 +332,19 @@ const styles = StyleSheet.create({
   actionButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#fff',
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 25,
     elevation: 2,
     flexDirection: 'row',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: '#312783',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   actionText: {
     marginLeft: 8,
@@ -380,8 +377,8 @@ const styles = StyleSheet.create({
     color: '#312783',
   },
   listContent: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: 16,
+    color: '#312783',
     marginTop: 8,
   },
   listDate: {

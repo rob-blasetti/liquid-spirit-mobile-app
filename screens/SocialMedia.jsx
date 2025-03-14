@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState, useCallback } from 'react';
+import React, { useEffect, useContext, useState, useCallback, useRef } from 'react';
 import { 
   View, 
   FlatList, 
@@ -6,9 +6,6 @@ import {
   ActivityIndicator, 
   RefreshControl, 
   TouchableOpacity, 
-  Modal, 
-  TextInput, 
-  Button, 
   Alert, 
   Text 
 } from 'react-native';
@@ -21,7 +18,7 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 
-const SocialMedia = ({ initialPosts }) => {
+const SocialMedia = ({ initialPosts, scrollToTop }) => {
   const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('explore');
   const [explorePosts, setExplorePosts] = useState(initialPosts || []);
@@ -35,6 +32,13 @@ const SocialMedia = ({ initialPosts }) => {
   const [commentText, setCommentText] = useState('');
 
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
+  const flatListRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollToTop) {
+      flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+    }
+  }, [scrollToTop]);
 
   const fetchExplorePosts = useCallback(async () => {
     try {
@@ -207,6 +211,7 @@ const SocialMedia = ({ initialPosts }) => {
         <ActivityIndicator size='large' color='#0485e2' style={{ marginTop: 20 }} />
       ) : (
         <FlatList
+          ref={flatListRef} 
           data={activeTab === 'explore' ? explorePosts : forYouPosts}
           scrollEnabled={scrollEnabled}
           keyExtractor={(item) => item._id}

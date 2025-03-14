@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
+import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
@@ -25,8 +26,10 @@ const tabIcons = {
 
 const BottomBar = ({ initialPosts }) => {
   const { isLoggedIn } = useContext(UserContext);
+  const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
-  
+  const [scrollToTop, setScrollToTop] = useState(false);
+
   return (
     <>
       <Tab.Navigator
@@ -48,17 +51,25 @@ const BottomBar = ({ initialPosts }) => {
             borderTopColor: '#ddd'
           },
         })}
-        screenListeners={({ route }) => ({
+        screenListeners={({ navigation, route }) => ({
           tabPress: (e) => {
-            if (!isLoggedIn && route.name !== 'Feed') {
+            const currentRouteIndex = navigation.getState().index;
+            const currentRouteName = navigation.getState().routes[currentRouteIndex]?.name;
+
+            if (!isLoggedIn && currentRouteName !== 'Feed') {
               e.preventDefault();
               setModalVisible(true);
+            }
+
+            // 🔥 If already on the Feed tab, trigger scroll to top
+            if (currentRouteName === 'Feed') {
+              setScrollToTop(prev => !prev);
             }
           },
         })}
       >
         <Tab.Screen name="Feed">
-          {() => <SocialMediaScreen initialPosts={initialPosts} />}
+          {() => <SocialMediaScreen initialPosts={initialPosts} scrollToTop={scrollToTop} />}
         </Tab.Screen>
         <Tab.Screen 
           name="Activities" 
