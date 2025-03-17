@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCheck, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
+
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>
     <View style={[styles.badge, style]}>
-      <Icon name={iconName} size={16} color="#fff" />
+      <FontAwesomeIcon icon={iconName} size={16} color="#fff" />
     </View>
   </Tooltip>
 );
@@ -25,13 +26,13 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
 
   if (type === 'user') {
     if (userCertifications?.isVerified) {
-      certifications.push({ iconName: 'check-decagram', label: 'Verified User', style: styles.verifiedBadge });
+      certifications.push({ iconName: faCheck, label: 'Verified User', style: styles.verifiedBadge });
     }
     if (userCertifications?.hasChildProtection) {
-      certifications.push({ iconName: 'shield-check', label: 'Child Protection Certified', style: styles.protectionBadge });
+      certifications.push({ iconName: faShieldAlt, label: 'Child Prot Cert.', style: styles.protectionBadge });
     }
     if (userCertifications?.isLocalAssemblyMember) {
-      certifications.push({ iconName: 'star', label: 'LSA Member', style: styles.lsaBadge });
+      certifications.push({ iconName: faStar, label: 'LSA Member', style: styles.lsaBadge });
     }
   }
 
@@ -117,21 +118,32 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   verifiedBadge: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#3e8e41',
   },
   protectionBadge: {
-    backgroundColor: '#FF9800',
+    backgroundColor: '#d81b60',
   },
   lsaBadge: {
-    backgroundColor: '#673AB7',
+    backgroundColor: '#b71c1c',
   },
   tooltipText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#fff',
-    backgroundColor: '#333',
-    padding: 5,
-    borderRadius: 5,
+    // backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 8,
+    maxWidth: 200,
+    flexWrap: 'wrap',     // Allow text to wrap
+    textAlign: 'left',
+    // Optionally add a box shadow for Android and iOS:
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
+  
 });
 
 export default UserBadge;
