@@ -52,27 +52,33 @@ const ActivityDetail = ({ route }) => {
 
   if (loading) {
     return <>
-      <View style={styles.loadingContainer}>
         <ScrollView contentContainerStyle={styles.container}>
           {activityPreload.imageUrl && <FastImage source={{ uri: activityPreload.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
 
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{activityPreload.title}</Text>
             <Text style={styles.type}>{activityPreload.activityType?.name || 'Unknown'}</Text>
-            <Text style={styles.date}><FontAwesomeIcon icon={faCalendar} size={16} color="#312783" /> Starts: {new Date(activityPreload.date).toLocaleDateString()}</Text>
-            <Text style={styles.schedule}>
-            <FontAwesomeIcon icon={faClock} size={16} color="#312783" /> {activityPreload.groupDetails?.day || 'N/A'} - {activityPreload.groupDetails?.time || 'N/A'} (
-              {activityPreload.groupDetails?.frequency || 'One-time'})
-            </Text>
+
+            <View style={styles.iconRow}>
+              <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
+              <Text style={styles.date}>Starts: {new Date(activityPreload.date).toLocaleDateString()}</Text>
+            </View>
+
+            <View style={styles.iconRow}>
+              <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
+              <Text style={styles.schedule}>{activityPreload.groupDetails?.day || 'N/A'} - {activityPreload.groupDetails?.time || 'N/A'} ({activityPreload.groupDetails?.frequency || 'One-time'})</Text>
+            </View>
 
             <TouchableOpacity onPress={openGoogleMaps}>
-              <Text style={styles.location}><FontAwesomeIcon icon={faCarSide} size={16} color="#312783" /> {activityPreload.address?.streetAddress}, {activityPreload.address?.suburb}, {activityPreload.address?.city}</Text>
+              <View style={styles.iconRow}>
+                <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
+                <Text style={styles.location}>{activityPreload.address?.streetAddress}, {activityPreload.address?.suburb}, {activityPreload.address?.city}</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </ScrollView>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} style={styles.loadingIndicator} />
-      </View>
-    </>;
+      </>;
   }
 
   if (error) {
@@ -92,20 +98,26 @@ const ActivityDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
-
+      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}      
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
-        <Text style={styles.date}><FontAwesomeIcon icon={faCalendar} size={16} color="#312783" /> Starts: {new Date(activity.date).toLocaleDateString()}</Text>
-        <Text style={styles.schedule}>
-        <FontAwesomeIcon icon={faClock} size={16} color="#312783" /> {activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} (
-          {activity.groupDetails?.frequency || 'One-time'})
-        </Text>
 
-        {/* Clickable Location */}
+        <View style={styles.iconRow}>
+          <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
+          <Text style={styles.date}>Starts: {new Date(activity.date).toLocaleDateString()}</Text>
+        </View>
+
+        <View style={styles.iconRow}>
+          <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
+          <Text style={styles.schedule}>{activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} ({activity.groupDetails?.frequency || 'One-time'})</Text>
+        </View>
+
         <TouchableOpacity onPress={openGoogleMaps}>
-          <Text style={styles.location}><FontAwesomeIcon icon={faCarSide} size={16} color="#312783" /> {activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
+          <View style={styles.iconRow}>
+            <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
+            <Text style={styles.location}>{activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
+          </View>
         </TouchableOpacity>
 
         {/* Facilitators List */}
@@ -152,15 +164,14 @@ const ActivityDetail = ({ route }) => {
 
 const styles = StyleSheet.create({
   loadingContainer: {
-    position: 'relative',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: themeVariables.whiteColor,
     minHeight: windowHeight,
   },
   loadingIndicator: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
+    alignSelf: 'center',
   },
   container: {
     backgroundColor: themeVariables.whiteColor,
@@ -175,10 +186,11 @@ const styles = StyleSheet.create({
   banner: {
     width: '100%',
     height: 220,
-    resizeMode: 'cover'
+    resizeMode: 'cover',
   },
   detailsContainer: {
     padding: 20,
+    marginRight: 10,
   },
   title: {
     fontSize: 26,
@@ -192,20 +204,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: '600',
   },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  iconSpacing: {
+    marginRight: 6,
+  },
   date: {
     fontSize: 18,
     color: themeVariables.blackColor,
-    marginBottom: 6,
   },
   schedule: {
     fontSize: 16,
     color: themeVariables.blackColor,
-    marginBottom: 5,
   },
   location: {
     fontSize: 16,
     color: themeVariables.primaryColor,
-    marginBottom: 20,
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

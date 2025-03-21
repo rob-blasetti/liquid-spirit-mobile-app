@@ -74,7 +74,6 @@ const EventDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Event Image */}
       <Image
         source={localImages[event.imageUrl] || require('../assets/img/placeholder.png')}
         style={styles.banner}
@@ -84,29 +83,24 @@ const EventDetail = ({ route }) => {
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.type}>{event.eventType || 'Unknown Event'}</Text>
 
-        {/* Event Date & Time */}
-        <Text style={styles.date}>
-          <FontAwesomeIcon icon={faCalendar} size={16} color="#312783" />
+        <View style={styles.iconRow}>
+          <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.iconText}>{formatDate(event.date)}</Text>
-        </Text>
+        </View>
 
-        <Text style={styles.time}>
-          <FontAwesomeIcon icon={faClock} size={16} color="#312783" />
+        <View style={styles.iconRow}>
+          <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.iconText}>
-            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
+            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {' '}
             {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
-        </Text>
+        </View>
 
-        {/* Location (Clickable) */}
-        <TouchableOpacity onPress={openGoogleMaps}>
-          <Text style={styles.location}>
-            <FontAwesomeIcon icon={faCarSide} size={16} color="#312783" />
-            <Text style={styles.iconText}>{event.venue}</Text>
-          </Text>
+        <TouchableOpacity style={styles.iconRow} onPress={openGoogleMaps}>
+          <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
+          <Text style={[styles.iconText, styles.location]}>{event.venue}</Text>
         </TouchableOpacity>
 
-        {/* Event Description */}
         <Text style={styles.descriptionHeader}>Description:</Text>
         <Text style={styles.description}>{event.description}</Text>
 
@@ -127,7 +121,6 @@ const EventDetail = ({ route }) => {
     </ScrollView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: themeVariables.whiteColor,
@@ -137,7 +130,7 @@ const styles = StyleSheet.create({
   banner: {
     width: '100%',
     height: 220,
-    resizeMode: 'cover'
+    resizeMode: 'cover',
   },
   detailsContainer: {
     padding: 20,
@@ -154,38 +147,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: '600',
   },
-  date: {
+  iconRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
-    fontSize: 18,
-    color: themeVariables.blackColor,
-    marginBottom: 6,
-  },
-  time: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
-    fontSize: 16,
-    color: themeVariables.blackColor,
     marginBottom: 10,
   },
+  iconSpacing: {
+    marginRight: 8,
+  },
   iconText: {
-    marginLeft: 10, // This adds space after the icon
+    fontSize: 16,
+    color: themeVariables.blackColor,
   },
   location: {
-    fontSize: 16,
     color: themeVariables.primaryColor,
-    marginBottom: 20,
-    fontWeight: '600',
     textDecorationLine: 'underline',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
   },
   descriptionHeader: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginTop: 15,
     marginBottom: 10,
     color: themeVariables.blackColor,
   },
