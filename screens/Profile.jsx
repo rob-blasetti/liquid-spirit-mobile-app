@@ -245,34 +245,35 @@ const renderScene = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.bannerContainer}>
-        <ImageBackground
-          source={{
-            uri: user?.community?.bannerImage || 'https://via.placeholder.com/600x200',
-          }}
-          style={styles.banner}
-          imageStyle={styles.bannerImage}
-        >
-          <View style={styles.overlay} />
-          <View style={styles.bannerContent}>
-            <View style={styles.bannerLeft}>
-              <TouchableOpacity onPress={handleProfilePicturePress}>
-                <FastImage
-                  style={styles.profilePicture}
-                  source={{ uri: user?.profilePicture }}
-                  resizeMode={FastImage.resizeMode.cover}
-                />
-              </TouchableOpacity>
-              <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-              <Text style={styles.bahaiID}>{user?.bahaiId}</Text>
-            </View>
-            <View style={styles.bannerRight}>
-              <Text style={styles.communityName}>{user?.community?.name}</Text>
-              <Text style={styles.memberCount}>144 members</Text>
-            </View>
-          </View>
-        </ImageBackground>
+    <View style={styles.bannerContainer}>
+      <FastImage
+        source={{
+          uri: user?.community?.bannerImage || 'https://via.placeholder.com/600x200',
+        }}
+        style={[styles.banner, StyleSheet.absoluteFill]}
+        resizeMode={FastImage.resizeMode.cover}
+        imageStyle={styles.bannerImage}
+      />
+      <View style={[styles.overlay, StyleSheet.absoluteFill]} />
+      <View style={styles.bannerContent}>
+        <View style={styles.bannerLeft}>
+          <TouchableOpacity onPress={handleProfilePicturePress}>
+            <FastImage
+              style={styles.profilePicture}
+              source={{ uri: user?.profilePicture }}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          </TouchableOpacity>
+          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+          <Text style={styles.bahaiID}>{user?.bahaiId}</Text>
+        </View>
+        <View style={styles.bannerRight}>
+          <Text style={styles.communityName}>{user?.community?.name}</Text>
+          <Text style={styles.memberCount}>144 members</Text>
+        </View>
       </View>
+      </View>
+
 
       {/* Profile Actions Section */}
       <View style={styles.profileActionsContainer}>
@@ -311,7 +312,18 @@ const styles = StyleSheet.create({
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  bannerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, width: '100%' },
+  bannerContent: {
+    // Position the content absolutely on top of the banner
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
   bannerLeft: { alignItems: 'center' },
   profilePicture: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#fff', marginBottom: 8 },
   name: { fontSize: 20, fontWeight: 'bold', color: '#fff', textAlign: 'center' },

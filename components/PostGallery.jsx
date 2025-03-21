@@ -4,6 +4,7 @@ import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../config';
 import localImages from '../utils/localImages'
+import FastImage from 'react-native-fast-image';
 const { width } = Dimensions.get('window'); // Get device width
 const ITEM_SIZE = width / 2 - 15; // Adjust for 2-column layout
 
@@ -47,8 +48,13 @@ const PostGallery = ({ posts }) => {
 
         return (
           <TouchableOpacity style={styles.postContainer} onPress={() => handlePress(item)}>
-            {/* Render Image, Video, or Placeholder */}
-            {mediaUrl && !isVideo && <Image source={imageSource} style={styles.postImage} resizeMode="cover" />}
+            {mediaUrl && !isVideo &&
+              <FastImage
+                style={styles.postImage}
+                source={imageSource}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            }
             {mediaUrl && isVideo && (
               <Video
                 source={{ uri: mediaUrl }}

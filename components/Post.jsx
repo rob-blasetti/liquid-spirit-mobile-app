@@ -23,7 +23,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const { token, user } = useContext(UserContext);
   const [isLiked, setIsLiked] = useState(!!post?.isLiked);
   const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
-  console.log(post)
 
   useEffect(() => {
     if (post.isLiked !== isLiked) {
