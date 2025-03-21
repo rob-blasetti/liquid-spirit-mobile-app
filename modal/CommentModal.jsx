@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 
 const CommentModal = ({
   visible,
@@ -47,7 +48,7 @@ const CommentModal = ({
             {comments.map((comment) => (
               <View key={comment._id} style={styles.commentItem}>
                 <View style={styles.commentHeader}>
-                  <Image
+                  <FastImage
                     source={{ uri: comment.user.profilePicture }}
                     style={styles.profilePic}
                   />
@@ -99,6 +100,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
+    marginBottom: 40,
   },
   modalContainer: {
     backgroundColor: '#fff',

@@ -185,18 +185,16 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
       <View style={styles.postFooter}>
         <TouchableOpacity style={styles.postFooterIcon} onPress={debouncedToggleLike}>
-          <Text style={styles.footerIconText}>
             <FontAwesomeIcon
               icon={isLiked ? solidHeart : heartOutline}
-              size={18}
+              size={22}
               color="#312783"
-            />{' '}
-          </Text>
+            />
+            <Text style={styles.footerIconText}></Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
-          <Text style={styles.footerIconText}>
-            <FontAwesomeIcon icon={faComment} size={18} color="#312783" /> {commentCount}
-          </Text>
+          <FontAwesomeIcon icon={faComment} size={22} color="#312783" />
+          <Text style={styles.footerIconText}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
 
@@ -324,15 +322,17 @@ const styles = StyleSheet.create({
   },
   postFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
     borderTopWidth: 1,
     borderTopColor: '#eee',
     paddingTop: 10,
     marginTop: 10,
+    // If you want spacing between buttons:
+    justifyContent: 'flex-start',
   },
   postFooterIcon: {
-    paddingLeft: 15,
-    marginRight: 10,
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginRight: 16,
   },
   footerIconText: {
     color: '#312783',
