@@ -49,11 +49,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
   const userId = user?.id || user?._id;
   const [isLiked, setIsLiked] = useState(post.likes?.includes(userId) || false);
-  const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
+  // const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
   const commentCount = post.comments?.length || 0;
   const isOwn = post.author._id == userId;
-
-  console.log('isLiked: ', isLiked);
 
   const handleToggleMenu = () => {
     if (!token) {

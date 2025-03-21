@@ -1334,7 +1334,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video (6.10.2):
+  - react-native-video (6.11.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1347,7 +1347,7 @@ PODS:
     - React-featureflags
     - React-graphics
     - React-ImageManager
-    - react-native-video/Video (= 6.10.2)
+    - react-native-video/Video (= 6.11.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-rendererdebug
@@ -1356,7 +1356,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Fabric (6.10.2):
+  - react-native-video/Fabric (6.11.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1377,7 +1377,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-video/Video (6.10.2):
+  - react-native-video/Video (6.11.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1963,49 +1963,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNSVG (15.11.2):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.11.18.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - RNSVG/common (= 15.11.2)
-    - Yoga
-  - RNSVG/common (15.11.2):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.11.18.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RNVectorIcons (10.2.0):
     - DoubleConversion
     - glog
@@ -2118,7 +2075,6 @@ DEPENDENCIES:
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
-  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2289,8 +2245,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
-  RNSVG:
-    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   Yoga:
@@ -2338,7 +2292,7 @@ SPEC CHECKSUMS:
   react-native-image-picker: ede3b0b991aae11b3c1d61c187a833720e255277
   react-native-pager-view: cda3e94765176877702695c4b8c4b5ca69cb2f16
   react-native-safe-area-context: 0f14bce545abcdfbff79ce2e3c78c109f0be283e
-  react-native-video: 80b56ba42f736957ee5865b60a34486c24931fa2
+  react-native-video: ebad7ae64c4d5302fd43ac76821d180adf4febd6
   React-nativeconfig: cd0fbb40987a9658c24dab5812c14e5522a64929
   React-NativeModulesApple: 4a9c304aa4fb086af32e8758ba892386d895b4d3
   React-perflogger: 721172bda31a65ce7b7a0c3bf3de96f12ef6f45d
@@ -2377,7 +2331,6 @@ SPEC CHECKSUMS:
   RNKeychain: 8d45ee314f242a6fb81fa9677ed8e0bf39dcecc3
   RNReanimated: 86aaf0407803b713a7aa47ac086730f409672b91
   RNScreens: b32d0d59b53acb574fa795a9343591ef4e7ab7c2
-  RNSVG: 877cd57c2db63dc9f1fd1bbb5e95506ccd481df6
   RNVectorIcons: bd818296a51dc2bb8c3bd97a3ca399df1afe216d
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d

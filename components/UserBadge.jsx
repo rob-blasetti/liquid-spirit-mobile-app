@@ -4,7 +4,7 @@ import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCheck, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
-
+import Avatar from '@flipxyz/react-native-boring-avatars';
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>
@@ -44,7 +44,12 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
           {avatarUri ? (
             <FastImage source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
-            <FontAwesomeIcon icon="user" size={30} color="#aaa" />            
+            <Avatar
+              size={55}
+              name={displayName}
+              variant="beam"
+              colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+            />
           )}
         </View>
 
@@ -85,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
-    backgroundColor: '#ddd', // ✅ Grey background when no profile image
+    backgroundColor: '#ddd', // Grey background when no profile image
   },
   avatar: {
     width: '100%',
@@ -100,7 +105,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   certificationsWrapper: {
-    height: 24, // ✅ Fixed height to maintain equal badge sizes
+    height: 24, // Fixed height to maintain equal badge sizes
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -129,21 +134,18 @@ const styles = StyleSheet.create({
   tooltipText: {
     fontSize: 14,
     color: '#fff',
-    // backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 10,
     paddingVertical: 2,
     borderRadius: 8,
     maxWidth: 200,
-    flexWrap: 'wrap',     // Allow text to wrap
+    flexWrap: 'wrap',
     textAlign: 'left',
-    // Optionally add a box shadow for Android and iOS:
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 2,
   },
-  
 });
 
 export default UserBadge;
