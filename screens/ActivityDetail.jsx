@@ -3,24 +3,26 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  Dimensions,
 } from 'react-native';
 import themeVariables from '../styles/theme';
+import FastImage from 'react-native-fast-image';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
+const { height: windowHeight } = Dimensions.get('window');
 
-const ActivityDetail = ({ route, navigation }) => {
+const ActivityDetail = ({ route }) => {
   const { user } = useContext(UserContext);
-  const { activityId } = route.params;
+  const { activityId, activityPreload } = route.params;
 
-  const [activity, setActivity] = useState(null);
+  const [activity, setActivity] = useState({ activityPreload });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -49,7 +51,28 @@ const ActivityDetail = ({ route, navigation }) => {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color={themeVariables.primaryColor} style={styles.loading} />;
+    return <>
+      <View style={styles.loadingContainer}>
+        <ScrollView contentContainerStyle={styles.container}>
+          {activityPreload.imageUrl && <FastImage source={{ uri: activityPreload.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
+
+          <View style={styles.detailsContainer}>
+            <Text style={styles.title}>{activityPreload.title}</Text>
+            <Text style={styles.type}>{activityPreload.activityType?.name || 'Unknown'}</Text>
+            <Text style={styles.date}><FontAwesomeIcon icon={faCalendar} size={16} color="#312783" /> Starts: {new Date(activityPreload.date).toLocaleDateString()}</Text>
+            <Text style={styles.schedule}>
+            <FontAwesomeIcon icon={faClock} size={16} color="#312783" /> {activityPreload.groupDetails?.day || 'N/A'} - {activityPreload.groupDetails?.time || 'N/A'} (
+              {activityPreload.groupDetails?.frequency || 'One-time'})
+            </Text>
+
+            <TouchableOpacity onPress={openGoogleMaps}>
+              <Text style={styles.location}><FontAwesomeIcon icon={faCarSide} size={16} color="#312783" /> {activityPreload.address?.streetAddress}, {activityPreload.address?.suburb}, {activityPreload.address?.city}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} style={styles.loadingIndicator} />
+      </View>
+    </>;
   }
 
   if (error) {
@@ -63,15 +86,14 @@ const ActivityDetail = ({ route, navigation }) => {
   const userId = user?.id;
   const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator.details._id === userId);
   const isUserAParticipant = activity.participants?.some(participant => participant.details._id === userId);
-  const hasFacilitatorSpace = activity.facilitators.length < activity.facilitatorLimit;
-  const hasParticipantSpace = activity.participants.length < activity.participantLimit;
+  const hasFacilitatorSpace = activity.facilitators?.length < activity.facilitatorLimit;
+  const hasParticipantSpace = activity.participants?.length < activity.participantLimit;
+  console.log('activity: ', activityPreload);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Activity Banner */}
-      {activity.imageUrl && <Image source={{ uri: activity.imageUrl }} style={styles.banner} />}
+      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
 
-      {/* Activity Details */}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
@@ -129,14 +151,21 @@ const ActivityDetail = ({ route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    position: 'relative',
+    backgroundColor: themeVariables.whiteColor,
+    minHeight: windowHeight,
+  },
+  loadingIndicator: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+  },
   container: {
     backgroundColor: themeVariables.whiteColor,
     flexGrow: 1,
     paddingBottom: 20,
-  },
-  loading: {
-    marginTop: 50,
-    alignSelf: 'center',
   },
   errorText: {
     color: 'red',

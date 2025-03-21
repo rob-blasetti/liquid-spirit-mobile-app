@@ -21,7 +21,7 @@ const PostGallery = ({ posts }) => {
         navigation.navigate('EventDetail', { event: item });
       } else {
         // ✅ Navigate to the activity detail page if it's an activity
-        navigation.navigate('ActivityDetail', { activityId: item._id });
+        navigation.navigate('ActivityDetail', { activityId: item._id, activityPreload: item });
       }
     }
   };

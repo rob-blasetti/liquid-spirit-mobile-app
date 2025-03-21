@@ -92,7 +92,7 @@ const Activities = ({ navigation }) => {
   const renderActivity = ({ item }) => (
     <TouchableOpacity
       style={styles.activityCard}
-      onPress={() => navigation.navigate('ActivityDetail', { activityId: item._id })}
+      onPress={() => navigation.navigate('ActivityDetail', { activityId: item._id, activityPreload: item })}
     >
       <View style={styles.imageContainer}>
         <FastImage
