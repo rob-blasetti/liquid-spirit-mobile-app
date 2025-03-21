@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, useEffect } from 'react';
+import React, { useState, useRef, useContext, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,24 +12,30 @@ import {
   faEllipsisV,
   faHeart as solidHeart
 } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as regularHeart, faComment } from '@fortawesome/free-regular-svg-icons';
+import { faHeart as heartOutline, faComment } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
+import debounce from 'lodash.debounce';
 
 const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token, user } = useContext(UserContext);
-  const [isLiked, setIsLiked] = useState(!!post?.isLiked);
-  const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
 
   useEffect(() => {
-    if (post.isLiked !== isLiked) {
-      setIsLiked(post.isLiked);
-    }
-    setLocalLikeCount(post.likes?.length || 0);
-  }, [post.isLiked, post.likes]);
+    // Recalculate the liked state based on the likes array
+    const computedIsLiked = post.likes?.includes(userId) || false;
+    setIsLiked(computedIsLiked);
+    // setLocalLikeCount(post.likes?.length || 0);
+  }, [post.likes, userId]);
+
+  const debouncedToggleLike = useCallback(
+    debounce(() => {
+      toggleLike();
+    }, 300),
+    [toggleLike]
+  );
   
   const [expanded, setExpanded] = useState(false);
 
@@ -42,8 +48,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
   const userId = user?.id || user?._id;
+  const [isLiked, setIsLiked] = useState(post.likes?.includes(userId) || false);
+  const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
   const commentCount = post.comments?.length || 0;
   const isOwn = post.author._id == userId;
+
+  console.log('isLiked: ', isLiked);
 
   const handleToggleMenu = () => {
     if (!token) {
@@ -82,17 +92,19 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   };
 
   const toggleLike = async () => {
-    try {
-      const newIsLiked = await onLike(post._id);
+    const previousLiked = isLiked;
   
-      if (newIsLiked !== null) {
-        setIsLiked(newIsLiked);
-        setLocalLikeCount((count) => newIsLiked ? count + 1 : Math.max(0, count - 1));
-      }
+    setIsLiked(!previousLiked);
+    // setLocalLikeCount(prevCount => !previousLiked ? prevCount + 1 : Math.max(prevCount - 1, 0));
+  
+    try {
+      await onLike(post._id, userId);
     } catch (error) {
+      setIsLiked(previousLiked);
+      // setLocalLikeCount(prevCount => previousLiked ? prevCount + 1 : Math.max(prevCount - 1, 0));
       console.error('Error updating like:', error);
     }
-  };  
+  };
 
   const lastTapRef = useRef(0);
   const handlePostPress = () => {
@@ -174,14 +186,13 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       </View>
 
       <View style={styles.postFooter}>
-        <TouchableOpacity style={styles.postFooterIcon} onPress={toggleLike}>
+        <TouchableOpacity style={styles.postFooterIcon} onPress={debouncedToggleLike}>
           <Text style={styles.footerIconText}>
             <FontAwesomeIcon
-              icon={isLiked ? solidHeart : regularHeart}
+              icon={isLiked ? solidHeart : heartOutline}
               size={18}
               color="#312783"
             />{' '}
-            {localLikeCount}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>

@@ -19,7 +19,7 @@ import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 
 const SocialMedia = ({ initialPosts, scrollToTop }) => {
-  const { token, communityId, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { token, communityId, isTokenExpired, refreshSession, user } = useContext(UserContext);
   const [activeTab, setActiveTab] = useState('explore');
   const [explorePosts, setExplorePosts] = useState(initialPosts || []);
   const [forYouPosts, setForYouPosts] = useState([]);
@@ -93,20 +93,25 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
     }
   };
 
-  const handleLike = async (postId) => {
+  const handleLike = async (postId, userId) => {
     if (!token) {
       setWelcomeModalVisible(true);
       return;
     }
   
     try {
-      const updatedPost = await likePost(postId, token);
+      const updatedPostResponse = await likePost(postId, token);
+      const updatedPost = updatedPostResponse.data;
   
-      // Ensure we update all instances of the post in state
-      setExplorePosts(prev => prev.map(p => (p._id === postId ? updatedPost : p)));
-      setForYouPosts(prev => prev.map(p => (p._id === postId ? updatedPost : p)));
+      setExplorePosts((prev) => 
+        prev.map((p) => (p._id === postId ? updatedPost : p))
+      );
+      setForYouPosts((prev) => 
+        prev.map((p) => (p._id === postId ? updatedPost : p))
+      );
   
-      return updatedPost.isLiked;  // Ensure correct like status is returned
+      const isLiked = updatedPost.likes?.includes(userId);
+      return isLiked;
     } catch (error) {
       Alert.alert('Error', 'An error occurred while liking the post');
       return null;

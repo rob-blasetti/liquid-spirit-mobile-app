@@ -99,7 +99,10 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
       }
   
       const responseData = await response.json();
-      return responseData.data; // Return updated post data or like count
+
+      console.log('likePost service call: ', responseData);
+
+      return responseData;
     } catch (error) {
       console.error('Error liking post:', error);
       throw new Error(`Like post error: ${error.message}`);
