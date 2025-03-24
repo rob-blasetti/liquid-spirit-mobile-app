@@ -15,7 +15,7 @@ import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faClock, faCarSide, faVideo } from '@fortawesome/free-solid-svg-icons';
 const { height: windowHeight } = Dimensions.get('window');
 
 const ActivityDetail = ({ route }) => {
@@ -50,6 +50,15 @@ const ActivityDetail = ({ route }) => {
     Linking.openURL(mapsUrl);
   };
 
+  const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
+    const [hour, minute] = timeString.split(':');
+    const date = new Date();
+    date.setHours(parseInt(hour, 10), parseInt(minute, 10));
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  };
+  
+
   if (loading) {
     return <>
         <ScrollView contentContainerStyle={styles.container}>
@@ -66,15 +75,25 @@ const ActivityDetail = ({ route }) => {
 
             <View style={styles.iconRow}>
               <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
-              <Text style={styles.schedule}>{activityPreload.groupDetails?.day || 'N/A'} - {activityPreload.groupDetails?.time || 'N/A'} ({activityPreload.groupDetails?.frequency || 'One-time'})</Text>
+              <Text style={styles.schedule}>{activityPreload.groupDetails?.day || 'N/A'} - {formatTime(activityPreload.groupDetails?.time) || 'N/A'} ({activityPreload.groupDetails?.frequency || 'One-time'})</Text>
             </View>
 
-            <TouchableOpacity onPress={openGoogleMaps}>
+            <TouchableOpacity onPress={activityPreload.onlineLink ? () => Linking.openURL(activityPreload.onlineLink) : openGoogleMaps}>
               <View style={styles.iconRow}>
-                <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
-                <Text style={styles.location}>{activityPreload.address?.streetAddress}, {activityPreload.address?.suburb}, {activityPreload.address?.city}</Text>
+                <FontAwesomeIcon
+                  icon={activityPreload.onlineLink ? faVideo : faCarSide}
+                  size={22}
+                  color="#312783"
+                  style={styles.iconSpacing}
+                />
+                <Text style={styles.location}>
+                  {activityPreload.onlineLink
+                    ? 'Join Online'
+                    : `${activityPreload.address?.streetAddress || 'No Address'}, ${activityPreload.address?.suburb || 'No Suburb'}, ${activityPreload.address?.city || 'No City'}`}
+                </Text>
               </View>
             </TouchableOpacity>
+
           </View>
         </ScrollView>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} style={styles.loadingIndicator} />
@@ -110,13 +129,22 @@ const ActivityDetail = ({ route }) => {
 
         <View style={styles.iconRow}>
           <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
-          <Text style={styles.schedule}>{activity.groupDetails?.day || 'N/A'} - {activity.groupDetails?.time || 'N/A'} ({activity.groupDetails?.frequency || 'One-time'})</Text>
+          <Text style={styles.schedule}>{activity.groupDetails?.day || 'N/A'} - {formatTime(activity.groupDetails?.time) || 'N/A'} ({activity.groupDetails?.frequency || 'One-time'})</Text>
         </View>
 
-        <TouchableOpacity onPress={openGoogleMaps}>
+        <TouchableOpacity onPress={activityPreload.onlineLink ? () => Linking.openURL(activityPreload.onlineLink) : openGoogleMaps}>
           <View style={styles.iconRow}>
-            <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
-            <Text style={styles.location}>{activity.address?.streetAddress}, {activity.address?.suburb}, {activity.address?.city}</Text>
+            <FontAwesomeIcon
+              icon={activityPreload.onlineLink ? faVideo : faCarSide}
+              size={22}
+              color="#312783"
+              style={styles.iconSpacing}
+            />
+            <Text style={styles.location}>
+              {activityPreload.onlineLink
+                ? 'Join Online'
+                : `${activityPreload.address?.streetAddress || 'No Address'}, ${activityPreload.address?.suburb || 'No Suburb'}, ${activityPreload.address?.city || 'No City'}`}
+            </Text>
           </View>
         </TouchableOpacity>
 

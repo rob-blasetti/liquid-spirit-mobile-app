@@ -333,6 +333,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center',
     marginRight: 16,
+    paddingVertical: 10, 
+    paddingHorizontal: 8,
   },
   footerIconText: {
     color: '#312783',

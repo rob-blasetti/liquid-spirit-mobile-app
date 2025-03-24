@@ -22,6 +22,7 @@ import {
   faUsers,
   faFire,
   faStar,
+  faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 const Activities = ({ navigation }) => {
@@ -33,6 +34,7 @@ const Activities = ({ navigation }) => {
   const [selectedType, setSelectedType] = useState('All');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
+  console.log(userActivities);
 
   const activityTypes = [
     { name: "Children's Class", icon: faChild },
@@ -118,12 +120,18 @@ const Activities = ({ navigation }) => {
         </View>
 
         <View style={styles.infoRow}>
-          <FontAwesomeIcon icon={faMapLocation} size={16} color="#666" />
+          <FontAwesomeIcon
+            icon={item.onlineLink ? faVideo : faMapLocation}
+            size={16}
+            color="#666"
+          />
           <Text style={styles.activityAddress}>
-            {item.address?.streetAddress || 'No Address'},{' '}
-            {item.address?.suburb || 'No Suburb'}
+            {item.onlineLink
+              ? 'Online'
+              : `${item.address?.streetAddress || 'No Address'}, ${item.address?.suburb || 'No Suburb'}`}
           </Text>
         </View>
+        
       </View>
     </TouchableOpacity>
   );
