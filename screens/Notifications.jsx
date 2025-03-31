@@ -6,18 +6,22 @@ import {
   faUsers,
   faCalendar,
   faInfo,
+  faAlignLeft,
+  faCompass,
 } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
 
 const NotificationIcon = ({ type }) => {
   switch (type) {
+    case "post":
+      return <FontAwesomeIcon icon={faUsers} size={20} />;
     case "activity":
-      return <FontAwesomeIcon icon={faCalendar} size={20} />;
+      return <FontAwesomeIcon icon={faAlignLeft} size={20} />;
+    case "event":
+      return <FontAwesomeIcon icon={faCalendar} size={20} />;        
     case "announcement":
       return <FontAwesomeIcon icon={faInfo} size={20} />;
-    case "update":
-      return <FontAwesomeIcon icon={faUsers} size={20} />;
     default:
       return <FontAwesomeIcon icon={faBell} size={20} />;
   }
@@ -33,7 +37,7 @@ export default function Notifications() {
   const fetchNotifications = async () => {
     try {
       const response = await NotificationService.getAllNotifications(token, user.id);
-
+      console.log(response);
       const formatted = response.data.map((n) => ({
         id: n._id,
         type: mapNotificationType(n.type?.typeName || n.type || ""), // handles populated and non-populated
@@ -77,12 +81,18 @@ export default function Notifications() {
     }
   };
 
+  const typeCategoryMap = {
+    post_media: "post",
+    post_created: "post",
+    new_activity: "activity",
+    join_activity: "activity",
+    activity_updated: "activity",
+    join_event: "event",
+    signup: "announcement",
+  };
+  
   const mapNotificationType = (typeName) => {
-    if (!typeName || typeof typeName !== "string") return "general";
-    if (typeName.includes("activity")) return "activity";
-    if (typeName.includes("announcement")) return "announcement";
-    if (typeName.includes("role") || typeName.includes("update")) return "update";
-    return "general";
+    return typeCategoryMap[typeName] || "general";
   };
 
   const formatTime = (timestamp) => {
@@ -140,11 +150,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
-    marginRight: 10,
     alignItems: "center",
   },
   textContainer: { marginLeft: 10 },
-  title: { fontWeight: "bold", fontSize: 16 },
+  title: { fontWeight: "bold", fontSize: 16, marginRight: 30 },
   message: { fontSize: 14, color: "#555" },
   time: { fontSize: 12, color: "#999" },
 });
