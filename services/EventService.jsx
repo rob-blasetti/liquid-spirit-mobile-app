@@ -29,13 +29,7 @@ export const fetchEvents = async (token) => {
 };
 
 export const joinEvent = async (eventId, token) => {
-  console.log('EVENT ID:', eventId);
-  console.log('TOKEN:', token);
   try {
-    // const userId = getCurrentUserId();
-    // const userName = user.firstName + ' ' + user.lastName;
-    // const userCommunityId = (community && community.data && community.data._id) ? community.data._id : 'Your Community ID';
-
     const response = await fetch(`${API_URL}/api/events/${eventId}/join`, {
       method: 'PUT',
       headers: {

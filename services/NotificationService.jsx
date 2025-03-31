@@ -1,12 +1,9 @@
-// src/services/NotificationService.js
 import { API_URL } from '../config';
 
 const NotificationService = {
-  async sendNotification(type, actorId, targetId, targetType, recipientCommunity, additionalData, scope) {
-    const token = localStorage.getItem('token');
+  async sendNotification(token, type, actorId, targetId, targetType, recipientCommunity, additionalData, scope) {
     try {
       if (!token) {
-        console.error('Token is not available for sendNotification. Ensure the user is logged in.');
         throw new Error('Token not available');
       }
 
@@ -23,19 +20,15 @@ const NotificationService = {
           targetType,
           recipientCommunity,
           additionalData,
-          scope
+          scope,
         }),
       });
 
-
       const data = await response.json();
-      console.log('Notification Response: ', data);
       if (!response.ok) {
-        console.error('Failed to send notification:', data.error || 'Unknown error');
         throw new Error(data.error || 'Failed to send notification');
       }
 
-      console.log('Notification sent successfully:', data);
       return data;
     } catch (error) {
       console.error('Error sending notification:', error);
@@ -43,10 +36,11 @@ const NotificationService = {
     }
   },
 
-  // Specific notification types
+  // Specific Notification Types
 
-  async userJoinedEventNotification(actorId, eventId, recipientCommunity, eventTitle, userName) {
+  async userJoinedEventNotification(token, actorId, eventId, recipientCommunity, eventTitle, userName) {
     return this.sendNotification(
+      token,
       'join_event',
       actorId,
       eventId,
@@ -57,8 +51,9 @@ const NotificationService = {
     );
   },
 
-  async newActivityNotification(actorId, activityId, recipientCommunity, activityTitle) {
+  async newActivityNotification(token, actorId, activityId, recipientCommunity, activityTitle) {
     return this.sendNotification(
+      token,
       'new_activity',
       actorId,
       activityId,
@@ -69,13 +64,9 @@ const NotificationService = {
     );
   },
 
-  async userJoinedActivity(actorId, activityId, recipientCommunity, activityTitle, activityType, userName) {
-    console.log('actorId:', actorId);
-    console.log('activityId:', activityId);
-    console.log('recipientCommunity:', recipientCommunity);
-    console.log('activityTitle:', activityTitle);
-    console.log('userName:', userName);
+  async userJoinedActivity(token, actorId, activityId, recipientCommunity, activityTitle, activityType, userName) {
     return this.sendNotification(
+      token,
       'activity_updated',
       actorId,
       activityId,
@@ -86,8 +77,9 @@ const NotificationService = {
     );
   },
 
-  async activityUpdateNotification(actorId, activityId, recipientCommunity, activityTitle) {
+  async activityUpdateNotification(token, actorId, activityId, recipientCommunity, activityTitle) {
     return this.sendNotification(
+      token,
       'activity_updated',
       actorId,
       activityId,
@@ -98,8 +90,9 @@ const NotificationService = {
     );
   },
 
-  async activityCanceledNotification(actorId, activityId, recipientCommunity, activityTitle) {
+  async activityCanceledNotification(token, actorId, activityId, recipientCommunity, activityTitle) {
     return this.sendNotification(
+      token,
       'activity_canceled',
       actorId,
       activityId,
@@ -110,8 +103,9 @@ const NotificationService = {
     );
   },
 
-  async userLeftEventNotification(actorId, eventId, recipientCommunity, eventTitle, userName) {
+  async userLeftEventNotification(token, actorId, eventId, recipientCommunity, eventTitle, userName) {
     return this.sendNotification(
+      token,
       'leave_event',
       actorId,
       eventId,
@@ -122,8 +116,9 @@ const NotificationService = {
     );
   },
 
-  async mediaPostedNotification(actorId, mediaId, recipientCommunity, mediaTitle, mediaUrl) {
+  async mediaPostedNotification(token, actorId, mediaId, recipientCommunity, mediaTitle, mediaUrl) {
     return this.sendNotification(
+      token,
       'post_media',
       actorId,
       mediaId,
@@ -134,8 +129,9 @@ const NotificationService = {
     );
   },
 
-  async assemblyAnnouncementNotification(actorId, announcementId, recipientCommunity, announcementTitle) {
+  async assemblyAnnouncementNotification(token, actorId, announcementId, recipientCommunity, announcementTitle) {
     return this.sendNotification(
+      token,
       'assembly_announcement',
       actorId,
       announcementId,
@@ -146,8 +142,9 @@ const NotificationService = {
     );
   },
 
-  async budgetUpdateNotification(actorId, budgetId, recipientCommunity) {
+  async budgetUpdateNotification(token, actorId, budgetId, recipientCommunity) {
     return this.sendNotification(
+      token,
       'budget_update',
       actorId,
       budgetId,
@@ -158,8 +155,9 @@ const NotificationService = {
     );
   },
 
-  async eventReminderNotification(actorId, eventId, recipientCommunity, eventTitle) {
+  async eventReminderNotification(token, actorId, eventId, recipientCommunity, eventTitle) {
     return this.sendNotification(
+      token,
       'event_reminder',
       actorId,
       eventId,
@@ -170,8 +168,9 @@ const NotificationService = {
     );
   },
 
-  async newMemberWelcomeNotification(actorId, memberId, recipientCommunity, memberName) {
+  async newMemberWelcomeNotification(token, actorId, memberId, recipientCommunity, memberName) {
     return this.sendNotification(
+      token,
       'new_member_welcome',
       actorId,
       memberId,
@@ -182,8 +181,9 @@ const NotificationService = {
     );
   },
 
-  async roleAssignmentNotification(actorId, memberId, recipientCommunity, roleName) {
+  async roleAssignmentNotification(token, actorId, memberId, recipientCommunity, roleName) {
     return this.sendNotification(
+      token,
       'role_assignment',
       actorId,
       memberId,
@@ -194,8 +194,9 @@ const NotificationService = {
     );
   },
 
-  async communityEventUpdateNotification(actorId, eventId, recipientCommunity, eventTitle, updateDetails) {
+  async communityEventUpdateNotification(token, actorId, eventId, recipientCommunity, eventTitle, updateDetails) {
     return this.sendNotification(
+      token,
       'community_event_update',
       actorId,
       eventId,
@@ -206,13 +207,9 @@ const NotificationService = {
     );
   },
 
-  async markNotificationAsRead(notificationId) {
+  async markNotificationAsRead(token, notificationId) {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('Token is not available for markNotificationAsRead. Ensure the user is logged in.');
-        throw new Error('Token not available');
-      }
+      if (!token) throw new Error('Token not available');
 
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/mark-as-read`, {
         method: 'PUT',
@@ -224,11 +221,9 @@ const NotificationService = {
 
       const data = await response.json();
       if (!response.ok) {
-        console.error('Failed to mark notification as read:', data.error || 'Unknown error');
         throw new Error(data.error || 'Failed to mark notification as read');
       }
 
-      console.log('Notification marked as read successfully:', data);
       return data;
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -236,82 +231,64 @@ const NotificationService = {
     }
   },
 
-  async markAllNotificationsAsRead(userId) {
+  async markAllNotificationsAsRead(token, userId) {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.error('Token is not available for markAllNotificationsAsRead. Ensure the user is logged in.');
-        throw new Error('Token not available');
-      }
-  
+      if (!token) throw new Error('Token not available');
+
       const response = await fetch(`${API_URL}/api/notifications/mark-as-read`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId }),
       });
-  
+
       const data = await response.json();
       if (!response.ok) {
-        console.error('Failed to mark all notifications as read:', data.error || 'Unknown error');
         throw new Error(data.error || 'Failed to mark all notifications as read');
       }
-  
-      console.log('All notifications marked as read successfully:', data);
+
       return data;
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       throw error;
     }
-  },  
+  },
 
-  // Get all notifications
-async getAllNotifications(userId, params = {}) {
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('Token is not available for getAllNotifications. Ensure the user is logged in.');
-      throw new Error('Token not available');
-    }
+  async getAllNotifications(token, userId, params = {}) {
+    try {
+      if (!token) throw new Error('Token not available');
 
-    // Construct the URL with query parameters
-    const url = new URL(`${API_URL}/api/notifications`);
-    url.searchParams.append('userId', userId);
+      
+      const url = new URL(`${API_URL}/api/notifications`);
+      url.searchParams.append('userId', userId);
 
-    // Add optional parameters (e.g., since for incremental fetching)
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        url.searchParams.append(key, value);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          url.searchParams.append(key, value);
+        }
+      });
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch notifications');
       }
-    });
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 401) {
-      console.error('Unauthorized request. Token might be expired or invalid.');
-      throw new Error('Unauthorized request');
+      return data;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    if (!response.ok) {
-      console.error('Failed to fetch notifications:', data.error || 'Unknown error');
-      throw new Error(data.error || 'Failed to fetch notifications');
-    }
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    throw error;
-  }
-}
+  },
 };
 
 export default NotificationService;

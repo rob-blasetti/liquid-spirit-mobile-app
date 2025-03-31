@@ -1,12 +1,13 @@
 import React, { useContext, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faBell } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
 import EventsScreen from '../screens/Events';
+import NotificationScreen from '../screens/Notifications';
 import ActivitiesScreen from '../screens/Activities';
 import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
@@ -20,6 +21,7 @@ const tabIcons = {
   Profile: faUser,
   Feed: faCompass,
   Camera: faSquarePlus,
+  Notifications: faBell,
   Events: faBahai,
   Activities: faAlignLeft,
 };
@@ -83,6 +85,11 @@ const BottomBar = ({ initialPosts }) => {
           name="Events" 
           component={EventsScreen} 
         />
+        <Tab.Screen 
+          name="Notifications" 
+          component={NotificationScreen} 
+        />
+
         <Tab.Screen 
           name="Profile" 
           component={ProfileStackNavigator} 
