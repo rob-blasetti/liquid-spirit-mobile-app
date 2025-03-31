@@ -27,6 +27,7 @@ export default function Notifications() {
   const { user, token } = useContext(UserContext);
   const [notifList, setNotifList] = useState([]);
   const [loading, setLoading] = useState(true);
+  console.log('notifList: ', notifList);
 
   const fetchNotifications = async () => {
     try {
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
+    marginRight: 10,
     alignItems: "center",
   },
   textContainer: { marginLeft: 10 },

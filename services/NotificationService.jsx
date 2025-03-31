@@ -208,11 +208,13 @@ const NotificationService = {
   },
 
   async markNotificationAsRead(token, notificationId) {
+    console.log('TOKEN: ', token, 'notificationId: ', notificationId);
+
     try {
       if (!token) throw new Error('Token not available');
 
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/mark-as-read`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -220,6 +222,8 @@ const NotificationService = {
       });
 
       const data = await response.json();
+      console.log(data);
+
       if (!response.ok) {
         throw new Error(data.error || 'Failed to mark notification as read');
       }
