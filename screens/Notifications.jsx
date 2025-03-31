@@ -27,7 +27,8 @@ export default function Notifications() {
   const { user, token } = useContext(UserContext);
   const [notifList, setNotifList] = useState([]);
   const [loading, setLoading] = useState(true);
-  console.log('notifList: ', notifList);
+  const [refreshing, setRefreshing] = useState(false);
+
 
   const fetchNotifications = async () => {
     try {
@@ -62,6 +63,17 @@ export default function Notifications() {
       );
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await fetchNotifications();
+    } catch (error) {
+      console.error("Error refreshing notifications:", error);
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -113,6 +125,8 @@ export default function Notifications() {
             </View>
           </Pressable>
         )}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
     </View>
   );
