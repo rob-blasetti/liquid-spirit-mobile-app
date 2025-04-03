@@ -18,95 +18,20 @@ import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
 import Video from 'react-native-video';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
-import { colors } from '../styles/colours';
-import { API_URL } from '../config';
 import { TouchableWithoutFeedback } from 'react-native';
+import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
 
 export default function CreatePost({ onPostCreated }) {
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [mediaType, setMediaType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { communityId, token } = useContext(UserContext);
+  const [uploadStep, setUploadStep] = useState('');
+  const { communityId, token, user } = useContext(UserContext);
 
   useEffect(() => {
     openCamera();
   }, []);
-
-  const uploadImageAndThumbnail = async (fileUri, fileType) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', {
-        uri: fileUri,
-        type: fileType,
-        name: `post-media-${Date.now()}.jpg`,
-      });
-  
-      const response = await fetch(`${API_URL}/api/upload/upload-image`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-  
-      const data = await response.json();
-      return {
-        originalUrl: data.originalUrl,
-        thumbnailUrl: data.thumbnailUrl,
-      };
-    } catch (err) {
-      console.error('Image upload error:', err);
-      Alert.alert('Upload Failed', err.message);
-      return null;
-    }
-  };
-
-  const uploadToS3 = async (fileUri, fileType) => {
-    try {
-      const isVideo = fileType.includes('video');
-      const fileExtension = isVideo ? 'mp4' : 'jpg';
-      const fileName = `post-media-${Date.now()}.${fileExtension}`;
-  
-      // ✅ Choose correct S3 endpoint
-      const endpoint = isVideo ? 's3-video-url' : 's3-url';
-  
-      // ✅ Step 1: Request Signed URL from backend
-      const signedUrlResponse = await fetch(
-        `${API_URL}/api/upload/${endpoint}?fileName=${fileName}&fileType=${fileType}`,
-        {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-  
-      const { url } = await signedUrlResponse.json();
-      if (!url) throw new Error('Failed to get signed URL');
-  
-      // ✅ Step 2: Convert `fileUri` into a Blob
-      const fileBlob = await fetch(fileUri).then(res => res.blob());
-  
-      // ✅ Step 3: Upload file to S3
-      const uploadResponse = await fetch(url, {
-        method: 'PUT',
-        body: fileBlob,
-        headers: { 'Content-Type': fileType },
-      });
-  
-      if (!uploadResponse.ok) throw new Error('Failed to upload to S3');
-  
-      return url.split('?')[0]; // ✅ Return the public URL of the uploaded file
-    } catch (error) {
-      console.error('S3 Upload Error:', error);
-      Alert.alert('Upload Failed', 'Could not upload media');
-      return null;
-    }
-  };  
 
   const openCamera = async () => {
     const options = { mediaType: 'mixed', quality: 0.7 };
@@ -141,36 +66,35 @@ export default function CreatePost({ onPostCreated }) {
       Alert.alert('Missing Fields', 'Please write something.');
       return;
     }
-  
+
     let mediaResult = null;
-    if (mediaUri) {
-      setIsUploading(true);
-      mediaResult = await uploadImageAndThumbnail(mediaUri, mediaType);
-      setIsUploading(false);
-      if (!mediaResult) return;
-    }
-  
+
     try {
       setIsUploading(true);
-      const response = await fetch(`${API_URL}/api/posts/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          content,
-          media: mediaResult ? [mediaResult.originalUrl] : [],
-          mediaThumbnails: mediaResult ? [mediaResult.thumbnailUrl] : [],
-          community: communityId,
-        }),
-      });
-      setIsUploading(false);
-  
-      if (!response.ok) {
-        throw new Error('Failed to create post.');
+      setUploadStep('Uploading media...');
+
+      if (mediaUri) {
+        if (mediaType.includes('image')) {
+          mediaResult = await uploadImageWithThumbnail(mediaUri, mediaType, token);
+        } else if (mediaType.includes('video')) {
+          mediaResult = await uploadVideoWithThumbnail(mediaUri, mediaType, token);
+        }
       }
-  
+
+      setUploadStep('Creating post...');
+
+      await createPost({
+        title: '',
+        content,
+        mediaUrl: mediaResult ? mediaResult.originalUrl : null,
+        mediaThumbnailUrl: mediaResult ? mediaResult.thumbnailUrl : null,
+        user: { id: user.id },
+        userCommunityId: communityId,
+        token,
+      });
+
+      setIsUploading(false);
+      setUploadStep('');
       Alert.alert('Success', 'Your post has been created!');
       setContent('');
       setMediaUri(null);
@@ -178,13 +102,13 @@ export default function CreatePost({ onPostCreated }) {
       if (onPostCreated) {
         onPostCreated();
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Post error:', err);
       setIsUploading(false);
-      Alert.alert('Error', `Create post error: ${error.message}`);
+      setUploadStep('');
+      Alert.alert('Error', err.message);
     }
   };
-  
-  
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
@@ -220,8 +144,15 @@ export default function CreatePost({ onPostCreated }) {
             <Video source={{ uri: mediaUri }} style={styles.video} controls resizeMode="contain" paused={false} repeat />
           )}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handlePost}>
-            {isUploading ? <ActivityIndicator color="#312783" /> : <Text style={styles.submitButtonText}>Post</Text>}
+          {isUploading && (
+            <View style={{ marginBottom: 10 }}>
+              <ActivityIndicator color="#312783" />
+              <Text style={{ color: '#312783', marginTop: 5 }}>{uploadStep}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
+            <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Post'}</Text>
           </TouchableOpacity>
         </ScrollView>
       </TouchableWithoutFeedback>
