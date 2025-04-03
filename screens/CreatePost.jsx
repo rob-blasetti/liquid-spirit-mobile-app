@@ -33,6 +33,40 @@ export default function CreatePost({ onPostCreated }) {
     openCamera();
   }, []);
 
+  const uploadImageAndThumbnail = async (fileUri, fileType) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: fileUri,
+        type: fileType,
+        name: `post-media-${Date.now()}.jpg`,
+      });
+  
+      const response = await fetch(`${API_URL}/api/upload/upload-image`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+  
+      const data = await response.json();
+      return {
+        originalUrl: data.originalUrl,
+        thumbnailUrl: data.thumbnailUrl,
+      };
+    } catch (err) {
+      console.error('Image upload error:', err);
+      Alert.alert('Upload Failed', err.message);
+      return null;
+    }
+  };
+
   const uploadToS3 = async (fileUri, fileType) => {
     try {
       const isVideo = fileType.includes('video');
@@ -107,17 +141,16 @@ export default function CreatePost({ onPostCreated }) {
       Alert.alert('Missing Fields', 'Please write something.');
       return;
     }
-
-    let mediaUrl = null;
+  
+    let mediaResult = null;
     if (mediaUri) {
       setIsUploading(true);
-      mediaUrl = await uploadToS3(mediaUri, mediaType);
+      mediaResult = await uploadImageAndThumbnail(mediaUri, mediaType);
       setIsUploading(false);
-      if (!mediaUrl) return;
+      if (!mediaResult) return;
     }
-
+  
     try {
-      console.log('setting is uploading');
       setIsUploading(true);
       const response = await fetch(`${API_URL}/api/posts/create`, {
         method: 'POST',
@@ -127,17 +160,17 @@ export default function CreatePost({ onPostCreated }) {
         },
         body: JSON.stringify({
           content,
-          media: mediaUrl ? [mediaUrl] : [],
+          media: mediaResult ? [mediaResult.originalUrl] : [],
+          mediaThumbnails: mediaResult ? [mediaResult.thumbnailUrl] : [],
           community: communityId,
         }),
       });
-      console.log('response: ', response);
       setIsUploading(false);
-
+  
       if (!response.ok) {
         throw new Error('Failed to create post.');
       }
-
+  
       Alert.alert('Success', 'Your post has been created!');
       setContent('');
       setMediaUri(null);
@@ -150,6 +183,8 @@ export default function CreatePost({ onPostCreated }) {
       Alert.alert('Error', `Create post error: ${error.message}`);
     }
   };
+  
+  
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
