@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
+import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
@@ -28,6 +29,7 @@ export default function CreatePost({ onPostCreated }) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
   const { communityId, token, user } = useContext(UserContext);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     openCamera();
@@ -72,6 +74,7 @@ export default function CreatePost({ onPostCreated }) {
     try {
       setIsUploading(true);
       setUploadStep('Uploading media...');
+      setUploadProgress(30);
 
       if (mediaUri) {
         if (mediaType.includes('image')) {
@@ -82,6 +85,7 @@ export default function CreatePost({ onPostCreated }) {
       }
 
       setUploadStep('Creating post...');
+      setUploadProgress(70);
 
       await createPost({
         title: '',
@@ -93,6 +97,7 @@ export default function CreatePost({ onPostCreated }) {
         token,
       });
 
+      setUploadProgress(100);
       setIsUploading(false);
       setUploadStep('');
       Alert.alert('Success', 'Your post has been created!');
@@ -145,8 +150,13 @@ export default function CreatePost({ onPostCreated }) {
           )}
 
           {isUploading && (
-            <View style={{ marginBottom: 10 }}>
-              <ActivityIndicator color="#312783" />
+            <View style={{ marginBottom: 10, alignItems: 'center' }}>
+              <Progress.Bar
+                progress={uploadProgress / 100}
+                width={250}
+                color="#312783"
+                borderRadius={10}
+              />
               <Text style={{ color: '#312783', marginTop: 5 }}>{uploadStep}</Text>
             </View>
           )}
