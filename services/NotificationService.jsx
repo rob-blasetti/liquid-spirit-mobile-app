@@ -260,20 +260,18 @@ const NotificationService = {
     }
   },
 
-  async getAllNotifications(token, userId, params = {}) {
+  async getAllNotifications(token, params = {}) {
     try {
       if (!token) throw new Error('Token not available');
-
-      
+  
       const url = new URL(`${API_URL}/api/notifications`);
-      url.searchParams.append('userId', userId);
-
+  
       Object.entries(params).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
           url.searchParams.append(key, value);
         }
       });
-
+  
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -281,12 +279,12 @@ const NotificationService = {
           'Authorization': `Bearer ${token}`,
         },
       });
-
+  
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch notifications');
       }
-
+  
       return data;
     } catch (error) {
       console.error('Error fetching notifications:', error);

@@ -18,6 +18,7 @@ export const UserProvider = ({ children }) => {
   const [userPosts, setUserPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(null);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -243,7 +244,9 @@ export const UserProvider = ({ children }) => {
         userPosts, 
         setUserPosts, 
         token, 
-        setToken, 
+        setToken,
+        unreadCount,
+        setUnreadCount,
         communityId, 
         setCommunityId,
         login,

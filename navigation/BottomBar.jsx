@@ -31,6 +31,7 @@ const BottomBar = ({ initialPosts }) => {
   const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
+  const { unreadCount } = useContext(UserContext);
 
   return (
     <>
@@ -85,9 +86,15 @@ const BottomBar = ({ initialPosts }) => {
           name="Events" 
           component={EventsScreen} 
         />
-        <Tab.Screen 
-          name="Notifications" 
-          component={NotificationScreen} 
+        <Tab.Screen
+          name="Notifications"
+          component={NotificationScreen}
+          options={{
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesomeIcon icon={faBell} color={color} size={size} />
+            ),
+            tabBarBadge: unreadCount > 0 ? unreadCount : null,
+          }}
         />
 
         <Tab.Screen 
@@ -96,7 +103,6 @@ const BottomBar = ({ initialPosts }) => {
         />
       </Tab.Navigator>
 
-      {/* 3. Render the WelcomeModal at the same level as the Tab.Navigator */}
       <WelcomeModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}

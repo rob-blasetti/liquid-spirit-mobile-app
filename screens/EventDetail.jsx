@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,27 +7,44 @@ import {
   ScrollView,
   TouchableOpacity,
   Linking,
-  ActivityIndicator
-} from 'react-native';import themeVariables from '../styles/theme';
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
-import { joinEvent } from '../services/EventService'; // adjust the path as needed
+import { joinEvent, fetchEventDetails } from '../services/EventService';
 import localImages from '../utils/localImages';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
 
 const EventDetail = ({ route }) => {
-  const { event } = route.params;
+  const { event: initialEvent, eventId } = route.params || {};
   const { user, token } = useContext(UserContext);
-  const [isJoining, setIsJoining] = useState(false);
-  const [hasJoined, setHasJoined] = useState(
-    user && event.attendees
-      ? event.attendees.some(attendee => attendee.refId.toString() === user.id.toString())
-      : false
-  );
 
-  const isAttendee = user && event.attendees
-    ? event.attendees.some(attendee => attendee.refId.toString() === user.id.toString())
-    : false;
+  const [event, setEvent] = useState(initialEvent || null);
+  const [loading, setLoading] = useState(!initialEvent);
+  const [isJoining, setIsJoining] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasJoined, setHasJoined] = useState(false);
+
+  useEffect(() => {
+    const fetchEvent = async () => {
+      if (!event && eventId && token) {
+        try {
+          const fetched = await fetchEventDetails(eventId, token);
+          setEvent(fetched);
+          setHasJoined(fetched.attendees?.some(att => att.refId?.toString() === user?.id?.toString()));
+        } catch (err) {
+          setError('Failed to fetch event');
+        } finally {
+          setLoading(false);
+        }
+      } else if (initialEvent) {
+        setHasJoined(initialEvent.attendees?.some(att => att.refId?.toString() === user?.id?.toString()));
+      }
+    };
+    fetchEvent();
+  }, [eventId, event, token]);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -48,29 +65,41 @@ const EventDetail = ({ route }) => {
   };
 
   const openGoogleMaps = () => {
-    if (!event.venue) return;
+    if (!event?.venue) return;
     const encodedAddress = encodeURIComponent(event.venue);
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
     Linking.openURL(mapsUrl);
   };
 
   const handleJoinEvent = async () => {
-    console.log('handleJoinEvent pressed');
-    console.log('join event, parameters 1: ', event._id, token); // not working
+    if (!event || !token) return;
     setIsJoining(true);
-    console.log('post set is joining true');
     try {
-      console.log('in try block');
-      console.log('join event, parameters 2: ', event._id, token); // not working
-      await joinEvent(event._id, token); //not getting called
+      await joinEvent(event._id, token);
       setHasJoined(true);
       Alert.alert('Success', 'You have joined the event.');
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to join the event. Please try again.');
+      Alert.alert('Error', error.message || 'Failed to join the event.');
     } finally {
       setIsJoining(false);
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.noEventContainer}>
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+      </View>
+    );
+  }
+
+  if (!event) {
+    return (
+      <View style={styles.noEventContainer}>
+        <Text style={styles.noEventText}>No event to display.</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -78,7 +107,6 @@ const EventDetail = ({ route }) => {
         source={localImages[event.imageUrl] || require('../assets/img/placeholder.png')}
         style={styles.banner}
       />
-
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{event.title}</Text>
         <Text style={styles.type}>{event.eventType || 'Unknown Event'}</Text>
@@ -91,7 +119,7 @@ const EventDetail = ({ route }) => {
         <View style={styles.iconRow}>
           <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.iconText}>
-            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {' '}
+            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
             {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>
         </View>
@@ -121,6 +149,7 @@ const EventDetail = ({ route }) => {
     </ScrollView>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: themeVariables.whiteColor,
@@ -198,6 +227,18 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     fontSize: 16,
     fontWeight: '600',
+  },
+  noEventContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: themeVariables.whiteColor,
+    padding: 20,
+  },
+  noEventText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 

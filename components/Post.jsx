@@ -4,6 +4,9 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Linking,
+  Share,
+  Alert
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -12,7 +15,7 @@ import {
   faEllipsisV,
   faHeart as solidHeart
 } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as heartOutline, faComment } from '@fortawesome/free-regular-svg-icons';
+import { faHeart as heartOutline, faComment, faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
@@ -24,10 +27,8 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const { token, user } = useContext(UserContext);
 
   useEffect(() => {
-    // Recalculate the liked state based on the likes array
     const computedIsLiked = post.likes?.includes(userId) || false;
     setIsLiked(computedIsLiked);
-    // setLocalLikeCount(post.likes?.length || 0);
   }, [post.likes, userId]);
 
   const debouncedToggleLike = useCallback(
@@ -49,7 +50,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
   const userId = user?.id || user?._id;
   const [isLiked, setIsLiked] = useState(post.likes?.includes(userId) || false);
-  // const [localLikeCount, setLocalLikeCount] = useState(post.likes?.length || 0);
   const commentCount = post.comments?.length || 0;
   const isOwn = post.author._id == userId;
 
@@ -89,17 +89,38 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     handleCloseMenu();
   };
 
+  const handleSharePost = async (id) => {
+    const url = `https://www.liquidspirit.org/posts/${id}`;
+    const message = `Check out this post on Liquid Spirit 👇\n${url}`;
+    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+  
+    try {
+      const supported = await Linking.canOpenURL(whatsappUrl);
+  
+      if (supported) {
+        await Linking.openURL(whatsappUrl);
+      } else {
+        // WhatsApp not installed - fallback to native share
+        await Share.share({
+          message,
+          url,
+          title: 'Liquid Spirit Post',
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+      Alert.alert('Sharing Error', 'Something went wrong while trying to share the post.');
+    }
+  };  
+
   const toggleLike = async () => {
     const previousLiked = isLiked;
-  
     setIsLiked(!previousLiked);
-    // setLocalLikeCount(prevCount => !previousLiked ? prevCount + 1 : Math.max(prevCount - 1, 0));
   
     try {
       await onLike(post._id, userId);
     } catch (error) {
       setIsLiked(previousLiked);
-      // setLocalLikeCount(prevCount => previousLiked ? prevCount + 1 : Math.max(prevCount - 1, 0));
       console.error('Error updating like:', error);
     }
   };
@@ -195,6 +216,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
           <FontAwesomeIcon icon={faComment} size={22} color="#312783" />
           <Text style={styles.footerIconText}>{commentCount}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.postFooterIcon} onPress={() => handleSharePost(post._id)}>
+          <FontAwesomeIcon icon={faPaperPlane} size={22} color="#312783" />
         </TouchableOpacity>
       </View>
 

@@ -22,7 +22,7 @@ const ActivityDetail = ({ route }) => {
   const { user } = useContext(UserContext);
   const { activityId, activityPreload } = route.params;
 
-  const [activity, setActivity] = useState({ activityPreload });
+  const [activity, setActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -57,9 +57,16 @@ const ActivityDetail = ({ route }) => {
     date.setHours(parseInt(hour, 10), parseInt(minute, 10));
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   };
-  
 
-  if (loading) {
+  if (!activityId) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.noActivityIdText}>No activity to display.</Text>
+      </View>
+    );
+  }  
+
+  if (loading && activityPreload) {
     return <>
         <ScrollView contentContainerStyle={styles.container}>
           {activityPreload.imageUrl && <FastImage source={{ uri: activityPreload.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
@@ -105,7 +112,19 @@ const ActivityDetail = ({ route }) => {
   }
 
   if (!activity) {
-    return <Text style={styles.errorText}>Activity details not available.</Text>;
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+        </View>
+      );
+    }
+  
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.noActivityIdText}>Activity details not available.</Text>
+      </View>
+    );
   }
 
   const userId = user?.id;
@@ -113,7 +132,6 @@ const ActivityDetail = ({ route }) => {
   const isUserAParticipant = activity.participants?.some(participant => participant.details._id === userId);
   const hasFacilitatorSpace = activity.facilitators?.length < activity.facilitatorLimit;
   const hasParticipantSpace = activity.participants?.length < activity.participantLimit;
-  console.log('activity: ', activityPreload);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -132,18 +150,18 @@ const ActivityDetail = ({ route }) => {
           <Text style={styles.schedule}>{activity.groupDetails?.day || 'N/A'} - {formatTime(activity.groupDetails?.time) || 'N/A'} ({activity.groupDetails?.frequency || 'One-time'})</Text>
         </View>
 
-        <TouchableOpacity onPress={activityPreload.onlineLink ? () => Linking.openURL(activityPreload.onlineLink) : openGoogleMaps}>
+        <TouchableOpacity onPress={activity.onlineLink ? () => Linking.openURL(activity.onlineLink) : openGoogleMaps}>
           <View style={styles.iconRow}>
             <FontAwesomeIcon
-              icon={activityPreload.onlineLink ? faVideo : faCarSide}
+              icon={activity.onlineLink ? faVideo : faCarSide}
               size={22}
               color="#312783"
               style={styles.iconSpacing}
             />
             <Text style={styles.location}>
-              {activityPreload.onlineLink
+              {activity.onlineLink
                 ? 'Join Online'
-                : `${activityPreload.address?.streetAddress || 'No Address'}, ${activityPreload.address?.suburb || 'No Suburb'}, ${activityPreload.address?.city || 'No City'}`}
+                : `${activity.address?.streetAddress || 'No Address'}, ${activity.address?.suburb || 'No Suburb'}, ${activity.address?.city || 'No City'}`}
             </Text>
           </View>
         </TouchableOpacity>
@@ -210,6 +228,12 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
     marginTop: 50,
+  },
+  noActivityIdText: {
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 18,
   },
   banner: {
     width: '100%',
@@ -283,6 +307,13 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: themeVariables.whiteColor,
+    padding: 20,
   },
 });
 

@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faBell,
@@ -28,36 +29,89 @@ const NotificationIcon = ({ type }) => {
 };
 
 export default function Notifications() {
+  const navigation = useNavigation();
   const { user, token } = useContext(UserContext);
   const [notifList, setNotifList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { setUnreadCount } = useContext(UserContext);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 20;
 
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (append = false) => {
     try {
-      const response = await NotificationService.getAllNotifications(token, user.id);
-      console.log(response);
+      const response = await NotificationService.getAllNotifications(token, {
+        limit: LIMIT,
+        offset: append ? notifList.length : 0,
+      });
+      
       const formatted = response.data.map((n) => ({
         id: n._id,
-        type: mapNotificationType(n.type?.typeName || n.type || ""), // handles populated and non-populated
+        type: mapNotificationType(n.type?.typeName || ""),
+        targetId: n.target?._id,
         title: n.additionalData?.caption || "Notification",
         message: n.additionalData?.caption || "",
         time: formatTime(n.createdAt),
+        timeStamp: n.createdAt,
         read: n.isRead,
       }));
+  
+      const grouped = {};
 
-      setNotifList(formatted);
+      formatted.forEach((n) => {
+        const group = getDateGroup(n.timeStamp); // you'll need raw createdAt
+        if (!grouped[group]) grouped[group] = [];
+        grouped[group].push(n);
+      });
+
+      const flattened = [];
+      Object.entries(grouped).forEach(([section, items]) => {
+        flattened.push({ id: section, type: 'section', title: section });
+
+        items.forEach((item) => {
+          flattened.push({ ...item, type: 'item' });
+        });
+      });
+
+      setNotifList((prev) => append ? [...prev, ...flattened] : flattened);
+
+      const unreadCount = formatted.filter((n) => !n.read).length;
+      setUnreadCount(unreadCount);
+  
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  const getDateGroup = (timestamp) => {
+    const now = new Date();
+    const date = new Date(timestamp);
+  
+    const isSameDay = (d1, d2) =>
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate();
+  
+    const isYesterday = (d) => {
+      const y = new Date();
+      y.setDate(now.getDate() - 1);
+      return isSameDay(d, y);
+    };
+  
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  
+    if (isSameDay(now, date)) return 'Today';
+    if (isYesterday(date)) return 'Yesterday';
+    if (diffInDays <= 7) return 'This Week';
+    return 'Earlier';
+  };
 
   const markAsRead = async (id) => {
     try {
@@ -67,6 +121,32 @@ export default function Notifications() {
       );
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
+    }
+  };
+
+  const handleNotificationPress = async (item) => {
+    try {
+      markAsRead(item.id);
+      switch (item.type) {
+        case 'post':
+          // navigation.navigate("PostDetail", { postId: item.targetId });
+          navigation.navigate('Feed');
+          break;
+        case 'activity':
+          navigation.navigate("ActivityDetail", { activityId: item.targetId });
+          break;
+        case 'event':
+          navigation.navigate("EventDetail", { eventId: item.targetId });
+          break;
+        case 'announcement':
+          navigation.navigate("Profile");
+          break;
+        default:
+          console.warn("Unknown notification type");
+          break;  
+      };
+    } catch (err) {
+      console.error("Notification press error:", err);
     }
   };
 
@@ -118,26 +198,41 @@ export default function Notifications() {
       <Text style={styles.heading}>Notifications</Text>
       <FlatList
         data={notifList}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={() => markAsRead(item.id)}
-            style={[
-              styles.notification,
-              { backgroundColor: item.read ? "#f5f5f5" : "#dbeafe" },
-            ]}
-          >
-            <NotificationIcon type={item.type} />
-            <View style={styles.textContainer}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.message}>{item.message}</Text>
-              <Text style={styles.time}>{item.time}</Text>
-            </View>
-          </Pressable>
-        )}
+        keyExtractor={(item) =>
+          item.type === 'section' ? `section-${item.title}` : `item-${item.id}`
+        }
+        renderItem={({ item }) => {
+          if (item.type === 'section') {
+            return <Text style={styles.sectionHeader}>{item.title}</Text>;
+          }
+        
+          return (
+            <Pressable
+              onPress={() => handleNotificationPress(item)}
+              style={[
+                styles.notification,
+                { backgroundColor: item.read ? "#f5f5f5" : "#dbeafe" },
+              ]}
+            >
+              <NotificationIcon type={item.type} />
+              <View style={styles.textContainer}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.message}>{item.message}</Text>
+                <Text style={styles.time}>{item.time}</Text>
+              </View>
+            </Pressable>
+          );
+        }}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        onEndReached={() => fetchNotifications(true)}
+        onEndReachedThreshold={0.5}
       />
+      {notifList.length === 0 && !loading && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>You're all caught up!</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -156,4 +251,22 @@ const styles = StyleSheet.create({
   title: { fontWeight: "bold", fontSize: 16, marginRight: 30 },
   message: { fontSize: 14, color: "#555" },
   time: { fontSize: 12, color: "#999" },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
+    fontStyle: 'italic',
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#444',
+  },
 });

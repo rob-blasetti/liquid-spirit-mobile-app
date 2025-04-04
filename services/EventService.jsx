@@ -38,20 +38,13 @@ export const joinEvent = async (eventId, token) => {
       },
     });
 
+    console.log('response: ', response);
+
     if (!response.ok) {
       throw new Error('Failed to join the event. Please try again.');
     }
 
-    // // Simulate a Notification Service call
-    // await NotificationService.userJoinedEventNotification(
-    //   userId,
-    //   eventId,
-    //   userCommunityId,
-    //   eventName,
-    //   userName
-    // );
-
-    return response; // Ensure that the response is returned
+    return response;
   } catch (error) {
     console.error('Error joining event:', error);
     throw error;
