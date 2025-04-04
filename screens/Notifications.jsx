@@ -36,7 +36,7 @@ export default function Notifications() {
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadCount } = useContext(UserContext);
   const [offset, setOffset] = useState(0);
-  const LIMIT = 20;
+  const LIMIT = 10;
 
   const fetchNotifications = async (append = false) => {
     try {
@@ -44,6 +44,8 @@ export default function Notifications() {
         limit: LIMIT,
         offset: append ? notifList.length : 0,
       });
+
+      console.log(response.data);
       
       const formatted = response.data.map((n) => ({
         id: n._id,
@@ -58,6 +60,8 @@ export default function Notifications() {
   
       const grouped = {};
 
+      console.log("Formatted Notifications:", formatted);
+
       formatted.forEach((n) => {
         const group = getDateGroup(n.timeStamp); // you'll need raw createdAt
         if (!grouped[group]) grouped[group] = [];
@@ -66,7 +70,7 @@ export default function Notifications() {
 
       const flattened = [];
       Object.entries(grouped).forEach(([section, items]) => {
-        flattened.push({ id: section, type: 'section', title: section });
+        flattened.push({ id: `section-${section}-${Date.now()}-${Math.random()}`, type: 'section', title: section });
 
         items.forEach((item) => {
           flattened.push({ ...item, type: 'item' });
@@ -198,9 +202,7 @@ export default function Notifications() {
       <Text style={styles.heading}>Notifications</Text>
       <FlatList
         data={notifList}
-        keyExtractor={(item) =>
-          item.type === 'section' ? `section-${item.title}` : `item-${item.id}`
-        }
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           if (item.type === 'section') {
             return <Text style={styles.sectionHeader}>{item.title}</Text>;
