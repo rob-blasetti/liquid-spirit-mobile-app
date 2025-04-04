@@ -36,6 +36,7 @@ export default function Notifications() {
   const [refreshing, setRefreshing] = useState(false);
   const { setUnreadCount } = useContext(UserContext);
   const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const LIMIT = 10;
 
   const fetchNotifications = async (append = false) => {
@@ -45,7 +46,12 @@ export default function Notifications() {
         offset: append ? notifList.length : 0,
       });
 
-      console.log(response.data);
+      const newData = response.data;
+      if (newData.length < LIMIT) {
+        setHasMore(false);
+      } else {
+        setHasMore(true);
+      }
       
       const formatted = response.data.map((n) => ({
         id: n._id,
@@ -63,7 +69,7 @@ export default function Notifications() {
       console.log("Formatted Notifications:", formatted);
 
       formatted.forEach((n) => {
-        const group = getDateGroup(n.timeStamp); // you'll need raw createdAt
+        const group = getDateGroup(n.timeStamp);
         if (!grouped[group]) grouped[group] = [];
         grouped[group].push(n);
       });
@@ -73,7 +79,7 @@ export default function Notifications() {
         flattened.push({ id: `section-${section}-${Date.now()}-${Math.random()}`, type: 'section', title: section });
 
         items.forEach((item) => {
-          flattened.push({ ...item, type: 'item' });
+          flattened.push({ ...item, type: item.type });
         });
       });
 
@@ -131,6 +137,7 @@ export default function Notifications() {
   const handleNotificationPress = async (item) => {
     try {
       markAsRead(item.id);
+      console.log(item.type);
       switch (item.type) {
         case 'post':
           // navigation.navigate("PostDetail", { postId: item.targetId });
@@ -225,6 +232,13 @@ export default function Notifications() {
             </Pressable>
           );
         }}
+        ListFooterComponent={() =>
+          !loading && notifList.length > 0 && !hasMore ? (
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>No more notifications</Text>
+            </View>
+          ) : null
+        }
         refreshing={refreshing}
         onRefresh={handleRefresh}
         onEndReached={() => fetchNotifications(true)}
@@ -240,7 +254,7 @@ export default function Notifications() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flex: 1, padding: 16, backgroundColor: "#fff", marginBottom: 45 },
   heading: { fontSize: 24, fontWeight: "bold", marginBottom: 12 },
   notification: {
     flexDirection: "row",
@@ -270,5 +284,14 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 8,
     color: '#444',
+  },
+  footer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  footerText: {
+    color: '#888',
+    fontSize: 14,
+    fontStyle: 'italic',
   },
 });
