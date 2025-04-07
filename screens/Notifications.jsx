@@ -8,7 +8,6 @@ import {
   faCalendar,
   faInfo,
   faAlignLeft,
-  faCompass,
 } from '@fortawesome/free-solid-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
@@ -32,8 +31,7 @@ const NotificationIcon = ({ type }) => {
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { user, token, setUnreadCount } = useContext(UserContext);
-  const [notifList, setNotifList] = useState([]);
+  const { token, setUnreadCount } = useContext(UserContext);
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -201,7 +199,7 @@ export default function Notifications() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#000" />
+        <ActivityIndicator size="large" color="#312783" />
       </View>
     );
   }
@@ -210,22 +208,22 @@ export default function Notifications() {
     <View style={styles.container}>
       <Text style={styles.heading}>Notifications (Beta)</Text>
       <View style={styles.toggleContainer}>
-      <Pressable
-        style={[
-          styles.toggleButton,
-          activeTab === 'personal' && styles.activeTab,
-        ]}
-        onPress={() => setActiveTab('personal')}
-      >
-        <Text
-          style={{
-            ...styles.toggleText,
-            color: activeTab === 'personal' ? '#312783' : '#fff',
-          }}
+        <Pressable
+          style={[
+            styles.toggleButton,
+            activeTab === 'personal' && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab('personal')}
         >
-          Personal
-        </Text>
-      </Pressable>
+          <Text
+            style={{
+              ...styles.toggleText,
+              color: activeTab === 'personal' ? '#fff' : '#312783',
+            }}
+          >
+            Personal
+          </Text>
+        </Pressable>
         <Pressable
           style={[
             styles.toggleButton,
@@ -236,7 +234,7 @@ export default function Notifications() {
           <Text
             style={{
               ...styles.toggleText,
-              color: activeTab === 'community' ? '#312783' : '#fff',
+              color: activeTab === 'community' ? '#fff' : '#312783',
             }}
           >
             Community
@@ -361,27 +359,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     marginBottom: 16,
-    borderRadius: 8,
-    backgroundColor: '#hitw',
-    padding: 6,
+    backgroundColor: '#dcdcdc',
+    borderRadius: 20,
+    padding: 4,
   },
+  
   toggleButton: {
     flex: 1,
-    paddingVertical: 8,
-    marginHorizontal: 8,
     alignItems: 'center',
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#312783',
   },
+  
   toggleText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#312783',
   },
+  
   activeTab: {
-    backgroundColor: '#f3f3f3',
-    borderRadius: 20,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: '#312783', // active tab highlight
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
   },
 });
