@@ -14,47 +14,48 @@ import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
 
 const NotificationIcon = ({ type }) => {
+  const iconStyle = { color: "#312783" };
+
   switch (type) {
     case "post":
-      return <FontAwesomeIcon icon={faUsers} size={20} />;
+      return <FontAwesomeIcon icon={faUsers} size={20} style={iconStyle} />;
     case "activity":
-      return <FontAwesomeIcon icon={faAlignLeft} size={20} />;
+      return <FontAwesomeIcon icon={faAlignLeft} size={20} style={iconStyle} />;
     case "event":
-      return <FontAwesomeIcon icon={faCalendar} size={20} />;        
+      return <FontAwesomeIcon icon={faCalendar} size={20} style={iconStyle} />;        
     case "announcement":
-      return <FontAwesomeIcon icon={faInfo} size={20} />;
+      return <FontAwesomeIcon icon={faInfo} size={20} style={iconStyle} />;
     default:
-      return <FontAwesomeIcon icon={faBell} size={20} />;
+      return <FontAwesomeIcon icon={faBell} size={20} style={iconStyle} />;
   }
 };
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { user, token } = useContext(UserContext);
+  const { user, token, setUnreadCount } = useContext(UserContext);
   const [notifList, setNotifList] = useState([]);
+  const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { setUnreadCount } = useContext(UserContext);
-  const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [activeTab, setActiveTab] = useState('personal');
   const LIMIT = 10;
 
   const fetchNotifications = async (append = false) => {
     try {
       const response = await NotificationService.getAllNotifications(token, {
         limit: LIMIT,
-        offset: append ? notifList.length : 0,
+        offset: append ? Object.values(groupedNotifList).flat().length : 0,
       });
 
+      console.log(response);
+
       const newData = response.data;
-      if (newData.length < LIMIT) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
-      
-      const formatted = response.data.map((n) => ({
+      if (newData.length < LIMIT) setHasMore(false);
+
+      const formatted = newData.map((n) => ({
         id: n._id,
+        scope: n.scope === 'community' ? 'community' : 'personal',
         type: mapNotificationType(n.type?.typeName || ""),
         targetId: n.target?._id,
         title: n.additionalData?.caption || "Notification",
@@ -63,31 +64,29 @@ export default function Notifications() {
         timeStamp: n.createdAt,
         read: n.isRead,
       }));
-  
+
       const grouped = {};
-
-      console.log("Formatted Notifications:", formatted);
-
       formatted.forEach((n) => {
         const group = getDateGroup(n.timeStamp);
         if (!grouped[group]) grouped[group] = [];
         grouped[group].push(n);
       });
 
-      const flattened = [];
-      Object.entries(grouped).forEach(([section, items]) => {
-        flattened.push({ id: `section-${section}-${Date.now()}-${Math.random()}`, type: 'section', title: section });
-
-        items.forEach((item) => {
-          flattened.push({ ...item, type: item.type });
-        });
+      setGroupedNotifList((prev) => {
+        const merged = { ...prev };
+        for (let [section, items] of Object.entries(grouped)) {
+          if (!merged[section]) merged[section] = items;
+          else {
+            const existingIds = new Set(merged[section].map((i) => i.id));
+            const newUniqueItems = items.filter((i) => !existingIds.has(i.id));
+            merged[section] = [...merged[section], ...newUniqueItems];
+          }
+        }
+        return merged;
       });
-
-      setNotifList((prev) => append ? [...prev, ...flattened] : flattened);
 
       const unreadCount = formatted.filter((n) => !n.read).length;
       setUnreadCount(unreadCount);
-  
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
@@ -103,20 +102,9 @@ export default function Notifications() {
   const getDateGroup = (timestamp) => {
     const now = new Date();
     const date = new Date(timestamp);
-  
-    const isSameDay = (d1, d2) =>
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate();
-  
-    const isYesterday = (d) => {
-      const y = new Date();
-      y.setDate(now.getDate() - 1);
-      return isSameDay(d, y);
-    };
-  
+    const isSameDay = (d1, d2) => d1.toDateString() === d2.toDateString();
+    const isYesterday = (d) => isSameDay(d, new Date(Date.now() - 86400000));
     const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-  
     if (isSameDay(now, date)) return 'Today';
     if (isYesterday(date)) return 'Yesterday';
     if (diffInDays <= 7) return 'This Week';
@@ -126,9 +114,13 @@ export default function Notifications() {
   const markAsRead = async (id) => {
     try {
       await NotificationService.markNotificationAsRead(token, id);
-      setNotifList((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-      );
+      setGroupedNotifList((prev) => {
+        const updated = {};
+        for (let [section, items] of Object.entries(prev)) {
+          updated[section] = items.map((n) => (n.id === id ? { ...n, read: true } : n));
+        }
+        return updated;
+      });
     } catch (err) {
       console.error("Failed to mark notification as read:", err);
     }
@@ -172,6 +164,16 @@ export default function Notifications() {
     }
   };
 
+  const filteredNotifList = [];
+
+  Object.entries(groupedNotifList).forEach(([section, items]) => {
+    const scopedItems = items.filter((item) => item.scope === activeTab);
+    if (scopedItems.length > 0) {
+      filteredNotifList.push({ id: `section-${section}`, type: 'section', title: section });
+      scopedItems.forEach((item) => filteredNotifList.push(item));
+    }
+  });
+
   const typeCategoryMap = {
     post_media: "post",
     post_created: "post",
@@ -206,22 +208,51 @@ export default function Notifications() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Notifications</Text>
+      <Text style={styles.heading}>Notifications (Beta)</Text>
+      <View style={styles.toggleContainer}>
+      <Pressable
+        style={[
+          styles.toggleButton,
+          activeTab === 'personal' && styles.activeTab,
+        ]}
+        onPress={() => setActiveTab('personal')}
+      >
+        <Text
+          style={{
+            ...styles.toggleText,
+            color: activeTab === 'personal' ? '#312783' : '#fff',
+          }}
+        >
+          Personal
+        </Text>
+      </Pressable>
+        <Pressable
+          style={[
+            styles.toggleButton,
+            activeTab === 'community' && styles.activeTab,
+          ]}
+          onPress={() => setActiveTab('community')}
+        >
+          <Text
+            style={{
+              ...styles.toggleText,
+              color: activeTab === 'community' ? '#312783' : '#fff',
+            }}
+          >
+            Community
+          </Text>
+        </Pressable>
+      </View>
       <FlatList
-        data={notifList}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          if (item.type === 'section') {
-            return <Text style={styles.sectionHeader}>{item.title}</Text>;
-          }
-        
-          return (
+        data={filteredNotifList}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
+        renderItem={({ item }) =>
+          item.type === 'section' ? (
+            <Text style={styles.sectionHeader}>{item.title}</Text>
+          ) : (
             <Pressable
               onPress={() => handleNotificationPress(item)}
-              style={[
-                styles.notification,
-                { backgroundColor: item.read ? "#f5f5f5" : "#dbeafe" },
-              ]}
+              style={[styles.notification, { backgroundColor: item.read ? "#f5f5f5" : "#dbeafe" }]}
             >
               <NotificationIcon type={item.type} />
               <View style={styles.textContainer}>
@@ -230,10 +261,10 @@ export default function Notifications() {
                 <Text style={styles.time}>{item.time}</Text>
               </View>
             </Pressable>
-          );
-        }}
+          )
+        }
         ListFooterComponent={() =>
-          !loading && notifList.length > 0 && !hasMore ? (
+          !loading && filteredNotifList.length > 0 && !hasMore ? (
             <View style={styles.footer}>
               <Text style={styles.footerText}>No more notifications</Text>
             </View>
@@ -244,7 +275,7 @@ export default function Notifications() {
         onEndReached={() => fetchNotifications(true)}
         onEndReachedThreshold={0.5}
       />
-      {notifList.length === 0 && !loading && (
+      {filteredNotifList.length === 0 && !loading && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>You're all caught up!</Text>
         </View>
@@ -254,19 +285,51 @@ export default function Notifications() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff", marginBottom: 45 },
-  heading: { fontSize: 24, fontWeight: "bold", marginBottom: 12 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#f3f3f3", // @LS-SoftGrey
+    marginBottom: 45,
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#312783", // @LS-TrueBlue
+  },
   notification: {
     flexDirection: "row",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
     alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#312783",
+    borderRadius: 20,
+    shadowColor: "#000",           // Shadow
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,                  // Android shadow
   },
   textContainer: { marginLeft: 10 },
-  title: { fontWeight: "bold", fontSize: 16, marginRight: 30 },
-  message: { fontSize: 14, color: "#555" },
-  time: { fontSize: 12, color: "#999" },
+  title: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginRight: 30,
+    marginBottom: 5,
+    color: "blck", // primary text
+  },
+  message: {
+    fontSize: 14,
+    marginRight: 30,
+    color: "#444", // @dark-grey-color
+  },
+  time: {
+    fontSize: 12,
+    color: "#999",
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -283,7 +346,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 8,
-    color: '#444',
+    color: "#312783",
   },
   footer: {
     paddingVertical: 20,
@@ -293,5 +356,32 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: '#hitw',
+    padding: 6,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 8,
+    marginHorizontal: 8,
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: '#312783',
+  },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#312783',
+  },
+  activeTab: {
+    backgroundColor: '#f3f3f3',
+    borderRadius: 20,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
