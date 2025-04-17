@@ -134,10 +134,12 @@ export default function Notifications() {
           navigation.navigate('Feed');
           break;
         case 'activity':
-          navigation.navigate("ActivityDetail", { activityId: item.targetId });
+          // Navigate to activity detail, passing the activity ID
+          navigation.navigate('ActivityDetailCard', { activityId: item.targetId });
           break;
         case 'event':
-          navigation.navigate("EventDetail", { eventId: item.targetId });
+          // Navigate to event detail, passing the event ID
+          navigation.navigate('EventDetailCard', { eventId: item.targetId });
           break;
         case 'announcement':
           navigation.navigate("Profile");
