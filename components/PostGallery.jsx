@@ -18,10 +18,10 @@ const PostGallery = ({ posts }) => {
     } else if (item.title && item.imageUrl) {
       if (item.eventType) {
         // ✅ Navigate to the event detail page if it's an event
-        navigation.navigate('EventDetail', { event: item });
+        navigation.navigate('EventDetailCard', { eventPreload: item });
       } else {
         // ✅ Navigate to the activity detail page if it's an activity
-        navigation.navigate('ActivityDetail', { activityId: item._id, activityPreload: item });
+        navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item });
       }
     }
   };
@@ -74,7 +74,7 @@ const PostGallery = ({ posts }) => {
             ) : (
               <View>
                 <Text style={styles.listTitle}>{item.title}</Text>
-                { item.activityType && <Text style={styles.listTitle}>{item.activityType?.name}</Text> }
+                { item.activityType && <Text style={styles.listType}>{item.activityType?.name}</Text> }
                 { item.eventType && <Text style={styles.listType}>{item.eventType}</Text> }
               </View>
             )}

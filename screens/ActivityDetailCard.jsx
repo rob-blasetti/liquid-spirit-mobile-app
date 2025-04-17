@@ -332,22 +332,6 @@ const ActivityCardBody = ({
           style={styles.titleBlock}
         />
 
-        {/* Quick facts */}
-        <View style={styles.factRow}>
-          <Fact icon={faUsers} label="Community" value="Banyule" />
-          <Fact
-            icon={faBook}
-            label="Reference"
-            value="Book 3"
-            onPress={() => Linking.openURL('https://example.com/book3')}
-            link
-          />
-          <Fact
-            icon={faChair}
-            label="Seats Left"
-            value={Math.max(participantLimit - participants.length, 0)}
-          />
-        </View>
 
         {/* Details grid */}
         <CardContent style={styles.cardContent}>
@@ -375,7 +359,11 @@ const ActivityCardBody = ({
               isLink={isOnline}
             />
           </View>
-
+          {/* Quick facts */}
+          <View style={styles.factRow}>
+            <Fact icon={faUsers} label="Community" value={user?.community?.name || 'Unknown'} />
+            <Fact icon={faBook} label="Reference Material" value={activity.referenceMaterial || 'No Material Attached'} />
+          </View>
           {/* Facilitators and Participants Sections */}
           <View style={styles.sectionsContainer}>
               <TouchableOpacity

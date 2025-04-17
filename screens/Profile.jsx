@@ -248,7 +248,9 @@ const renderScene = ({ route }) => {
     <View style={styles.bannerContainer}>
       <FastImage
         source={{
-          uri: user?.community?.bannerImage || 'https://via.placeholder.com/600x200',
+          uri: Array.isArray(user?.community?.bannerImage)
+            ? user.community.bannerImage[0]
+            : (user?.community?.bannerImage || 'https://via.placeholder.com/600x200'),
         }}
         style={[styles.banner, StyleSheet.absoluteFill]}
         resizeMode={FastImage.resizeMode.cover}

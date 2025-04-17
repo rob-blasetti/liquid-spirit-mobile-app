@@ -15,6 +15,7 @@ const BadgeIcon = ({ iconName, label, style }) => (
 );
 
 const UserBadge = ({ user, userCertifications, type = 'user' }) => {
+  console.log(user);
   if (!user || typeof user !== 'object') {
     console.error('Invalid user data provided to UserBadge component');
     return <View style={[styles.container, styles.errorContainer]}><Text>Error</Text></View>;

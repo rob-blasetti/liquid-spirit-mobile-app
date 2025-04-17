@@ -93,7 +93,7 @@ const Events = () => {
     return (
       <TouchableOpacity
         style={styles.eventCard}
-        onPress={() => navigation.navigate('EventDetail', { event: item })}
+        onPress={() => navigation.navigate('EventDetailCard', { eventId: item._id, eventPreload: item })}
       >
         <View style={styles.imageContainer}>
           <FastImage

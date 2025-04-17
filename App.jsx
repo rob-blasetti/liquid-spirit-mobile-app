@@ -16,6 +16,8 @@ import Register from './screens/Register';
 import Verification from './screens/Verification';
 import EventDetail from './screens/EventDetail';
 import ActivityDetail from './screens/ActivityDetail';
+import ActivityDetailCard from './screens/ActivityDetailCard';
+import EventDetailCard from './screens/EventDetailCard';
 import ForgotPassword from './screens/ForgotPassword';
 import Eula from './screens/Eula';
 
@@ -96,7 +98,9 @@ const MainApp = () => {
             <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
             <Stack.Screen name="EULA" component={Eula} /> 
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
+            <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
+            <Stack.Screen name="ActivityDetailCard" component={ActivityDetailCard} options={{ title: 'Activity Detail Card' }}/>
             <Stack.Screen name="Main"
               options={{ headerShown: false }}
             >

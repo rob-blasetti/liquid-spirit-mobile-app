@@ -25,6 +25,7 @@ import UserBadge from '../components/UserBadge';
 // import OversightBadges from '../components/OversightBadges'; // unused, replaced by avatars
 import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
+import { API_URL } from '../config';
 
 const { height: windowHeight } = Dimensions.get('window');
 
@@ -43,14 +44,25 @@ const parseTime = timeStr => {
 };
 
 const EventDetailCard = ({ route }) => {
-  const { eventPreload, oversightMembersPreload } = route.params;
+  const { eventPreload, oversightMembersPreload, eventId } = route.params;
+  const [event, setEvent] = useState(eventPreload || null);
   const { user, token } = useContext(UserContext);
-  const [event, setEvent] = useState(eventPreload);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
 
-  // No initial API call: we use the passed-in preload event details directly.
+  console.log('THE EVENT: ', event);
 
-  // No loading or error state: always render the card based on preloaded data.
+  // Fetch full event details in the background and update state
+  useEffect(() => {
+    if (eventPreload) {
+      setEvent(eventPreload);
+    }
+    if (eventId && token) {
+      fetchEventDetails(eventId, token)
+        .then(data => setEvent(data))
+        .catch(err => console.error('Error fetching event details:', err));
+    }
+  }, [eventId, token, eventPreload]);
+  // Render immediately with available event data
   if (!event) {
     return (
       <View style={styles.centered}>
@@ -74,7 +86,9 @@ const EventDetailCard = ({ route }) => {
 };
 
 const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOptimisticJoin, oversightMembersPreload }) => {
-  const { imageUrl, title, eventType, date, startTime, endTime, venue, attendees = [], host, materials = [] } = event;
+  // Destructure raw attendees from event; we'll enrich with full user data below
+  const { imageUrl, title, eventType, date, startTime, endTime, venue,
+    attendees: rawAttendees = [], host, materials = [] } = event;
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   const dateSub = getDayMonth(dateObj);
@@ -82,7 +96,8 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   // Append hyphen before end time to indicate range
   const timeSub = endTime ? `- ${parseTime(endTime)}` : '';
   const fullAddr = venue || 'No location';
-  const hasJoined = optimisticJoin || attendees.some(a => a.refId?.toString() === userId?.toString());
+  // Determine join status based on raw attendees (before enrichment)
+  const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
 
   const openMaps = () => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`);
   const handleJoin = async () => {
@@ -99,6 +114,8 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
 
   const [attendeesModalVisible, setAttendeesModalVisible] = useState(false);
   const [oversightModalVisible, setOversightModalVisible] = useState(false);
+  // State for enriched attendees: load full user data for each attendee
+  const [enrichedAttendees, setEnrichedAttendees] = useState(null);
 
   // State for oversight body members; initialize name based on eventType to avoid empty jump
   const defaultOversightName = (eventType || '').toLowerCase().includes('feast')
@@ -142,6 +159,8 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
     loadBody();
     return () => { isMounted = false; };
   }, [eventType, oversightMembersPreload]);
+  
+  const attendees = enrichedAttendees ?? rawAttendees;
   
   return (
     <Card style={styles.card}>
@@ -242,7 +261,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             <TouchableOpacity style={styles.sideSection} onPress={() => setAttendeesModalVisible(true)} activeOpacity={0.8}>
               <Text style={styles.sectionTitle}>Attendees ({attendees.length})</Text>
               {attendees.length > 0 ? (
-                <OverlappingAvatars list={attendees.map(a => ({ details: a.user || a }))} />
+                <OverlappingAvatars list={attendees.map(a => ({ details: a.details || a.user || a }))} />
               ) : (
                 <Text style={styles.noDataText}>No attendees</Text>
               )}
@@ -262,7 +281,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       <BadgeModal
         visible={attendeesModalVisible}
         onClose={() => setAttendeesModalVisible(false)}
-        list={attendees.map(a => ({ details: a.user || a, certifications: a.certifications }))}
+        list={attendees.map(a => ({ details: a.details || a.user || a, certifications: a.certifications }))}
         title="Attendees"
       />
       <BadgeModal
@@ -334,8 +353,9 @@ const BadgeModal = ({ visible, onClose, list, title }) => (
             <Text style={styles.modalTitle}>{title}</Text>
             <ScrollView contentContainerStyle={styles.modalList}>
               {list.map((item, idx) => {
-                const key = item.user?._id || item.details?._id || idx;
-                const user = item.user || item.details || item;
+                // Determine unique key and extract user details
+                const key = item.details?._id || item.user?._id || idx;
+                const user = item.details || item.user || item;
                 const certs = item.certifications;
                 return (
                   <View key={key} style={styles.modalBadgeWrap}>
@@ -393,9 +413,9 @@ const styles = StyleSheet.create({
   modalBadgeWrap:{width:100,alignItems:'center',margin:8},
   modalCloseButton:{padding:12,backgroundColor:themeVariables.primaryColor,borderRadius:20,alignItems:'center',marginTop:16},
   modalCloseText:{color:themeVariables.whiteColor,fontWeight:'600',fontSize:16},
-  requestButton:{flexDirection:'row',alignItems:'center',paddingVertical:8,paddingHorizontal:12,borderRadius:20,backgroundColor:'#eee'},
+  requestButton:{flexDirection:'row',alignItems:'center',paddingVertical:8,paddingHorizontal:12,borderRadius:20,backgroundColor:'#312783'},
   requestButtonWrapper:{marginTop:8,alignItems:'center'},
-  requestButtonText:{fontSize:14,fontWeight:'600',color:themeVariables.primaryColor,marginLeft:6},
+  requestButtonText:{fontSize:14,fontWeight:'600',color:themeVariables.whiteColor,marginLeft:6},
   /* New Section Styles */
   sectionContainer:{
     borderWidth:1,

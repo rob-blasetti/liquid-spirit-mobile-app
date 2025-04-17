@@ -196,13 +196,7 @@ export default function Notifications() {
     return `${days}d ago`;
   };
 
-  if (loading) {
-    return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#312783" />
-      </View>
-    );
-  }
+  // Always render header and toggles, show spinner inline while loading
 
   return (
     <View style={styles.container}>
@@ -241,6 +235,10 @@ export default function Notifications() {
           </Text>
         </Pressable>
       </View>
+      {/* Loading indicator while fetching notifications */}
+      {loading && (
+        <ActivityIndicator size="large" color="#312783" style={styles.loading} />
+      )}
       <FlatList
         data={filteredNotifList}
         keyExtractor={(item, index) => `${item.id}-${index}`}

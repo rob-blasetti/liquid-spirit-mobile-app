@@ -11,7 +11,7 @@ const themeVariables = {
     lightGreyColor: '#f3f3f3', // Lighter grey (adjust manually)
     darkGreyColor: '#e0e0e0',  // Darker grey (adjust manually)
     
-    primaryColor: '#0a488c', // This references blueColor, so we replace it
+    primaryColor: '#312783', // This references blueColor, so we replace it
     primaryLightColor: '#3578a8', // Adjust this manually to be lighter blue
     primaryLighterColor: '#5b9ac8', // Even lighter blue
     

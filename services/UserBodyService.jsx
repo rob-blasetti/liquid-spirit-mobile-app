@@ -2,8 +2,11 @@ import { jwtDecode } from 'jwt-decode';
 
 import { API_URL } from '../config';
 
-export const fetchLocalSpiritualAssembly = async () => {
-    const token = localStorage.getItem('token');
+/**
+ * Fetch Local Spiritual Assembly members.
+ * @param {string} token - Bearer token for authorization.
+ */
+export const fetchLocalSpiritualAssembly = async (token) => {
     if (!token) {
         console.warn('No token found, returning empty array.');
         return [];
@@ -30,8 +33,11 @@ export const fetchLocalSpiritualAssembly = async () => {
     }
 };
 
-export const fetchFeastCommittee = async () => {
-    const token = localStorage.getItem('token');
+/**
+ * Fetch Feast Committee members.
+ * @param {string} token - Bearer token for authorization.
+ */
+export const fetchFeastCommittee = async (token) => {
     if (!token) {
         console.warn('No token found, returning empty array.');
         return [];
@@ -58,8 +64,11 @@ export const fetchFeastCommittee = async () => {
     }
 };
 
-export const fetchHolyDaysCommittee = async () => {
-    const token = localStorage.getItem('token');
+/**
+ * Fetch Holy Days Committee members.
+ * @param {string} token - Bearer token for authorization.
+ */
+export const fetchHolyDaysCommittee = async (token) => {
     if (!token) {
         console.warn('No token found, returning empty array.');
         return [];
@@ -219,5 +228,31 @@ export const fetchIsMemberOfLocalSpiritualAssembly = async (userId, communityId)
     } catch (error) {
         console.error('Error fetching is member of Local Spiritual Assembly:', error);
         return null;
+    }
+};
+/**
+ * Fetch the appropriate user body members based on the event type.
+ * @param {string} eventType - The type of the event (e.g., 'Feast', 'Holy Day', or other).
+ * @returns {Promise<Array>} - Array of users in the appropriate committee or assembly.
+ */
+/**
+ * Fetch the appropriate user body members based on the event type.
+ * @param {string} eventType - The type of the event (e.g., 'Feast', 'Holy Day', else LSA).
+ * @param {string} token - Bearer token for authorization.
+ * @returns {Promise<Array>} Array of users in the selected body.
+ */
+export const fetchUserBodyByEventType = async (eventType, token) => {
+  const type = (eventType || '').toLowerCase();
+    try {
+      if (type.includes('feast')) {
+        return await fetchFeastCommittee(token);
+      } else if (type.includes('holy')) {
+        return await fetchHolyDaysCommittee(token);
+      } else {
+        return await fetchLocalSpiritualAssembly(token);
+      }
+    } catch (error) {
+      console.error('Error fetching user body for event type:', eventType, error);
+      return [];
     }
 };
