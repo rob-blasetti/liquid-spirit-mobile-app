@@ -269,7 +269,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               {!hasJoined && (
                 <View style={styles.requestButtonWrapper}>
                   <TouchableOpacity style={styles.requestButton} onPress={handleJoin} activeOpacity={0.8}>
-                    <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.primaryColor} />
+                    <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
                     <Text style={styles.requestButtonText}>Attend</Text>
                   </TouchableOpacity>
                 </View>

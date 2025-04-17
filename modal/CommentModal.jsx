@@ -11,6 +11,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 
@@ -35,60 +36,66 @@ const CommentModal = ({
       transparent
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackground}>
-        <KeyboardAvoidingView
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <Text style={styles.title}>Comments</Text>
-          <ScrollView style={styles.commentsList}>
-            {comments.length === 0 && (
-              <Text style={styles.noCommentsText}>No comments yet</Text>
-            )}
-            {comments.map((comment) => (
-              <View key={comment._id} style={styles.commentItem}>
-                <View style={styles.commentHeader}>
-                  <FastImage
-                    source={{ uri: comment.user.profilePicture }}
-                    style={styles.profilePic}
-                  />
-                  <View style={styles.commentTextContainer}>
-                    <View style={styles.commentTopRow}>
-                      <Text style={styles.commentAuthor}>
-                        {comment.user.firstName} {comment.user.lastName}
-                      </Text>
-                      <Text style={styles.commentDate}>
-                        {new Date(comment.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                        })}
-                      </Text>
+      {/* Capture taps outside modalContainer to close */}
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.modalBackground}>
+          {/* Prevent taps inside modalContainer from closing */}
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <KeyboardAvoidingView
+              style={styles.modalContainer}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              <Text style={styles.title}>Comments</Text>
+              <ScrollView style={styles.commentsList}>
+                {comments.length === 0 && (
+                  <Text style={styles.noCommentsText}>No comments yet</Text>
+                )}
+                {comments.map((comment) => (
+                  <View key={comment._id} style={styles.commentItem}>
+                    <View style={styles.commentHeader}>
+                      <FastImage
+                        source={{ uri: comment.user.profilePicture }}
+                        style={styles.profilePic}
+                      />
+                      <View style={styles.commentTextContainer}>
+                        <View style={styles.commentTopRow}>
+                          <Text style={styles.commentAuthor}>
+                            {comment.user.firstName} {comment.user.lastName}
+                          </Text>
+                          <Text style={styles.commentDate}>
+                            {new Date(comment.createdAt).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                            })}
+                          </Text>
+                        </View>
+                        <Text style={styles.commentContent}>{comment.comment}</Text>
+                      </View>
                     </View>
-                    <Text style={styles.commentContent}>{comment.comment}</Text>
                   </View>
-                </View>
+                ))}
+              </ScrollView>
+
+              <TextInput
+                style={styles.textInput}
+                value={commentText}
+                onChangeText={setCommentText}
+                placeholder="Write your comment..."
+                multiline
+              />
+
+              <View style={styles.buttonRow}>
+                <Pressable style={styles.submitButton} onPress={handleSubmit}>
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                </Pressable>
+                <Pressable style={styles.cancelButton} onPress={onClose}>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </Pressable>
               </View>
-            ))}
-          </ScrollView>
-
-          <TextInput
-            style={styles.textInput}
-            value={commentText}
-            onChangeText={setCommentText}
-            placeholder="Write your comment..."
-            multiline
-          />
-
-          <View style={styles.buttonRow}>
-            <Pressable style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </Pressable>
-            <Pressable style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </Pressable>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };

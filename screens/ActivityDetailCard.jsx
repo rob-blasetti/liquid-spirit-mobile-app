@@ -242,8 +242,7 @@ const ActivityCardBody = ({
       await requestFacilitator(activity._id, userId, token || '');
       // refresh activity data
       const updated = await fetchActivityDetails(activity._id, token || '');
-      setActivity(updated);
-      alert('Facilitator request sent');
+      setActivity(updated);      
     } catch (err) {
       const msg = err.message || 'Failed to send facilitator request';
       // If already requested, treat as pending
@@ -267,7 +266,6 @@ const ActivityCardBody = ({
       // refresh activity data
       const updated = await fetchActivityDetails(activity._id, token || '');
       setActivity(updated);
-      alert('Participant request sent');
     } catch (err) {
       const msg = err.message || 'Failed to send participation request';
       // If already requested, treat as pending
@@ -379,7 +377,7 @@ const ActivityCardBody = ({
                   onPress={handleFacilitatorRequest}
                   activeOpacity={0.8}
                 >
-                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.primaryColor} />
+                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
                   <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}
@@ -398,7 +396,7 @@ const ActivityCardBody = ({
                   onPress={handleParticipantRequest}
                   activeOpacity={0.8}
                 >
-                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.primaryColor} />
+                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
                   <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}
@@ -791,13 +789,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#eee',
+    backgroundColor: themeVariables.primaryColor,
     marginTop: 8,
   },
   requestButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: themeVariables.primaryColor,
+    color: themeVariables.whiteColor,
     marginLeft: 6,
   },
   /* Status chip in top-right corner */
