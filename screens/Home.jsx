@@ -14,16 +14,21 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
+import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
 
+// Constants for bottom squares layout
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_PADDING = 20;
+const GUTTER = 10;
+const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const Home = ({ navigation }) => {
   const { user, userActivities, userEvents, userPosts } = useContext(UserContext);
-  const { width: SCREEN_WIDTH } = Dimensions.get('window');
   const [activeTab, setActiveTab] = useState('Activities');
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -81,7 +86,19 @@ const Home = ({ navigation }) => {
                 <Text style={styles.communityMembers}>144 members</Text>
               </View>
             </View>
-            <Text style={styles.bahaiDate}>12 Beauty 181BE</Text>
+          {/* Show Gregorian date and Badi date with separator */}
+            {(() => {
+              const nowDate = new Date();
+              // Gregorian date
+              const gregorianDate = nowDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+              // Badi date
+              const badi = getBadiDate(nowDate);
+              return (
+                <Text style={styles.bahaiDate}>
+                  {gregorianDate} {'\u2022'} {badi.formatted}
+                </Text>
+              );
+            })()}
           </View>
         </View>
 
@@ -251,14 +268,57 @@ const Home = ({ navigation }) => {
             </View>
           );
         })()}
-          {/* <TouchableOpacity */}
-            {/* // style={styles.createRow} */}
-            {/* // onPress={() => TODO: navigate to create activity screen} */}
-          {/* // > */}
-          {/* <Text style={styles.createRowText}>Create Activity</Text> */}
-          {/* <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} /> */}
-          {/* </TouchableOpacity> */}
         </Animated.View>
+        <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
+        <View style={styles.createContainer}>
+          <TouchableOpacity
+            style={styles.createRow}
+            onPress={() => navigation.navigate('Activities')}
+          >
+            <View style={styles.createRowContent}>
+              <FontAwesomeIcon
+                icon={faAlignLeft}
+                size={16}
+                color={themeVariables.primaryColor}
+                style={styles.createIcon}
+              />
+              <Text style={styles.createRowText}>Create Activity</Text>
+            </View>
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+          <View style={styles.separator} />
+          <TouchableOpacity
+            style={styles.createRow}
+            onPress={() => navigation.navigate('Events')}
+          >
+            <View style={styles.createRowContent}>
+              <FontAwesomeIcon
+                icon={faEnvelopeOpen}
+                size={16}
+                color={themeVariables.primaryColor}
+                style={styles.createIcon}
+              />
+              <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
+            </View>
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+          <View style={styles.separator} />
+          <TouchableOpacity
+            style={styles.createRow}
+            onPress={() => navigation.navigate('Activities')}
+          >
+            <View style={styles.createRowContent}>
+              <FontAwesomeIcon
+                icon={faUsers}
+                size={16}
+                color={themeVariables.primaryColor}
+                style={styles.createIcon}
+              />
+              <Text style={styles.createRowText}>Recent Arrivals</Text>
+            </View>
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -366,6 +426,21 @@ const styles = StyleSheet.create({
     bottom: 10,
     fontSize: 14,
     color: themeVariables.whiteColor,
+  },
+  // Bottom two large squares
+  bottomSquaresContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: GRID_PADDING,
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  bottomSquare: {
+    width: BOTTOM_SQUARE_SIZE,
+    height: BOTTOM_SQUARE_SIZE,
+  },
+  bottomSquareRight: {
+    marginLeft: GUTTER,
   },
   gridItemCount: {
     fontSize: 20,
@@ -527,7 +602,8 @@ const styles = StyleSheet.create({
   // Tab buttons
   heading: {
     color: themeVariables.pirmaryColor,
-    marginHorizontal: 20,
+    marginHorizontal: 20,    
+    marginBottom: 10,
     padding: 4,
     fontWeight: 'bold',
   },
@@ -565,19 +641,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: themeVariables.whiteColor,
-    borderWidth: 1,
-    borderColor: themeVariables.primaryColor,
-    borderRadius: 8,
-    marginHorizontal: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    marginBottom: 20,
   },
   createRowText: {
     fontSize: 16,
     fontWeight: '500',
     color: themeVariables.primaryColor,
+    textAlign: 'left',
+  },
+  createContainer: {
+    marginHorizontal: 20,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  createRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  separator: {
+    height: 1,
+    backgroundColor: themeVariables.primaryColor,
+  },
+  createIcon: {
+    marginRight: 8,
   },
   // Posts Section
   postsList: {
