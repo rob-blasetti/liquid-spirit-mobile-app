@@ -17,6 +17,8 @@ import Verification from './screens/Verification';
 import EventDetail from './screens/EventDetail';
 import ActivityDetail from './screens/ActivityDetail';
 import ActivityDetailCard from './screens/ActivityDetailCard';
+import ActivitiesScreen from './screens/Activities';
+import EventsScreen from './screens/Events';
 import EventDetailCard from './screens/EventDetailCard';
 import ForgotPassword from './screens/ForgotPassword';
 import Eula from './screens/Eula';
@@ -26,9 +28,9 @@ import BottomBar from './navigation/BottomBar';
 // FontAwesome library setup
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fab } from '@fortawesome/free-brands-svg-icons';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome } from '@fortawesome/free-solid-svg-icons';
 
-library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft);
+library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome);
 
 const Stack = createNativeStackNavigator();
 
@@ -97,6 +99,8 @@ const MainApp = () => {
             <Stack.Screen name="Verification" component={Verification} />
             <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
             <Stack.Screen name="EULA" component={Eula} /> 
+            <Stack.Screen name="Events" component={EventsScreen} />
+            <Stack.Screen name="Activities" component={ActivitiesScreen} />
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
             <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>

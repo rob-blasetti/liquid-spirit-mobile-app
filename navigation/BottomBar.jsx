@@ -1,11 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faBell, faHome } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
+import Home from '../screens/Home';
 import EventsScreen from '../screens/Events';
 import NotificationScreen from '../screens/Notifications';
 import ActivitiesScreen from '../screens/Activities';
@@ -18,12 +19,11 @@ import WelcomeModal from '../modal/WelcomeModal';
 const Tab = createBottomTabNavigator();
 
 const tabIcons = {
+  Home: faBahai,
   Profile: faUser,
   Feed: faCompass,
   Camera: faSquarePlus,
   Notifications: faBell,
-  Events: faBahai,
-  Activities: faAlignLeft,
 };
 
 const BottomBar = ({ initialPosts }) => {
@@ -36,6 +36,7 @@ const BottomBar = ({ initialPosts }) => {
   return (
     <>
       <Tab.Navigator
+        initialRouteName="Home"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
@@ -71,20 +72,13 @@ const BottomBar = ({ initialPosts }) => {
           },
         })}
       >
+        <Tab.Screen name="Home" component={Home} />
         <Tab.Screen name="Feed">
           {() => <SocialMediaScreen initialPosts={initialPosts} scrollToTop={scrollToTop} />}
         </Tab.Screen>
         <Tab.Screen 
-          name="Activities" 
-          component={ActivitiesScreen} 
-        />
-        <Tab.Screen 
           name="Camera" 
           component={CreatePostScreen} 
-        />
-        <Tab.Screen 
-          name="Events" 
-          component={EventsScreen} 
         />
         <Tab.Screen
           name="Notifications"
