@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useEffect } from 'react';
+import React, { useContext, useState, useRef, useEffect, useMemo } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -11,6 +11,7 @@ import {
   Animated,
   FlatList,
   Dimensions,
+  Linking,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -27,8 +28,24 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 20;
 const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
+const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
+
 const Home = ({ navigation }) => {
-  const { user, userActivities, userEvents, userPosts } = useContext(UserContext);
+  const { user, communityId, userActivities, userEvents, userPosts } = useContext(UserContext);
+  // Determine the next upcoming event without a host
+  const eventWithoutHost = useMemo(() => {
+    if (!Array.isArray(userEvents)) return null;
+    const now = new Date();
+    // Filter future events
+    const upcoming = userEvents.filter(e => {
+      const d = new Date(e.date);
+      return !isNaN(d) && d >= now;
+    });
+    // Sort by date ascending
+    upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // Find first with no hosts
+    return upcoming.find(e => !e.hosts || (Array.isArray(e.hosts) && e.hosts.length === 0)) || null;
+  }, [userEvents]);
   const [activeTab, setActiveTab] = useState('Activities');
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -105,7 +122,7 @@ const Home = ({ navigation }) => {
         {/* Tabs: Events, Activities, Posts, Admin */}
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
-          {['Activities','Events','Admin'].map(tab => (
+          {['Activities','Events'].map(tab => (
             <TouchableOpacity
               key={tab}
               style={[styles.tabButton, activeTab===tab && styles.tabButtonActive]}
@@ -133,10 +150,11 @@ const Home = ({ navigation }) => {
           return (
             <View style={styles.dualGrid}>
               {/* Large Upcoming Event Tile */}
-              <RectangularTile
+          <RectangularTile
                 title="Upcoming"
                 bgImgColour="green"
-                subheading={nextEvent.title}
+                // Show title and event type separated by a dot
+                subheading={`${nextEvent.title} \u2022 ${nextEvent.eventType || ''}`}
                 dateTime={eventDateTime}
                 onPress={() => navigation.navigate('EventDetailCard', { eventId: nextEvent._id, eventPreload: nextEvent })}
                 style={styles.largeTile}
@@ -146,7 +164,7 @@ const Home = ({ navigation }) => {
                 <SquareTile
                   subheading="Can You Host?"
                   bgImgColour="red"
-                  onPress={() => navigation.navigate('EventDetailCard', { eventId: nextEvent._id, eventPreload: nextEvent })}
+                  onPress={() => navigation.navigate('EventDetailCard', { eventId: eventWithoutHost._id, eventPreload: eventWithoutHost })}
                   actionIcon={faQuestionCircle}
                   style={styles.smallTileGap}
                 />
@@ -201,6 +219,7 @@ const Home = ({ navigation }) => {
             .filter(ac => ac.date && new Date(ac.date) >= now)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
           const nextAct = upcomingA[0];
+          const nextActWithSpace = upcomingA[1];
           // format activity date/time for tile
           const actDate = new Date(nextAct.date);
           const actDateTime = actDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
@@ -208,10 +227,11 @@ const Home = ({ navigation }) => {
           if (!nextAct) return null;
           return (
             <View style={styles.dualGrid}>
-              <RectangularTile
+          <RectangularTile
                 title="Upcoming"
                 dateTime={actDateTime}
-                subheading={nextAct.title}
+                // Show title and activity type separated by a dot
+                subheading={`${nextAct.title} \u2022 ${nextAct.activityType?.name || ''}`}
                 imageSource={{ uri: nextAct.imageUrl }}
                 onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextAct._id, activityPreload: nextAct })}
                 style={styles.largeTile}
@@ -220,7 +240,7 @@ const Home = ({ navigation }) => {
                 <SquareTile
                   subheading="Can You Facilitate?"
                   bgImgColour="blue"
-                  onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextAct._id, activityPreload: nextAct })}
+                  onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextActWithSpace._id, activityPreload: nextActWithSpace })}
                   actionIcon={faQuestionCircle}
                   style={styles.smallTileGap}
                 />
@@ -271,9 +291,12 @@ const Home = ({ navigation }) => {
         </Animated.View>
         <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
         <View style={styles.createContainer}>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.createRow}
-            onPress={() => navigation.navigate('Activities')}
+            onPress={() => navigation.navigate('CreateActivity', {
+              communityId,
+              userId: user?.id,
+            })}
           >
             <View style={styles.createRowContent}>
               <FontAwesomeIcon
@@ -286,10 +309,10 @@ const Home = ({ navigation }) => {
             </View>
             <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity>
-          <View style={styles.separator} />
+          <View style={styles.separator} /> */}
           <TouchableOpacity
             style={styles.createRow}
-            onPress={() => navigation.navigate('Events')}
+            onPress={() => Linking.openURL(RIDVAN_182_BE)}
           >
             <View style={styles.createRowContent}>
               <FontAwesomeIcon
@@ -302,7 +325,7 @@ const Home = ({ navigation }) => {
             </View>
             <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity>
-          <View style={styles.separator} />
+          {/* <View style={styles.separator} />
           <TouchableOpacity
             style={styles.createRow}
             onPress={() => navigation.navigate('Activities')}
@@ -317,7 +340,7 @@ const Home = ({ navigation }) => {
               <Text style={styles.createRowText}>Recent Arrivals</Text>
             </View>
             <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -480,6 +503,7 @@ const styles = StyleSheet.create({
   dualGrid: {
     flexDirection: 'row',
     paddingHorizontal: 20,
+    paddingVertical: 20,
     marginBottom: 10,
     // align tiles at top of grid rows
     alignItems: 'flex-start',
@@ -610,7 +634,6 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginVertical: 10,
     marginHorizontal: 20,
     padding: 4,
     backgroundColor: themeVariables.whiteColor,

@@ -91,3 +91,7 @@ export const denyFacilitatorRequest = (activityId, userId, token) => makeRequest
 
 export const leaveParticipation = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/leave-participant/${userId}`, 'POST', token);
 export const leaveFacilitator = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/leave-facilitator/${userId}`, 'POST', token);
+
+// Create a new activity
+export const createActivity = (activityData, token) =>
+  makeRequest('/api/activities', 'POST', token, activityData);

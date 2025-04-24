@@ -15,6 +15,7 @@ import Login from './screens/Login';
 import Register from './screens/Register';
 import Verification from './screens/Verification';
 import EventDetail from './screens/EventDetail';
+import CreateActivity from './screens/CreateActivity';
 import ActivityDetail from './screens/ActivityDetail';
 import ActivityDetailCard from './screens/ActivityDetailCard';
 import ActivitiesScreen from './screens/Activities';
@@ -101,6 +102,7 @@ const MainApp = () => {
             <Stack.Screen name="EULA" component={Eula} /> 
             <Stack.Screen name="Events" component={EventsScreen} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />
+            <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
             <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
