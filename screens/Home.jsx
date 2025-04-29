@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
@@ -221,7 +221,7 @@ const Home = ({ navigation }) => {
           const nextAct = upcomingA[0];
           const nextActWithSpace = upcomingA[1];
           // format activity date/time for tile
-          const actDate = new Date(nextAct.date);
+          const actDate = new Date(nextAct?.date);
           const actDateTime = actDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
           console.log('nextAct: ', nextAct);
           if (!nextAct) return null;
@@ -325,8 +325,40 @@ const Home = ({ navigation }) => {
             </View>
             <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity>
-          {/* <View style={styles.separator} />
+          <View style={styles.separator} />
           <TouchableOpacity
+            style={styles.createRow}
+            onPress={() => navigation.navigate('Activities')}
+          >
+            <View style={styles.createRowContent}>
+              <FontAwesomeIcon
+                icon={faAlignLeft}
+                size={16}
+                color={themeVariables.primaryColor}
+                style={styles.createIcon}
+              />
+              <Text style={styles.createRowText}>View All Activities</Text>
+            </View>
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+          <View style={styles.separator} />
+          <TouchableOpacity
+            style={styles.createRow}
+            onPress={() => navigation.navigate('Events')}
+          >
+            <View style={styles.createRowContent}>
+              <FontAwesomeIcon
+                icon={faBahai}
+                size={16}
+                color={themeVariables.primaryColor}
+                style={styles.createIcon}
+              />
+              <Text style={styles.createRowText}>View All Events</Text>
+            </View>
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+
+          {/* <TouchableOpacity
             style={styles.createRow}
             onPress={() => navigation.navigate('Activities')}
           >

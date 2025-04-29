@@ -199,17 +199,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             <View style={styles.sideSection}>
               <Text style={styles.sectionTitle}>Host</Text>
               {host ? (
-                host.profilePicture ? (
-                  <FastImage source={{ uri: host.profilePicture }} style={styles.hostAvatar} />
-                ) : (
-                  <Avatar
-                    size={styles.hostAvatar.width}
-                    name={`${host.firstName || ''} ${host.lastName || ''}`.trim()}
-                    variant="beam"
-                    colors={[ '#1B263B','#0A74DA','#6C7A89','#F8F9FA','#0C0C0C' ]}
-                    style={styles.hostAvatar}
-                  />
-                )
+                <UserBadge user={host} userCertifications={host.certifications} />
               ) : (
                 <>
                   <Text style={styles.noHostText}>No host yet</Text>
@@ -225,16 +215,23 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               <Text style={styles.sectionTitle}>Materials</Text>
               {materials.length > 0 ? (
                 <View style={styles.materialsContainer}>
-                  {materials.map((mat, idx) => (
-                    <TouchableOpacity
-                      key={mat._id || mat.name || idx}
-                      style={styles.materialTile}
-                      onPress={() => alert(`Material: ${mat.name}`)}
-                    >
-                      <FontAwesomeIcon icon={faFileAlt} size={16} color={themeVariables.primaryColor} />
-                      <Text style={styles.materialText}>{mat.name}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {materials.map((mat, idx) => {
+                    // determine link URL if available
+                    const url = mat.url || mat.link || mat.fileUrl;
+                    return (
+                      <TouchableOpacity
+                        key={mat._id || mat.name || idx}
+                        style={styles.materialTile}
+                        onPress={() => url && Linking.openURL(url)}
+                        disabled={!url}
+                      >
+                        <FontAwesomeIcon icon={faFileAlt} size={16} color={themeVariables.primaryColor} />
+                        <Text style={[styles.materialText, url && styles.linkText]} numberOfLines={1}>
+                          {mat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               ) : (
                 <Text style={styles.noDataText}>No materials available</Text>
