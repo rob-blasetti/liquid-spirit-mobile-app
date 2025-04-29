@@ -593,11 +593,13 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   factBox: { flex: 1, alignItems: 'center' },
-  factLabel: { fontSize: 11, color: '#666', marginTop: 4 },
+  factLabel: { fontSize: 11, color: '#666', marginTop: 4, textAlign: 'center', width: Platform.select({ android: 150 })},
   factValue: {
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
+    textAlign: 'center',
+    width: Platform.select({ android: 150 })
   },
   linkText: {
     color: themeVariables.primaryColor,
@@ -627,6 +629,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
     textAlign: 'center',
+    width: Platform.select({ android: 65 })
   },
   detailValue: {
     fontSize: 14,
@@ -634,6 +637,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginBottom: 4,
     textAlign: 'center',
+    width: Platform.select({ android: 65 })
   },
   detailSub: {
     fontSize: 12,
@@ -657,6 +661,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
     color: themeVariables.blackColor,
+    textAlign: 'center',
+    width: Platform.select({ android: 150 })
   },
   avatarsContainer: {
     flexDirection: 'row',
@@ -759,6 +765,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
+    width: Platform.select({ android: 40 })
   },
   /* Modal badge list layout */
   modalList: {
@@ -813,6 +821,8 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     fontSize: 12,
     fontWeight: '600',
+    textAlign: 'center',
+    width: Platform.select({ android: 100 })
   },
 });
 

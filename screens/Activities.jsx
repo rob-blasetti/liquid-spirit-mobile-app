@@ -232,6 +232,8 @@ const styles = StyleSheet.create({
     color: '#fff', 
     fontWeight: 'bold',
     marginLeft: 6,
+    textAlign: 'center',
+    width: Platform.select({ android: 90 })
   },
   drawerContainer: {
     backgroundColor: 'white',
@@ -279,6 +281,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginTop: 5,
     textAlign: 'center',
+    width: Platform.select({ android: 100 })
   },
   selectedFilterText: {
     color: '#fff', // White text for selected filters
@@ -320,6 +323,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#1C5C0E',
+    textAlign: 'center',
+    width: Platform.select({ android: 180 })
   },
   cardContent: {
     padding: 16,

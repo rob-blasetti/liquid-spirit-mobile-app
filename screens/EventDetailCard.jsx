@@ -393,8 +393,8 @@ const styles = StyleSheet.create({
   detailRow:{flexDirection:'row',justifyContent:'space-between',borderWidth:1,borderColor:'#ddd',borderRadius:12,paddingHorizontal:10,paddingVertical:10,marginBottom:14},
   detailCell:{flex:1,alignItems:'center',paddingHorizontal:4},
   detailIcon:{marginBottom:6},
-  detailLabel:{fontSize:11,color:'#666',marginBottom:4,textAlign:'center'},
-  detailValue:{fontSize:14,fontWeight:'600',color:'#312783',marginBottom:4,textAlign:'center'},
+  detailLabel:{fontSize:11,color:'#666',marginBottom:4,textAlign:'center', textAlign: 'center', width: Platform.select({ android: 50 }) },
+  detailValue:{fontSize:14,fontWeight:'600',color:'#312783',marginBottom:4,textAlign:'center', width: Platform.select({ android: 140 })},
   detailSub:{fontSize:12,color:'#666',textAlign:'center'},
   sectionsContainer:{flexDirection:'row',borderWidth:1,borderColor:'#ddd',borderRadius:12,backgroundColor:'#fff',marginBottom:14,overflow:'hidden'},
   sideSection:{flex:1,paddingVertical:10,paddingHorizontal:10,alignItems:'center'},
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   modalCloseText:{color:themeVariables.whiteColor,fontWeight:'600',fontSize:16},
   requestButton:{flexDirection:'row',alignItems:'center',paddingVertical:8,paddingHorizontal:12,borderRadius:20,backgroundColor:'#312783'},
   requestButtonWrapper:{marginTop:8,alignItems:'center'},
-  requestButtonText:{fontSize:14,fontWeight:'600',color:themeVariables.whiteColor,marginLeft:6},
+  requestButtonText:{fontSize:14,fontWeight:'600',color:themeVariables.whiteColor,marginLeft:6, width: Platform.select({ android: 100 })},
   /* New Section Styles */
   sectionContainer:{
     borderWidth:1,
@@ -430,12 +430,16 @@ const styles = StyleSheet.create({
     textAlign:'center',
     marginBottom:4,
     color:themeVariables.blackColor,
+    textAlign: 'center',
+    width: Platform.select({ android: 160 }),    
   },
   sectionSubtitle: {
     fontSize:12,
     color:'#666',
     textAlign:'center',
     marginBottom:8,
+    textAlign: 'center',
+    width: Platform.select({ android: 160 }),    
   },
   hostAvatar:{
     width:40,
@@ -447,6 +451,8 @@ const styles = StyleSheet.create({
     fontSize:12,
     color:'#666',
     marginBottom:8,
+    textAlign: 'center',
+    width: Platform.select({ android: 160 }),    
   },
   materialsContainer:{
     flexDirection:'row',
@@ -470,9 +476,11 @@ const styles = StyleSheet.create({
   noDataText:{
     fontSize:12,
     color:'#666',
+    textAlign: 'center',
+    width: Platform.select({ android: 160 }),    
   },
   statusChip:{position:'absolute',top:16,right:12,backgroundColor:themeVariables.primaryColor,borderRadius:12,paddingHorizontal:8,paddingVertical:4,zIndex:10},
-  statusChipText:{color:themeVariables.whiteColor,fontSize:12,fontWeight:'600'},
+  statusChipText:{color:themeVariables.whiteColor,fontSize:12,fontWeight:'600', width: Platform.select({ android: 65 })},
 });
 
 export default EventDetailCard;

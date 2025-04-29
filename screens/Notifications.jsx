@@ -374,6 +374,8 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 16,
     fontWeight: '600',
+    width: Platform.select({ android: 95 }),
+    textAlign: 'center',
   },
   
   activeTab: {

@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../config';
 import localImages from '../utils/localImages'
 import FastImage from 'react-native-fast-image';
-const { width } = Dimensions.get('window'); // Get device width
-const ITEM_SIZE = width / 2 - 15; // Adjust for 2-column layout
+
+const { width } = Dimensions.get('window');
+const ITEM_SIZE = width / 2 - 15;
 
 const PostGallery = ({ posts }) => {
   const navigation = useNavigation();
@@ -30,7 +31,7 @@ const PostGallery = ({ posts }) => {
     <FlatList
       data={posts}
       keyExtractor={(item) => item._id.toString()}
-      numColumns={2} // ✅ Display in 2 columns
+      numColumns={2}
       contentContainerStyle={styles.galleryContainer}
       renderItem={({ item }) => {
         let mediaUrl = item.media?.[0] || item.imageUrl;
@@ -38,11 +39,11 @@ const PostGallery = ({ posts }) => {
         let imageSource;
         if (mediaUrl) {
           if (localImages[mediaUrl]) {
-            imageSource = localImages[mediaUrl]; // Local image (require)
+            imageSource = localImages[mediaUrl];
           } else if (!mediaUrl.startsWith('http')) {
-            imageSource = { uri: `${API_URL}/${mediaUrl}` }; // Convert relative to absolute
+            imageSource = { uri: `${API_URL}/${mediaUrl}` };
           } else {
-            imageSource = { uri: mediaUrl }; // Absolute URL
+            imageSource = { uri: mediaUrl };
           }
         }
 
@@ -69,7 +70,7 @@ const PostGallery = ({ posts }) => {
             {/* Render Post Content OR Title */}
             {item.content ? (
               <Text style={styles.listContent}>
-                {item.content.length > 50 ? `${item.content.slice(0, 50)}...` : item.content}
+                {item.content?.length > 50 ? `${item.content?.slice(0, 50)}...` : item.content}
               </Text>
             ) : (
               <View>
@@ -108,7 +109,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     overflow: 'hidden',
     alignSelf: 'flex-start',
-    // Add these properties to prioritize top-left:
     position: 'relative',
     top: 0,
     left: 0,

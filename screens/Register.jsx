@@ -121,7 +121,7 @@ const Register = () => {
       )}
 
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.link}>
-        <Text style={styles.linkText}>Already have an account? Login</Text>
+        <Text style={styles.linkText}>Already have an account?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -142,6 +142,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#312783',
     marginBottom: 32,
+    width: Platform.select({ android: 140 }),
+    textAlign: 'center',
   },
   input: {
     width: '100%',
@@ -161,6 +163,8 @@ const styles = StyleSheet.create({
     color: '#0485e2',
     textDecorationLine: 'underline',
     marginLeft: 8,
+    width: Platform.select({ android: 160 }),
+    textAlign: 'center',
   },
   button: {
     backgroundColor: '#312783',
@@ -177,13 +181,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    width: Platform.select({ android: 120 }),
+    textAlign: 'center',
   },
   link: {
     marginTop: 16,
+    width: Platform.select({ android: 180 }),
+    textAlign: 'center',
   },
   linkText: {
     color: '#0485e2',
     fontSize: 14,
-    textDecorationLine: 'underline',
+    textDecorationLine: 'underline', 
   },
 });

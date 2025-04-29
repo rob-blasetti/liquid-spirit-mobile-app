@@ -150,7 +150,7 @@ const Home = ({ navigation }) => {
           return (
             <View style={styles.dualGrid}>
               {/* Large Upcoming Event Tile */}
-          <RectangularTile
+              <RectangularTile
                 title="Upcoming"
                 bgImgColour="green"
                 // Show title and event type separated by a dot
@@ -440,11 +440,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: themeVariables.whiteColor,
+    width: Platform.select({ android: 100 }),
   },
   communityMembers: {
     fontSize: 14,
     color: themeVariables.whiteColor,
     marginTop: 4,
+    width: Platform.select({ android: 100 }),
   },
   statsSection: {
     alignItems: 'center',
@@ -687,6 +689,8 @@ const styles = StyleSheet.create({
   tabButtonText: {
     fontSize: 14,
     color: themeVariables.primaryColor,
+    textAlign: 'center',
+    width: Platform.select({ android: 65 }),
   },
   tabButtonTextActive: {
     color: themeVariables.whiteColor,
@@ -704,6 +708,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: themeVariables.primaryColor,
     textAlign: 'left',
+    width: Platform.select({ android: 200 }),
   },
   createContainer: {
     marginHorizontal: 20,

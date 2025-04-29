@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     left: 10,
     fontSize: 14,
     color: themeVariables.whiteColor,
+    width: Platform.select({ android: 160 }),
   },
 });
 

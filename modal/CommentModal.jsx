@@ -157,10 +157,13 @@ const styles = StyleSheet.create({
   },
   commentAuthor: {
     fontWeight: '600',
+    width: Platform.select({ android: 100 })
   },
   commentDate: {
     color: '#666',
     fontSize: 12,
+    width: Platform.select({ android: 100 })
+
   },
   commentContent: {
     fontSize: 14,
@@ -184,6 +187,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
+    width: Platform.select({ android: 100 })
   },
   submitButtonText: {
     color: '#fff',
@@ -197,6 +201,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: 'white',
+    width: Platform.select({ android: 100 })
   },
   cancelButtonText: {
     color: '#312783',

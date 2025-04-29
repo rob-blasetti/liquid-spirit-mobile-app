@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginBottom: 20,
     textAlign: 'center',
+    width: Platform.select({ android: 240 }),
   },
   textArea: {
     width: '100%',
@@ -220,6 +221,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+    width: Platform.select({ android: 65 }),
   },
   mediaPreview: {
     width: '100%',
@@ -248,5 +250,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     fontSize: 18,
     fontWeight: '600',
+    textAlign: 'center',
+    width: Platform.select({ android: 80 }),
   },
 });

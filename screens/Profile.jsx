@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
-import { TabView, TabBar } from 'react-native-tab-view';
+import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import PostGallery from '../components/PostGallery';
 import { useAuthService } from '../services/AuthService';
@@ -218,7 +218,7 @@ const renderList = (data, type) => {
 const renderScene = ({ route }) => {
   switch (route.key) {
     case 'posts':
-      return <PostGallery posts={posts} />; // ✅ Use PostGallery component
+      return <PostGallery posts={posts} />;
     case 'activities':
       return <PostGallery posts={activities} />;
     case 'events':
@@ -243,6 +243,32 @@ const renderScene = ({ route }) => {
     }
   };
 
+  // Custom TabBar to ensure full labels are visible and centered on Android
+  const renderTabBarCustom = ({ navigationState, jumpTo }) => (
+    <View style={{ flexDirection: 'row', backgroundColor: '#312783' }}>
+      {navigationState.routes.map((route, idx) => {
+        const focused = navigationState.index === idx;
+        return (
+          <TouchableOpacity
+            key={route.key}
+            style={{
+              flex: 1,
+              paddingVertical: 12,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderBottomWidth: focused ? 2 : 0,
+              borderBottomColor: '#fff',
+            }}
+            onPress={() => jumpTo(route.key)}
+          >
+            <Text style={{ color: '#fff', fontSize: 16, textTransform: 'none', textAlign: 'center' }}>
+              {route.title}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
   return (
     <View style={styles.container}>
     <View style={styles.bannerContainer}>
@@ -257,25 +283,24 @@ const renderScene = ({ route }) => {
         imageStyle={styles.bannerImage}
       />
       <View style={[styles.overlay, StyleSheet.absoluteFill]} />
-      <View style={styles.bannerContent}>
-        <View style={styles.bannerLeft}>
-          <TouchableOpacity onPress={handleProfilePicturePress}>
-            <FastImage
-              style={styles.profilePicture}
-              source={{ uri: user?.profilePicture }}
-              resizeMode={FastImage.resizeMode.cover}
-            />
-          </TouchableOpacity>
-          <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
-          <Text style={styles.bahaiID}>{user?.bahaiId}</Text>
-        </View>
-        <View style={styles.bannerRight}>
-          <Text style={styles.communityName}>{user?.community?.name}</Text>
-          <Text style={styles.memberCount}>144 members</Text>
+        <View style={styles.bannerContent}>
+          <View style={styles.bannerLeft}>
+            <TouchableOpacity onPress={handleProfilePicturePress}>
+              <FastImage
+                style={styles.profilePicture}
+                source={{ uri: user?.profilePicture }}
+                resizeMode={FastImage.resizeMode.cover}
+              />
+            </TouchableOpacity>
+            <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
+            <Text style={styles.bahaiID}>{user?.bahaiId}</Text>
+          </View>
+          <View style={styles.bannerRight}>
+            <Text style={styles.communityName}>{user?.community?.name}</Text>
+            <Text style={styles.memberCount}>144 members</Text>
+          </View>
         </View>
       </View>
-      </View>
-
 
       {/* Profile Actions Section */}
       <View style={styles.profileActionsContainer}>
@@ -295,14 +320,7 @@ const renderScene = ({ route }) => {
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
-        renderTabBar={props => (
-          <TabBar
-            {...props}
-            indicatorStyle={{ backgroundColor: '#312783' }}
-            style={{ backgroundColor: '#312783' }}
-            labelStyle={{ color: '#fff' }}
-          />
-        )}
+        renderTabBar={renderTabBarCustom}
       />
     </View>
   );
@@ -328,11 +346,11 @@ const styles = StyleSheet.create({
   },
   bannerLeft: { alignItems: 'center' },
   profilePicture: { width: 80, height: 80, borderRadius: 40, borderWidth: 2, borderColor: '#fff', marginBottom: 8 },
-  name: { fontSize: 20, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
+  name: { fontSize: 20, fontWeight: 'bold', color: '#fff', textAlign: 'center', width: Platform.select({ android: 105 }) },
   bahaiID: { fontSize: 14, color: '#fff', textAlign: 'center' },
   bannerRight: { alignItems: 'flex-end' },
-  communityName: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
-  memberCount: { fontSize: 14, color: '#ddd' },
+  communityName: { fontSize: 18, fontWeight: 'bold', color: '#fff', width: Platform.select({ android: 95 }), textAlign: 'center', },
+  memberCount: { fontSize: 14, color: '#ddd', width: Platform.select({ android: 95 }), textAlign: 'center', },
 
   // Profile Actions Section
   profileActionsContainer: {
@@ -364,6 +382,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#312783',
+    width: Platform.select({ android: 95 }),
+    textAlign: 'center',
   },
   placeholderText: { textAlign: 'center', padding: 20, fontSize: 16, color: '#999' },
   noDataText: {

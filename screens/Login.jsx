@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
@@ -75,7 +75,7 @@ const Login = ({ navigation }) => {
         onPress={() => navigation.navigate('Register')}
         style={styles.link}
       >
-        <Text style={styles.linkText}>Don't have an account? Register</Text>
+        <Text style={styles.linkText}>Don't have an account?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -87,13 +87,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff',    
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#312783',
     marginBottom: 32,
+    width: Platform.select({ android: 120 }),
+    textAlign: 'center',    
   },
   input: {
     width: '100%',
@@ -116,6 +118,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    width: Platform.select({ android: 120 }),
+    textAlign: 'center',
   },
   link: {
     marginTop: 16,
@@ -124,6 +128,8 @@ const styles = StyleSheet.create({
     color: '#0485e2',
     fontSize: 14,
     textDecorationLine: 'underline',
+    width: Platform.select({ android: 280 }),
+    textAlign: 'center',
   },
 });
 

@@ -6,7 +6,8 @@ import {
   StyleSheet,
   Linking,
   Share,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    width: Platform.select({ android: 125 })
   },
   communityContainer: {
     flexDirection: 'row',
@@ -286,11 +288,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 14,
     marginRight: 8,
+    flexShrink: 0,
+    width: Platform.select({ android: 85 })
   },
   communityText: {
     fontSize: 14,
     color: '#fff',
-    textAlign: 'center'
+    textAlign: 'center',
+    flexShrink: 0,
   },
   imageContainer: {
     position: 'relative',
@@ -343,6 +348,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     textDecorationLine: 'underline',
     fontSize: 14,
+    width: Platform.select({ android: 75 }),
   },
   postFooter: {
     flexDirection: 'row',
