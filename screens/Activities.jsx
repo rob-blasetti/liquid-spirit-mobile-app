@@ -24,6 +24,7 @@ import {
   faStar,
   faVideo,
 } from '@fortawesome/free-solid-svg-icons';
+import themeVariables from '../styles/theme';
 
 const Activities = ({ navigation }) => {
   const { userActivities } = useContext(UserContext);
@@ -180,7 +181,7 @@ const Activities = ({ navigation }) => {
       </Animated.View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#312783" />
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       ) : filteredActivities.length > 0 ? (
         <FlatList style={styles.flatListContainer} data={filteredActivities} keyExtractor={(item) => item._id.toString()} renderItem={renderActivity} />
       ) : (

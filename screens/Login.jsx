@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Platform, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
@@ -65,7 +66,7 @@ const Login = ({ navigation }) => {
         secureTextEntry
       />
       {loading ? (
-        <ActivityIndicator size="large" color="#0485e2" />
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Login</Text>

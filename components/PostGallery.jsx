@@ -9,7 +9,7 @@ import FastImage from 'react-native-fast-image';
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 2 - 15;
 
-const PostGallery = ({ posts }) => {
+const PostGallery = ({ posts = [] }) => {
   const navigation = useNavigation();
 
   const handlePress = (item) => {
@@ -33,6 +33,11 @@ const PostGallery = ({ posts }) => {
       keyExtractor={(item) => item._id.toString()}
       numColumns={2}
       contentContainerStyle={styles.galleryContainer}
+      ListEmptyComponent={() => (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No items to display right now.</Text>
+        </View>
+      )}
       renderItem={({ item }) => {
         let mediaUrl = item.media?.[0] || item.imageUrl;
         const isVideo = mediaUrl?.endsWith('.mp4') || mediaUrl?.includes('video');
@@ -133,6 +138,17 @@ const styles = StyleSheet.create({
   listType: {
     fontSize: 14,
     color: '#333',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
   }
 });

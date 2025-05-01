@@ -4,6 +4,7 @@ import { StatusBar, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import themeVariables from './styles/theme';
 
 import { UserProvider, UserContext } from './contexts/UserContext';
 import { fetchExploreFeed } from './services/PostService';
@@ -81,7 +82,7 @@ const MainApp = () => {
   if (checkingSession || isLoading) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0485e2" />
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       </SafeAreaView>
     );
   }

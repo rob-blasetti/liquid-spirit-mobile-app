@@ -49,8 +49,6 @@ const EventDetailCard = ({ route }) => {
   const { user, token } = useContext(UserContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
 
-  console.log('THE EVENT: ', event);
-
   // Fetch full event details in the background and update state
   useEffect(() => {
     if (eventPreload) {

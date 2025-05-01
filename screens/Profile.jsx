@@ -19,6 +19,7 @@ import { faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import s3 from '../awsConfig';
+import Avatar from '@flipxyz/react-native-boring-avatars';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, userPosts, userActivities, userEvents, isLoading, setUser, logout } = useContext(UserContext);
@@ -144,7 +145,7 @@ const handleItemPress = (type, item) => {
 
 const renderList = (data, type) => {
   if (isLoading) {
-    return <ActivityIndicator size="large" color="#312783" />;
+    return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
   if (!data.length) {
     return <Text style={styles.noDataText}>No {type} available.</Text>;
@@ -286,11 +287,16 @@ const renderScene = ({ route }) => {
         <View style={styles.bannerContent}>
           <View style={styles.bannerLeft}>
             <TouchableOpacity onPress={handleProfilePicturePress}>
-              <FastImage
-                style={styles.profilePicture}
-                source={{ uri: user?.profilePicture }}
-                resizeMode={FastImage.resizeMode.cover}
-              />
+              {user?.profilePicture ? (
+                <FastImage source={{ uri: user?.profilePicture }} style={styles.profileAvatar} resizeMode={FastImage.resizeMode.cover}/>
+              ) : (
+                <Avatar
+                  size={55}
+                  name={user?.firstName}
+                  variant="beam"
+                  colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+                />
+              )}
             </TouchableOpacity>
             <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
             <Text style={styles.bahaiID}>{user?.bahaiId}</Text>

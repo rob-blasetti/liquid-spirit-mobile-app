@@ -12,6 +12,7 @@ import {
   FlatList,
   Dimensions,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -22,6 +23,7 @@ import localImages from '../utils/localImages';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
+import Avatar from '@flipxyz/react-native-boring-avatars';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -69,6 +71,16 @@ const Home = ({ navigation }) => {
     });
   };
 
+  console.log('user: ', user);
+  // Show loading spinner until user data (activities, events, posts) has loaded
+  if (userActivities === null || userEvents === null || userPosts === null) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollView}>
@@ -86,10 +98,16 @@ const Home = ({ navigation }) => {
           <View style={styles.bannerOverlay} />
           <View style={styles.bannerContent}>
             <View style={styles.bannerMiddleRow}>
-              <FastImage
-                source={{ uri: user?.profilePicture }}
-                style={styles.profileAvatar}
-              />
+              {user?.profilePicture ? (
+                <FastImage source={{ uri: user?.profilePicture }} style={styles.profileAvatar} />
+              ) : (
+                <Avatar
+                  size={55}
+                  name={user?.firstName}
+                  variant="beam"
+                  colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+                />
+              )}
               <View style={styles.profileColumn}>
                 <Text style={styles.profileName}>
                   {user?.firstName} {user?.lastName}
@@ -143,9 +161,8 @@ const Home = ({ navigation }) => {
             .sort((a, b) => new Date(a.date) - new Date(b.date));
           const nextEvent = upcoming[0];
           // format event date/time for tile
-          const eventDate = new Date(nextEvent.date);
+          const eventDate = new Date(nextEvent.startTime);
           const eventDateTime = eventDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-          console.log(nextEvent);
           if (!nextEvent) return null;
           return (
             <View style={styles.dualGrid}>
@@ -223,7 +240,6 @@ const Home = ({ navigation }) => {
           // format activity date/time for tile
           const actDate = new Date(nextAct?.date);
           const actDateTime = actDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-          console.log('nextAct: ', nextAct);
           if (!nextAct) return null;
           return (
             <View style={styles.dualGrid}>
@@ -382,6 +398,12 @@ const Home = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: themeVariables.greyColor,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: themeVariables.greyColor,
   },
   scrollView: {
