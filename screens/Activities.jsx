@@ -195,7 +195,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-    marginBottom: 45,
   },
   controlContainer: {
     flexDirection: 'row',

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
@@ -169,10 +169,10 @@ const Home = ({ navigation }) => {
                   style={styles.smallTileGap}
                 />
                 <SquareTile
-                  subheading="See All Events"
+                  subheading="Events this month: 3"
                   bgImgColour="red"
                   onPress={() => navigation.navigate('Events')}
-                  actionIcon={faCalendar}
+                  actionIcon={faSquarePollVertical}
                   style={styles.smallTileLast}
                 />
               </View>
@@ -245,10 +245,10 @@ const Home = ({ navigation }) => {
                   style={styles.smallTileGap}
                 />
                 <SquareTile
-                  subheading="See All Activities"
+                  subheading="Activities this month: 20"
                   bgImgColour="blue"
                   onPress={() => navigation.navigate('Activities')}
-                  actionIcon={faAlignLeft}
+                  actionIcon={faSquarePollVertical}
                   style={styles.smallTileLast}
                 />
               </View>

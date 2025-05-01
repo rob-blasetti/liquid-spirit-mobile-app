@@ -32,7 +32,8 @@ platform :android do
 
   desc "Deploy a new version to the Google Play"
   lane :deploy do
-    gradle(task: "clean assembleRelease")
+    # Build Android App Bundle for Google Play
+    gradle(task: "clean bundleRelease")
     upload_to_play_store
   end
 end
