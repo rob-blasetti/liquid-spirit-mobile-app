@@ -49,9 +49,10 @@ const ForgotPassword = ({ navigation }) => {
         Please enter your email address to reset your password
       </Text>
 
+      {/* Email Label and Input */}
+      <Text style={styles.label}>Email Address</Text>
       <TextInput
         style={styles.input}
-        placeholder='Email Address'
         value={email}
         onChangeText={setEmail}
         keyboardType='email-address'
@@ -80,6 +81,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#312783',
     marginBottom: 10,
+    textAlign: 'center',
+    width: 260,
+
   },
   subtitle: {
     fontSize: 16,
@@ -87,6 +91,14 @@ const styles = StyleSheet.create({
     color: '#555',
     marginBottom: 20,
     paddingHorizontal: 10,
+  },
+  // Label above inputs for clarity on all devices
+  label: {
+    width: '100%',
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
+    alignSelf: 'flex-start',
   },
   input: {
     height: 50,
@@ -109,5 +121,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    width: 180,
+    textAlign: 'center',
+
   },
 });

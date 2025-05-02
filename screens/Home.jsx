@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useEffect, useMemo } from 'react';
+import React, { useContext, useState, useRef, useMemo } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -7,19 +7,16 @@ import {
   View,
   TouchableOpacity,
   Image,
-  ImageBackground,
   Animated,
-  FlatList,
   Dimensions,
   Linking,
   ActivityIndicator,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
-import localImages from '../utils/localImages';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';

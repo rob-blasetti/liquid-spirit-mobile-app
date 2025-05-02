@@ -245,31 +245,43 @@ const renderScene = ({ route }) => {
   };
 
   // Custom TabBar to ensure full labels are visible and centered on Android
-  const renderTabBarCustom = ({ navigationState, jumpTo }) => (
-    <View style={{ flexDirection: 'row', backgroundColor: '#312783' }}>
-      {navigationState.routes.map((route, idx) => {
-        const focused = navigationState.index === idx;
-        return (
-          <TouchableOpacity
-            key={route.key}
-            style={{
-              flex: 1,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderBottomWidth: focused ? 2 : 0,
-              borderBottomColor: '#fff',
-            }}
-            onPress={() => jumpTo(route.key)}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, textTransform: 'none', textAlign: 'center' }}>
-              {route.title}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
+  const renderTabBarCustom = ({ navigationState, jumpTo, layout }) => {
+    const totalWidth = layout?.width ?? Dimensions.get('window').width;
+    const tabWidth = totalWidth / navigationState.routes.length;
+    return (
+      <View style={{ flexDirection: 'row', backgroundColor: '#312783' }}>
+        {navigationState.routes.map((route, idx) => {
+          const focused = navigationState.index === idx;
+          return (
+            <TouchableOpacity
+              key={route.key}
+              style={{
+                width: tabWidth,
+                paddingVertical: 12,
+                alignItems: 'left',
+                justifyContent: 'center',
+                borderBottomWidth: focused ? 2 : 0,
+                borderBottomColor: '#fff',
+              }}
+              onPress={() => jumpTo(route.key)}
+            >
+              <Text
+                style={{
+                  color: '#fff',
+                  fontSize: 16,
+                  textTransform: 'none',
+                  textAlign: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                {route.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
   return (
     <View style={styles.container}>
     <View style={styles.bannerContainer}>

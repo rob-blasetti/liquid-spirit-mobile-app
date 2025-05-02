@@ -99,7 +99,7 @@ const MainApp = () => {
             <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
             <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
             <Stack.Screen name="Verification" component={Verification} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ title: 'Forgot Password' }} />
             <Stack.Screen name="EULA" component={Eula} /> 
             <Stack.Screen name="Events" component={EventsScreen} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />

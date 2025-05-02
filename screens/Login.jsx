@@ -49,18 +49,20 @@ const Login = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+      {/* Email Label and Input */}
+      <Text style={styles.label}>Email</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
       />
+      {/* Password Label and Input */}
+      <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -97,6 +99,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     width: Platform.select({ android: 120 }),
     textAlign: 'center',    
+  },
+  // Label above inputs for clarity on all devices
+  label: {
+    width: '100%',
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
+    alignSelf: 'flex-start',
   },
   input: {
     width: '100%',

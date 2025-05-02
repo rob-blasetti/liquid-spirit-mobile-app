@@ -36,8 +36,8 @@ const BottomBar = ({ initialPosts }) => {
   return (
     <>
       <Tab.Navigator
-        // Set Feed as the initial tab when the app opens
-        initialRouteName="Feed"
+        // Dynamically set initial tab: Home if logged in, otherwise Feed
+        initialRouteName={isLoggedIn ? 'Home' : 'Feed'}
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ color, size }) => (

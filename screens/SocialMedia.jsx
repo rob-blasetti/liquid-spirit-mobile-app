@@ -268,19 +268,19 @@ const styles = StyleSheet.create({
   tabItem: { 
     flex: 1, 
     paddingVertical: 12, 
-    alignItems: 'center' 
   },
   tabText: { 
     fontSize: 16, 
     fontWeight: '600', 
-    color: '#333' 
+    color: '#333',
+    textAlign: 'center',
   },
   activeTab: { 
     borderBottomWidth: 3, 
     borderBottomColor: '#312783' 
   },
   activeTabText: { 
-    color: '#312783' 
+    color: '#312783',
   }
 });
 

@@ -62,32 +62,36 @@ const Register = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
 
+      {/* Email Label and Input */}
+      <Text style={styles.label}>Email</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
       />
+      {/* Bahá'í ID Label and Input */}
+      <Text style={styles.label}>Bahá'í ID</Text>
       <TextInput
         style={styles.input}
-        placeholder="Bahá'í ID"
         value={bahaiId}
         onChangeText={setBahaiId}
         keyboardType="numeric"
       />
+      {/* Password Label and Input */}
+      <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="Password"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+      {/* Confirm Password Label and Input */}
+      <Text style={styles.label}>Confirm Password</Text>
       <TextInput
         style={styles.input}
-        placeholder="Confirm Password"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
@@ -144,6 +148,14 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     width: Platform.select({ android: 140 }),
     textAlign: 'center',
+  },
+  // Label above inputs for clarity on all devices
+  label: {
+    width: '100%',
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 4,
+    alignSelf: 'flex-start',
   },
   input: {
     width: '100%',
