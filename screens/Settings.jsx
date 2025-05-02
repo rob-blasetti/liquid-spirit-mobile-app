@@ -4,6 +4,7 @@ import { UserContext } from '../contexts/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
+import { CommonActions } from '@react-navigation/native';
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
@@ -14,10 +15,12 @@ const Settings = ({ navigation }) => {
 
   const handleLogout = async () => {
     await logout();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Feed' }],
-    });
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Welcome' }],
+      })
+    );
   };
 
   const handleConfirmDelete = async () => {
@@ -25,11 +28,13 @@ const Settings = ({ navigation }) => {
       try {
         await deleteAccount(user.id, token);
         
-        await logout(); 
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'SocialMedia' }], 
-        });
+        await logout();
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Welcome' }],
+          })
+        );
       } catch (error) {
         console.error('Error deleting account:', error);
         Alert.alert('Error', 'Could not delete account. Please try again.');

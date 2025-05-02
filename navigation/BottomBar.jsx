@@ -36,7 +36,8 @@ const BottomBar = ({ initialPosts }) => {
   return (
     <>
       <Tab.Navigator
-        initialRouteName="Home"
+        // Set Feed as the initial tab when the app opens
+        initialRouteName="Feed"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
