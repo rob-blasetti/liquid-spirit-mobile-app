@@ -282,6 +282,9 @@ const renderScene = ({ route }) => {
       </View>
     );
   };
+
+  console.log('User1:', user);
+
   return (
     <View style={styles.container}>
     <View style={styles.bannerContainer}>
@@ -300,7 +303,7 @@ const renderScene = ({ route }) => {
           <View style={styles.bannerLeft}>
             <TouchableOpacity onPress={handleProfilePicturePress}>
               {user?.profilePicture ? (
-                <FastImage source={{ uri: user?.profilePicture }} style={styles.profileAvatar} resizeMode={FastImage.resizeMode.cover}/>
+                <FastImage source={{ uri: user?.profilePicture }} style={styles.profilePicture} resizeMode={FastImage.resizeMode.cover}/>
               ) : (
                 <Avatar
                   size={55}
