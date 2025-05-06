@@ -13,17 +13,13 @@ import {
 import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import PostGallery from '../components/PostGallery';
-import { useAuthService } from '../services/AuthService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
-import { launchImageLibrary } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
-import s3 from '../awsConfig';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import ChangeableProfileImage from '../components/ChangeableProfileImage';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, userPosts, userActivities, userEvents, isLoading, setUser, logout } = useContext(UserContext);
-  const { updateMe } = useAuthService();
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
@@ -77,61 +73,6 @@ const ProfileScreen = ({ navigation }) => {
     }
   }, [userPosts, userActivities, userEvents, user?.id]);
 
-  const handleProfilePicturePress = async () => {
-    const options = {
-      mediaType: 'photo',
-      maxWidth: 1024,
-      maxHeight: 1024,
-      quality: 0.8,
-    };
-
-    launchImageLibrary(options, async response => {
-      if (response.didCancel) {
-        console.log('User cancelled image picker');
-      } else if (response.errorCode) {
-        console.error('ImagePicker Error: ', response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        const asset = response.assets[0];
-        const { uri, fileName, type } = asset;
-
-        try {
-          const imageBlob = await getBlob(uri);
-
-          const s3Key = `profile-images/${fileName || Date.now()}`;
-          const params = {
-            Bucket: 'liquid-spirit',
-            Key: s3Key,
-            Body: imageBlob,
-            ContentType: type || 'image/jpeg',
-          };
-          const s3Upload = await s3.upload(params).promise();
-          console.log('S3 upload success =>', s3Upload.Location);
-
-          const updatedUserFields = {
-            ...user,
-            profilePicture: s3Upload.Location,
-          };
-
-          const { ok, data } = await updateMe(updatedUserFields);
-          if (!ok) {
-            console.log('Error updating user profile:', data);
-            alert('Failed to update profile on the server.');
-            return;
-          }
-
-          setUser(data); 
-
-        } catch (err) {
-          console.error('Error uploading to S3 =>', err);
-        }
-      }
-    });
-  };
-
-  const getBlob = async (uri) => {
-    const response = await fetch(uri);
-    return await response.blob();
-  };
 
 const handleItemPress = (type, item) => {
   if (type === 'posts') {
@@ -301,24 +242,13 @@ const renderScene = ({ route }) => {
       <View style={[styles.overlay, StyleSheet.absoluteFill]} />
         <View style={styles.bannerContent}>
           <View style={styles.bannerLeft}>
-            <TouchableOpacity onPress={handleProfilePicturePress}>
-              {user?.profilePicture ? (
-                <FastImage source={{ uri: user?.profilePicture }} style={styles.profilePicture} resizeMode={FastImage.resizeMode.cover}/>
-              ) : (
-                <Avatar
-                  size={55}
-                  name={user?.firstName}
-                  variant="beam"
-                  colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-                />
-              )}
-            </TouchableOpacity>
+            <ChangeableProfileImage imageStyle={styles.profilePicture} avatarSize={80} />
             <Text style={styles.name}>{user?.firstName} {user?.lastName}</Text>
             <Text style={styles.bahaiID}>{user?.bahaiId}</Text>
           </View>
           <View style={styles.bannerRight}>
             <Text style={styles.communityName}>{user?.community?.name}</Text>
-            <Text style={styles.memberCount}>144 members</Text>
+            <Text style={styles.memberCount}>141 members</Text>
           </View>
         </View>
       </View>

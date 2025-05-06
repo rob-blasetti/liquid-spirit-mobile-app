@@ -88,7 +88,14 @@ const Events = () => {
   };
 
   const RenderEvent = ({ item }) => {
-    const imageSource = localImages[item.imageUrl] || localImages['/img/events/Event_Placeholder.png'];
+    console.log('event item: ', item);
+    let imageSource;
+    // Support both remote S3 URLs and local images
+    if (item.imageUrl && (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://'))) {
+      imageSource = { uri: item.imageUrl };
+    } else {
+      imageSource = localImages[item.imageUrl] || localImages['/img/events/Event_Placeholder.png'];
+    }
   
     return (
       <TouchableOpacity

@@ -20,7 +20,7 @@ import { UserContext } from '../contexts/UserContext';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import ChangeableProfileImage from '../components/ChangeableProfileImage';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -95,16 +95,7 @@ const Home = ({ navigation }) => {
           <View style={styles.bannerOverlay} />
           <View style={styles.bannerContent}>
             <View style={styles.bannerMiddleRow}>
-              {user?.profilePicture ? (
-                <FastImage source={{ uri: user?.profilePicture }} style={styles.profileAvatar} />
-              ) : (
-                <Avatar
-                  size={55}
-                  name={user?.firstName}
-                  variant="beam"
-                  colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-                />
-              )}
+              <ChangeableProfileImage imageStyle={styles.profileAvatar} avatarSize={55} />
               <View style={styles.profileColumn}>
                 <Text style={styles.profileName}>
                   {user?.firstName} {user?.lastName}
@@ -115,7 +106,7 @@ const Home = ({ navigation }) => {
               </View>
               <View style={styles.communityColumn}>
                 <Text style={styles.communityName}>{user?.community?.name}</Text>
-                <Text style={styles.communityMembers}>144 members</Text>
+                <Text style={styles.communityMembers}>141 members</Text>
               </View>
             </View>
           {/* Show Gregorian date and Badi date with separator */}
