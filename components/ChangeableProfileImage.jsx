@@ -57,7 +57,14 @@ const ChangeableProfileImage = ({ imageStyle, avatarSize = 55 }) => {
             alert('Failed to update profile on the server.');
             return;
           }
-          setUser(data);
+          // Merge returned data with existing user to preserve nested properties (e.g., community)
+          // updatedUserFields includes the new profilePicture and retains other user fields
+          setUser({
+            // existing user context fields
+            ...user,
+            // override with any updated fields from server response
+            ...data,
+          });
         } catch (err) {
           console.error('Error uploading to S3 =>', err);
         }
