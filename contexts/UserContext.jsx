@@ -170,10 +170,16 @@ export const UserProvider = ({ children }) => {
       const data = await response.json();
       
       if (!response.ok) {
-        console.error("Invalid refresh token, logging out...");
+        console.warn("Invalid refresh token, attempting re-login with stored credentials...");
         await AsyncStorage.removeItem('refreshToken');
-        logout();
-        throw new Error(data.message || 'Refresh token invalid');
+        // Attempt to re-authenticate using stored credentials
+        try {
+          await biometricLogin();
+        } catch (err) {
+          console.error('Re-login failed:', err);
+          logout();
+        }
+        return;
       }
   
       // Extract tokens

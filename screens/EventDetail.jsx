@@ -19,7 +19,7 @@ import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icon
 
 const EventDetail = ({ route }) => {
   const { event: initialEvent, eventId } = route.params || {};
-  const { user, token } = useContext(UserContext);
+  const { user, token, communityId } = useContext(UserContext);
 
   const [event, setEvent] = useState(initialEvent || null);
   const [loading, setLoading] = useState(!initialEvent);
@@ -75,7 +75,8 @@ const EventDetail = ({ route }) => {
     if (!event || !token) return;
     setIsJoining(true);
     try {
-      await joinEvent(event._id, token);
+      // Join the event and notify community
+      await joinEvent(event._id, token, event.title, user, communityId);
       setHasJoined(true);
       Alert.alert('Success', 'You have joined the event.');
     } catch (error) {

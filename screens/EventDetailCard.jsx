@@ -46,7 +46,7 @@ const parseTime = timeStr => {
 const EventDetailCard = ({ route }) => {
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
-  const { user, token } = useContext(UserContext);
+  const { user, token, communityId } = useContext(UserContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
 
   // Fetch full event details in the background and update state
@@ -60,11 +60,11 @@ const EventDetailCard = ({ route }) => {
         .catch(err => console.error('Error fetching event details:', err));
     }
   }, [eventId, token, eventPreload]);
-  // Render immediately with available event data
+  // Show loading spinner while fetching event details
   if (!event) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.noEventText}>Event details not available.</Text>
+        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       </View>
     );
   }
@@ -84,6 +84,8 @@ const EventDetailCard = ({ route }) => {
 };
 
 const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOptimisticJoin, oversightMembersPreload }) => {
+  // Access current user and community from context for joining
+  const { user, communityId } = useContext(UserContext);
   // Destructure raw attendees from event; we'll enrich with full user data below
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
     attendees: rawAttendees = [], host, materials = [] } = event;
@@ -101,11 +103,13 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const handleJoin = async () => {
     setOptimisticJoin(true);
     try {
-      await joinEvent(event._id, token || '');
+      // Join the event and notify community
+      await joinEvent(event._id, token || '', event.title, user, communityId);
       const updated = await fetchEventDetails(event._id, token || '');
       setEvent(updated);
-    } catch {
+    } catch (err) {
       setOptimisticJoin(false);
+      console.error('Join event failed:', err);
       alert('Failed to join event');
     }
   };

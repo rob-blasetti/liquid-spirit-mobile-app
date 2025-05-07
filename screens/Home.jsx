@@ -12,7 +12,6 @@ import {
   Linking,
   ActivityIndicator,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';

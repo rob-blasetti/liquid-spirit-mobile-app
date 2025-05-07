@@ -88,7 +88,6 @@ const Events = () => {
   };
 
   const RenderEvent = ({ item }) => {
-    console.log('event item: ', item);
     let imageSource;
     // Support both remote S3 URLs and local images
     if (item.imageUrl && (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://'))) {
