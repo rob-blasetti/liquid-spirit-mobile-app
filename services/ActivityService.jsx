@@ -86,7 +86,14 @@ export const cancelRequestFacilitator = (activityId, userId, token) => makeReque
 export const approveParticipation = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/approve-participant/${userId}`, 'POST', token);
 export const approveFacilitator = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/approve-facilitator/${userId}`, 'POST', token);
 
-export const denyParticipationRequest = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/deny-participation/${userId}`, 'POST', token);
+// Deny a participant's request to join an activity
+export const denyParticipationRequest = (activityId, userId, token) =>
+  makeRequest(
+    // endpoint should match /approve-participant naming (deny-participant)
+    `/api/activities/${activityId}/deny-participant/${userId}`,
+    'POST',
+    token
+  );
 export const denyFacilitatorRequest = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/deny-facilitator/${userId}`, 'POST', token);
 
 export const leaveParticipation = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/leave-participant/${userId}`, 'POST', token);

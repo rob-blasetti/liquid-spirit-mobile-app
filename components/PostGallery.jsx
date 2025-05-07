@@ -9,7 +9,7 @@ import FastImage from 'react-native-fast-image';
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 2 - 15;
 
-const PostGallery = ({ posts = [] }) => {
+const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
   const navigation = useNavigation();
 
   const handlePress = (item) => {
@@ -32,6 +32,8 @@ const PostGallery = ({ posts = [] }) => {
       data={posts}
       keyExtractor={(item) => item._id.toString()}
       numColumns={2}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       contentContainerStyle={styles.galleryContainer}
       ListEmptyComponent={() => (
         <View style={styles.emptyContainer}>
