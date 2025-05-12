@@ -26,6 +26,7 @@ import EventDetailCard from './screens/EventDetailCard';
 import ForgotPassword from './screens/ForgotPassword';
 import Eula from './screens/Eula';
 import PublicUserProfile from './screens/PublicUserProfile';
+import RequestAgendaItem from './screens/RequestAgendaItem';
 
 import BottomBar from './navigation/BottomBar';
 
@@ -128,6 +129,7 @@ const MainApp = () => {
             <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
             <Stack.Screen name="ActivityDetailCard" component={ActivityDetailCard} options={{ title: 'Activity Detail Card' }}/>
+            <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
             <Stack.Screen name="Main"
               options={{ headerShown: false }}
             >

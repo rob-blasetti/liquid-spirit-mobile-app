@@ -22,6 +22,7 @@ import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
+import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -47,6 +48,7 @@ const Home = ({ navigation, homeOverview }) => {
     return upcoming.find(e => !e.hosts || (Array.isArray(e.hosts) && e.hosts.length === 0)) || null;
   }, [userEvents]);
   const [activeTab, setActiveTab] = useState('Activities');
+  const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -69,10 +71,6 @@ const Home = ({ navigation, homeOverview }) => {
     });
   };
 
-  console.log('user: ', user);
-  console.log('homeOverview: ', homeOverview);
-  
-  // On screen focus, check token expiration and attempt session refresh if expired
   useFocusEffect(
     useCallback(() => {
       if (token && isTokenExpired(token)) {
@@ -80,7 +78,6 @@ const Home = ({ navigation, homeOverview }) => {
       }
     }, [token])
   );
-  // Show loading spinner until user data (activities, events, posts) has loaded
   if (userActivities === null || userEvents === null || userPosts === null) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -120,7 +117,6 @@ const Home = ({ navigation, homeOverview }) => {
                 <Text style={styles.communityMembers}>{homeOverview.stats?.communityMembersCount} members</Text>
               </View>
             </View>
-          {/* Show Gregorian date and Badi date with separator */}
             {(() => {
               const nowDate = new Date();
               // Gregorian date
@@ -136,7 +132,6 @@ const Home = ({ navigation, homeOverview }) => {
           </View>
         </View>
 
-        {/* Tabs: Events, Activities, Posts, Admin */}
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
           {['Activities','Events'].map(tab => (
@@ -197,7 +192,6 @@ const Home = ({ navigation, homeOverview }) => {
         })()}
         {/* Admin Section */}
         {activeTab==='Admin' && (() => {
-          const recentMember = { name: 'Alice Smith', avatarUrl: 'https://via.placeholder.com/400' };
           return (
             <View style={styles.dualGrid}>
               {/* Main Assembly Tile */}
@@ -212,17 +206,17 @@ const Home = ({ navigation, homeOverview }) => {
               <View style={styles.smallTilesColumn}>
                 <SquareTile
                   subheading="My Local Spiritual Assembly"
-                  onPress={() => navigation.navigate('EventDetail', { event: nextEvent })}
                   bgImgColour="red"
                   actionIcon={faUsers}
                   style={styles.smallTileGap}
+                  onPress={() => setAssemblyModalVisible(true)}
                 />
                 <SquareTile
                   subheading="Request Agenda Item"
-                  onPress={() => {/* TODO: request topic */}}
                   bgImgColour="red"
                   actionIcon={faAlignLeft}
                   style={styles.smallTileLast}
+                  // onPress={() => navigation.navigate('RequestAgendaItem')}
                 />
               </View>
             </View>
@@ -390,6 +384,12 @@ const Home = ({ navigation, homeOverview }) => {
           </TouchableOpacity> */}
         </View>
       </ScrollView>
+      {/* Local Spiritual Assembly Members Modal */}
+      <LocalAssemblyModal
+        visible={assemblyModalVisible}
+        onClose={() => setAssemblyModalVisible(false)}
+        members={homeOverview.localSpiritualAssembly?.members || []}
+      />
     </SafeAreaView>
   );
 };
