@@ -94,6 +94,24 @@ export const useAuthService = () => {
     }
   };
 
+  const fetchHomeOverview = async (communityId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/homeOverview/${communityId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      const data = await response.json();
+
+      console.log('homeOverview data: ', data);
+
+      return { ok: response.ok, data };
+    } catch (error) {
+      throw new Error(`Sign-up error: ${error.message}`);
+    }
+  };
+
   const fetchMe = async () => {
     try {
       const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -242,5 +260,6 @@ export const useAuthService = () => {
     googleSignIn,
     fetchGoogleUserInfo,
     deleteAccount,
+    fetchHomeOverview,
   };
 };

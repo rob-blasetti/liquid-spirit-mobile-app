@@ -31,7 +31,8 @@ export const UserProvider = ({ children }) => {
         if (storedToken) setToken(storedToken);
         if (storedRefreshToken) setRefreshToken(storedRefreshToken);
         if (storedUser) setUser(JSON.parse(storedUser));
-        if (storedCommunityId) setCommunityId(storedCommunityId); 
+        // Set communityId from storage, even if empty string
+        if (storedCommunityId !== null) setCommunityId(storedCommunityId);
 
         const cachedActivities = await AsyncStorage.getItem('userActivities');
         const cachedEvents = await AsyncStorage.getItem('userEvents');

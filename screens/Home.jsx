@@ -11,6 +11,7 @@ import {
   Dimensions,
   Linking,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +30,7 @@ const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
-const Home = ({ navigation }) => {
+const Home = ({ navigation, homeOverview }) => {
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession } = useContext(UserContext);
   // Determine the next upcoming event without a host
   const eventWithoutHost = useMemo(() => {
@@ -69,6 +70,8 @@ const Home = ({ navigation }) => {
   };
 
   console.log('user: ', user);
+  console.log('homeOverview: ', homeOverview);
+  
   // On screen focus, check token expiration and attempt session refresh if expired
   useFocusEffect(
     useCallback(() => {
@@ -114,7 +117,7 @@ const Home = ({ navigation }) => {
               </View>
               <View style={styles.communityColumn}>
                 <Text style={styles.communityName}>{user?.community?.name}</Text>
-                <Text style={styles.communityMembers}>141 members</Text>
+                <Text style={styles.communityMembers}>{homeOverview.stats?.communityMembersCount} members</Text>
               </View>
             </View>
           {/* Show Gregorian date and Badi date with separator */}
@@ -182,7 +185,7 @@ const Home = ({ navigation }) => {
                   style={styles.smallTileGap}
                 />
                 <SquareTile
-                  subheading="Events this month: 3"
+                  subheading={`Events this month: ${homeOverview.stats?.eventsCount}`}
                   bgImgColour="red"
                   onPress={() => navigation.navigate('Events')}
                   actionIcon={faSquarePollVertical}
@@ -257,7 +260,7 @@ const Home = ({ navigation }) => {
                   style={styles.smallTileGap}
                 />
                 <SquareTile
-                  subheading="Activities this month: 20"
+                  subheading={`Activities this month: ${homeOverview.stats?.activitiesCount}`}
                   bgImgColour="blue"
                   onPress={() => navigation.navigate('Activities')}
                   actionIcon={faSquarePollVertical}
@@ -677,7 +680,7 @@ const styles = StyleSheet.create({
   },
   // Tab buttons
   heading: {
-    color: themeVariables.pirmaryColor,
+    color: themeVariables.primaryColor,
     marginHorizontal: 20,    
     marginBottom: 10,
     padding: 4,

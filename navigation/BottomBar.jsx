@@ -26,7 +26,7 @@ const tabIcons = {
   Notifications: faBell,
 };
 
-const BottomBar = ({ initialPosts }) => {
+const BottomBar = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn } = useContext(UserContext);
   const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
@@ -73,7 +73,10 @@ const BottomBar = ({ initialPosts }) => {
           },
         })}
       >
-        <Tab.Screen name="Home" component={Home} />
+        {/* Pass homeOverview as a prop via render callback */}
+        <Tab.Screen name="Home">
+          {props => <Home {...props} homeOverview={homeOverview} />}
+        </Tab.Screen>
         <Tab.Screen name="Feed">
           {() => <SocialMediaScreen initialPosts={initialPosts} scrollToTop={scrollToTop} />}
         </Tab.Screen>

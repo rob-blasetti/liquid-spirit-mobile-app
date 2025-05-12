@@ -8,6 +8,7 @@ import themeVariables from './styles/theme';
 
 import { UserProvider, UserContext } from './contexts/UserContext';
 import { fetchExploreFeed } from './services/PostService';
+import { useAuthService } from './services/AuthService';
 
 import Splash from './screens/Splash';
 
@@ -40,8 +41,10 @@ const Stack = createNativeStackNavigator();
 const MainApp = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
+  const [homeOverview, setHomeOverview] = useState([]);
   const [checkingSession, setCheckingSession] = useState(true);
-  const { biometricLogin, isLoading, isLoggedIn } = useContext(UserContext);
+  const { biometricLogin, isLoading, isLoggedIn, communityId } = useContext(UserContext);
+  const { fetchHomeOverview } = useAuthService();
 
   useEffect(() => {
     const attemptBiometricLogin = async () => {
@@ -55,32 +58,47 @@ const MainApp = () => {
   }, []);
 
   useEffect(() => {
-    // 1) Simulate data fetching (and keep splash for an extra second)
+    // 1) Fetch initial posts and keep splash for an extra moment
     const prepareApp = async () => {
       try {
-        // e.g. Fetch some data that you want ready for the first screen
         const fetchedPosts = await fetchExploreFeed();
         setInitialPosts(fetchedPosts);
-
-        // 2) Keep splash an extra second for demonstration:
+        // Keep splash an extra moment
         await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
         console.error('Error loading initial data:', error);
       } finally {
-        // 3) We’re done -> show the app
+        // Done -> show the app
         setAppIsReady(true);
       }
     };
-
     prepareApp();
   }, []);
+
+  // Fetch home overview whenever communityId becomes available
+  useEffect(() => {
+    const loadHomeOverview = async () => {
+      if (!communityId) return;
+      try {
+        const overviewResult = await fetchHomeOverview(communityId);
+        if (overviewResult.ok) {
+          setHomeOverview(overviewResult.data);
+        } else {
+          console.warn('Failed to fetch home overview');
+        }
+      } catch (error) {
+        console.error('Error fetching home overview:', error);
+      }
+    };
+    loadHomeOverview();
+  }, [communityId]);
 
   if (!appIsReady) {
     // Show your splash screen while things load
     return <Splash />;
   }
 
-  if (checkingSession || isLoading) {
+  if (checkingSession || isLoading || (isLoggedIn && !communityId)) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
@@ -113,7 +131,7 @@ const MainApp = () => {
             <Stack.Screen name="Main"
               options={{ headerShown: false }}
             >
-              {() => <BottomBar initialPosts={initialPosts} />}
+              {() => <BottomBar initialPosts={initialPosts} homeOverview={homeOverview}/>}
             </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>
