@@ -15,6 +15,7 @@ import {
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
+import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCalendar, faClock, faCarSide, faUsers, faPlusCircle, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 
@@ -324,26 +325,46 @@ const OverlappingAvatars = ({ list }) => {
   const maxDisplay = 2;
   const extraCount = list.length - maxDisplay;
   const displayList = list.slice(0, maxDisplay);
+  const navigation = useNavigation();
   return (
     <View style={styles.avatarsContainer}>
       {displayList.map((item, idx) => {
         const key = item.details?._id || idx;
         const user = item.details || {};
         const avatarUri = user.profilePicture;
-        const style = [styles.avatar, idx > 0 && { marginLeft: -15 }];
-        return avatarUri ? (
-          <FastImage key={key} source={{ uri: avatarUri }} style={style} />
-        ) : (
-          <Avatar key={key} size={styles.avatar.width} name={`${user.firstName||''} ${user.lastName||''}`.trim()} variant="beam" colors={[ '#1B263B','#0A74DA','#6C7A89','#F8F9FA','#0C0C0C' ]} style={style} />
+        const imageStyle = [styles.avatar, idx > 0 && { marginLeft: -15 }];
+        return (
+          <TouchableOpacity
+            key={key}
+            style={imageStyle}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
+          >
+            {avatarUri ? (
+              <FastImage source={{ uri: avatarUri }} style={imageStyle} />
+            ) : (
+              <Avatar
+                size={styles.avatar.width}
+                name={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                variant="beam"
+                colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+                style={imageStyle}
+              />
+            )}
+          </TouchableOpacity>
         );
       })}
       {extraCount > 0 && (
-        <View key="extra" style={[styles.avatar, styles.extraCount, { marginLeft: -15 }]}><Text style={styles.extraCountText}>+{extraCount}</Text></View>
+        <View key="extra" style={[styles.avatar, styles.extraCount, { marginLeft: -15 }]}>
+          <Text style={styles.extraCountText}>+{extraCount}</Text>
+        </View>
       )}
     </View>
   );
 };
-const BadgeModal = ({ visible, onClose, list, title }) => (
+const BadgeModal = ({ visible, onClose, list, title }) => {
+  const navigation = useNavigation();
+  return (
   <Modal visible={visible} animationType="slide" transparent>
     <TouchableWithoutFeedback onPress={onClose}>
       <View style={styles.modalContainer}>
@@ -352,14 +373,18 @@ const BadgeModal = ({ visible, onClose, list, title }) => (
             <Text style={styles.modalTitle}>{title}</Text>
             <ScrollView contentContainerStyle={styles.modalList}>
               {list.map((item, idx) => {
-                // Determine unique key and extract user details
                 const key = item.details?._id || item.user?._id || idx;
                 const user = item.details || item.user || item;
                 const certs = item.certifications;
                 return (
-                  <View key={key} style={styles.modalBadgeWrap}>
+                  <TouchableOpacity
+                    key={key}
+                    style={styles.modalBadgeWrap}
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
+                  >
                     <UserBadge user={user} userCertifications={certs} />
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </ScrollView>
@@ -369,7 +394,8 @@ const BadgeModal = ({ visible, onClose, list, title }) => (
       </View>
     </TouchableWithoutFeedback>
   </Modal>
-);
+  );
+};
 const styles = StyleSheet.create({
   scroll:{flexGrow:1,backgroundColor:themeVariables.whiteColor,paddingBottom:30},
   centered:{flex:1,minHeight:windowHeight,justifyContent:'center',alignItems:'center',backgroundColor:themeVariables.whiteColor},

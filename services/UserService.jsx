@@ -107,6 +107,32 @@ export const helloUsers = async () => {
     throw new Error(`Fetch user error: ${error.message}`);
   }
 };
+/**
+ * Fetch a single user's public profile by ID (React Native version)
+ * @param {string} userId
+ * @param {string} token  Bearer token
+ */
+export const fetchUserById = async (userId, token) => {
+  try {
+    const response = await fetch(`${API_URL}/api/users/getUser/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      // handle errors from API wrapper
+      const msg = data.message || (data.error && data.error.message) || 'Failed to fetch user';
+      throw new Error(msg);
+    }
+    // API may return wrapper { data: user } or { user: {...} }
+    return data;
+  } catch (error) {
+    throw new Error(`fetchUserById error: ${error.message}`);
+  }
+};
 
 export const blockUser = async (userId, token) => { 
   try {

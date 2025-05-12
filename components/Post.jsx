@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import Video from 'react-native-video';
@@ -26,6 +27,7 @@ const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token, user } = useContext(UserContext);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const computedIsLiked = post.likes?.includes(userId) || false;
@@ -146,7 +148,10 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       onPress={handlePostPress}
     >
       <View style={styles.userInfoContainer}>
-        <View style={styles.userInfo}>
+        <TouchableOpacity
+          style={styles.userInfo}
+          onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
+        >
           <FastImage
             source={{ uri: profilePic }}
             style={styles.profilePic}
@@ -154,7 +159,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
           />
           <Text style={styles.username}>{authorName}</Text>
-        </View>
+        </TouchableOpacity>
         <View style={styles.communityContainer}>
           <View style={styles.communityChip}>
             <Text style={styles.communityText}>{authorCommunity}</Text>

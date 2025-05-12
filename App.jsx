@@ -24,6 +24,7 @@ import EventsScreen from './screens/Events';
 import EventDetailCard from './screens/EventDetailCard';
 import ForgotPassword from './screens/ForgotPassword';
 import Eula from './screens/Eula';
+import PublicUserProfile from './screens/PublicUserProfile';
 
 import BottomBar from './navigation/BottomBar';
 
@@ -106,6 +107,7 @@ const MainApp = () => {
             <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
             <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
+            <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
             <Stack.Screen name="ActivityDetailCard" component={ActivityDetailCard} options={{ title: 'Activity Detail Card' }}/>
             <Stack.Screen name="Main"

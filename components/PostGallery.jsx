@@ -64,14 +64,16 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
               />
             }
             {mediaUrl && isVideo && (
-              <Video
-                source={{ uri: mediaUrl }}
-                style={styles.postVideo}
-                resizeMode="cover"
-                muted
-                repeat
-                controls={false} // Prevents user controls, just a preview
-              />
+              <View style={styles.mediaWrapper}>
+                <Video
+                  source={{ uri: mediaUrl }}
+                  style={styles.videoInside}
+                  resizeMode="cover"
+                  muted
+                  repeat
+                  controls={false} // Prevents user controls, just a preview
+                />
+              </View>
             )}
 
             {/* Render Post Content OR Title */}
@@ -80,7 +82,7 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
                 {item.content?.length > 50 ? `${item.content?.slice(0, 50)}...` : item.content}
               </Text>
             ) : (
-              <View>
+              <View style={styles.listContent}>
                 <Text style={styles.listTitle}>{item.title}</Text>
                 { item.activityType && <Text style={styles.listType}>{item.activityType?.name}</Text> }
                 { item.eventType && <Text style={styles.listType}>{item.eventType}</Text> }
@@ -101,8 +103,7 @@ const styles = StyleSheet.create({
   postContainer: {
     width: ITEM_SIZE,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 20,
     margin: 5,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -113,6 +114,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     borderRadius: 8,
+    borderBottomEndRadius: 0,
+    borderBottomStartRadius: 0,
     marginBottom: 8,
     overflow: 'hidden',
     alignSelf: 'flex-start',
@@ -120,14 +123,20 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
-  postVideo: {
+  mediaWrapper: {
     width: '100%',
-    height: 120, // Set fixed height for videos
-    borderRadius: 8,
+    height: 120, // Fixed height for media top section
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    overflow: 'hidden',
     marginBottom: 8,
   },
+  videoInside: {
+    width: '100%',
+    height: 120,
+  },
   listTitle: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
     color: '#312783',
     textAlign: 'center',
@@ -136,6 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     textAlign: 'center',
+    margin: 12,
   },
   listType: {
     fontSize: 14,

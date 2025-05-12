@@ -557,18 +557,7 @@ const styles = StyleSheet.create({
   pendingRequestText: {
     fontSize: 14,
     color: '#555',
-  },
-  pendingRequestRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginVertical: 4,
-  },
-  pendingAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 8,
-    backgroundColor: '#ddd',
   },
   pendingButtons: {
     flexDirection: 'row',

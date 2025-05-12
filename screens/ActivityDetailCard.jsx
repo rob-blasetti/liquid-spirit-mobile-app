@@ -21,6 +21,7 @@ import {
 } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
+import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faCalendar,
@@ -462,6 +463,7 @@ const OverlappingAvatars = ({ list }) => {
   const maxDisplay = 2;
   const extraCount = list.length - maxDisplay;
   const displayList = list.slice(0, maxDisplay);
+  const navigation = useNavigation();
   return (
     <View style={styles.avatarsContainer}>
       {displayList.map((item, idx) => {
@@ -469,17 +471,25 @@ const OverlappingAvatars = ({ list }) => {
         const user = item.details || item;
         const avatarUri = user.profilePicture || null;
         const imageStyle = [styles.avatar, idx > 0 && { marginLeft: -15 }];
-        return avatarUri ? (
-          <FastImage key={key} source={{ uri: avatarUri }} style={imageStyle} />
-        ) : (
-          <Avatar
+        return (
+          <TouchableOpacity
             key={key}
-            size={styles.avatar.width}
-            name={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
-            variant="beam"
-            colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
             style={imageStyle}
-          />
+            onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
+            activeOpacity={0.8}
+          >
+            {avatarUri ? (
+              <FastImage source={{ uri: avatarUri }} style={imageStyle} />
+            ) : (
+              <Avatar
+                size={styles.avatar.width}
+                name={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
+                variant="beam"
+                colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+                style={imageStyle}
+              />
+            )}
+          </TouchableOpacity>
         );
       })}
       {extraCount > 0 && (
@@ -497,7 +507,9 @@ const OverlappingAvatars = ({ list }) => {
 /* ───────────── Badge Modal Component ──────────────────────────────
    This modal displays detailed info (name and certifications) for each user.
 ──────────────────────────────────────────────────────────────────────── */
-const BadgeModal = ({ visible, onClose, list, title }) => (
+const BadgeModal = ({ visible, onClose, list, title }) => {
+  const navigation = useNavigation();
+  return (
   <Modal visible={visible} animationType="slide" transparent>
     <TouchableWithoutFeedback onPress={onClose}>
       <View style={styles.modalContainer}>
@@ -510,9 +522,14 @@ const BadgeModal = ({ visible, onClose, list, title }) => (
             const user = item.details || item;
             const certs = item.certifications;
             return (
-              <View key={key} style={styles.modalBadgeWrap}>
+              <TouchableOpacity
+                key={key}
+                style={styles.modalBadgeWrap}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
+              >
                 <UserBadge user={user} userCertifications={certs} />
-              </View>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
@@ -528,7 +545,8 @@ const BadgeModal = ({ visible, onClose, list, title }) => (
       </View>
     </TouchableWithoutFeedback>
   </Modal>
-);
+  );
+};
 
 /* ───────────── Styles ───────────────────────────────────────────── */
 const styles = StyleSheet.create({

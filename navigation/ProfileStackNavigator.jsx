@@ -1,6 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import ProfileScreen from '../screens/Profile';
+import PublicUserProfile from '../screens/PublicUserProfile';
 import Settings from '../screens/Settings';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
@@ -18,6 +19,11 @@ const ProfileStackNavigator = () => {
       <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'EditProfile', headerShown: false }} />
       {/* <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'ChangePassword', headerShown: false }} /> */}
+      <Stack.Screen
+        name="PublicUserProfile"
+        component={PublicUserProfile}
+        options={{ title: 'User Profile', headerShown: true }}
+      />
     </Stack.Navigator>
   );
 };
