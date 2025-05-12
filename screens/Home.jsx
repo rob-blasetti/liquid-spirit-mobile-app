@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useMemo } from 'react';
+import React, { useContext, useState, useRef, useMemo, useCallback } from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
@@ -29,7 +30,7 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
 const Home = ({ navigation }) => {
-  const { user, communityId, userActivities, userEvents, userPosts } = useContext(UserContext);
+  const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession } = useContext(UserContext);
   // Determine the next upcoming event without a host
   const eventWithoutHost = useMemo(() => {
     if (!Array.isArray(userEvents)) return null;
@@ -68,6 +69,14 @@ const Home = ({ navigation }) => {
   };
 
   console.log('user: ', user);
+  // On screen focus, check token expiration and attempt session refresh if expired
+  useFocusEffect(
+    useCallback(() => {
+      if (token && isTokenExpired(token)) {
+        refreshSession();
+      }
+    }, [token])
+  );
   // Show loading spinner until user data (activities, events, posts) has loaded
   if (userActivities === null || userEvents === null || userPosts === null) {
     return (

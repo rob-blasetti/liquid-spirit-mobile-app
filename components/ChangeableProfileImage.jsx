@@ -59,11 +59,12 @@ const ChangeableProfileImage = ({ imageStyle, avatarSize = 55 }) => {
           }
           // Merge returned data with existing user to preserve nested properties (e.g., community)
           // updatedUserFields includes the new profilePicture and retains other user fields
+          // Merge returned data but ensure community data (banner, etc.) is preserved
           setUser({
-            // existing user context fields
             ...user,
-            // override with any updated fields from server response
             ...data,
+            // preserve nested community fields in case response omits them
+            community: user.community,
           });
         } catch (err) {
           console.error('Error uploading to S3 =>', err);
