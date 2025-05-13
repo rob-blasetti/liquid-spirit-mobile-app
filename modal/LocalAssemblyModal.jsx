@@ -16,6 +16,8 @@ const HORIZONTAL_PADDING = 32;
 const GUTTER = 22;
 // Calculate item size to fit 3 columns
 const ITEM_SIZE = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GUTTER * 2) / 3;
+// Avatar size (smaller than item container)
+const AVATAR_SIZE = ITEM_SIZE * 0.75;
 
 /**
  * Modal to display Local Spiritual Assembly members in a bottom sheet.
@@ -47,11 +49,16 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
                       />
                     ) : (
                       <Avatar
-                        size={ITEM_SIZE}
+                        size={AVATAR_SIZE}
+                        style={styles.avatar}
                         name={`${member.userId.firstName} ${member.userId.lastName}`}
                         variant="beam"
                         colors={[
-                          '#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C'
+                          '#1B263B',
+                          '#0A74DA',
+                          '#6C7A89',
+                          '#F8F9FA',
+                          '#0C0C0C',
                         ]}
                       />
                     )}
@@ -101,16 +108,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   avatar: {
-    width: ITEM_SIZE,
-    height: ITEM_SIZE,
-    borderRadius: ITEM_SIZE / 2,
-    marginBottom: 6,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: AVATAR_SIZE / 2,
+    marginBottom: 4,
     backgroundColor: '#eee',
   },
   name: {
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
 });
 

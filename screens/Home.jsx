@@ -32,21 +32,21 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
 const Home = ({ navigation, homeOverview }) => {
+  console.log('homeOverview: ', homeOverview);
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession } = useContext(UserContext);
-  // Determine the next upcoming event without a host
+  // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {
-    if (!Array.isArray(userEvents)) return null;
+    if (!Array.isArray(homeOverview.events)) return null;
     const now = new Date();
-    // Filter future events
-    const upcoming = userEvents.filter(e => {
-      const d = new Date(e.date);
-      return !isNaN(d) && d >= now;
-    });
-    // Sort by date ascending
-    upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
-    // Find first with no hosts
+    const upcoming = homeOverview.events
+      .filter(e => {
+        const date = e.startTime || e.date;
+        const d = new Date(date);
+        return !isNaN(d) && d >= now;
+      })
+      .sort((a, b) => new Date(a.startTime || a.date) - new Date(b.startTime || b.date));
     return upcoming.find(e => !e.hosts || (Array.isArray(e.hosts) && e.hosts.length === 0)) || null;
-  }, [userEvents]);
+  }, [homeOverview.events]);
   const [activeTab, setActiveTab] = useState('Activities');
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
@@ -134,7 +134,7 @@ const Home = ({ navigation, homeOverview }) => {
 
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
-          {['Activities','Events'].map(tab => (
+          {['Activities','Events', 'Assembly'].map(tab => (
             <TouchableOpacity
               key={tab}
               style={[styles.tabButton, activeTab===tab && styles.tabButtonActive]}
@@ -175,7 +175,13 @@ const Home = ({ navigation, homeOverview }) => {
                 <SquareTile
                   subheading="Can You Host?"
                   bgImgColour="red"
-                  onPress={() => navigation.navigate('EventDetailCard', { eventId: eventWithoutHost._id, eventPreload: eventWithoutHost })}
+                  onPress={() => {
+                    if (eventWithoutHost) {
+                      navigation.navigate('EventDetailCard', { eventId: eventWithoutHost._id, eventPreload: eventWithoutHost });
+                    } else {
+                      navigation.navigate('Events');
+                    }
+                  }}
                   actionIcon={faQuestionCircle}
                   style={styles.smallTileGap}
                 />
@@ -190,17 +196,45 @@ const Home = ({ navigation, homeOverview }) => {
             </View>
           );
         })()}
-        {/* Admin Section */}
-        {activeTab==='Admin' && (() => {
+        {/* Assembly Section */}
+        {activeTab==='Assembly' && (() => {
+          if (!Array.isArray(homeOverview?.events)) return null;
+          const now = new Date();
+          const lsaEvents = homeOverview.events.filter(e => e.title === 'Local Spiritual Assembly Meeting');
+          let nextLsaEvent = null;
+          if (lsaEvents.length > 0) {
+            const futureEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) >= now);
+            if (futureEvents.length > 0) {
+              futureEvents.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+              nextLsaEvent = futureEvents[0];
+            } else {
+              const pastEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) < now);
+              if (pastEvents.length > 0) {
+                pastEvents.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+                const lastEvent = pastEvents[0];
+                const fallbackDate = new Date(lastEvent.startTime);
+                fallbackDate.setDate(fallbackDate.getDate() + 14);
+                nextLsaEvent = { ...lastEvent, startTime: fallbackDate.toISOString() };
+              }
+            }
+          }
+          if (!nextLsaEvent) return null;
+          const eventDate = new Date(nextLsaEvent.startTime);
+          const day = eventDate.toLocaleDateString(undefined, { weekday: 'short' });
+          const date = eventDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+          const time = eventDate
+            .toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric', hour12: true })
+            .toLowerCase()
+            .replace(/\s+/g, '');
+          const dateTimeStr = `${day}, ${date} at ${time}`;
           return (
             <View style={styles.dualGrid}>
-              {/* Main Assembly Tile */}
               <RectangularTile
                 title="Upcoming"
                 bgImgColour="blue"
-                dateTime="Mon, 28 Apr at 7:30pm"
+                dateTime={dateTimeStr}
                 subheading="Next Local Spiritual Assembly Meeting"
-                onPress={() => navigation.navigate('Profile')}
+                onPress={() => navigation.navigate('EventDetailCard', { eventId: nextLsaEvent._id, eventPreload: nextLsaEvent })}
                 style={styles.largeTile}
               />
               <View style={styles.smallTilesColumn}>
@@ -216,30 +250,36 @@ const Home = ({ navigation, homeOverview }) => {
                   bgImgColour="red"
                   actionIcon={faAlignLeft}
                   style={styles.smallTileLast}
-                  // onPress={() => navigation.navigate('RequestAgendaItem')}
+                  onPress={() => navigation.navigate('RequestAgendaItem')}
                 />
               </View>
             </View>
           );
         })()}
-        {/* Activities Section */}
-        {activeTab==='Activities' && userActivities && userActivities.length > 0 && (() => {
+        {/* Activities Section (homeOverview) */}
+        {activeTab === 'Activities' && Array.isArray(homeOverview.activities) && homeOverview.activities.length > 0 && (() => {
           const now = new Date();
-          const upcomingA = userActivities
-            .filter(ac => ac.date && new Date(ac.date) >= now)
+          // Upcoming activities from overview
+          const upcoming = homeOverview.activities
+            .filter(a => a.date && new Date(a.date) >= now)
             .sort((a, b) => new Date(a.date) - new Date(b.date));
-          const nextAct = upcomingA[0];
-          const nextActWithSpace = upcomingA[1];
-          // format activity date/time for tile
-          const actDate = new Date(nextAct?.date);
-          const actDateTime = actDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+          const nextAct = upcoming[0] || null;
+          // Next activity with available facilitator slots
+          const activityToFacilitate = upcoming.find(a => {
+            const currentCount = Array.isArray(a.facilitators) ? a.facilitators.length : 0;
+            return typeof a.facilitatorLimit === 'number' && currentCount < a.facilitatorLimit;
+          }) || null;
           if (!nextAct) return null;
+          // Format date/time for nextAct
+          const actDate = new Date(nextAct.date);
+          const actDateTime = actDate.toLocaleString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric'
+          });
           return (
             <View style={styles.dualGrid}>
-          <RectangularTile
+              <RectangularTile
                 title="Upcoming"
                 dateTime={actDateTime}
-                // Show title and activity type separated by a dot
                 subheading={`${nextAct.title} \u2022 ${nextAct.activityType?.name || ''}`}
                 imageSource={{ uri: nextAct.imageUrl }}
                 onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextAct._id, activityPreload: nextAct })}
@@ -249,7 +289,13 @@ const Home = ({ navigation, homeOverview }) => {
                 <SquareTile
                   subheading="Can You Facilitate?"
                   bgImgColour="blue"
-                  onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextActWithSpace._id, activityPreload: nextActWithSpace })}
+                  onPress={() => {
+                    if (activityToFacilitate) {
+                      navigation.navigate('ActivityDetailCard', { activityId: activityToFacilitate._id, activityPreload: activityToFacilitate });
+                    } else {
+                      navigation.navigate('Activities');
+                    }
+                  }}
                   actionIcon={faQuestionCircle}
                   style={styles.smallTileGap}
                 />

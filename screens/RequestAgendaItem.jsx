@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
-  View,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Alert,
+  View,
+  ActivityIndicator,
 } from 'react-native';
 import { TextInput, Button, Title, HelperText } from 'react-native-paper';
-import { Linking } from 'react-native';
+import { sendAgendaItemSuggestion } from '../services/AssemblyService';
+import { UserContext } from '../contexts/UserContext';
 
-/**
- * Screen to request an agenda item via email.
- * User enters a title and description, then taps Send to open the mail client.
- */
-export default function RequestAgendaItem({ navigation }) {
+export default function RequestAgendaItem({ navigation, route }) {
+  const { communityId, token } = useContext(UserContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -27,22 +27,18 @@ export default function RequestAgendaItem({ navigation }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!validate()) return;
-    const to = 'info@liquidspirit.org';
-    const subject = encodeURIComponent('Request: Assembly Meeting Agenda Item');
-    const body = encodeURIComponent(
-      `Title: ${title}\n\nDescription:\n${description}`
-    );
-    const url = `mailto:${to}?subject=${subject}&body=${body}`;
-    Linking.openURL(url)
-      .then(() => {
-        // Optionally navigate back
-        navigation.goBack();
-      })
-      .catch(() => {
-        Alert.alert('Error', 'Unable to open email client');
-      });
+    try {
+      setLoading(true);
+      await sendAgendaItemSuggestion(token, communityId, title, description);
+      Alert.alert('Success', 'Agenda item suggestion sent');
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to send suggestion');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,10 +72,15 @@ export default function RequestAgendaItem({ navigation }) {
         <HelperText type="error" visible={!!errors.description}>
           {errors.description}
         </HelperText>
-        <Button mode="contained" onPress={handleSend} style={styles.button}>
+        <Button mode="contained" onPress={handleSend} loading={loading} disabled={loading} style={styles.button}>
           Send
         </Button>
       </ScrollView>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#312783" />
+        </View>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -102,5 +103,15 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 10,
     backgroundColor: '#312783',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.7)',
   },
 });
