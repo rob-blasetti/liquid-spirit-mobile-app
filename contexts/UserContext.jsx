@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
+import NotificationService from '../services/NotificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 import { fetchActivities } from '../services/ActivityService.jsx';
@@ -19,6 +20,7 @@ export const UserProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshToken, setRefreshToken] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [userNotifications, setUserNotifications] = useState(null);
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -197,6 +199,22 @@ export const UserProvider = ({ children }) => {
       logout();
     }
   };
+  // Load notifications on token change
+  useEffect(() => {
+    if (!token) return;
+    const loadNotifications = async () => {
+      try {
+        const resp = await NotificationService.getAllNotifications(token, { limit: 10, offset: 0 });
+        const notifs = resp.data || [];
+        setUserNotifications(notifs);
+        const unread = notifs.filter(n => !n.isRead).length;
+        setUnreadCount(unread);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    };
+    loadNotifications();
+  }, [token]);
 
   const biometricLogin = async () => {
     try {
@@ -241,20 +259,22 @@ export const UserProvider = ({ children }) => {
 
   return (
     <UserContext.Provider 
-      value={{ 
-        user, 
-        setUser, 
-        userActivities, 
-        setUserActivities, 
+      value={{
+        user,
+        setUser,
+        userActivities,
+        setUserActivities,
         userEvents,
-        setUserEvents, 
-        userPosts, 
-        setUserPosts, 
-        token, 
+        setUserEvents,
+        userPosts,
+        setUserPosts,
+        token,
         setToken,
         unreadCount,
         setUnreadCount,
-        communityId, 
+        userNotifications,
+        setUserNotifications,
+        communityId,
         setCommunityId,
         login,
         logout,

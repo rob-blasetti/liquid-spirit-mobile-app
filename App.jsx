@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext } from 'react';
-import { StatusBar, ActivityIndicator } from 'react-native';
+import { StatusBar, StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -43,8 +43,10 @@ const MainApp = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
   const [homeOverview, setHomeOverview] = useState([]);
+  const [homeOverviewLoaded, setHomeOverviewLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
-  const { biometricLogin, isLoading, isLoggedIn, communityId } = useContext(UserContext);
+  const [showSplash, setShowSplash] = useState(true);
+  const { biometricLogin, isLoggedIn, communityId } = useContext(UserContext);
   const { fetchHomeOverview } = useAuthService();
 
   useEffect(() => {
@@ -80,6 +82,7 @@ const MainApp = () => {
   useEffect(() => {
     const loadHomeOverview = async () => {
       if (!communityId) return;
+      setHomeOverviewLoaded(false);
       try {
         const overviewResult = await fetchHomeOverview(communityId);
         if (overviewResult.ok) {
@@ -89,30 +92,32 @@ const MainApp = () => {
         }
       } catch (error) {
         console.error('Error fetching home overview:', error);
+      } finally {
+        setHomeOverviewLoaded(true);
       }
     };
     loadHomeOverview();
   }, [communityId]);
 
-  if (!appIsReady) {
-    // Show your splash screen while things load
-    return <Splash />;
-  }
-
-  if (checkingSession || isLoading || (isLoggedIn && !communityId)) {
-    return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      </SafeAreaView>
-    );
-  }
+  // Hide splash when all initial loading is done
+  useEffect(() => {
+    if (
+      appIsReady &&
+      !checkingSession &&
+      (!isLoggedIn || (communityId && homeOverviewLoaded))
+    ) {
+      setShowSplash(false);
+    }
+  }, [appIsReady, checkingSession, isLoggedIn, communityId, homeOverviewLoaded]);
 
   // Once ready, render your normal app
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-        <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
+      <SafeAreaView style={styles.root}>
+        <StatusBar
+          barStyle={showSplash ? 'light-content' : 'dark-content'}
+          backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.whiteColor}
+        />
         <NavigationContainer>
           <Stack.Navigator initialRouteName="Main" screenOptions={{ headerStyle: { backgroundColor: '#312783' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: 'bold' } }}>
             <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }}/>
@@ -137,6 +142,12 @@ const MainApp = () => {
             </Stack.Screen>
           </Stack.Navigator>
         </NavigationContainer>
+        {/* Overlay splash until app is fully ready */}
+        {showSplash && (
+          <View style={styles.splashOverlay}>
+            <Splash />
+          </View>
+        )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -149,3 +160,14 @@ const App = () => (
 );
 
 export default App;
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: themeVariables.whiteColor,
+  },
+  splashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 9999,
+  },
+});

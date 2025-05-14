@@ -31,71 +31,46 @@ const NotificationIcon = ({ type }) => {
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { token, setUnreadCount } = useContext(UserContext);
+  const { token, setUnreadCount, userNotifications, setUserNotifications } = useContext(UserContext);
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const [activeTab, setActiveTab] = useState('personal');
+  const [activeTab, setActiveTab] = useState('community');
   const LIMIT = 10;
 
-  const fetchNotifications = async (append = false) => {
-    try {
-      const response = await NotificationService.getAllNotifications(token, {
-        limit: LIMIT,
-        offset: append ? Object.values(groupedNotifList).flat().length : 0,
-      });
-
-      console.log(response);
-
-      const newData = response.data;
-      if (newData.length < LIMIT) setHasMore(false);
-
-      const formatted = newData.map((n) => ({
-        id: n._id,
-        scope: n.scope === 'community' ? 'community' : 'personal',
-        type: mapNotificationType(n.type?.typeName || ""),
-        targetId: n.target?._id,
-        title: n.additionalData?.caption || "Notification",
-        message: n.additionalData?.caption || "",
-        time: formatTime(n.createdAt),
-        timeStamp: n.createdAt,
-        read: n.isRead,
-      }));
-
-      const grouped = {};
-      formatted.forEach((n) => {
-        const group = getDateGroup(n.timeStamp);
-        if (!grouped[group]) grouped[group] = [];
-        grouped[group].push(n);
-      });
-
-      setGroupedNotifList((prev) => {
-        const merged = { ...prev };
-        for (let [section, items] of Object.entries(grouped)) {
-          if (!merged[section]) merged[section] = items;
-          else {
-            const existingIds = new Set(merged[section].map((i) => i.id));
-            const newUniqueItems = items.filter((i) => !existingIds.has(i.id));
-            merged[section] = [...merged[section], ...newUniqueItems];
-          }
-        }
-        return merged;
-      });
-
-      const unreadCount = formatted.filter((n) => !n.read).length;
-      setUnreadCount(unreadCount);
-    } catch (err) {
-      console.error("Error fetching notifications:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
+  // Group notifications when context provides them
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (userNotifications == null) {
+      setLoading(true);
+      return;
+    }
+    setLoading(false);
+    // Format raw notifications
+    const formatted = userNotifications.map((n) => ({
+      id: n._id,
+      scope: n.scope === 'community' ? 'community' : 'personal',
+      type: mapNotificationType(n.type?.typeName || ""),
+      targetId: n.target?._id,
+      title: n.additionalData?.caption || "Notification",
+      message: n.additionalData?.caption || "",
+      time: formatTime(n.createdAt),
+      timeStamp: n.createdAt,
+      read: n.isRead,
+    }));
+    // Group by date
+    const grouped = {};
+    formatted.forEach((n) => {
+      const group = getDateGroup(n.timeStamp);
+      if (!grouped[group]) grouped[group] = [];
+      grouped[group].push(n);
+    });
+    setGroupedNotifList(grouped);
+    setHasMore(userNotifications.length >= LIMIT);
+    // Update unread count badge
+    const unread = formatted.filter((n) => !n.read).length;
+    setUnreadCount(unread);
+  }, [userNotifications]);
 
   const getDateGroup = (timestamp) => {
     const now = new Date();
@@ -154,9 +129,13 @@ export default function Notifications() {
   };
 
   const handleRefresh = async () => {
+    setRefreshing(true);
     try {
-      setRefreshing(true);
-      await fetchNotifications();
+      const response = await NotificationService.getAllNotifications(token, { limit: LIMIT, offset: 0 });
+      const notifs = response.data || [];
+      setUserNotifications(notifs);
+      const unread = notifs.filter((n) => !n.isRead).length;
+      setUnreadCount(unread);
     } catch (error) {
       console.error("Error refreshing notifications:", error);
     } finally {
@@ -270,8 +249,6 @@ export default function Notifications() {
         }
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        onEndReached={() => fetchNotifications(true)}
-        onEndReachedThreshold={0.5}
       />
       {filteredNotifList.length === 0 && !loading && (
         <View style={styles.emptyState}>
