@@ -5,10 +5,10 @@ import splashLogo from '../assets/img/LS_Splash.png';
 const Splash = () => {
   return (
     <View style={styles.container}>
-      <Image 
-        source={splashLogo} 
+      <Image
+        source={splashLogo}
         style={styles.logo}
-        resizeMode="contain"
+        resizeMode="cover"
       />
     </View>
   );
@@ -24,12 +24,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: '100%',
-    height: '100%',
     position: 'absolute',
     top: 0,
     left: 0,
-    resizeMode: 'cover',
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   title: {
     color: '#fff',
