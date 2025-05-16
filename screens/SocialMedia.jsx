@@ -12,7 +12,7 @@ import {
 
 import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost, deletePost } from '../services/PostService';
 import { blockUser, muteUser } from '../services/UserService';
-
+import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#312783' 
   },
   activeTabText: { 
-    color: '#312783',
+    color: themeVariables.blackColor,
   }
 });
 

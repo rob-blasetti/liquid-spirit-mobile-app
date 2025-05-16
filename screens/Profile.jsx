@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
+import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
@@ -497,6 +498,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#fff',
+    // Add shadow beneath the profile header for a raised look
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   headerProfileInfo: {
     flexDirection: 'row',
@@ -525,7 +532,7 @@ const styles = StyleSheet.create({
   nameSmall: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#312783',
+    color: themeVariables.blackColor,
   },
   pendingContainer: {
     paddingHorizontal: 16,
@@ -536,7 +543,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#312783',
+    color: themeVariables.blackColor,
   },
   pendingItem: {
     backgroundColor: '#fff',

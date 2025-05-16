@@ -9,11 +9,12 @@ import {
   faInfo,
   faAlignLeft,
 } from '@fortawesome/free-solid-svg-icons';
+import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
 
 const NotificationIcon = ({ type }) => {
-  const iconStyle = { color: "#312783" };
+  const iconStyle = { color: themeVariables.blackColor };
 
   switch (type) {
     case "post":
@@ -193,7 +194,7 @@ export default function Notifications() {
           <Text
             style={{
               ...styles.toggleText,
-              color: activeTab === 'personal' ? '#fff' : '#312783',
+              color: activeTab === 'personal' ? themeVariables.whiteColor : themeVariables.blackColor,
             }}
           >
             Personal
@@ -209,7 +210,7 @@ export default function Notifications() {
           <Text
             style={{
               ...styles.toggleText,
-              color: activeTab === 'community' ? '#fff' : '#312783',
+              color: activeTab === 'community' ? themeVariables.whiteColor : themeVariables.blackColor,
             }}
           >
             Community
@@ -263,14 +264,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#f3f3f3", // @LS-SoftGrey
+    backgroundColor: themeVariables.whiteColor, // @LS-SoftGrey
     marginBottom: 45,
   },
   heading: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 12,
-    color: "#312783", // @LS-TrueBlue
+    color: themeVariables.blackColor,
   },
   notification: {
     flexDirection: "row",
@@ -278,26 +279,24 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
     alignItems: "center",
-    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#312783",
+    borderColor: themeVariables.borderColor, // @LS-SoftGrey
     borderRadius: 20,
     shadowColor: "#000",           // Shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 2,
     elevation: 3,                  // Android shadow
   },
   textContainer: { marginLeft: 10 },
   title: {
-    fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 30,
     marginBottom: 5,
-    color: "blck", // primary text
+    color: themeVariables.blackColor, // primary text
   },
   message: {
-    fontSize: 14,
+    fontSize: 12,
     marginRight: 30,
     color: "#444", // @dark-grey-color
   },
@@ -318,10 +317,9 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
-    color: "#312783",
+    marginTop: 8,
+    marginBottom: 24,
+    color: themeVariables.blackColor,
   },
   footer: {
     paddingVertical: 20,
@@ -340,21 +338,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 4,
   },
-  
   toggleButton: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 10,
     borderRadius: 20,
-  },
-  
+  },  
   toggleText: {
     fontSize: 16,
     fontWeight: '600',
     width: Platform.select({ android: 95 }),
     textAlign: 'center',
   },
-  
   activeTab: {
     backgroundColor: '#312783', // active tab highlight
     shadowColor: '#000',

@@ -373,12 +373,12 @@ const Home = ({ navigation, homeOverview }) => {
               <FontAwesomeIcon
                 icon={faEnvelopeOpen}
                 size={16}
-                color={themeVariables.primaryColor}
+                color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <View style={styles.separator} />
           <TouchableOpacity
@@ -389,12 +389,12 @@ const Home = ({ navigation, homeOverview }) => {
               <FontAwesomeIcon
                 icon={faAlignLeft}
                 size={16}
-                color={themeVariables.primaryColor}
+                color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>View All Activities</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <View style={styles.separator} />
           <TouchableOpacity
@@ -405,12 +405,12 @@ const Home = ({ navigation, homeOverview }) => {
               <FontAwesomeIcon
                 icon={faBahai}
                 size={16}
-                color={themeVariables.primaryColor}
+                color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>View All Events</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
 
           {/* <TouchableOpacity
@@ -726,7 +726,7 @@ const styles = StyleSheet.create({
   },
   // Tab buttons
   heading: {
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     marginHorizontal: 20,    
     marginBottom: 10,
     padding: 4,
@@ -738,7 +738,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 4,
     backgroundColor: themeVariables.whiteColor,
-    borderColor: themeVariables.primaryColor,
+    borderColor: themeVariables.blackColor,
     borderWidth: 1,
     borderRadius: 25,
   },
@@ -755,7 +755,7 @@ const styles = StyleSheet.create({
   },
   tabButtonText: {
     fontSize: 14,
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'center',
     width: Platform.select({ android: 65 }),
   },
@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
   createRowText: {
     fontSize: 16,
     fontWeight: '500',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'left',
     width: Platform.select({ android: 200 }),
   },
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     backgroundColor: themeVariables.whiteColor,
     borderWidth: 1,
-    borderColor: themeVariables.primaryColor,
+    borderColor: themeVariables.blackColor,
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: 20,

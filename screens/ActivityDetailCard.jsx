@@ -827,8 +827,8 @@ const styles = StyleSheet.create({
   /* Status chip in top-right corner */
   statusChip: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 48,
+    right: 20,
     backgroundColor: themeVariables.primaryColor,
     borderRadius: 12,
     paddingHorizontal: 8,

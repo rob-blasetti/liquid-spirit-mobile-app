@@ -108,8 +108,9 @@ export const UserProvider = ({ children }) => {
       await AsyncStorage.setItem('refreshToken', refreshToken|| '');
   
       if (email && password) {
+        // Store credentials securely without prompting biometric on save (will prompt on retrieval)
         await Keychain.setGenericPassword(email, password, {
-          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         });
         console.log('Credentials securely stored.');
       }

@@ -1,5 +1,9 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import themeVariables from '../styles/theme';
 import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
 import Settings from '../screens/Settings';
@@ -12,7 +16,34 @@ const Stack = createStackNavigator();
 
 const ProfileStackNavigator = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <Stack.Navigator
+      // Custom header: white bg, primary text/icons, no back title, indented arrow
+      screenOptions={({ navigation }) => ({
+        headerStyle: { backgroundColor: themeVariables.whiteColor },
+        headerTintColor: themeVariables.primaryColor,
+        headerTitleStyle: { fontWeight: 'bold' },
+        headerBackTitleVisible: false,
+        headerBackTitle: '',
+        headerLeftContainerStyle: { paddingLeft: 16 },
+        // Custom back arrow button invokes navigation.goBack()
+        headerLeft: () =>
+          navigation.canGoBack() ? (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                backgroundColor: themeVariables.greyColor,
+                borderRadius: themeVariables.borderRadiusPill,
+                padding: 6,
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faChevronLeft}
+                color={themeVariables.blackColor}
+                size={20}
+              />
+            </TouchableOpacity>
+          ) : null,
+      })}>
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />

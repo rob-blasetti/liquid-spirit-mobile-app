@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState, useEffect, useContext } from 'react';
-import { StatusBar, StyleSheet, View } from 'react-native';
+import { StatusBar, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -33,7 +33,8 @@ import BottomBar from './navigation/BottomBar';
 // FontAwesome library setup
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fab } from '@fortawesome/free-brands-svg-icons';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 
 library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome);
 
@@ -119,7 +120,37 @@ const MainApp = () => {
           backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.whiteColor}
         />
         <NavigationContainer>
-          <Stack.Navigator initialRouteName="Main" screenOptions={{ headerStyle: { backgroundColor: '#312783' }, headerTintColor: '#fff', headerTitleStyle: { fontWeight: 'bold' } }}>
+          <Stack.Navigator
+            initialRouteName="Main"
+          screenOptions={({ navigation }) => ({
+              // White background with primary-colored icons/text
+              headerStyle: { backgroundColor: themeVariables.whiteColor },
+              headerTintColor: themeVariables.primaryColor,
+              headerTitleStyle: { fontWeight: 'bold' },
+              // Hide default back title
+              headerBackTitleVisible: false,
+              headerBackTitle: '',
+              headerLeftContainerStyle: { paddingLeft: 16 },
+              // Custom back arrow button invokes navigation.goBack()
+              headerLeft: () =>
+                navigation.canGoBack() ? (
+                  <TouchableOpacity
+                    onPress={() => navigation.goBack()}
+                    style={{
+                      backgroundColor: themeVariables.greyColor,
+                      borderRadius: themeVariables.borderRadiusPill,
+                      padding: 6,
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={faChevronLeft}
+                      color={themeVariables.blackColor}
+                      size={20}
+                    />
+                  </TouchableOpacity>
+                ) : null,
+            })}
+          >
             <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }}/>
             <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
             <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
