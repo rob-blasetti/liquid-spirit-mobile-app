@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical, faBell } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,7 +33,7 @@ const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages
 
 const Home = ({ navigation, homeOverview }) => {
   console.log('homeOverview: ', homeOverview);
-  const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
   // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {
     if (!Array.isArray(homeOverview.events)) return null;
@@ -102,6 +102,17 @@ const Home = ({ navigation, homeOverview }) => {
           />
           <View style={styles.bannerOverlay} />
           <View style={styles.bannerContent}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={() => navigation.navigate('Notifications')}
+            >
+              <FontAwesomeIcon icon={faBell} size={24} color={themeVariables.whiteColor} />
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
             <View style={styles.bannerMiddleRow}>
               <ChangeableProfileImage imageStyle={styles.profileAvatar} avatarSize={55} />
               <View style={styles.profileColumn}>
@@ -444,6 +455,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: themeVariables.greyColor,
+  },
+  // Styles for notification button on banner
+  notificationButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 2,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: 'red',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
@@ -816,6 +850,29 @@ const styles = StyleSheet.create({
     color: themeVariables.greyColor,
     marginTop: 8,
     textAlign: 'right',
+  },
+  // Styles for notification button on banner
+  notificationButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 2,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: 'red',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 

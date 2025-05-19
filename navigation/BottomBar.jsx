@@ -1,14 +1,15 @@
 import React, { useContext, useState } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faBell, faHome } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faSquarePlus, faBahai, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import SocialMediaScreen from '../screens/SocialMedia';
 import Home from '../screens/Home';
 import EventsScreen from '../screens/Events';
-import NotificationScreen from '../screens/Notifications';
+// Removed NotificationScreen import; Notifications handled via Home screen banner
+import SearchScreen from '../screens/Search';
 import ActivitiesScreen from '../screens/Activities';
 import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
@@ -23,7 +24,7 @@ const tabIcons = {
   Profile: faUser,
   Feed: faCompass,
   Camera: faSquarePlus,
-  Notifications: faBell,
+  Search: faSearch,
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
@@ -31,7 +32,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
-  const { unreadCount } = useContext(UserContext);
+  // removed unreadCount; notifications accessed via Home banner button
 
   return (
     <>
@@ -80,19 +81,13 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         <Tab.Screen name="Feed">
           {() => <SocialMediaScreen initialPosts={initialPosts} scrollToTop={scrollToTop} />}
         </Tab.Screen>
-        <Tab.Screen 
-          name="Camera" 
-          component={CreatePostScreen} 
+        <Tab.Screen
+          name="Camera"
+          component={CreatePostScreen}
         />
         <Tab.Screen
-          name="Notifications"
-          component={NotificationScreen}
-          options={{
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesomeIcon icon={faBell} color={color} size={size} />
-            ),
-            tabBarBadge: unreadCount > 0 ? unreadCount : null,
-          }}
+          name="Search"
+          component={SearchScreen}
         />
 
         <Tab.Screen 

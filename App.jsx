@@ -29,6 +29,7 @@ import PublicUserProfile from './screens/PublicUserProfile';
 import RequestAgendaItem from './screens/RequestAgendaItem';
 
 import BottomBar from './navigation/BottomBar';
+import NotificationScreen from './screens/Notifications';
 
 // FontAwesome library setup
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -166,6 +167,7 @@ const MainApp = () => {
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
             <Stack.Screen name="ActivityDetailCard" component={ActivityDetailCard} options={{ title: 'Activity Detail Card' }}/>
             <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
+            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
             <Stack.Screen name="Main"
               options={{ headerShown: false }}
             >
