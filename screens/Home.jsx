@@ -106,7 +106,7 @@ const Home = ({ navigation, homeOverview }) => {
               style={styles.notificationButton}
               onPress={() => navigation.navigate('Notifications')}
             >
-              <FontAwesomeIcon icon={faBell} size={24} color={themeVariables.whiteColor} />
+              <FontAwesomeIcon icon={faBell} size={20} color={themeVariables.blackColor} />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
                   <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
@@ -456,12 +456,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: themeVariables.greyColor,
   },
-  // Styles for notification button on banner
+  // Styles for notification button on banner, matching Profile banner icon style
   notificationButton: {
     position: 'absolute',
     top: 20,
     right: 20,
     zIndex: 2,
+    backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 6,
+    // subtle shadow for raised effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   notificationBadge: {
     position: 'absolute',
@@ -844,35 +855,6 @@ const styles = StyleSheet.create({
   postContent: {
     fontSize: 16,
     color: themeVariables.blackColor,
-  },
-  postDate: {
-    fontSize: 12,
-    color: themeVariables.greyColor,
-    marginTop: 8,
-    textAlign: 'right',
-  },
-  // Styles for notification button on banner
-  notificationButton: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 2,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: 'red',
-    borderRadius: 8,
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationBadgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 });
 

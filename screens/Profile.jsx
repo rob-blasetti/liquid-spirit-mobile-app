@@ -332,10 +332,10 @@ const renderScene = ({ route }) => {
         </View>
         <View style={styles.headerActionsContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-            <FontAwesomeIcon icon={faCogs} size={20} color="#312783" />
+            <FontAwesomeIcon icon={faCogs} size={20} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => handleShareProfile(user)}>
-            <FontAwesomeIcon icon={faShareAlt} size={20} color="#312783" />
+            <FontAwesomeIcon icon={faShareAlt} size={20} color={themeVariables.blackColor} />
           </TouchableOpacity>
         </View>
       </View>
@@ -514,11 +514,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#312783',
+    backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 6,
+    // subtle shadow for raised effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,

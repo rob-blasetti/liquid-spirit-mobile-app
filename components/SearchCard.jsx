@@ -1,8 +1,11 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import themeVariables from '../styles/theme';
+import localImages from '../utils/localImages';
+import FastImage from 'react-native-fast-image';
+import Avatar from '@flipxyz/react-native-boring-avatars';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUsers, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faXmarkCircle, faClock, faSprout } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Card component to display a search result of type activity, event, or member.
@@ -19,7 +22,120 @@ function safeText(val) {
   return JSON.stringify(val);
 }
 
+/**
+ * Returns an image source for activities, events, or member avatars.
+ */
 const SearchCard = ({ item, onPress }) => {
+  // Top section: image (event/activity) or avatar (member/user)
+  const renderImageSection = () => {
+    if (item.type === 'event') {
+      const source = item.imageUrl && localImages[item.imageUrl]
+        ? localImages[item.imageUrl]
+        : item.imageUrl
+          ? { uri: item.imageUrl }
+          : require('../assets/img/placeholder.png');
+      return (
+        <View style={styles.imageContainer}>
+          <FastImage source={source} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
+          <View style={styles.overlayChipContainer}>{renderChipsOverlay()}</View>
+        </View>
+      );
+    }
+    if (item.type === 'activity') {
+      const source = item.imageUrl
+        ? { uri: item.imageUrl }
+        : require('../assets/img/placeholder.png');
+      return (
+        <View style={styles.imageContainer}>
+          <FastImage source={source} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
+          <View style={styles.overlayChipContainer}>{renderChipsOverlay()}</View>
+        </View>
+      );
+    }
+    if (item.type === 'member' || item.type === 'user') {
+      const hasPic = Boolean(item.profilePicture);
+      return (
+        <View style={styles.imageContainer}>
+          {hasPic ? (
+            <FastImage source={{ uri: item.profilePicture }} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
+          ) : (
+            <Avatar
+              size={120}
+              name={`${item.firstName || ''} ${item.lastName || ''}`.trim()}
+              variant="beam"
+              colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          <View style={styles.overlayChipContainer}>{renderChipsOverlay()}</View>
+        </View>
+      );
+    }
+    return null;
+  };
+
+  const renderChipsOverlay = () => {
+    switch (item.type) {
+      case 'activity':
+        // Community chip and status chip; status chip shows red background if expired
+        return (
+          <>
+            <View style={[styles.chip, styles.communityChip]}>
+              <FontAwesomeIcon
+                icon={faSprout}
+                size={12}
+                color={themeVariables.whiteColor}
+                style={styles.chipIcon}
+              />
+              <Text style={styles.chipText}>{safeText(item.community)}</Text>
+            </View>
+            {
+              // Determine if status is expired (case-insensitive)
+              (() => {
+                const status = (item.status || '').toString().toLowerCase();
+                const isExpired = status === 'expired';
+                return (
+                  <View
+                    style={[
+                      styles.chip,
+                      isExpired ? styles.expiredStatusChip : styles.statusChip,
+                    ]}
+                  >
+                    <FontAwesomeIcon
+                      icon={isExpired ? faXmarkCircle : faClock}
+                      size={12}
+                      color={themeVariables.whiteColor}
+                      style={styles.chipIcon}
+                    />
+                    <Text style={styles.chipText}>
+                      {safeText(item.status)}
+                    </Text>
+                  </View>
+                );
+              })()
+            }
+          </>
+        );
+      case 'event':
+        return (
+          <View style={[styles.chip, styles.communityChip]}>
+            <FontAwesomeIcon icon={faSprout} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
+            <Text style={styles.chipText}>{safeText(item.community)}</Text>
+          </View>
+        );
+      case 'member':
+      case 'user':
+        return (
+          <View style={[styles.chip, styles.communityChip]}>
+            <FontAwesomeIcon icon={faSprout} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
+            <Text style={styles.chipText}>{safeText(item.community)}</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
+
   const renderContent = () => {
     switch (item.type) {
       case 'activity':
@@ -28,16 +144,6 @@ const SearchCard = ({ item, onPress }) => {
             <Text style={styles.title}>{safeText(item.title)}</Text>
             <Text style={styles.field}>{safeText(item.activityType)}</Text>
             <Text style={styles.field}>{formatDate(item.date)}</Text>
-            <View style={styles.chipContainer}>
-              <View style={[styles.chip, styles.communityChip]}>
-                <FontAwesomeIcon icon={faUsers} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
-                <Text style={styles.chipText}>{safeText(item.community)}</Text>
-              </View>
-              <View style={[styles.chip, styles.statusChip]}>
-                <FontAwesomeIcon icon={faInfoCircle} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
-                <Text style={styles.chipText}>{safeText(item.status)}</Text>
-              </View>
-            </View>
           </>
         );
       case 'event':
@@ -46,12 +152,6 @@ const SearchCard = ({ item, onPress }) => {
             <Text style={styles.title}>{safeText(item.title)}</Text>
             <Text style={styles.field}>{safeText(item.eventType)}</Text>
             <Text style={styles.field}>{formatDate(item.date)}</Text>
-            <View style={styles.chipContainer}>
-              <View style={[styles.chip, styles.communityChip]}>
-                <FontAwesomeIcon icon={faUsers} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
-                <Text style={styles.chipText}>{safeText(item.community)}</Text>
-              </View>
-            </View>
           </>
         );
       case 'member':
@@ -59,13 +159,7 @@ const SearchCard = ({ item, onPress }) => {
         return (
           <>
             <Text style={styles.title}>{safeText(item.firstName)} {safeText(item.lastName)}</Text>
-            <Text style={styles.field}>ID: {safeText(item.bahaiId)}</Text>
-            <View style={styles.chipContainer}>
-              <View style={[styles.chip, styles.communityChip]}>
-                <FontAwesomeIcon icon={faUsers} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
-                <Text style={styles.chipText}>{safeText(item.community)}</Text>
-              </View>
-            </View>
+            <Text style={styles.field}>Baha'i ID: {safeText(item.bahaiId)}</Text>
           </>
         );
       default:
@@ -79,7 +173,8 @@ const SearchCard = ({ item, onPress }) => {
       activeOpacity={onPress ? 0.7 : 1}
       onPress={() => onPress && onPress(item)}
     >
-      <View>
+      {renderImageSection()}
+      <View style={styles.content}>
         {renderContent()}
       </View>
     </TouchableOpacity>
@@ -106,15 +201,18 @@ function formatDate(dateString) {
 
 const styles = StyleSheet.create({
   card: {
+    // fixed width for two-column layout
+    width: '48%',
+    margin: 6,
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 8,
     padding: 12,
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+    overflow: 'hidden',
   },
   title: {
     fontSize: 16,
@@ -129,6 +227,8 @@ const styles = StyleSheet.create({
   },
   chipContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     marginTop: 6,
   },
   chip: {
@@ -138,12 +238,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 12,
     marginRight: 8,
+    marginBottom: 4,
+    flexShrink: 1,
   },
   communityChip: {
     backgroundColor: themeVariables.primaryColor,
   },
+  // Default status chip: light secondary background, dark secondary text and border
   statusChip: {
-    backgroundColor: themeVariables.secondaryColor || themeVariables.greenColor,
+    backgroundColor: themeVariables.secondaryLightColor,
+  },
+  // Text color for default status chip (white for contrast)
+  statusChipText: {
+    color: themeVariables.whiteColor,
+  },
+  // Expired status chip: red background and border
+  expiredStatusChip: {
+    backgroundColor: themeVariables.redColor,
+    borderWidth: 1,
+    borderColor: themeVariables.redColor,
   },
   chipIcon: {
     marginRight: 4,
@@ -151,6 +264,28 @@ const styles = StyleSheet.create({
   chipText: {
     fontSize: 12,
     color: themeVariables.whiteColor,
+    flexShrink: 1,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 120,
+    position: 'relative',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  overlayChipContainer: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  content: {
+    paddingHorizontal: 0,
+    paddingBottom: 0,
   },
 });
 

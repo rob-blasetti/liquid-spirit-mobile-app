@@ -21,6 +21,7 @@ export const UserProvider = ({ children }) => {
   const [refreshToken, setRefreshToken] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userNotifications, setUserNotifications] = useState(null);
+  const [storageLoaded, setStorageLoaded] = useState(false);
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -49,7 +50,9 @@ export const UserProvider = ({ children }) => {
       }
     };
 
-    loadCachedData();
+    loadCachedData().finally(() => {
+      setStorageLoaded(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -283,6 +286,7 @@ export const UserProvider = ({ children }) => {
         biometricLogin,
         isTokenExpired,
         refreshSession
+        ,storageLoaded
       }}>
       {children}
     </UserContext.Provider>

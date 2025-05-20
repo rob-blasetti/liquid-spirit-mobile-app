@@ -48,19 +48,19 @@ const MainApp = () => {
   const [homeOverviewLoaded, setHomeOverviewLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
-  const { biometricLogin, isLoggedIn, communityId } = useContext(UserContext);
+  const { biometricLogin, isLoggedIn, communityId, storageLoaded } = useContext(UserContext);
   const { fetchHomeOverview } = useAuthService();
 
   useEffect(() => {
+    if (!storageLoaded) return;
     const attemptBiometricLogin = async () => {
       if (!isLoggedIn) {
         await biometricLogin();
       }
       setCheckingSession(false);
     };
-
     attemptBiometricLogin();
-  }, []);
+  }, [storageLoaded]);
 
   useEffect(() => {
     // 1) Fetch initial posts and keep splash for an extra moment

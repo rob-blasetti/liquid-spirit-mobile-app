@@ -34,6 +34,12 @@ const ProfileStackNavigator = () => {
                 backgroundColor: themeVariables.greyColor,
                 borderRadius: themeVariables.borderRadiusPill,
                 padding: 6,
+                // subtle shadow for raised effect
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
               }}
             >
               <FontAwesomeIcon

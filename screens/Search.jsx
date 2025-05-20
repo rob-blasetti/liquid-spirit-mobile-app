@@ -60,6 +60,8 @@ const Search = () => {
       ) : (
         <FlatList
           data={results}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
           keyExtractor={(item, index) => (item.id || item._id ? (item.id || item._id).toString() : index.toString())}
           renderItem={({ item }) => (
             <SearchCard
@@ -95,12 +97,17 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
   },
   searchInput: {
-    height: 40,
-    borderColor: themeVariables.greyColor,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
+    // Indent and padded search bar
+    height: 48,
+    marginHorizontal: 8,
     marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderColor: themeVariables.primaryCo,  
+    borderWidth: 1,
+    borderRadius: 20,
+    // Optionally, add a subtle background for contrast
+    backgroundColor: themeVariables.lightGreyColor,
   },
   placeholderContainer: {
     alignItems: 'center',
@@ -118,6 +125,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     color: themeVariables.greyColor,
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
   },
 });
 

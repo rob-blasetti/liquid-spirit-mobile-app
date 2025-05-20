@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: themeVariables.whiteColor, // @LS-SoftGrey
-    marginBottom: 45,
   },
   heading: {
     fontSize: 24,
