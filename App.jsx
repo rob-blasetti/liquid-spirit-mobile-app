@@ -24,6 +24,7 @@ import ActivitiesScreen from './screens/Activities';
 import EventsScreen from './screens/Events';
 import EventDetailCard from './screens/EventDetailCard';
 import ForgotPassword from './screens/ForgotPassword';
+import ForgotBahaiId from './screens/ForgotBahaiId';
 import Eula from './screens/Eula';
 import PublicUserProfile from './screens/PublicUserProfile';
 import RequestAgendaItem from './screens/RequestAgendaItem';
@@ -157,6 +158,7 @@ const MainApp = () => {
             <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />
             <Stack.Screen name="Verification" component={Verification} />
             <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ title: 'Forgot Password' }} />
+            <Stack.Screen name="ForgotBahaiId" component={ForgotBahaiId} options={{ title: "Forgot Bahá'í ID" }} />
             <Stack.Screen name="EULA" component={Eula} /> 
             <Stack.Screen name="Events" component={EventsScreen} />
             <Stack.Screen name="Activities" component={ActivitiesScreen} />

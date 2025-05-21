@@ -93,6 +93,23 @@ export const useAuthService = () => {
       throw new Error(`Sign-up error: ${error.message}`);
     }
   };
+  
+  const forgotBahaiId = async (email) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/forgot-bahai-id`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+
+      return { ok: response.ok, data };
+    } catch (error) {
+      throw new Error(`Forgot Bahá'í ID error: ${error.message}`);
+    }
+  };
 
   const fetchHomeOverview = async (communityId) => {
     try {
@@ -253,6 +270,7 @@ export const useAuthService = () => {
     signUp,
     verify,
     forgotPassword,
+    forgotBahaiId,
     fetchMe,
     updateMe,
     getCurrentUserId,

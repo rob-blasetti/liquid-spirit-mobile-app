@@ -127,6 +127,9 @@ const Register = () => {
       <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.link}>
         <Text style={styles.linkText}>Already have an account?</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={() => navigation.navigate('ForgotBahaiId')} style={styles.link}>
+        <Text style={styles.linkText}>Forgot my Bahá'í ID?</Text>
+      </TouchableOpacity>
     </View>
   );
 };
