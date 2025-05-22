@@ -29,10 +29,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const { token, user } = useContext(UserContext);
   const navigation = useNavigation();
 
+  // Sync isLiked state when likes or user changes
   useEffect(() => {
-    const computedIsLiked = post.likes?.includes(userId) || false;
+    const uid = user?.id || user?._id;
+    const computedIsLiked = post.likes?.includes(uid) || false;
     setIsLiked(computedIsLiked);
-  }, [post.likes, userId]);
+  }, [post.likes, user]);
 
   const debouncedToggleLike = useCallback(
     debounce(() => {

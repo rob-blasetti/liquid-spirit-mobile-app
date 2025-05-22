@@ -143,10 +143,22 @@ export default function CreatePost({ onPostCreated }) {
           </View>
 
           {mediaUri && mediaType.includes('image') && (
-            <Image source={{ uri: mediaUri }} style={styles.mediaPreview} />
+            <Image
+              testID="imagePreview"
+              source={{ uri: mediaUri }}
+              style={styles.mediaPreview}
+            />
           )}
           {mediaUri && mediaType.includes('video') && (
-            <Video source={{ uri: mediaUri }} style={styles.video} controls resizeMode="contain" paused={false} repeat />
+            <Video
+              testID="videoPreview"
+              source={{ uri: mediaUri }}
+              style={styles.video}
+              controls
+              resizeMode="contain"
+              paused={false}
+              repeat
+            />
           )}
 
           {isUploading && (
