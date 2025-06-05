@@ -29,12 +29,42 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const { token, user } = useContext(UserContext);
   const navigation = useNavigation();
 
+  // Helper: determine if current user has liked this post
+  const hasUserLiked = useCallback((likes, uid) => {
+    if (!Array.isArray(likes) || !uid) return false;
+    return likes.some(like => {
+      if (!like) return false;
+      // Case: likes array contains plain user ID strings
+      if (typeof like === 'string') {
+        return like === uid;
+      }
+      if (typeof like === 'object') {
+        // Case: like is a user object ({ _id, id, ... })
+        if (like._id === uid || like.id === uid) {
+          return true;
+        }
+        // Case: like is a like document with a user field (string or nested object)
+        if (typeof like.user === 'string' && like.user === uid) {
+          return true;
+        }
+        if (like.user && typeof like.user === 'object' && (like.user._id === uid || like.user.id === uid)) {
+          return true;
+        }
+        // Case: like document uses userId field
+        if (typeof like.userId === 'string' && like.userId === uid) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }, []);
   // Sync isLiked state when likes or user changes
   useEffect(() => {
     const uid = user?.id || user?._id;
-    const computedIsLiked = post.likes?.includes(uid) || false;
-    setIsLiked(computedIsLiked);
-  }, [post.likes, user]);
+    console.log('Checking likes for user ID:', uid);
+    console.log('Post likes:', post, post.likes);
+    setIsLiked(hasUserLiked(post.likes, uid));
+  }, [post.likes, user, hasUserLiked]);
 
   const debouncedToggleLike = useCallback(
     debounce(() => {
@@ -54,7 +84,8 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
   const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
   const userId = user?.id || user?._id;
-  const [isLiked, setIsLiked] = useState(post.likes?.includes(userId) || false);
+  // initial liked state based on post.likes
+  const [isLiked, setIsLiked] = useState(() => hasUserLiked(post.likes, userId));
   const commentCount = post.comments?.length || 0;
   const isOwn = post.author._id == userId;
 
@@ -253,7 +284,6 @@ const styles = StyleSheet.create({
   postContainer: {
     marginBottom: 16,
     backgroundColor: '#fff',
-    borderRadius: 10,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

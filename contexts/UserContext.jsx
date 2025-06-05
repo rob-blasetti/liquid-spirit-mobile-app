@@ -206,6 +206,11 @@ export const UserProvider = ({ children }) => {
   // Load notifications on token change
   useEffect(() => {
     if (!token) return;
+    // if token expired, attempt to refresh and defer loading notifications
+    if (isTokenExpired(token)) {
+      refreshSession();
+      return;
+    }
     const loadNotifications = async () => {
       try {
         const resp = await NotificationService.getAllNotifications(token, { limit: 10, offset: 0 });

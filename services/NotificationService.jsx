@@ -272,7 +272,8 @@ const NotificationService = {
         }
       });
   
-      const response = await fetch(url, {
+      // fetch expects a string URL; convert URL object to string
+      const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -282,7 +283,8 @@ const NotificationService = {
   
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch notifications');
+        // throw server-provided message if available, else default
+        throw new Error(data.error || data.message || 'Failed to fetch notifications');
       }
   
       return data;

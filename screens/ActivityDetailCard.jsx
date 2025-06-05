@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  ActivityIndicator,
   Linking,
   Dimensions,
   LayoutAnimation,
@@ -35,6 +35,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import themeVariables from '../styles/theme';
+import MapView, { Marker } from 'react-native-maps';
 import {
   fetchActivityDetails,
   requestParticipation,
@@ -50,13 +51,11 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const { height: windowHeight } = Dimensions.get('window');
+// Screen dimensions
+const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
 
 /* ─── Helper Functions ────────────────────────────────────────────── */
-const getDayName = (d) =>
-  d.toLocaleDateString(undefined, { weekday: 'long' });
-const getDayMonth = (d) =>
-  d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
+// (Removed getDayName/getDayMonth: using groupDetails.day and formatTime now)
 
 /* ────────────────────────────────────────────────────────────────────────────
    Screen
@@ -70,7 +69,6 @@ const ActivityDetailCard = ({ route }) => {
   const [error, setError] = useState(null);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
-
   useEffect(() => {
     if (!activityId) return;
     const fetchDetails = async () => {
@@ -194,18 +192,35 @@ const ActivityCardBody = ({
   } = activity;
 
   // Derived values for display
-  const dateObj = new Date(date);
-  const dateMain = getDayName(dateObj);
-  const dateSub = getDayMonth(dateObj);
+  // Use groupDetails.day explicitly for the Day cell
+  const dayOfWeek = groupDetails?.day ?? 'N/A';
+  // Time of session
   const timeMain = formatTime(groupDetails?.time);
-  const timeSub = groupDetails?.day ?? 'N/A';
+  // Host full address
+  const fullAddr = isOnline ? onlineLink : [address?.streetAddress, address?.suburb, address?.city]
+    .filter(Boolean).join(', ');
+  // Region state for map
+  const [region, setRegion] = useState(null);
+  useEffect(() => {
+    if (!fullAddr || isOnline) return;
+    // Geocode via OpenStreetMap Nominatim
+    const q = encodeURIComponent(fullAddr);
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`)
+      .then(res => res.json())
+      .then(results => {
+        if (results && results.length > 0) {
+          const { lat, lon } = results[0];
+          setRegion({
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lon),
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          });
+        }
+      })
+      .catch(err => console.warn('Geocode error', err));
+  }, [fullAddr]);
   const isOnline = Boolean(onlineLink);
-  const fullAddr =
-    isOnline
-      ? 'Join Online'
-      : [address?.streetAddress, address?.suburb, address?.city]
-          .filter(Boolean)
-          .join(', ') || 'No address';
 
   // Use a shorter label for location in the detail cell (if desired)
   const locationLabel = isOnline
@@ -228,6 +243,10 @@ const ActivityCardBody = ({
   // Local state for modals for facilitators/participants
   const [facilitatorsModalVisible, setFacilitatorsModalVisible] = useState(false);
   const [participantsModalVisible, setParticipantsModalVisible] = useState(false);
+  // Session-specific modal for upcoming sessions
+  const [sessionModalVisible, setSessionModalVisible] = useState(false);
+  const [sessionModalList, setSessionModalList] = useState([]);
+  const [sessionModalTitle, setSessionModalTitle] = useState('');
   // Optimistic request flags
   const [optimisticFacilitatorRequest, setOptimisticFacilitatorRequest] = useState(false);
   const [optimisticParticipantRequest, setOptimisticParticipantRequest] = useState(false);
@@ -329,80 +348,154 @@ const ActivityCardBody = ({
           title={title}
           subtitle={activityType?.name ?? 'Unknown'}
           style={styles.titleBlock}
+          titleStyle={styles.cardTitleText}
+          subtitleStyle={styles.cardSubtitleText}
         />
+        {/* Header Info: Day.Time and Host Address */}
+        <View style={styles.headerInfoContainer}>
+          <Text style={styles.headerInfoText}>{dayOfWeek} . {timeMain}</Text>
+        </View>
+        {/* Divider above map */}
+        <View style={styles.divider} />
+        {/* Host Address title */}
+        <Text style={styles.mapTitle}>Host Address</Text>
+        {/* Map showing host address with rounded corners */}
+        <View style={styles.mapWrapper}>
+          {region ? (
+            <MapView style={styles.map} initialRegion={region}>
+              <Marker coordinate={region} />
+            </MapView>
+          ) : (
+            <View style={styles.mapLoader}>
+              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+            </View>
+          )}
+        </View>
+        {/* Host Address text below map */}
+        <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>{locationLabel}</Text>
+        {/* Divider below map */}
+        <View style={styles.divider} />
 
 
         {/* Details grid */}
         <CardContent style={styles.cardContent}>
-          <View style={styles.detailRow}>
-            <DetailCell
-              icon={faCalendar}
-              label="Date"
-              main={dateMain}
-              sub={dateSub}
-            />
-            <DetailCell
-              icon={faClock}
-              label="Time"
-              main={timeMain}
-              sub={timeSub}
-            />
-            <DetailCell
-              icon={isOnline ? faVideo : faCarSide}
-              label={isOnline ? 'Online' : 'Location'}
-              main={locationLabel}
-              sub=""
-              onPress={() =>
-                isOnline ? Linking.openURL(onlineLink) : openGoogleMaps(fullAddr)
-              }
-              isLink={isOnline}
-            />
-          </View>
-          {/* Quick facts */}
-          <View style={styles.factRow}>
-            <Fact icon={faUsers} label="Community" value={user?.community?.name || 'Unknown'} />
-            <Fact icon={faBook} label="Reference Material" value={activity.referenceMaterial || 'No Material Attached'} />
-          </View>
-          {/* Facilitators and Participants Sections */}
-          <View style={styles.sectionsContainer}>
-              <TouchableOpacity
-              onPress={() => setFacilitatorsModalVisible(true)}
-              activeOpacity={0.8}
-              style={styles.sideSection}
-            >
-              <Text style={styles.sectionTitle}>Facilitators</Text>
-              <OverlappingAvatars list={facilitators} />
-              {detailsLoaded && hasFacilitatorSpace && !isUserFacilitator && !isUserParticipant && !hasRequestedFacilitator && !hasRequestedParticipant && (
-                <TouchableOpacity
-                  style={styles.requestButton}
-                  onPress={handleFacilitatorRequest}
-                  activeOpacity={0.8}
-                >
-                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
-                  <Text style={styles.requestButtonText}>Request Join</Text>
-                </TouchableOpacity>
-              )}
-              </TouchableOpacity>
-              <View style={styles.dividerVertical} />
-              <TouchableOpacity
-              onPress={() => setParticipantsModalVisible(true)}
-              activeOpacity={0.8}
-              style={styles.sideSection}
-            >
-              <Text style={styles.sectionTitle}>Participants</Text>
-              <OverlappingAvatars list={participants} />
-              {detailsLoaded && hasParticipantSpace && !isUserParticipant && !isUserFacilitator && !hasRequestedParticipant && !hasRequestedFacilitator && (
-                <TouchableOpacity
-                  style={styles.requestButton}
-                  onPress={handleParticipantRequest}
-                  activeOpacity={0.8}
-                >
-                  <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
-                  <Text style={styles.requestButtonText}>Request Join</Text>
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
+        {/* Upcoming Sessions Carousel */}
+          {Array.isArray(activity.sessions) && (
+            (() => {
+              const now = new Date();
+              const upcoming = activity.sessions
+                .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
+                .map(s => ({ ...s, dateObj: new Date(s.date) }))
+                .filter(s => !isNaN(s.dateObj) && s.dateObj >= now)
+                .sort((a, b) => a.dateObj - b.dateObj);
+              if (upcoming.length === 0) return null;
+              return (
+                <View style={styles.carouselContainer}>
+                  <Text style={styles.carouselTitle}>Upcoming Sessions</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.carouselContent}
+                  >
+                    {upcoming.map((sess, idx) => (
+                      <View
+                        key={sess._id || idx}
+                        style={[styles.sessionCard, { width: screenWidth - 32 }]}
+                      >
+                        {/* Status chip */}
+                        <View style={styles.sessionStatusChip}>
+                          <Text style={styles.sessionStatusText}>{sess.status}</Text>
+                        </View>
+                        {/* Date */}
+                        <Text style={styles.sessionCardDate}>
+                          {sess.dateObj.toLocaleDateString(undefined, {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </Text>
+                        {/* Facilitators & Participants Sections */}
+                        <View style={styles.sessionInfoRow}>
+                          <View style={styles.sessionSection}>
+                            <Text style={styles.sessionSectionTitle}>Facilitators</Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setSessionModalList(sess.facilitators || []);
+                                setSessionModalTitle('Facilitators');
+                                setSessionModalVisible(true);
+                              }}
+                            >
+                              <OverlappingAvatars list={sess.facilitators || []} />
+                            </TouchableOpacity>
+                            {detailsLoaded && hasFacilitatorSpace && !isUserFacilitator && !isUserParticipant && !hasRequestedFacilitator && !hasRequestedParticipant && (
+                              <TouchableOpacity
+                                style={styles.requestButton}
+                                onPress={handleFacilitatorRequest}
+                                activeOpacity={0.8}
+                              >
+                                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
+                                <Text style={styles.requestButtonText}>Request Join</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                          <View style={styles.sessionSection}>
+                            <Text style={styles.sessionSectionTitle}>Participants</Text>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setSessionModalList(sess.participants || []);
+                                setSessionModalTitle('Participants');
+                                setSessionModalVisible(true);
+                              }}
+                            >
+                              <OverlappingAvatars list={sess.participants || []} />
+                            </TouchableOpacity>
+                            {detailsLoaded && hasParticipantSpace && !isUserParticipant && !isUserFacilitator && !hasRequestedParticipant && !hasRequestedFacilitator && (
+                              <TouchableOpacity
+                                style={styles.requestButton}
+                                onPress={handleParticipantRequest}
+                                activeOpacity={0.8}
+                              >
+                                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
+                                <Text style={styles.requestButtonText}>Request Join</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              );
+            })()
+          )}
+
+          {/* Divider before Guidelines and Forms */}
+          <View style={styles.divider} />
+
+          {/* Activity Guidelines Section */}
+          {activity.guidelines ? (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Activity Guidelines</Text>
+              <Text style={styles.guidelinesText}>{activity.guidelines}</Text>
             </View>
+          ) : null}
+
+          {/* Forms Section */}
+          {Array.isArray(activity.forms) && activity.forms.length > 0 ? (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Forms</Text>
+              {activity.forms.map((form, idx) => (
+                <TouchableOpacity
+                  key={form._id || idx}
+                  onPress={() => Linking.openURL(form.url)}
+                  style={styles.formLink}
+                >
+                  <Text style={styles.formLinkText}>{form.name || form.title || `Form ${idx + 1}`}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : null}
+
         </CardContent>
 
       </View>
@@ -421,6 +514,13 @@ const ActivityCardBody = ({
         onClose={() => setParticipantsModalVisible(false)}
         list={participants}
         title="Participants"
+      />
+      {/* Session Avatar Modal */}
+      <BadgeModal
+        visible={sessionModalVisible}
+        onClose={() => setSessionModalVisible(false)}
+        list={sessionModalList}
+        title={sessionModalTitle}
       />
     </Card>
   );
@@ -588,7 +688,8 @@ const styles = StyleSheet.create({
     width: '100%',
     marginTop: -40,
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     paddingBottom: 16,
     paddingHorizontal: 16,
     shadowColor: '#000',
@@ -597,7 +698,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  titleBlock: { paddingTop: 12 },
+  titleBlock: { paddingTop: 12, fontWeight: 'bold', alignItems: 'center' },
+  // Overrides for CardTitle text
+  cardTitleText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    textAlign: 'center',
+  },
+  cardSubtitleText: {
+    fontSize: 16,
+    color: '#444',
+    textAlign: 'center',
+  },
 
   /* facts */
   factRow: {
@@ -754,15 +867,135 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  /* Header Info below title */
+  headerInfoContainer: {
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  headerInfoText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  /* Upcoming Sessions Carousel */
+  carouselContainer: {
+    marginBottom: 14,
+  },
+  carouselTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+    marginBottom: 6,
+  },
+  carouselContent: {
+    paddingLeft: 4,
+  },
+  sessionCard: {
+    backgroundColor: themeVariables.whiteColor,
+    padding: 8,
+    marginRight: 10,
+    alignItems: 'center',
+    minWidth: 100,
+  },
+  sessionCardDate: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: themeVariables.primaryColor,
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  sessionCardTime: {
+    fontSize: 12,
+    color: '#666',
+  },
+  // Session status chip at top right
+  sessionStatusChip: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  sessionStatusText: {
+    color: themeVariables.whiteColor,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  // Info row for facilitators/participants
+  sessionInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    width: '100%',
+  },
+  sessionSection: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  sessionSectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  sessionInfoText: {
+    fontSize: 12,
+    color: '#666',
+  },
   /* Combined Facilitators/Participants styles */
   sectionsContainer: {
     flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
     backgroundColor: '#fff',
     marginBottom: 14,
     overflow: 'hidden',
+  },
+  // Divider line
+  divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  // (Deprecated) Map container, no longer used; replaced by mapWrapper
+  mapContainer: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  // Wrapper for MapView with 20px corner radius on all corners
+  mapWrapper: {
+    width: '100%',
+    height: 200,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  // Loader area matching mapWrapper dimensions
+  mapLoader: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    // more space above/below title
+    marginTop: 12,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
   },
   sideSection: {
     flex: 1,
@@ -823,6 +1056,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.whiteColor,
     marginLeft: 6,
+  },
+  
+  /* Activity Guidelines & Forms */
+  guidelinesText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  formLink: {
+    paddingVertical: 6,
+    alignSelf: 'flex-start',
+  },
+  formLinkText: {
+    fontSize: 14,
+    color: themeVariables.primaryColor,
+    textDecorationLine: 'underline',
   },
   /* Status chip in top-right corner */
   statusChip: {

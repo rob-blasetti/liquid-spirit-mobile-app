@@ -25,6 +25,19 @@ import {
   faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
+// Helper: get the next upcoming session date for filtering, sorting, and display
+const getNextSessionDate = (activity) => {
+  if (!Array.isArray(activity.sessions)) return null;
+  const now = new Date();
+  // Only consider sessions that are Scheduled or Confirmed
+  const futureDates = activity.sessions
+    .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
+    .map(s => new Date(s.date))
+    .filter(d => !isNaN(d) && d >= now);
+  if (futureDates.length === 0) return null;
+  futureDates.sort((a, b) => a - b);
+  return futureDates[0];
+};
 
 const Activities = ({ navigation }) => {
   const { userActivities } = useContext(UserContext);
@@ -60,16 +73,20 @@ const Activities = ({ navigation }) => {
   }, [activities, selectedType, sortOrder]);
 
   const filterAndSortActivities = () => {
-    let filtered = [...activities];
+    // Only include activities with at least one future session
+    let filtered = activities.filter((activity) => getNextSessionDate(activity) !== null);
 
     if (selectedType !== 'All') {
       filtered = filtered.filter((activity) => activity.activityType?.name === selectedType);
     }
 
+    // Sort by the next session date
     filtered.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      const dateA = getNextSessionDate(a) || new Date(0);
+      const dateB = getNextSessionDate(b) || new Date(0);
+      return sortOrder === 'asc'
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime();
     });
 
     setFilteredActivities(filtered);
@@ -116,7 +133,9 @@ const Activities = ({ navigation }) => {
         <View style={styles.infoRow}>
           <FontAwesomeIcon icon={faCalendar} size={16} color="#666" />
           <Text style={styles.activityDetails}>
-            {new Date(item.date).toDateString()}
+            {getNextSessionDate(item)
+              ? getNextSessionDate(item).toDateString()
+              : 'TBA'}
           </Text>
         </View>
 

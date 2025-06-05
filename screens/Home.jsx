@@ -23,6 +23,28 @@ import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
+// Helper: get the next upcoming session date for an activity
+const getNextSessionDate = (activity) => {
+  if (!Array.isArray(activity.sessions)) return null;
+  const now = new Date();
+  const future = activity.sessions
+    .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
+    .map(s => new Date(s.date))
+    .filter(d => !isNaN(d) && d >= now);
+  if (future.length === 0) return null;
+  future.sort((a, b) => a - b);
+  return future[0];
+};
+// Fallback helper: use session date or root-level date
+const getEffectiveNextDate = (activity) => {
+  const nextSession = getNextSessionDate(activity);
+  if (nextSession) return nextSession;
+  if (activity.date) {
+    const d = new Date(activity.date);
+    if (!isNaN(d)) return d;
+  }
+  return null;
+};
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -270,20 +292,23 @@ const Home = ({ navigation, homeOverview }) => {
         {/* Activities Section (homeOverview) */}
         {activeTab === 'Activities' && Array.isArray(homeOverview.activities) && homeOverview.activities.length > 0 && (() => {
           const now = new Date();
-          // Upcoming activities from overview
-          const upcoming = homeOverview.activities
-            .filter(a => a.date && new Date(a.date) >= now)
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
-          const nextAct = upcoming[0] || null;
+          // Prepare activities with next dates (session or root date)
+          const upcomingWithDate = homeOverview.activities
+            .map(a => ({ activity: a, nextDate: getEffectiveNextDate(a) }))
+            .filter(({ nextDate }) => nextDate && nextDate >= now)
+            .sort((a, b) => a.nextDate - b.nextDate);
+          const upcoming = upcomingWithDate.map(({ activity }) => activity);
+          const nextActData = upcomingWithDate[0] || null;
+          const nextAct = nextActData?.activity || null;
+          const nextDate = nextActData?.nextDate || null;
           // Next activity with available facilitator slots
           const activityToFacilitate = upcoming.find(a => {
             const currentCount = Array.isArray(a.facilitators) ? a.facilitators.length : 0;
             return typeof a.facilitatorLimit === 'number' && currentCount < a.facilitatorLimit;
           }) || null;
-          if (!nextAct) return null;
+          if (!nextAct || !nextDate) return null;
           // Format date/time for nextAct
-          const actDate = new Date(nextAct.date);
-          const actDateTime = actDate.toLocaleString(undefined, {
+          const actDateTime = nextDate.toLocaleString(undefined, {
             weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric'
           });
           return (
