@@ -38,6 +38,7 @@ import {
 } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
+import SessionCard from '../components/SessionCard';
 
 if (
   Platform.OS === 'android' &&
@@ -70,6 +71,7 @@ const ActivityDetailCard = ({ route }) => {
     const fetchDetails = async () => {
       try {
         const data = await fetchActivityDetails(activityId, token || '');
+        console.log('activity deatils page => activity: ', data);
         setActivity(data);
       } catch (err) {
         setError(err.message || 'Failed to load activity details');
@@ -357,11 +359,6 @@ const ActivityCardBody = ({
       )}
 
       <View style={styles.overlayCard}>
-        {statusLabel && (
-          <View style={styles.statusChip}>
-            <Text style={styles.statusChipText}>{statusLabel}</Text>
-          </View>
-        )}
         <CardTitle
           title={title}
           subtitle={activityType?.name ?? 'Unknown'}
@@ -371,7 +368,7 @@ const ActivityCardBody = ({
         />
         {/* Header Info: Day.Time and Host Address */}
         <View style={styles.headerInfoContainer}>
-          <Text style={styles.headerInfoText}>{dayOfWeek} . {timeMain}</Text>
+          <Text style={styles.headerInfoText}>{dayOfWeek} ‧ {timeMain}</Text>
         </View>
         {/* Divider above map */}
         <View style={styles.divider} />
@@ -416,70 +413,20 @@ const ActivityCardBody = ({
                     contentContainerStyle={styles.carouselContent}
                   >
                     {upcoming.map((sess, idx) => (
-                      <View
+                      <SessionCard
                         key={sess._id || idx}
-                        style={[styles.sessionCard, { width: screenWidth - 32 }]}
-                      >
-                        {/* Status chip */}
-                        <View style={styles.sessionStatusChip}>
-                          <Text style={styles.sessionStatusText}>{sess.status}</Text>
-                        </View>
-                        {/* Date */}
-                        <Text style={styles.sessionCardDate}>
-                          {sess.dateObj.toLocaleDateString(undefined, {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </Text>
-                        {/* Facilitators & Participants Sections */}
-                        <View style={styles.sessionInfoRow}>
-                          <View style={styles.sessionSection}>
-                            <Text style={styles.sessionSectionTitle}>Facilitators</Text>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setSessionModalList(sess.facilitators || []);
-                                setSessionModalTitle('Facilitators');
-                                setSessionModalVisible(true);
-                              }}
-                            >
-                              <OverlappingAvatars list={sess.facilitators || []} />
-                            </TouchableOpacity>
-                            {detailsLoaded && hasFacilitatorSpace && !isUserFacilitator && !isUserParticipant && !hasRequestedFacilitator && !hasRequestedParticipant && (
-                              <TouchableOpacity
-                                style={styles.requestButton}
-                                onPress={handleFacilitatorRequest}
-                                activeOpacity={0.8}
-                              >
-                                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
-                                <Text style={styles.requestButtonText}>Request Join</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                          <View style={styles.sessionSection}>
-                            <Text style={styles.sessionSectionTitle}>Participants</Text>
-                            <TouchableOpacity
-                              onPress={() => {
-                                setSessionModalList(sess.participants || []);
-                                setSessionModalTitle('Participants');
-                                setSessionModalVisible(true);
-                              }}
-                            >
-                              <OverlappingAvatars list={sess.participants || []} />
-                            </TouchableOpacity>
-                            {detailsLoaded && hasParticipantSpace && !isUserParticipant && !isUserFacilitator && !hasRequestedParticipant && !hasRequestedFacilitator && (
-                              <TouchableOpacity
-                                style={styles.requestButton}
-                                onPress={handleParticipantRequest}
-                                activeOpacity={0.8}
-                              >
-                                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
-                                <Text style={styles.requestButtonText}>Request Join</Text>
-                              </TouchableOpacity>
-                            )}
-                          </View>
-                        </View>
-                      </View>
+                        session={sess}
+                        detailsLoaded={detailsLoaded}
+                        hasFacilitatorSpace={hasFacilitatorSpace}
+                        hasParticipantSpace={hasParticipantSpace}
+                        isUserFacilitator={isUserFacilitator}
+                        isUserParticipant={isUserParticipant}
+                        hasRequestedFacilitator={hasRequestedFacilitator}
+                        hasRequestedParticipant={hasRequestedParticipant}
+                        onFacilitatorRequest={handleFacilitatorRequest}
+                        onParticipantRequest={handleParticipantRequest}
+                        width={screenWidth - 32}
+                      />
                     ))}
                   </ScrollView>
                 </View>
@@ -735,13 +682,13 @@ const styles = StyleSheet.create({
   titleBlock: { fontWeight: 'bold', alignItems: 'center' },
   // Overrides for CardTitle text
   cardTitleText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'center',
   },
   cardSubtitleText: {
-    fontSize: 16,
+    fontSize: 20,
     color: '#444',
     textAlign: 'center',
   },
@@ -907,18 +854,15 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   headerInfoText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#666',
   },
-  /* Upcoming Sessions Carousel */
-  carouselContainer: {
-    marginBottom: 14,
-  },
   carouselTitle: {
-    fontSize: 16,
-    fontWeight: '600',
     color: themeVariables.blackColor,
-    marginBottom: 6,
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 14,
+    marginBottom: 14,
   },
   carouselContent: {
     paddingLeft: 4,
@@ -1020,11 +964,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mapTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
-    // more space above/below title
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 14,
+    marginBottom: 14,
     alignSelf: 'flex-start',
   },
   map: {
@@ -1040,6 +983,46 @@ const styles = StyleSheet.create({
   dividerVertical: {
     width: 1,
     backgroundColor: '#ddd',
+  },
+  /* New styles for Upcoming Sessions layout */
+  sessionCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 8,
+  },
+  sessionStatusInline: {
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  sessionStatusInlineText: {
+    color: themeVariables.whiteColor,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  userListContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+  },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
+    marginBottom: 6,
+  },
+  smallAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  avatarName: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
   },
   extraCount: {
     backgroundColor: '#666',
