@@ -167,7 +167,18 @@ const MainApp = () => {
             <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
             <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
-            <Stack.Screen name="ActivityDetailCard" component={ActivityDetailCard} options={{ title: 'Activity Detail Card' }}/>
+            <Stack.Screen
+              name="ActivityDetailCard"
+              component={ActivityDetailCard}
+              options={{
+                // Transparent navigation header to show banner behind
+                headerTransparent: true,
+                headerStyle: { backgroundColor: 'transparent', elevation: 0 },
+                headerTitle: '',
+                headerShadowVisible: false,
+                headerTintColor: themeVariables.blackColor,
+              }}
+            />
             <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
             <Stack.Screen name="Main"
@@ -199,7 +210,7 @@ export default App;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: 'transparent',
   },
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,

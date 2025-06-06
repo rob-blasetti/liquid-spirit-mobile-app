@@ -1,4 +1,7 @@
+// Amount to offset content so top corners are hidden initially
+const HEADER_OFFSET = 0;
 import React, { useContext, useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -9,7 +12,6 @@ import {
   TouchableWithoutFeedback,
   Linking,
   Dimensions,
-  LayoutAnimation,
   UIManager,
   Platform,
   Modal,
@@ -24,13 +26,6 @@ import Avatar from '@flipxyz/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-  faCalendar,
-  faClock,
-  faCarSide,
-  faVideo,
-  faUsers,
-  faBook,
-  faChair,
   faPlusCircle,
 } from '@fortawesome/free-solid-svg-icons';
 
@@ -61,6 +56,7 @@ const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
    Screen
    ──────────────────────────────────────────────────────────────────────────── */
 const ActivityDetailCard = ({ route }) => {
+  const navigation = useNavigation();
   const { user, token } = useContext(UserContext);
   const { activityId, activityPreload } = route.params;
 
@@ -107,8 +103,18 @@ const ActivityDetailCard = ({ route }) => {
 
   if (loading && activityPreload) {
     return (
-      <View style={styles.loadingWrapper}>
-        <ScrollView contentContainerStyle={styles.scroll}>
+      <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+          overScrollMode="always"
+          scrollEventThrottle={16}
+          onScrollEndDrag={({ nativeEvent }) => {
+            if (nativeEvent.contentOffset.y < -HEADER_OFFSET / 2) {
+              navigation.goBack();
+            }
+          }}
+        >
           <ActivityCardBody
             activity={activityPreload}
             setActivity={setActivity}
@@ -121,7 +127,7 @@ const ActivityDetailCard = ({ route }) => {
         <View style={styles.loadingOverlayContainer}>
           <ActivityIndicator size="large" color={themeVariables.primaryColor} />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -150,16 +156,28 @@ const ActivityDetailCard = ({ route }) => {
 
   /* ── main render ────────────────────────────────────────────── */
   return (
-    <ScrollView contentContainerStyle={styles.scroll}>
-      <ActivityCardBody
-        activity={activity}
-        setActivity={setActivity}
-        formatTime={formatTime}
-        openGoogleMaps={openGoogleMaps}
-        userId={user?.id}
-        detailsLoaded={detailsLoaded}
-      />
-    </ScrollView>
+    <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+        overScrollMode="always"
+        scrollEventThrottle={16}
+        onScrollEndDrag={({ nativeEvent }) => {
+          if (nativeEvent.contentOffset.y < -HEADER_OFFSET / 2) {
+            navigation.goBack();
+          }
+        }}
+      >
+        <ActivityCardBody
+          activity={activity}
+          setActivity={setActivity}
+          formatTime={formatTime}
+          openGoogleMaps={openGoogleMaps}
+          userId={user?.id}
+          detailsLoaded={detailsLoaded}
+        />
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -650,9 +668,23 @@ const BadgeModal = ({ visible, onClose, list, title }) => {
 
 /* ───────────── Styles ───────────────────────────────────────────── */
 const styles = StyleSheet.create({
+  // Primary scroll container style for full-screen background
+  container: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   scroll: {
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: 'transparent',
     flexGrow: 1,
+    // Offset content so card’s top corners are hidden behind header
     paddingBottom: 30,
   },
   // Wrapper for preload content with loading overlay
@@ -682,6 +714,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     elevation: 0,
     margin: 0,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   banner: { width: '100%', height: 220, borderRadius: 0 },
   overlayCard: {
@@ -698,7 +732,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
-  titleBlock: { paddingTop: 12, fontWeight: 'bold', alignItems: 'center' },
+  titleBlock: { fontWeight: 'bold', alignItems: 'center' },
   // Overrides for CardTitle text
   cardTitleText: {
     fontSize: 20,
@@ -1093,5 +1127,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: Platform.select({ android: 100 })
   },
+  // Custom back button overlay
 });
 
