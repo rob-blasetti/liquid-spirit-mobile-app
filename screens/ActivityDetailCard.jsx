@@ -113,6 +113,7 @@ const ActivityDetailCard = ({ route }) => {
           animated={true}
           translucent={true}
           backgroundColor="transparent"
+          barStyle="light-content"
         />
         <ScrollView
           style={styles.scrollView}
@@ -168,6 +169,7 @@ const ActivityDetailCard = ({ route }) => {
         animated={true}
         translucent={true}
         backgroundColor="transparent"
+        barStyle="light-content"
       />
       <ScrollView
         style={styles.scrollView}
@@ -697,13 +699,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
-  banner: { width: '100%', height: 220, borderRadius: 0 },
+  banner: { width: '100%', height: 300, borderRadius: 0 },
   overlayCard: {
     width: '100%',
     marginTop: -40,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingBottom: 16,
     paddingHorizontal: 16,
     shadowColor: '#000',
