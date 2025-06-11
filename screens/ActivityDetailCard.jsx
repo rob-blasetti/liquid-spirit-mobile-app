@@ -15,6 +15,8 @@ import {
   UIManager,
   Platform,
   Modal,
+  StatusBar,
+  StatusBarStyle,
 } from 'react-native';
 import {
   Card,
@@ -107,6 +109,11 @@ const ActivityDetailCard = ({ route }) => {
   if (loading && activityPreload) {
     return (
       <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
+        <StatusBar
+          animated={true}
+          translucent={true}
+          backgroundColor="transparent"
+        />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
@@ -157,6 +164,11 @@ const ActivityDetailCard = ({ route }) => {
   /* ── main render ────────────────────────────────────────────── */
   return (
     <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
+      <StatusBar
+        animated={true}
+        translucent={true}
+        backgroundColor="transparent"
+      />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}

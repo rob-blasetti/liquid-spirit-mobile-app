@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from 'react';
 import { StatusBar, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import themeVariables from './styles/theme';
 
 import { UserProvider, UserContext } from './contexts/UserContext';
@@ -117,7 +117,7 @@ const MainApp = () => {
   // Once ready, render your normal app
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.root}>
+      <View style={styles.root}>
         <StatusBar
           barStyle={showSplash ? 'light-content' : 'dark-content'}
           backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.whiteColor}
@@ -178,6 +178,8 @@ const MainApp = () => {
                 headerTitle: '',
                 headerShadowVisible: false,
                 headerTintColor: themeVariables.blackColor,
+                // Override iOS safe area to allow content under status bar
+                safeAreaInsets: { top: 0 },
               }}
             />
             <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
@@ -200,7 +202,7 @@ const MainApp = () => {
             <Splash />
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </SafeAreaProvider>
   );
 };
