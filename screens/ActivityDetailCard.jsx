@@ -969,11 +969,11 @@ const styles = StyleSheet.create({
   // Wrapper for MapView with 20px corner radius on all corners
   mapWrapper: {
     width: '100%',
-    height: 200,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    height: 300,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
     overflow: 'hidden',
     marginBottom: 8,
   },
