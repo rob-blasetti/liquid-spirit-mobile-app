@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Easing, ScrollView, TouchableWithoutFeedback } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
@@ -21,6 +22,12 @@ const SessionCard = ({
   onParticipantRequest,
   width,
 }) => {
+  // Extract curriculum lesson details from session
+  const { curriculumLesson } = session;
+  // Data fields: grade, setTitle, lessonNumber, lessonTitle
+  const grade = curriculumLesson?.grade;
+  const setTitle = curriculumLesson?.setTitle || curriculumLesson?.set;
+  const lessonNumber = curriculumLesson?.lessonNumber;
   let statusIcon;
   switch (session.status) {
     case 'Scheduled':
@@ -39,6 +46,8 @@ const SessionCard = ({
   
   const [modalVisible, setModalVisible] = useState(false);
   const overlayOpacity = useState(new Animated.Value(0))[0];
+  // navigation to curriculum detail
+  const navigation = useNavigation();
 
   const renderUserList = (users, type) => users.slice(0, 3).map((item, i) => (
     <UserCell key={item.refId?._id || i} user={item.refId || item.details || item} type={item.type} />
@@ -85,7 +94,20 @@ const closeModal = () => {
           <Text style={styles.sessionStatusInlineText}>{session.status}</Text>
         </View>
       </View>
-
+      {/* curriculum lesson summary */}
+      {grade != null && (
+        <TouchableOpacity
+          style={styles.curriculumContainer}
+          activeOpacity={0.8}
+          // onPress={() => navigation.navigate('CurriculumDetailScreen', { curriculumLesson })}
+        >
+          <Text style={styles.curriculumTitle}>Grade {grade}</Text>
+          {setTitle && <Text style={styles.curriculumSet}>{setTitle}</Text>}
+          {lessonNumber != null && (
+            <Text style={styles.curriculumLesson}>Lesson {lessonNumber}</Text>
+          )}
+        </TouchableOpacity>
+      )}
       <View style={styles.sectionsContainer}>
         <View style={styles.sideSection}>
           <Text style={styles.sessionSectionTitle}>Facilitators</Text>
@@ -156,6 +178,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     alignItems: 'center',
     minWidth: 100,
+    borderRadius: 12,
   },
   sessionCardHeader: {
     flexDirection: 'row',
@@ -185,6 +208,31 @@ const styles = StyleSheet.create({
   },
   sectionsContainer: {
     flexDirection: 'row',
+  },
+  curriculumContainer: {
+    width: '100%',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#f9f9f9',
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+    marginBottom: 8,
+  },
+  curriculumTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: themeVariables.primaryColor,
+    marginBottom: 4,
+  },
+  curriculumSet: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: themeVariables.textColor || '#555',
+    marginBottom: 4,
+  },
+  curriculumLesson: {
+    fontSize: 14,
+    color: themeVariables.textColor || '#333',
   },
   sideSection: {
     flex: 1,

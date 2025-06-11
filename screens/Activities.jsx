@@ -332,16 +332,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 10,
     right: 10,
-    backgroundColor: '#58DB33',
+    backgroundColor: themeVariables.secondaryColor,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
-    opacity: 0.9,
+    borderRadius: 16,
   },
   activityTagText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1C5C0E',
+    color: themeVariables.blackColor,
     textAlign: 'center',
     width: Platform.select({ android: 180 })
   },
@@ -351,7 +350,7 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#312783',
+    color: themeVariables.blackColor,
     flexShrink: 1,
     marginBottom: 6,
   },

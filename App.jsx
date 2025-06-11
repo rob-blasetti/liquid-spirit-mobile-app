@@ -27,6 +27,7 @@ import ForgotPassword from './screens/ForgotPassword';
 import ForgotBahaiId from './screens/ForgotBahaiId';
 import Eula from './screens/Eula';
 import PublicUserProfile from './screens/PublicUserProfile';
+import CurriculumDetailScreen from './screens/CurriculumDetailScreen';
 import RequestAgendaItem from './screens/RequestAgendaItem';
 
 import BottomBar from './navigation/BottomBar';
@@ -181,6 +182,11 @@ const MainApp = () => {
             />
             <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
             <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
+            <Stack.Screen
+              name="CurriculumDetailScreen"
+              component={CurriculumDetailScreen}
+              options={{ title: 'Curriculum Details' }}
+            />
             <Stack.Screen name="Main"
               options={{ headerShown: false }}
             >

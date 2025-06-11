@@ -27,6 +27,7 @@ import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faPlusCircle,
+  faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 
 import themeVariables from '../styles/theme';
@@ -126,9 +127,6 @@ const ActivityDetailCard = ({ route }) => {
             detailsLoaded={detailsLoaded}
           />
         </ScrollView>
-        <View style={styles.loadingOverlayContainer}>
-          <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-        </View>
       </SafeAreaView>
     );
   }
@@ -370,26 +368,49 @@ const ActivityCardBody = ({
         <View style={styles.headerInfoContainer}>
           <Text style={styles.headerInfoText}>{dayOfWeek} ‧ {timeMain}</Text>
         </View>
-        {/* Divider above map */}
+        {/* Divider above description */}
         <View style={styles.divider} />
-        {/* Host Address title */}
-        <Text style={styles.mapTitle}>Host Address</Text>
-        {/* Map showing host address with rounded corners */}
-        <View style={styles.mapWrapper}>
-          {region ? (
-            <MapView style={styles.map} initialRegion={region}>
-              <Marker coordinate={region} />
-            </MapView>
-          ) : (
-            <View style={styles.mapLoader}>
-              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+        {/* Description section */}
+        <Text style={styles.mapTitle}>Description</Text>
+        <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
+          {activity.description}
+        </Text>
+        {/* Divider above host/location section */}
+        <View style={styles.divider} />
+        {isOnline ? (
+          <>
+            <Text style={styles.mapTitle}>Online Only</Text>
+            <View style={styles.onlineRow}>
+              <FontAwesomeIcon icon={faVideo} size={20} color={themeVariables.primaryColor} style={{ marginRight: 8 }} />
+              <Text
+                style={[styles.headerInfoText, { color: themeVariables.primaryColor }]}
+                onPress={() => Linking.openURL(onlineLink)}
+              >
+                {onlineLink}
+              </Text>
             </View>
-          )}
-        </View>
-        {/* Host Address text below map */}
-        <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>{locationLabel}</Text>
-        {/* Divider below map */}
-        <View style={styles.divider} />
+            <View style={styles.divider} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.mapTitle}>Host Address</Text>
+            <View style={styles.mapWrapper}>
+            {region ? (
+              <MapView style={styles.map} initialRegion={region}>
+                <Marker coordinate={region} />
+              </MapView>
+            ) : (
+              <View style={styles.mapLoader}>
+                <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+              </View>
+            )}
+            </View>
+            <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
+              {locationLabel}
+            </Text>
+            <View style={styles.divider} />
+          </>
+        )}
 
 
         {/* Details grid */}
@@ -888,11 +909,11 @@ const styles = StyleSheet.create({
   // Session status chip at top right
   sessionStatusChip: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
     backgroundColor: themeVariables.primaryColor,
-    borderRadius: 12,
-    paddingHorizontal: 10,
+    borderRadius: 16,
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
   sessionStatusText: {
@@ -969,6 +990,13 @@ const styles = StyleSheet.create({
     marginTop: 14,
     marginBottom: 14,
     alignSelf: 'flex-start',
+  },
+  // Row for online link section
+  onlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginVertical: 12,
   },
   map: {
     width: '100%',
