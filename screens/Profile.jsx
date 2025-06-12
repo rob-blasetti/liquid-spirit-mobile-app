@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
@@ -320,10 +321,8 @@ const renderScene = ({ route }) => {
     );
   };
 
-  console.log('User1:', user);
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.headerProfileInfo}>
@@ -395,12 +394,12 @@ const renderScene = ({ route }) => {
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: themeVariables.whiteColor, },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
@@ -424,8 +423,6 @@ const styles = StyleSheet.create({
   bannerRight: { alignItems: 'flex-end' },
   communityName: { fontSize: 18, fontWeight: 'bold', color: '#fff', width: Platform.select({ android: 95 }), textAlign: 'center', },
   memberCount: { fontSize: 14, color: '#ddd', width: Platform.select({ android: 95 }), textAlign: 'center', },
-
-  // Profile Actions Section
   profileActionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -498,11 +495,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     backgroundColor: '#fff',
-    // Add shadow beneath the profile header for a raised look
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
     elevation: 2,
   },
   headerProfileInfo: {
@@ -517,7 +509,6 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.greyColor,
     borderRadius: themeVariables.borderRadiusPill,
     padding: 6,
-    // subtle shadow for raised effect
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,

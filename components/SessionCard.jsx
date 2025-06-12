@@ -139,8 +139,8 @@ const closeModal = () => {
               <Text style={styles.modalTitle}>Facilitators</Text>
               {detailsLoaded && hasFacilitatorSpace && !isUserFacilitator && !hasRequestedFacilitator && (
                 <TouchableOpacity style={styles.requestButtonSmall} onPress={onFacilitatorRequest}>
-                  <Text style={styles.requestButtonText}>Request Join</Text>
                   <FontAwesomeIcon icon={faPlusCircle} size={16} color={themeVariables.whiteColor} />
+                  <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -153,8 +153,8 @@ const closeModal = () => {
               <Text style={styles.modalTitle}>Participants</Text>
               {detailsLoaded && hasParticipantSpace && !isUserParticipant && !hasRequestedParticipant && (
                 <TouchableOpacity style={styles.requestButtonSmall} onPress={onParticipantRequest}>
-                  <Text style={styles.requestButtonText}>Request Join</Text>
                   <FontAwesomeIcon icon={faPlusCircle} size={16} color={themeVariables.whiteColor} />
+                  <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   requestButtonText: {
     color: themeVariables.whiteColor,
     fontWeight: '600',
-    marginRight: 6,
+    marginLeft: 6,
   },
   closeModal: {
     marginTop: 10,

@@ -125,7 +125,7 @@ const MainApp = () => {
         <NavigationContainer>
           <Stack.Navigator
             initialRouteName="Main"
-          screenOptions={({ navigation }) => ({
+            screenOptions={({ navigation }) => ({
               // White background with primary-colored icons/text
               headerStyle: { backgroundColor: themeVariables.whiteColor },
               headerTintColor: themeVariables.primaryColor,
@@ -165,7 +165,20 @@ const MainApp = () => {
             <Stack.Screen name="Activities" component={ActivitiesScreen} />
             <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
             <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }}/>
-            <Stack.Screen name="EventDetailCard" component={EventDetailCard} options={{ title: 'Event Detail Card' }}/>
+            <Stack.Screen
+              name="EventDetailCard"
+              component={EventDetailCard}
+              options={{
+                // Transparent header so the banner image extends to the top edge
+                headerTransparent: true,
+                headerStyle: { backgroundColor: 'transparent', elevation: 0 },
+                headerTitle: '',
+                headerShadowVisible: false,
+                headerTintColor: themeVariables.blackColor,
+                // Allow content under status bar on iOS
+                safeAreaInsets: { top: 0 },
+              }}
+            />
             <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }}/>
             <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }}/>
             <Stack.Screen

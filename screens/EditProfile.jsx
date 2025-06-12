@@ -1,8 +1,11 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import themeVariables from '../styles/theme';
+import { colors } from '../styles/colours';
 import { UserContext } from '../contexts/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSave, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faSave, faUpload, faCamera } from '@fortawesome/free-solid-svg-icons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
@@ -96,13 +99,18 @@ const EditProfile = ({ navigation }) => {
   
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Edit Profile</Text>
-
-      <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
+    <SafeAreaView style={styles.container} edges={['top']}>  
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <View style={styles.avatarWrapper}>
+        <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
         <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
-        <FontAwesomeIcon icon={faUpload} style={styles.uploadIcon} />
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.changeAvatarButton} onPress={handleProfilePicturePress}>
+        <FontAwesomeIcon icon={faCamera} color={themeVariables.primaryColor} size={16} />
+        <Text style={styles.changeAvatarButtonText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.header}>Edit Profile</Text>
 
       {[
         { label: 'First Name', value: firstName, onChange: setFirstName },
@@ -135,7 +143,8 @@ const EditProfile = ({ navigation }) => {
         <FontAwesomeIcon icon={faSave} size={20} color="#fff" />
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -143,19 +152,46 @@ const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: '#F9FAFB',
+    },
+    scrollView: {
+      flex: 1,
+    },
+    contentContainer: {
       padding: 20,
-      marginBottom: 60,
+      paddingBottom: 60,
     },
     header: {
       fontSize: 28,
       fontWeight: 'bold',
-      color: '#312783',
-      marginVertical: 20,
-      textAlign: 'center',
+      color: colors.text,
+      marginTop: 10,
+      marginBottom: 20,
+      textAlign: 'left',
+      alignSelf: 'flex-start',
+    },
+    avatarWrapper: {
+      alignItems: 'center',
+      marginBottom: 20,
     },
     avatarContainer: {
       alignItems: 'center',
+    },
+    changeAvatarButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'center',
+      backgroundColor: themeVariables.greyColor,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: themeVariables.borderRadiusPill,
+      marginTop: -15,
       marginBottom: 20,
+    },
+    changeAvatarButtonText: {
+      marginLeft: 8,
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: '600',
     },
     avatar: {
       width: 120,

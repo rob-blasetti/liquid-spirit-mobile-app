@@ -1,14 +1,15 @@
 import React, { useEffect, useContext, useState, useCallback, useRef } from 'react';
-import { 
-  View, 
-  FlatList, 
-  StyleSheet, 
-  ActivityIndicator, 
-  RefreshControl, 
-  TouchableOpacity, 
-  Alert, 
-  Text 
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  RefreshControl,
+  TouchableOpacity,
+  Alert,
+  Text
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost, deletePost } from '../services/PostService';
 import { blockUser, muteUser } from '../services/UserService';
@@ -192,7 +193,7 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
   };  
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.tabRow}>
         <TouchableOpacity 
           style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]} 
@@ -249,14 +250,14 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
         setCommentText={setCommentText}
         onSubmit={submitComment}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: '#f5f5f5',
+    backgroundColor: themeVariables.whiteColor,
     marginBottom: 50
   },
   tabRow: { 

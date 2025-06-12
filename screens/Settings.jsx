@@ -1,10 +1,12 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ScrollView, Switch } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
 import { CommonActions } from '@react-navigation/native';
+import themeVariables from '../styles/theme';
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
@@ -54,7 +56,8 @@ const Settings = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.header}>Settings</Text>
 
       <View style={styles.section}>
@@ -113,20 +116,26 @@ const Settings = ({ navigation }) => {
           </View>
         </View>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: themeVariables.whiteColor,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
     padding: 20,
   },
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#312783',
+    color: themeVariables.textColor,
     marginVertical: 20,
   },
   section: {

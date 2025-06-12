@@ -13,6 +13,7 @@ import {
   Platform,
   Keyboard
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
 import * as Progress from 'react-native-progress';
@@ -116,9 +117,10 @@ export default function CreatePost({ onPostCreated }) {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Create a New Post</Text>
 
           <TextInput
@@ -176,9 +178,10 @@ export default function CreatePost({ onPostCreated }) {
           <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
             <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Post'}</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

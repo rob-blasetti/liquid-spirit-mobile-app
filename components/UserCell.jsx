@@ -9,6 +9,7 @@ const truncateText = (text, maxLength) => {
 };
 
 const UserCell = ({ user, type }) => {
+  console.log('UserCell rendered with user:', user);
   const navigation = useNavigation();
   const name = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name;
 

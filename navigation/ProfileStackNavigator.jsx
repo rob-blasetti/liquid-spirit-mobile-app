@@ -51,10 +51,29 @@ const ProfileStackNavigator = () => {
           ) : null,
       })}>
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Settings"
+        component={Settings}
+        options={{
+          // Transparent header with only a back button, no title or shadow
+          headerTransparent: true,
+          headerTitle: '',
+          headerShadowVisible: false,
+        }}
+      />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'EditProfile', headerShown: false }} />
+      <Stack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{
+          // Transparent header with only a back button, no title or shadow
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent' },
+          headerTitle: '',
+          headerShadowVisible: false,
+        }}
+      />
       {/* <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'ChangePassword', headerShown: false }} /> */}
       <Stack.Screen
         name="PublicUserProfile"
