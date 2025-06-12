@@ -107,13 +107,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
-    marginBottom: 40,
   },
   modalContainer: {
     backgroundColor: '#fff',
     padding: 20,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    // Extra bottom padding for comfortable spacing inside container
+    paddingBottom: 40,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     maxHeight: '80%',
   },
   title: {

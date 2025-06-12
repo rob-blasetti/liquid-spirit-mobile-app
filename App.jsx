@@ -196,7 +196,18 @@ const MainApp = () => {
               }}
             />
             <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
-            <Stack.Screen name="Notifications" component={NotificationScreen} options={{ title: 'Notifications' }} />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationScreen}
+              options={{
+                headerTransparent: true,
+                headerStyle: { backgroundColor: 'transparent', elevation: 0 },
+                headerTitle: '',
+                headerShadowVisible: false,
+                headerTintColor: themeVariables.blackColor,
+                headerLeftContainerStyle: { paddingLeft: 16, paddingTop: 8 },
+              }}
+            />
             <Stack.Screen
               name="CurriculumDetailScreen"
               component={CurriculumDetailScreen}

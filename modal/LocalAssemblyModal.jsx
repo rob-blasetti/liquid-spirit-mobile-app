@@ -8,7 +8,9 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  TouchableOpacity,
 } from 'react-native';
+import themeVariables from '../styles/theme';
 import Avatar from '@flipxyz/react-native-boring-avatars';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -68,6 +70,13 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
                   </View>
                 ))}
               </ScrollView>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.modalCloseButton}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalCloseText}>Close</Text>
+              </TouchableOpacity>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -87,8 +96,8 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: HORIZONTAL_PADDING,
     paddingBottom: 40,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     maxHeight: '80%',
   },
   title: {
@@ -118,6 +127,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginTop: 4,
+  },
+  // Close button at bottom of modal
+  modalCloseButton: {
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    marginTop: 16,
+  },
+  modalCloseText: {
+    color: themeVariables.primaryColor,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

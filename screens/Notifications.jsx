@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -12,6 +12,7 @@ import {
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
+import { Chip } from 'react-native-paper';
 
 const NotificationIcon = ({ type }) => {
   const iconStyle = { color: themeVariables.blackColor };
@@ -182,7 +183,16 @@ export default function Notifications() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Notifications (Beta)</Text>
+      <View style={styles.headingRow}>
+        <Text style={styles.heading}>Notifications</Text>
+        <Chip
+          mode="outlined"
+          style={styles.betaChip}
+          textStyle={styles.betaChipText}
+        >
+          Beta
+        </Chip>
+      </View>
       <View style={styles.toggleContainer}>
         <Pressable
           style={[
@@ -251,6 +261,7 @@ export default function Notifications() {
         refreshing={refreshing}
         onRefresh={handleRefresh}
       />
+      {/* Empty state message when no notifications */}
       {filteredNotifList.length === 0 && !loading && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>You're all caught up!</Text>
@@ -263,8 +274,11 @@ export default function Notifications() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: themeVariables.whiteColor, // @LS-SoftGrey
+    // Space content below transparent header (status bar + header height)
+    paddingTop: Platform.select({ ios: 120, android: 120 }),
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: themeVariables.whiteColor,
   },
   heading: {
     fontSize: 24,
@@ -304,10 +318,10 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   emptyState: {
+    // Center inline empty state below toggles
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'top',
     alignItems: 'center',
-    marginTop: 50,
   },
   emptyText: {
     fontSize: 16,
@@ -356,5 +370,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
+  },
+  headingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  betaChip: {
+    marginLeft: 8,
+    marginBottom: 16,
+    borderRadius: 20,
   },
 });
