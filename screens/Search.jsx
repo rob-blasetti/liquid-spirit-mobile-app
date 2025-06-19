@@ -69,6 +69,9 @@ const Search = () => {
               onPress={(selected) => {
                 if (selected.type === 'member' || selected.type === 'user') {
                   navigation.navigate('PublicUserProfile', { userId: selected._id || selected.id });
+                } else if (selected.type === 'session') {
+                  // Navigate to the parent activity detail for this session
+                  navigation.navigate('ActivityDetailCard', { activityId: selected.activityId });
                 } else if (selected.type === 'activity') {
                   navigation.navigate('ActivityDetailCard', { activityId: selected._id || selected.id });
                 } else if (selected.type === 'event') {

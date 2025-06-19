@@ -26,6 +26,7 @@ function safeText(val) {
  * Returns an image source for activities, events, or member avatars.
  */
 const SearchCard = ({ item, onPress }) => {
+  console.log('Rendering SearchCard for item:', item);
   // Top section: image (event/activity) or avatar (member/user)
   const renderImageSection = () => {
     if (item.type === 'event') {
@@ -41,7 +42,7 @@ const SearchCard = ({ item, onPress }) => {
         </View>
       );
     }
-    if (item.type === 'activity') {
+    if (item.type === 'activity' || item.type === 'session') {
       const source = item.imageUrl
         ? { uri: item.imageUrl }
         : require('../assets/img/placeholder.png');
@@ -77,6 +78,7 @@ const SearchCard = ({ item, onPress }) => {
   const renderChipsOverlay = () => {
     switch (item.type) {
       case 'activity':
+      case 'session':
         // Community chip and status chip; status chip shows red background if expired
         return (
           <>
@@ -93,16 +95,14 @@ const SearchCard = ({ item, onPress }) => {
               // Determine if status is expired (case-insensitive)
               (() => {
                 const status = (item.status || '').toString().toLowerCase();
-                const isExpired = status === 'expired';
+                const isError = status === 'expired' || status === 'cancelled';
                 return (
-                  <View
-                    style={[
+                  <View style={[
                       styles.chip,
-                      isExpired ? styles.expiredStatusChip : styles.statusChip,
-                    ]}
-                  >
+                      isError ? styles.expiredStatusChip : styles.statusChip,
+                  ]}>
                     <FontAwesomeIcon
-                      icon={isExpired ? faXmarkCircle : faClock}
+                      icon={isError ? faXmarkCircle : faClock}
                       size={12}
                       color={themeVariables.whiteColor}
                       style={styles.chipIcon}
@@ -139,6 +139,7 @@ const SearchCard = ({ item, onPress }) => {
   const renderContent = () => {
     switch (item.type) {
       case 'activity':
+      case 'session':
         return (
           <>
             <Text style={styles.title}>{safeText(item.title)}</Text>
