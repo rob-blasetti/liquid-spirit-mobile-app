@@ -3,7 +3,6 @@ import {
   Modal,
   View,
   StyleSheet,
-  TouchableOpacity,
   Text,
   TextInput,
   ScrollView,
@@ -13,6 +12,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
 } from 'react-native';
+import { Button } from 'liquid-spirit-styleguide';
 import FastImage from 'react-native-fast-image';
 
 const CommentModal = ({
@@ -85,9 +85,7 @@ const CommentModal = ({
               />
 
               <View style={styles.buttonRow}>
-                <Pressable style={styles.submitButton} onPress={handleSubmit}>
-                  <Text style={styles.submitButtonText}>Submit</Text>
-                </Pressable>
+                <Button primary label="Submit" onPress={handleSubmit} />
                 <Pressable style={styles.cancelButton} onPress={onClose}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </Pressable>
@@ -182,18 +180,6 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  submitButton: {
-    backgroundColor: '#312783',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    width: Platform.select({ android: 100 })
-  },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   cancelButton: {
     borderColor: '#312783',
