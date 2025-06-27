@@ -42,10 +42,18 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
               <Text style={styles.title}>Local Spiritual Assembly</Text>
               <ScrollView contentContainerStyle={styles.grid}>
                 {members.map((member) => (
-                  <View key={member._id} style={styles.memberItem}>
+                  console.log('Rendering member:', member),
+                  <View key={member.id || `${member.firstName}-${member.lastName}`} style={styles.memberItem}>
                     <TouchableOpacity
                       activeOpacity={0.8}
-                      onPress={() => navigation.navigate('PublicUserProfile', { userId: member._id }, onClose())}
+                      onPress={() => {
+                        if (member.id) {
+                          navigation.navigate('PublicUserProfile', { userId: member.id });
+                          onClose();
+                        } else {
+                          console.warn('Cannot navigate: member.id is missing', member);
+                        }
+                      }}
                     >
                     {member.profilePicture ? (
                       <FastImage

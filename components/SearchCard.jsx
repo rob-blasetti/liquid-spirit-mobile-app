@@ -78,6 +78,20 @@ const SearchCard = ({ item, onPress }) => {
   const renderChipsOverlay = () => {
     switch (item.type) {
       case 'activity':
+        // Community chip and status chip; status chip shows red background if expired
+        return (
+          <>
+            <View style={[styles.chip, styles.communityChip]}>
+              <FontAwesomeIcon
+                icon={faSprout}
+                size={12}
+                color={themeVariables.whiteColor}
+                style={styles.chipIcon}
+              />
+              <Text style={styles.chipText}>{safeText(item.community)}</Text>
+            </View>
+          </>
+        );
       case 'session':
         // Community chip and status chip; status chip shows red background if expired
         return (
