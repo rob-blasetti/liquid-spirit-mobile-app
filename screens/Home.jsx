@@ -470,7 +470,7 @@ const Home = ({ navigation, homeOverview }) => {
       <LocalAssemblyModal
         visible={assemblyModalVisible}
         onClose={() => setAssemblyModalVisible(false)}
-        members={homeOverview.localSpiritualAssembly?.members || []}
+        members={homeOverview.localSpiritualAssembly || []}
       />
     </SafeAreaView>
   );

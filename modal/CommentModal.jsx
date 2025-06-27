@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Button } from 'liquid-spirit-styleguide';
 import FastImage from 'react-native-fast-image';
+import themeVariables from '../styles/theme';
 
 const CommentModal = ({
   visible,
@@ -86,9 +87,10 @@ const CommentModal = ({
 
               <View style={styles.buttonRow}>
                 <Button primary label="Submit" onPress={handleSubmit} />
-                <Pressable style={styles.cancelButton} onPress={onClose}>
+                <Button secondary label="Cancel" onPress={onClose} />
+                {/* <Pressable style={styles.cancelButton} onPress={onClose}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable>
+                </Pressable> */}
               </View>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
@@ -107,13 +109,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContainer: {
-    backgroundColor: '#fff',
     padding: 20,
     // Extra bottom padding for comfortable spacing inside container
-    paddingBottom: 40,
+    paddingBottom: 80,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    maxHeight: '80%',
+    backgroundColor: '#fefefe',
   },
   title: {
     fontSize: 18,
@@ -180,6 +181,7 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 40,
   },
   cancelButton: {
     borderColor: '#312783',

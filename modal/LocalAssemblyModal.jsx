@@ -11,7 +11,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import themeVariables from '../styles/theme';
+import { useNavigation } from '@react-navigation/native';
+import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
+import { Button } from 'liquid-spirit-styleguide';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 32;
@@ -21,14 +24,10 @@ const ITEM_SIZE = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GUTTER * 2) / 3;
 // Avatar size (smaller than item container)
 const AVATAR_SIZE = ITEM_SIZE * 0.75;
 
-/**
- * Modal to display Local Spiritual Assembly members in a bottom sheet.
- * Props:
- *  visible: boolean
- *  onClose: () => void
- *  members: Array<{ _id: string, firstName: string, lastName: string, profilePicture?: string }>
- */
 const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
+  const navigation = useNavigation();
+  console.log('Members: ', members);
+
   return (
     <Modal
       visible={visible}
@@ -44,16 +43,20 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
               <ScrollView contentContainerStyle={styles.grid}>
                 {members.map((member) => (
                   <View key={member._id} style={styles.memberItem}>
-                    {member.userId.profilePicture ? (
-                      <Image
-                        source={{ uri: member.userId.profilePicture }}
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => navigation.navigate('PublicUserProfile', { userId: member._id }, onClose())}
+                    >
+                    {member.profilePicture ? (
+                      <FastImage
+                        source={{ uri: member.profilePicture }}
                         style={styles.avatar}
                       />
                     ) : (
                       <Avatar
                         size={AVATAR_SIZE}
                         style={styles.avatar}
-                        name={`${member.userId.firstName} ${member.userId.lastName}`}
+                        name={`${member.firstName} ${member.lastName}`}
                         variant="beam"
                         colors={[
                           '#1B263B',
@@ -64,19 +67,14 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
                         ]}
                       />
                     )}
+                    </TouchableOpacity>                    
                     <Text style={styles.name} numberOfLines={2}>
-                      {member.userId.firstName} {member.userId.lastName}
+                      {member.firstName} {member.lastName}
                     </Text>
                   </View>
                 ))}
               </ScrollView>
-              <TouchableOpacity
-                onPress={onClose}
-                style={styles.modalCloseButton}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.modalCloseText}>Close</Text>
-              </TouchableOpacity>
+              <Button secondary onPress={onClose} label="Close" />
             </View>
           </TouchableWithoutFeedback>
         </View>
