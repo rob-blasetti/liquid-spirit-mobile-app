@@ -51,10 +51,10 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             bottom: 0,
             left: 0,
             right: 0,
-            height: 60,
+            height: 80,
             backgroundColor: '#fff',
             borderTopWidth: 1,
-            borderTopColor: '#ddd'
+            borderTopColor: '#ddd',
           },
         })}
         screenListeners={({ navigation, route }) => ({
