@@ -1,6 +1,6 @@
 {
   "name": "liquid_spirit_mobile_app",
-  "version": "0.0.1",
+  "version": "1.5.2",
   "private": true,
   "resolutions": {
     "react-native-svg": "12.3.0"
