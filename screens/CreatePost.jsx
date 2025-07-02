@@ -14,7 +14,8 @@ import {
   Keyboard,
   StatusBar
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -34,7 +35,8 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const [uploadStep, setUploadStep] = useState('');
   const { communityId, token, user } = useContext(UserContext);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const handleClose = onClose ? onClose : () => navigation.goBack();
 
 
   const openCamera = async () => {
@@ -118,18 +120,18 @@ export default function CreatePost({ onPostCreated, onClose }) {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <>
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={{ flex: 1, marginTop: -40 }}>
-          <View style={[styles.headerRow, { marginTop: insets.top || StatusBar.currentHeight || 0 }]}>  
-            <Text style={styles.header}>Create a post</Text>
-            {onClose && (
-              <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
-                <FontAwesomeIcon icon={faTimes} size={24} color="#312783" />
-              </TouchableOpacity>
-            )}
-          </View>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={{ flex: 1 }}>
+              <View style={styles.headerRow}>
+                <Text style={styles.header}>Create a post</Text>
+                <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
+                  <FontAwesomeIcon icon={faTimes} size={24} color="#312783" />
+                </TouchableOpacity>
+              </View>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
 
           <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
@@ -187,7 +189,8 @@ export default function CreatePost({ onPostCreated, onClose }) {
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </>
   );
 }
 
@@ -195,6 +198,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f3f3f3',
+    marginTop: 10,
   },
   content: {
     padding: 20,

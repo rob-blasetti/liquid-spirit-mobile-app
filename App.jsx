@@ -32,6 +32,8 @@ import RequestAgendaItem from './screens/RequestAgendaItem';
 
 import BottomBar from './navigation/BottomBar';
 import NotificationScreen from './screens/Notifications';
+// Modal screen for creating posts
+import CreatePostScreen from './screens/CreatePost';
 
 // FontAwesome library setup
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -205,6 +207,16 @@ const MainApp = () => {
                 headerShadowVisible: false,
                 headerTintColor: themeVariables.blackColor,
                 headerLeftContainerStyle: { paddingLeft: 16, paddingTop: 8 },
+              }}
+            />
+            {/* Modal for creating posts */}
+            <Stack.Screen
+              name="CreatePostModal"
+              component={CreatePostScreen}
+              options={{
+                // full-screen modal to cover the status-bar area
+                presentation: 'fullScreenModal',
+                headerShown: false,
               }}
             />
             <Stack.Screen

@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Modal } from 'react-native';
+// import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faUser, faCompass, faPlusCircle, faBahai, faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -33,8 +33,6 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [prevRouteName, setPrevRouteName] = useState('Home');
   // removed unreadCount; notifications accessed via Home banner button
 
   return (
@@ -70,8 +68,8 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
               if (!isLoggedIn) {
                 setModalVisible(true);
               } else {
-                setPrevRouteName(currentRoute);
-                setCreateModalVisible(true);
+                // Navigate to the CreatePost modal in parent stack
+                navigation.getParent()?.navigate('CreatePostModal');
               }
               return;
             }
@@ -115,26 +113,6 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
       />
-      <Modal
-        visible={createModalVisible}
-        animationType="slide"
-        onRequestClose={() => {
-          setCreateModalVisible(false);
-          // Navigate back to previous tab inside Main
-          navigation.navigate('Main', { screen: prevRouteName });
-        }}
-      >
-        <CreatePostScreen
-          onPostCreated={() => {
-            setCreateModalVisible(false);
-            navigation.navigate('Main', { screen: prevRouteName });
-          }}
-          onClose={() => {
-            setCreateModalVisible(false);
-            navigation.navigate('Main', { screen: prevRouteName });
-          }}
-        />
-      </Modal>
     </>
   );
 };
