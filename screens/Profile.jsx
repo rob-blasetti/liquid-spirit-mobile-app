@@ -14,7 +14,9 @@ import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
-import PostGallery from '../components/PostGallery';
+import PostItem from '../components/PostItem';
+import ActivityItem from '../components/ActivityItem';
+import EventItem from '../components/EventItem';
 import { fetchActivities } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
@@ -189,66 +191,23 @@ const renderList = (data, type) => {
     return <Text style={styles.noDataText}>No {type} available.</Text>;
   }
 
+  const ItemComponent =
+    type === 'posts' ? PostItem : type === 'activities' ? ActivityItem : EventItem;
+
   return (
     <FlatList
       data={data}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       keyExtractor={(item, index) =>
         item._id ? item._id.toString() : index.toString()
       }
-      renderItem={({ item }) => {
-        let rawDate;
-        if (type === 'events') rawDate = item.date || item.startTime;
-        else if (type === 'activities') rawDate = item.date || item.createdAt;
-        else if (type === 'posts') rawDate = item.createdAt || item.updatedAt;
-
-        let formattedDate = rawDate
-          ? new Date(rawDate).toLocaleDateString()
-          : 'N/A';
-
-        return (
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => handleItemPress(type, item)}
-          >
-            {type === 'posts' && item.content && (
-              <Text style={styles.listContent}>
-                {item.content.length > 100
-                  ? `${item.content.slice(0, 100)}...`
-                  : item.content}
-              </Text>
-            )}
-
-            {type === 'activities' && item.description && (
-              <>
-                <Text style={styles.listTitle}>{item.title || item.name}</Text>
-                <Text style={styles.listContent}>
-                  {item.description.length > 100
-                    ? `${item.description.slice(0, 100)}...`
-                    : item.description}
-                </Text>
-              </>
-            )}
-
-            {type === 'events' && (
-              <>
-                <Text style={styles.listTitle}>{item.title || item.name}</Text>
-                {item.venue && (
-                  <Text style={styles.listContent}>Venue: {item.venue}</Text>
-                )}
-                {item.description && (
-                  <Text style={styles.listContent}>
-                    {item.description.length > 100
-                      ? `${item.description.slice(0, 100)}...`
-                      : item.description}
-                  </Text>
-                )}
-              </>
-            )}
-
-            <Text style={styles.listDate}>{formattedDate}</Text>
-          </TouchableOpacity>
-        );
-      }}
+      renderItem={({ item }) => (
+        <ItemComponent
+          item={item}
+          onPress={() => handleItemPress(type, item)}
+        />
+      )}
     />
   );
 };
@@ -257,11 +216,11 @@ const renderList = (data, type) => {
 const renderScene = ({ route }) => {
   switch (route.key) {
     case 'posts':
-      return <PostGallery posts={posts} refreshing={refreshing} onRefresh={onRefresh} />;
+      return renderList(posts, 'posts');
     case 'activities':
-      return <PostGallery posts={activities} refreshing={refreshing} onRefresh={onRefresh} />;
+      return renderList(activities, 'activities');
     case 'events':
-      return <PostGallery posts={events} refreshing={refreshing} onRefresh={onRefresh} />;
+      return renderList(events, 'events');
     default:
       return null;
   }
