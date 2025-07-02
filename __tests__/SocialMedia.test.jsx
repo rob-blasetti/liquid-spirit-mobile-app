@@ -25,6 +25,9 @@ jest.mock('../services/PostService', () => ({
   flagPost: jest.fn(),
   deletePost: jest.fn(),
 }));
+// Mock modals to avoid importing navigation and screens dependencies
+jest.mock('../modal/WelcomeModal', () => () => null);
+jest.mock('../modal/CommentModal', () => () => null);
 
 describe('SocialMedia screen', () => {
   const userContextValue = {

@@ -54,7 +54,6 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
 const Home = ({ navigation, homeOverview }) => {
-  console.log('homeOverview: ', homeOverview);
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
   // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {

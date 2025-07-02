@@ -121,8 +121,6 @@ export const useAuthService = () => {
       });
       const data = await response.json();
 
-      console.log('homeOverview data: ', data);
-
       return { ok: response.ok, data };
     } catch (error) {
       throw new Error(`Sign-up error: ${error.message}`);

@@ -62,8 +62,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   // Sync isLiked state when likes or user changes
   useEffect(() => {
     const uid = user?.id || user?._id;
-    console.log('Checking likes for user ID:', uid);
-    console.log('Post likes:', post, post.likes);
     setIsLiked(hasUserLiked(post.likes, uid));
   }, [post.likes, user, hasUserLiked]);
 

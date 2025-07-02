@@ -15,6 +15,10 @@ jest.mock('../services/PostService', () => ({
   uploadVideoWithThumbnail: jest.fn(),
   createPost: jest.fn(),
 }));
+// Mock navigation hook
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ goBack: jest.fn() }),
+}));
 
 describe('CreatePost screen', () => {
   const userContextValue = {
@@ -39,7 +43,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => {
       expect(getByTestId('imagePreview')).toBeTruthy();
       expect(queryByTestId('videoPreview')).toBeNull();
@@ -58,7 +62,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => {
       expect(getByTestId('imagePreview')).toBeTruthy();
       expect(queryByTestId('videoPreview')).toBeNull();
@@ -77,7 +81,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => {
       expect(getByTestId('imagePreview')).toBeTruthy();
       expect(queryByTestId('videoPreview')).toBeNull();
@@ -96,7 +100,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => {
       expect(getByTestId('videoPreview')).toBeTruthy();
       expect(queryByTestId('imagePreview')).toBeNull();
@@ -115,7 +119,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => {
       expect(getByTestId('videoPreview')).toBeTruthy();
       expect(queryByTestId('imagePreview')).toBeNull();
@@ -140,7 +144,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => getByTestId('imagePreview'));
 
     fireEvent.changeText(
@@ -148,7 +152,7 @@ describe('CreatePost screen', () => {
       'Test post'
     );
 
-    fireEvent.press(getByText('Post'));
+    fireEvent.press(getByText('Create post'));
 
     await waitFor(() => {
       expect(uploadImageWithThumbnail).toHaveBeenCalledWith(
@@ -187,7 +191,7 @@ describe('CreatePost screen', () => {
       </UserContext.Provider>
     );
 
-    fireEvent.press(getByText('Gallery'));
+    fireEvent.press(getByText('Upload image or video'));
     await waitFor(() => getByTestId('videoPreview'));
 
     fireEvent.changeText(
@@ -195,7 +199,7 @@ describe('CreatePost screen', () => {
       'Video post'
     );
 
-    fireEvent.press(getByText('Post'));
+    fireEvent.press(getByText('Create post'));
 
     await waitFor(() => {
       expect(uploadVideoWithThumbnail).toHaveBeenCalledWith(

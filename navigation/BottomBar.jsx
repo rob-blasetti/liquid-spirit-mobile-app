@@ -92,7 +92,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           {props => <Home {...props} homeOverview={homeOverview} />}
         </Tab.Screen>
         <Tab.Screen name="Feed">
-          {() => <SocialMediaScreen initialPosts={initialPosts} scrollToTop={scrollToTop} />}
+          {props => <SocialMediaScreen {...props} initialPosts={initialPosts} scrollToTop={scrollToTop} />}
         </Tab.Screen>
         <Tab.Screen
           name="Camera"

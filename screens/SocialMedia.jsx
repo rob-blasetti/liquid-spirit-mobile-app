@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  InteractionManager,
   TouchableOpacity,
   Alert,
   Text,
@@ -20,8 +21,9 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 
-const SocialMedia = ({ initialPosts, scrollToTop }) => {
+const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const { token, communityId, isTokenExpired, refreshSession, user } = useContext(UserContext);
+  // Debug logs removed
   const [activeTab, setActiveTab] = useState('explore');
   const [explorePosts, setExplorePosts] = useState(initialPosts || []);
   const [forYouPosts, setForYouPosts] = useState([]);
@@ -35,12 +37,34 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
 
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
   const flatListRef = useRef(null);
+  const pendingScrollIndexRef = useRef(null);
 
   useEffect(() => {
     if (scrollToTop) {
       flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
     }
   }, [scrollToTop]);
+  // Handle deep-linking to a specific post: scroll as soon as possible
+  useEffect(() => {
+    const post = route?.params?.post;
+    if (!post) return;
+    const data = activeTab === 'explore' ? explorePosts : forYouPosts;
+    const idx = data.findIndex(p => p._id === post._id);
+    if (idx >= 0 && flatListRef.current) {
+      InteractionManager.runAfterInteractions(() => {
+        // Delay to allow layout measurement
+        setTimeout(() => {
+          try {
+            flatListRef.current.scrollToIndex({ index: idx, animated: true });
+          } catch (err) {
+            // Fallback will be handled by onScrollToIndexFailed
+          }
+          // Clear navigation param after scrolling
+          navigation?.setParams({ post: undefined });
+        }, 500);
+      });
+    }
+  }, [route?.params?.post, explorePosts, forYouPosts, activeTab]);
 
   const fetchExplorePosts = useCallback(async () => {
     try {
@@ -239,7 +263,7 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
         <ActivityIndicator size='large' color='#0485e2' style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          ref={flatListRef} 
+          ref={flatListRef}
           data={activeTab === 'explore' ? explorePosts : forYouPosts}
           scrollEnabled={scrollEnabled}
           keyExtractor={(item) => item._id}
@@ -252,10 +276,17 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
               onBlock={handleBlock}
               onMute={handleMute}
               onDelete={handleDelete}
-              setScrollEnabled={setScrollEnabled} // ✅ Add this
+              setScrollEnabled={setScrollEnabled}
             />
           )}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          // Fallback if scrollToIndex fails
+          onScrollToIndexFailed={({ index, averageItemLength }) => {
+            flatListRef.current?.scrollToOffset({
+              offset: index * averageItemLength,
+              animated: true,
+            });
+          }}
         />
       )}
 

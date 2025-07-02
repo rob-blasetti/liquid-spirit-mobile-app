@@ -33,6 +33,7 @@ const ProfileScreen = ({ navigation }) => {
     { key: 'posts', title: 'My Posts' },
     { key: 'activities', title: 'My Activities' },
     { key: 'events', title: 'My Events' },
+    { key: 'requests', title: 'Requests' },
   ]);
 
   const [posts, setPosts] = useState([]);
@@ -173,15 +174,25 @@ const ProfileScreen = ({ navigation }) => {
   };
 
 
-const handleItemPress = (type, item) => {
-  if (type === 'posts') {
-    navigation.navigate('Feed', { post: item });
-  } else if (type === 'activities') {
-    navigation.navigate('ActivityDetail', { activityId: item._id });
-  } else if (type === 'events') {
-    navigation.navigate('EventDetail', { event: item });
-  }
-};
+  const handleItemPress = (type, item) => {
+    console.log(`Navigating to ${type} item:`, item);
+    if (type === 'posts') {
+      // Navigate to Feed tab and scroll to the selected post
+      navigation.getParent()?.navigate('Feed', { post: item });
+    } else if (type === 'activities') {
+      // Open the activity detail view
+      navigation.navigate('ActivityDetailCard', {
+        activityId: item._id,
+        activityPreload: item,
+      });
+    } else if (type === 'events') {
+      // Open the event detail view
+      navigation.navigate('EventDetailCard', {
+        eventId: item._id,
+        eventPreload: item,
+      });
+    }
+  };
 
 const renderList = (data, type) => {
   if (isLoading) {
@@ -212,6 +223,61 @@ const renderList = (data, type) => {
   );
 };
 
+
+// Render pending requests for Requests tab
+const renderRequests = () => {
+  if (isLoading) {
+    return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
+  }
+  if (!pendingRequests.length) {
+    return <Text style={styles.noDataText}>No pending requests.</Text>;
+  }
+  return (
+    <FlatList
+      data={pendingRequests}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      keyExtractor={(req, index) =>
+        req.activity._id + '_' + req.request._id + '_' + req.type || index.toString()
+      }
+      renderItem={({ item }) => {
+        const req = item;
+        return (
+          <View style={styles.pendingItem}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('ActivityDetailCard', {
+                  activityId: req.activity._id,
+                  activityPreload: req.activity,
+                })
+              }
+            >
+              <Text style={styles.pendingActivityTitle}>{req.activity.title}</Text>
+            </TouchableOpacity>
+            <View style={styles.pendingRequestRow}>
+              <FastImage source={{ uri: req.request?.profilePicture }} style={styles.pendingAvatar} />
+              <Text style={styles.pendingRequestText}>
+                {(req.request?.firstName || req.request?.name || req.request?.username)
+                  ? (req.request?.firstName || req.request?.name || req.request?.username) +
+                    (req.request?.lastName ? ` ${req.request.lastName}` : '')
+                  : req.request?._id}
+                {` requested to join as ${req.type}`}
+              </Text>
+            </View>
+            <View style={styles.pendingButtons}>
+              <TouchableOpacity style={styles.acceptButton} onPress={() => handleApprove(req)}>
+                <Text style={styles.buttonText}>Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.declineButton} onPress={() => handleDeny(req)}>
+                <Text style={[styles.buttonText, styles.declineButtonText]}>Decline</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
+      }}
+    />
+  );
+};
 
 const renderScene = ({ route }) => {
   switch (route.key) {
@@ -298,52 +364,6 @@ const renderScene = ({ route }) => {
         </View>
       </View>
 
-      {/* Pending Requests Section */}
-      <View style={styles.pendingContainer}>
-        <Text style={styles.pendingHeader}>Pending Requests</Text>
-        {pendingRequests.length > 0 ? (
-          pendingRequests.map((req, idx) => (
-            <View key={idx} style={styles.pendingItem}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ActivityDetailCard', {
-                  activityId: req.activity._id,
-                  activityPreload: req.activity,
-                })}
-              >
-                <Text style={styles.pendingActivityTitle}>{req.activity.title}</Text>
-              </TouchableOpacity>
-              <View style={styles.pendingRequestRow}>
-                <FastImage
-                  source={{ uri: req.request?.profilePicture }}
-                  style={styles.pendingAvatar}
-                />
-                <Text style={styles.pendingRequestText}>
-                  {(req.request?.firstName || req.request?.name || req.request?.username)
-                    ? (req.request?.firstName || req.request?.name || req.request?.username) +
-                      (req.request?.lastName ? ` ${req.request.lastName}` : '')
-                    : req.request?._id}{` requested to join as ${req.type}`}
-                </Text>
-              </View>
-              <View style={styles.pendingButtons}>
-                <TouchableOpacity
-                  style={styles.acceptButton}
-                  onPress={() => handleApprove(req)}
-                >
-                  <Text style={styles.buttonText}>Accept</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.declineButton}
-                  onPress={() => handleDeny(req)}
-                >
-                  <Text style={[styles.buttonText, styles.declineButtonText]}>Decline</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))
-        ) : (
-          <Text style={styles.noDataText}>No pending requests.</Text>
-        )}
-      </View>
 
 
       <TabView

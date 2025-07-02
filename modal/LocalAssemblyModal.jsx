@@ -26,7 +26,6 @@ const AVATAR_SIZE = ITEM_SIZE * 0.75;
 
 const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
   const navigation = useNavigation();
-  console.log('Members: ', members);
 
   return (
     <Modal
@@ -42,7 +41,6 @@ const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
               <Text style={styles.title}>Local Spiritual Assembly</Text>
               <ScrollView contentContainerStyle={styles.grid}>
                 {members.map((member) => (
-                  console.log('Rendering member:', member),
                   <View key={member.id || `${member.firstName}-${member.lastName}`} style={styles.memberItem}>
                     <TouchableOpacity
                       activeOpacity={0.8}
