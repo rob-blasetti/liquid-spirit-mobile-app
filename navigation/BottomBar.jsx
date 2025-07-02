@@ -1,7 +1,8 @@
 import React, { useContext, useState } from 'react';
+import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUser, faCompass, faSquarePlus, faBahai, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCompass, faPlusCircle, faBahai, faSearch } from '@fortawesome/free-solid-svg-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
@@ -23,7 +24,7 @@ const tabIcons = {
   Home: faBahai,
   Profile: faUser,
   Feed: faCompass,
-  Camera: faSquarePlus,
+  Camera: faPlusCircle,
   Search: faSearch,
 };
 
@@ -32,6 +33,8 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const navigation = useNavigation(); 
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [prevRouteName, setPrevRouteName] = useState('Home');
   // removed unreadCount; notifications accessed via Home banner button
 
   return (
@@ -58,17 +61,29 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           },
         })}
         screenListeners={({ navigation, route }) => ({
-          tabPress: (e) => {
-            const currentRouteIndex = navigation.getState().index;
-            const currentRouteName = navigation.getState().routes[currentRouteIndex]?.name;
-
-            if (!isLoggedIn && currentRouteName !== 'Feed') {
+          tabPress: e => {
+            const state = navigation.getState();
+            const currentRoute = state.routes[state.index]?.name;
+            // Intercept Camera tab to open as modal
+            if (route.name === 'Camera') {
+              e.preventDefault();
+              if (!isLoggedIn) {
+                setModalVisible(true);
+              } else {
+                setPrevRouteName(currentRoute);
+                setCreateModalVisible(true);
+              }
+              return;
+            }
+            // Require login for other tabs (except Feed)
+            if (!isLoggedIn && route.name !== 'Feed') {
               e.preventDefault();
               setModalVisible(true);
+              return;
             }
-
-            // 🔥 If already on the Feed tab, trigger scroll to top
-            if (currentRouteName === 'Feed') {
+            // Scroll to top on Feed if already active
+            if (route.name === 'Feed' && currentRoute === 'Feed') {
+              e.preventDefault();
               setScrollToTop(prev => !prev);
             }
           },
@@ -100,6 +115,26 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
       />
+      <Modal
+        visible={createModalVisible}
+        animationType="slide"
+        onRequestClose={() => {
+          setCreateModalVisible(false);
+          // Navigate back to previous tab inside Main
+          navigation.navigate('Main', { screen: prevRouteName });
+        }}
+      >
+        <CreatePostScreen
+          onPostCreated={() => {
+            setCreateModalVisible(false);
+            navigation.navigate('Main', { screen: prevRouteName });
+          }}
+          onClose={() => {
+            setCreateModalVisible(false);
+            navigation.navigate('Main', { screen: prevRouteName });
+          }}
+        />
+      </Modal>
     </>
   );
 };

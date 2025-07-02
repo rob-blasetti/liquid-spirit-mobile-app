@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -11,19 +11,22 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Keyboard
+  Keyboard,
+  StatusBar
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
 import { TouchableWithoutFeedback } from 'react-native';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
+import themeVariables from '../styles/theme';
 
-export default function CreatePost({ onPostCreated }) {
+export default function CreatePost({ onPostCreated, onClose }) {
   const [content, setContent] = useState('');
   const [mediaUri, setMediaUri] = useState(null);
   const [mediaType, setMediaType] = useState(null);
@@ -31,10 +34,8 @@ export default function CreatePost({ onPostCreated }) {
   const [uploadStep, setUploadStep] = useState('');
   const { communityId, token, user } = useContext(UserContext);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    openCamera();
-  }, []);
 
   const openCamera = async () => {
     const options = { mediaType: 'mixed', quality: 0.7 };
@@ -120,9 +121,23 @@ export default function CreatePost({ onPostCreated }) {
     <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.header}>Create a New Post</Text>
+          <View style={{ flex: 1, marginTop: -40 }}>
+          <View style={[styles.headerRow, { marginTop: insets.top || StatusBar.currentHeight || 0 }]}>  
+            <Text style={styles.header}>Create a post</Text>
+            {onClose && (
+              <TouchableOpacity style={styles.closeIcon} onPress={onClose}>
+                <FontAwesomeIcon icon={faTimes} size={24} color="#312783" />
+              </TouchableOpacity>
+            )}
+          </View>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
 
+          <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
+            <FontAwesomeIcon icon={faImages} size={40} color="#312783" />
+            <Text style={styles.uploadButtonText}>Upload image or video</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.label}>Content</Text>
           <TextInput
             style={styles.textArea}
             placeholder="What's on your mind?"
@@ -131,18 +146,6 @@ export default function CreatePost({ onPostCreated }) {
             onChangeText={setContent}
             multiline
           />
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.actionButton} onPress={openCamera}>
-              <FontAwesomeIcon icon={faImage} size={20} color="white" />
-              <Text style={styles.buttonText}>Camera</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionButton} onPress={openLibrary}>
-              <FontAwesomeIcon icon={faImages} size={20} color="white" />
-              <Text style={styles.buttonText}>Gallery</Text>
-            </TouchableOpacity>
-          </View>
 
           {mediaUri && mediaType.includes('image') && (
             <Image
@@ -175,10 +178,13 @@ export default function CreatePost({ onPostCreated }) {
             </View>
           )}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
-            <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Post'}</Text>
-          </TouchableOpacity>
-          </ScrollView>
+            </ScrollView>
+            <View style={styles.footer}>
+              <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
+                <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Create post'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -188,19 +194,31 @@ export default function CreatePost({ onPostCreated }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#f3f3f3',
   },
   content: {
     padding: 20,
+    paddingBottom: 100,
     alignItems: 'center',
   },
   header: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: '700',
     color: '#312783',
-    marginBottom: 20,
     textAlign: 'center',
-    width: Platform.select({ android: 240 }),
+  },
+  headerRow: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+    position: 'relative',
+  },
+  closeIcon: {
+    position: 'absolute',
+    top: -6,
+    right: 15,
+    padding: 8,
   },
   textArea: {
     width: '100%',
@@ -214,6 +232,31 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 20,
+  },
+  label: {
+    alignSelf: 'flex-start',
+    color: themeVariables.blackColor,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  uploadButton: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#312783',
+    borderStyle: 'dotted',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  uploadButtonText: {
+    color: '#312783',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -249,6 +292,16 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 10,
     marginBottom: 20,
+  },
+  footer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 40,    // sit above bottom tab bar (height 80)
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#f3f3f3',
   },
   submitButton: {
     backgroundColor: '#fff',

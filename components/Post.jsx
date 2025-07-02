@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import Video from 'react-native-video';
@@ -283,7 +284,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 const styles = StyleSheet.create({
   postContainer: {
     marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.greyColor,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

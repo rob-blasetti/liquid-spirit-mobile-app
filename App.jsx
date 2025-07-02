@@ -114,7 +114,6 @@ const MainApp = () => {
     }
   }, [appIsReady, checkingSession, isLoggedIn, communityId, homeOverviewLoaded]);
 
-  // Once ready, render your normal app
   return (
     <SafeAreaProvider>
       <View style={styles.root}>

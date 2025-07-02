@@ -7,7 +7,8 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
-  Text
+  Text,
+  Pressable
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -195,22 +196,43 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.tabRow}>
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'explore' && styles.activeTab]} 
+        <Pressable
           onPress={() => handleTabPress('explore')}
+          style={({ pressed }) => [
+            styles.tabItem,
+            pressed && styles.pressedTab
+          ]}
         >
-          <Text style={[styles.tabText, activeTab === 'explore' && styles.activeTabText]}>
-            Explore
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabItem, activeTab === 'foryou' && styles.activeTab]} 
+          {({ pressed }) => (
+            <Text style={[
+              styles.tabText,
+              activeTab === 'explore' && styles.activeTabText,
+              pressed && styles.pressedTabText,
+              activeTab === 'explore' && styles.underlineText
+            ]}>
+              Explore
+            </Text>
+          )}
+        </Pressable>
+
+        <Pressable
           onPress={() => handleTabPress('foryou')}
+          style={({ pressed }) => [
+            styles.tabItem,
+            pressed && styles.pressedTab
+          ]}
         >
-          <Text style={[styles.tabText, activeTab === 'foryou' && styles.activeTabText]}>
-            For You
-          </Text>
-        </TouchableOpacity>
+          {({ pressed }) => (
+            <Text style={[
+              styles.tabText,
+              activeTab === 'foryou' && styles.activeTabText,
+              pressed && styles.pressedTabText,
+              activeTab === 'foryou' && styles.underlineText
+            ]}>
+              For You
+            </Text>
+          )}
+        </Pressable>
       </View>
 
       {loading ? (
@@ -257,18 +279,21 @@ const SocialMedia = ({ initialPosts, scrollToTop }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: themeVariables.greyColor,
     marginBottom: 50
   },
   tabRow: { 
     flexDirection: 'row', 
     justifyContent: 'center', 
-    backgroundColor: '#fff', 
-    elevation: 2 
+    backgroundColor: themeVariables.whiteColor, 
+    elevation: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: themeVariables.borderColor,
   },
   tabItem: { 
     flex: 1, 
     paddingVertical: 12, 
+    backgroundColor: themeVariables.greyColor,
   },
   tabText: { 
     fontSize: 16, 
@@ -282,7 +307,19 @@ const styles = StyleSheet.create({
   },
   activeTabText: { 
     color: themeVariables.blackColor,
-  }
+  },
+  pressedTab: {
+    backgroundColor: themeVariables.greyColor, // subtle highlight when pressing
+  },
+  pressedTabText: {
+    color: themeVariables.blackColor,
+  },
+  underlineText: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#312783',
+    paddingBottom: 4, // spacing between text and underline
+    alignSelf: 'center',
+  },
 });
 
 export default SocialMedia;
