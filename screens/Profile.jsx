@@ -30,9 +30,9 @@ const ProfileScreen = ({ navigation }) => {
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'posts', title: 'My Posts' },
-    { key: 'activities', title: 'My Activities' },
-    { key: 'events', title: 'My Events' },
+    { key: 'posts', title: 'Posts' },
+    { key: 'activities', title: 'Activities' },
+    { key: 'events', title: 'Events' },
     { key: 'requests', title: 'Requests' },
   ]);
 
@@ -366,6 +366,8 @@ const renderScene = ({ route }) => {
 
 
 
+      <Text style={styles.dashboardHeading}>My Dashboard</Text>
+
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
@@ -475,6 +477,13 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
     elevation: 2,
+  },
+  dashboardHeading: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+    paddingHorizontal: 26,
+    marginBottom: 8,
   },
   headerProfileInfo: {
     flexDirection: 'row',
