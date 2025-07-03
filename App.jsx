@@ -3,7 +3,7 @@ import { useState, useEffect, useContext } from 'react';
 import { StatusBar, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import themeVariables from './styles/theme';
 
 import { UserProvider, UserContext } from './contexts/UserContext';
@@ -117,7 +117,7 @@ const MainApp = () => {
   }, [appIsReady, checkingSession, isLoggedIn, communityId, homeOverviewLoaded]);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <View style={styles.root}>
         <StatusBar
           barStyle={showSplash ? 'light-content' : 'dark-content'}

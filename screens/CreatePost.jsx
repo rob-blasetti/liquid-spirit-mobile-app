@@ -8,7 +8,6 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
@@ -17,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faImage, faImages } from '@fortawesome/free-regular-svg-icons';
+import { faImages } from '@fortawesome/free-regular-svg-icons';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
@@ -122,63 +121,63 @@ export default function CreatePost({ onPostCreated, onClose }) {
   return (
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={{ flex: 1 }}>
-              <View style={styles.headerRow}>
-                <Text style={styles.header}>Create a post</Text>
-                <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-                  <FontAwesomeIcon icon={faTimes} size={24} color="#312783" />
-                </TouchableOpacity>
-              </View>
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
-
-          <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
-            <FontAwesomeIcon icon={faImages} size={40} color="#312783" />
-            <Text style={styles.uploadButtonText}>Upload image or video</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.label}>Content</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="What's on your mind?"
-            placeholderTextColor="#999"
-            value={content}
-            onChangeText={setContent}
-            multiline
-          />
-
-          {mediaUri && mediaType.includes('image') && (
-            <Image
-              testID="imagePreview"
-              source={{ uri: mediaUri }}
-              style={styles.mediaPreview}
-            />
-          )}
-          {mediaUri && mediaType.includes('video') && (
-            <Video
-              testID="videoPreview"
-              source={{ uri: mediaUri }}
-              style={styles.video}
-              controls
-              resizeMode="contain"
-              paused={false}
-              repeat
-            />
-          )}
-
-          {isUploading && (
-            <View style={{ marginBottom: 10, alignItems: 'center' }}>
-              <Progress.Bar
-                progress={uploadProgress / 100}
-                width={250}
-                color="#312783"
-                borderRadius={10}
-              />
-              <Text style={{ color: '#312783', marginTop: 5 }}>{uploadStep}</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.headerRow}>
+              <Text style={styles.header}>Create a post</Text>
+              <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
+                <FontAwesomeIcon icon={faTimes} size={24} color={themeVariables.primaryColor} />
+              </TouchableOpacity>
             </View>
-          )}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+
+              <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
+                <FontAwesomeIcon icon={faImages} size={40} color={themeVariables.primaryColor} />
+                <Text style={styles.uploadButtonText}>Upload image or video</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.label}>Content</Text>
+              <TextInput
+                style={styles.textArea}
+                placeholder="What's on your mind?"
+                placeholderTextColor="#999"
+                value={content}
+                onChangeText={setContent}
+                multiline
+              />
+
+              {mediaUri && mediaType.includes('image') && (
+                <Image
+                  testID="imagePreview"
+                  source={{ uri: mediaUri }}
+                  style={styles.mediaPreview}
+                />
+              )}
+              {mediaUri && mediaType.includes('video') && (
+                <Video
+                  testID="videoPreview"
+                  source={{ uri: mediaUri }}
+                  style={styles.video}
+                  controls
+                  resizeMode="contain"
+                  paused={false}
+                  repeat
+                />
+              )}
+
+              {isUploading && (
+                <View style={{ marginBottom: 10, alignItems: 'center' }}>
+                  <Progress.Bar
+                    progress={uploadProgress / 100}
+                    width={250}
+                    color={themeVariables.primaryColor}
+                    borderRadius={10}
+                  />
+                  <Text style={{ color: themeVariables.primaryColor, marginTop: 5 }}>{uploadStep}</Text>
+                </View>
+              )}
 
             </ScrollView>
             <View style={styles.footer}>
@@ -197,24 +196,24 @@ export default function CreatePost({ onPostCreated, onClose }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f3f3',
-    marginTop: 10,
+    backgroundColor: themeVariables.greyColor,
+    marginTop: 60,
   },
   content: {
     padding: 20,
-    paddingBottom: 100,
     alignItems: 'center',
   },
   header: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#312783',
+    color: themeVariables.primaryColor,
     textAlign: 'center',
   },
   headerRow: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 20,
     marginBottom: 20,
     position: 'relative',
   },
@@ -226,7 +225,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.whiteColor,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#ddd',
@@ -247,17 +246,17 @@ const styles = StyleSheet.create({
   uploadButton: {
     width: '100%',
     borderWidth: 1,
-    borderColor: '#312783',
+    borderColor: themeVariables.primaryColor,
     borderStyle: 'dotted',
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.whiteColor,
     paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
   uploadButtonText: {
-    color: '#312783',
+    color: themeVariables.primaryColor,
     fontSize: 16,
     fontWeight: '600',
     marginTop: 8,
@@ -271,7 +270,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#312783',
+    backgroundColor: themeVariables.primaryColor,
     paddingVertical: 12,
     borderRadius: 20,
     alignItems: 'center',
@@ -279,7 +278,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: themeVariables.whiteColor,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
@@ -301,25 +300,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 40,    // sit above bottom tab bar (height 80)
+    bottom: 40,
     width: '100%',
     alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: '#f3f3f3',
+    backgroundColor: themeVariables.greyColor,
   },
   submitButton: {
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.whiteColor,
     paddingVertical: 15,
     borderRadius: 25,
     alignItems: 'center',
     width: '90%',
-    borderColor: '#312783',
+    borderColor: themeVariables.primaryColor,
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: '#312783',
+    borderColor: themeVariables.primaryColor,
   },
   submitButtonText: {
-    color: '#312783',
+    color: themeVariables.primaryColor,
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
