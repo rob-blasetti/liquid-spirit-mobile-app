@@ -107,8 +107,11 @@ export default function Notifications() {
       console.log(item.type);
       switch (item.type) {
         case 'post':
-          // navigation.navigate("PostDetail", { postId: item.targetId });
-          navigation.navigate('Feed');
+          // Navigate to Feed tab and scroll to the specific post if needed
+          navigation.navigate('Main', {
+            screen: 'Feed',
+            params: { post: { _id: item.targetId } },
+          });
           break;
         case 'activity':
           // Navigate to activity detail, passing the activity ID
@@ -119,7 +122,8 @@ export default function Notifications() {
           navigation.navigate('EventDetailCard', { eventId: item.targetId });
           break;
         case 'announcement':
-          navigation.navigate("Profile");
+          // Navigate to Profile tab
+          navigation.navigate('Main', { screen: 'Profile' });
           break;
         default:
           console.warn("Unknown notification type");

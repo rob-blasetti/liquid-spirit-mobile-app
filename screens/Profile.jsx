@@ -21,7 +21,7 @@ import { fetchActivities } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCogs, faShareAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faShareAlt, faFileAlt, faTasks, faCalendarAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 
@@ -199,7 +199,38 @@ const renderList = (data, type) => {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
   if (!data.length) {
-    return <Text style={styles.noDataText}>No {type} available.</Text>;
+    let icon;
+    let message;
+    switch (type) {
+      case 'posts':
+        icon = faFileAlt;
+        message = 'No posts at the moment';
+        break;
+      case 'activities':
+        icon = faTasks;
+        message = 'No activities at the moment';
+        break;
+      case 'events':
+        icon = faCalendarAlt;
+        message = 'No events at the moment';
+        break;
+      default:
+        icon = null;
+        message = `No ${type} at the moment`;
+    }
+    return (
+      <View style={styles.noDataContainer}>
+        <Text style={styles.noDataText}>{message}</Text>
+        {icon && (
+          <FontAwesomeIcon
+            icon={icon}
+            size={40}
+            color="#999"
+            style={styles.noDataIcon}
+          />
+        )}
+      </View>
+    );
   }
 
   const ItemComponent =
@@ -230,7 +261,17 @@ const renderRequests = () => {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
   if (!pendingRequests.length) {
-    return <Text style={styles.noDataText}>No pending requests.</Text>;
+    return (
+      <View style={styles.noDataContainer}>
+        <Text style={styles.noDataText}>No requests at the moment</Text>
+        <FontAwesomeIcon
+          icon={faUserPlus}
+          size={40}
+          color="#999"
+          style={styles.noDataIcon}
+        />
+      </View>
+    );
   }
   return (
     <FlatList
@@ -287,6 +328,8 @@ const renderScene = ({ route }) => {
       return renderList(activities, 'activities');
     case 'events':
       return renderList(events, 'events');
+    case 'requests':
+      return renderRequests();
     default:
       return null;
   }
@@ -436,12 +479,20 @@ const styles = StyleSheet.create({
     width: Platform.select({ android: 95 }),
     textAlign: 'center',
   },
+  noDataContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   placeholderText: { textAlign: 'center', padding: 20, fontSize: 16, color: '#999' },
   noDataText: {
     textAlign: 'center',
     marginVertical: 20,
     fontSize: 16,
     color: '#999',
+  },
+  noDataIcon: {
+    marginTop: 8,
   },
   listItem: {
     backgroundColor: '#fff',
