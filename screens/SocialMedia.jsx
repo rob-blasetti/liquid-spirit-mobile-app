@@ -310,21 +310,20 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: themeVariables.greyColor,
-    marginBottom: 50
+    backgroundColor: themeVariables.darkGreyColor,
+    marginBottom: 80
   },
   tabRow: { 
     flexDirection: 'row', 
     justifyContent: 'center', 
     backgroundColor: themeVariables.whiteColor, 
-    elevation: 2,
     borderBottomWidth: 1,
-    borderBottomColor: themeVariables.borderColor,
+    borderBottomColor: themeVariables.whiteColor,
   },
   tabItem: { 
     flex: 1, 
     paddingVertical: 12, 
-    backgroundColor: themeVariables.greyColor,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   tabText: { 
     fontSize: 16, 
@@ -340,7 +339,7 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
   },
   pressedTab: {
-    backgroundColor: themeVariables.greyColor, // subtle highlight when pressing
+    backgroundColor: themeVariables.darkGreyColor, // subtle highlight when pressing
   },
   pressedTabText: {
     color: themeVariables.blackColor,

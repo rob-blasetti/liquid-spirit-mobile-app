@@ -16,9 +16,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import Video from 'react-native-video';
 import {
   faEllipsisV,
-  faHeart as solidHeart
+  faHeart as solidHeart,
+  faShare
 } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as heartOutline, faComment, faPaperPlane } from '@fortawesome/free-regular-svg-icons';
+import { faHeart as heartOutline, faComment } from '@fortawesome/free-regular-svg-icons';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
@@ -255,8 +256,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           <FontAwesomeIcon icon={faComment} size={22} color="#312783" />
           <Text style={styles.footerIconText}>{commentCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.postFooterIcon} onPress={() => handleSharePost(post._id)}>
-          <FontAwesomeIcon icon={faPaperPlane} size={22} color="#312783" />
+        <TouchableOpacity
+          // Push share icon to the right
+          style={[styles.postFooterIcon, { marginLeft: 'auto' }]}
+          onPress={() => handleSharePost(post._id)}
+        >
+          <FontAwesomeIcon icon={faShare} size={22} color="#312783" />
         </TouchableOpacity>
       </View>
 
@@ -281,8 +286,11 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
 const styles = StyleSheet.create({
   postContainer: {
+    marginHorizontal: 16,
     marginBottom: 16,
+    marginTop: 4,
     backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
     padding: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

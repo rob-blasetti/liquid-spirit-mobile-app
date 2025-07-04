@@ -73,7 +73,7 @@ const Search = () => {
     return (
       <View style={{
           flexDirection: 'row',
-          backgroundColor: themeVariables.greyColor,
+          backgroundColor: themeVariables.darkGreyColor,
         }}>
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
@@ -86,17 +86,17 @@ const Search = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 // static bottom border thickness, color depends on focus
-                borderBottomWidth: 2,
+                borderBottomWidth: focused ? 2 : 0,
                 borderBottomColor: focused ? themeVariables.primaryColor : themeVariables.blackColor,
                 // rounded bottom corners on active tab
-                borderBottomLeftRadius: focused ? 6 : 0,
-                borderBottomRightRadius: focused ? 6 : 0,
+                // borderBottomLeftRadius: focused ? 6 : 0,
+                // borderBottomRightRadius: focused ? 6 : 0,
               }}
               onPress={() => jumpTo(route.key)}
             >
               <Text style={{
                   color: focused ? themeVariables.primaryColor : themeVariables.blackColor,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: focused ? 'bold' : 'normal',
                 }}>
                 {route.title}
@@ -160,8 +160,8 @@ const Search = () => {
             onIndexChange={setSearchIndex}
             initialLayout={{ width: Dimensions.get('window').width }}
             renderTabBar={renderSearchTabBar}
-            sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
-            style={{ backgroundColor: themeVariables.greyColor }}
+            sceneContainerStyle={{ backgroundColor: themeVariables.darkGreyColor }}
+            style={{ backgroundColor: themeVariables.darkGreyColor }}
           />
         </View>
       )}
@@ -173,7 +173,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: themeVariables.greyColor,
+    marginBottom: 80,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   searchInput: {
     // Indent and padded search bar
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderColor: themeVariables.primaryCo,  
+    borderColor: themeVariables.blackColor,  
     borderWidth: 1,
     borderRadius: 20,
     // Optionally, add a subtle background for contrast
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   placeholderText: {
-    color: themeVariables.greyColor,
+    color: themeVariables.blackColor,
   },
   resultItem: {
     paddingVertical: 8,
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
   emptyText: {
     textAlign: 'center',
     marginTop: 16,
-    color: themeVariables.greyColor,
+    color: themeVariables.blackColor,
   },
   columnWrapper: {
     justifyContent: 'space-between',

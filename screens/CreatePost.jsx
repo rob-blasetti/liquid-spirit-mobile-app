@@ -120,8 +120,13 @@ export default function CreatePost({ onPostCreated, onClose }) {
 
   return (
     <>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      <SafeAreaView style={styles.container}>
+      {/* Status bar matching screen background */}
+      <StatusBar
+        backgroundColor={themeVariables.darkGreyColor}
+        barStyle="dark-content"
+        translucent={false}
+      />
+      <SafeAreaView style={styles.container} edges={['top']}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={{ flex: 1 }}>
@@ -196,8 +201,9 @@ export default function CreatePost({ onPostCreated, onClose }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.greyColor,
-    marginTop: 60,
+    backgroundColor: themeVariables.darkGreyColor,
+    // Removed marginTop to allow background to extend under status bar
+    // marginTop: 60,
   },
   content: {
     padding: 20,
@@ -304,7 +310,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: themeVariables.greyColor,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   submitButton: {
     backgroundColor: themeVariables.whiteColor,

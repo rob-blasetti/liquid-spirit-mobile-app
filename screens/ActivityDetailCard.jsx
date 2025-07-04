@@ -1,6 +1,6 @@
 // Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useLayoutEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -16,7 +16,7 @@ import {
   Platform,
   Modal,
   StatusBar,
-  StatusBarStyle,
+  Share,
 } from 'react-native';
 import {
   Card,
@@ -30,6 +30,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faPlusCircle,
   faVideo,
+  faShare,
 } from '@fortawesome/free-solid-svg-icons';
 
 import themeVariables from '../styles/theme';
@@ -69,6 +70,32 @@ const ActivityDetailCard = ({ route }) => {
   const [error, setError] = useState(null);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
+  // Add share button in header, styled like back arrow
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={{
+            backgroundColor: themeVariables.greyColor,
+            borderRadius: themeVariables.borderRadiusPill,
+            padding: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
+          }}
+          onPress={() => {
+            const title = activity?.title || '';
+            const message = `Check out this activity: ${title}`;
+            Share.share({ message });
+          }}
+        >
+          <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, activity]);
   useEffect(() => {
     if (!activityId) return;
     const fetchDetails = async () => {

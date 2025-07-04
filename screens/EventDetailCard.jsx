@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   Image,
   StatusBar,
   Platform,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
@@ -21,7 +22,7 @@ import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faClock, faCarSide, faUsers, faPlusCircle, faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faClock, faCarSide, faUsers, faPlusCircle, faFileAlt, faShare } from '@fortawesome/free-solid-svg-icons';
 
 import themeVariables from '../styles/theme';
 import { fetchEventDetails, joinEvent } from '../services/EventService';
@@ -59,6 +60,32 @@ const EventDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
+  // Add share button in header, styled like back arrow
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={{
+            backgroundColor: themeVariables.greyColor,
+            borderRadius: themeVariables.borderRadiusPill,
+            padding: 6,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
+          }}
+          onPress={() => {
+            const title = event?.title || '';
+            const message = `Check out this event: ${title}`;
+            Share.share({ message });
+          }}
+        >
+          <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, event]);
   const { user, token, communityId } = useContext(UserContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
 

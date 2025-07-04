@@ -53,8 +53,8 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost })
 const styles = StyleSheet.create({
   overlayContainer: {
     position: 'absolute',
-    top: 0, left: 0,
-    width: screenWidth,
+    top: 0, left: 0, right: 20,
+    width: screenWidth - 30,
     height: screenHeight,
     justifyContent: 'center',
     alignItems: 'center',
@@ -62,9 +62,9 @@ const styles = StyleSheet.create({
   },
   overlay: {
     position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 350,
     backgroundColor: 'rgba(47, 40, 40, 0.4)',
-    borderRadius: 10,
+    borderRadius: 20,
   },
   menu: {
     width: 180,

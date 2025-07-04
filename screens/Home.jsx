@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faSquarePollVertical, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faCalendarDays, faSquarePollVertical, faBell } from '@fortawesome/free-solid-svg-icons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -438,7 +438,8 @@ const Home = ({ navigation, homeOverview }) => {
           >
             <View style={styles.createRowContent}>
               <FontAwesomeIcon
-                icon={faBahai}
+                // Changed icon to calendar for events
+                icon={faCalendarDays}
                 size={16}
                 color={themeVariables.blackColor}
                 style={styles.createIcon}
@@ -478,7 +479,7 @@ const Home = ({ navigation, homeOverview }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.greyColor,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   // Styles for notification button on banner, matching Profile banner icon style
   notificationButton: {

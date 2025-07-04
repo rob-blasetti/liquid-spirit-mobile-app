@@ -118,10 +118,14 @@ const SearchCard = ({ item, onPress }) => {
                     <FontAwesomeIcon
                       icon={isError ? faXmarkCircle : faClock}
                       size={12}
-                      color={themeVariables.whiteColor}
+                      // Status chip icon in black
+                      color={themeVariables.blackColor}
                       style={styles.chipIcon}
                     />
-                    <Text style={styles.chipText}>
+                    <Text
+                      // Status chip text in black
+                      style={[styles.chipText, styles.statusChipText]}
+                    >
                       {safeText(item.status)}
                     </Text>
                   </View>
@@ -262,9 +266,9 @@ const styles = StyleSheet.create({
   statusChip: {
     backgroundColor: themeVariables.secondaryLightColor,
   },
-  // Text color for default status chip (white for contrast)
+  // Text color for status chip labels
   statusChipText: {
-    color: themeVariables.whiteColor,
+    color: themeVariables.blackColor,
   },
   // Expired status chip: red background and border
   expiredStatusChip: {

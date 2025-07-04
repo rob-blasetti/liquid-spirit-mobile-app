@@ -55,10 +55,8 @@ const ProfileStackNavigator = () => {
         name="Settings"
         component={Settings}
         options={{
-          // Transparent header with only a back button, no title or shadow
-          headerTransparent: true,
-          headerTitle: '',
-          headerShadowVisible: false,
+          // Hide default header; custom back chevron rendered in Settings component
+          headerShown: false,
         }}
       />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />

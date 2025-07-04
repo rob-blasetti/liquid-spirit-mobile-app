@@ -12,6 +12,7 @@ import { faCheck, faShieldAlt, faStar, faSprout } from '@fortawesome/free-solid-
 import { Tooltip } from 'react-native-elements';
 import { Chip } from 'react-native-paper';
 import PostGallery from '../components/PostGallery';
+import CertificationsList from '../components/CertificationsList';
 
 const PublicUserProfile = () => {
   const route = useRoute();
@@ -124,21 +125,13 @@ const PublicUserProfile = () => {
           />
         )}
         <Text style={styles.name}>{firstName} {lastName}</Text>
-        <View style={styles.badgesContainer}>
-          {badgeDefs.map((b, i) => b.flag && (
-            <Tooltip
-              key={i}
-              popover={<Text style={{ color: '#fff' }}>{b.label}</Text>}
-              backgroundColor={b.color}
-              height={40}
-              width={120}
-            >
-              <View style={[styles.badge, { backgroundColor: b.color }]}> 
-                <FontAwesomeIcon icon={b.icon} size={16} color="#fff" />
-              </View>
-            </Tooltip>
-          ))}
-        </View>
+        {/* Certifications badges */}
+        <CertificationsList
+          items={badgeDefs
+            .filter(b => b.flag)
+            .map(b => ({ label: b.label, icon: b.icon, color: b.color }))
+          }
+        />
         {/* Community Chip in header top-right */}
         {communityName ? (
           <Chip
@@ -208,8 +201,7 @@ const styles = StyleSheet.create({
   value: { fontSize: 16, color: '#444', flexShrink: 1 },
   socialRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },
   socialButton: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#312783', justifyContent: 'center', alignItems: 'center', marginHorizontal: 8 },
-  badgesContainer: { flexDirection: 'row', marginTop: 8, justifyContent: 'center' },
-  badge: { width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginHorizontal: 4 },
+  // Certifications badges container and badge styles are now extracted into CertificationsList component
   chipContainer: { marginTop: 12, flexDirection: 'row', borderRadius: 20 },
   chip: { alignSelf: 'flex-start' },
   communityChip: { position: 'absolute', top: 0, right: 10, borderRadius: 20 },

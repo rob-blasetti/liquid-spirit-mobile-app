@@ -47,26 +47,36 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           // Hide labels, show icons only
           tabBarShowLabel: false,
           // Render icon with active top border
-          tabBarIcon: ({ focused, color, size }) => (
-            <View style={{ alignItems: 'center' }}>
-              {/* Top border bar, above the icon */}
-              {focused && (
-                <View style={{
-                  height: 4,
-                  width: size + 16, // match old marginHorizontal: 12
-                  backgroundColor: themeVariables.primaryColor,
-                  borderBottomLeftRadius: 5,
-                  borderBottomRightRadius: 5,
-                  marginBottom: 6,
-                  transform: [{ translateY: -2 }],
-                }} />
-              )}
-              {/* Icon remains untouched */}
-              <FontAwesomeIcon icon={tabIcons[route.name]} size={size} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ focused, color, size }) => {
+            // Determine icon color: camera retains tint, others always black
+            const iconColor = route.name === 'Camera'
+              ? color
+              : themeVariables.blackColor;
+            return (
+              <View style={{ alignItems: 'center' }}>
+                {/* Top border bar, above the icon */}
+                {focused && (
+                  <View style={{
+                    height: 4,
+                    width: size + 6, // match old marginHorizontal: 12
+                    backgroundColor: themeVariables.primaryColor,
+                    borderBottomLeftRadius: 5,
+                    borderBottomRightRadius: 5,
+                    marginBottom: 6,
+                    transform: [{ translateY: -2 }],
+                  }} />
+                )}
+                {/* Icon colored per route */}
+                <FontAwesomeIcon
+                  icon={tabIcons[route.name]}
+                  size={size}
+                  color={iconColor}
+                />
+              </View>
+            );
+          },
           tabBarActiveTintColor: themeVariables.primaryColor,
-          tabBarInactiveTintColor: themeVariables.blackColor,
+          tabBarInactiveTintColor: themeVariables.primaryColor,
           tabBarStyle: {
             position: 'absolute',
             bottom: 0,
@@ -75,7 +85,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             height: 80,
             backgroundColor: themeVariables.greyColor,
             borderTopWidth: 1,
-            borderTopColor: themeVariables.blackColor,
+            borderTopColor: themeVariables.whiteColor,
           },
         })}
         screenListeners={({ navigation, route }) => ({

@@ -3,13 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, Scro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
 import { CommonActions } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
+import { useNavigation } from '@react-navigation/native';
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
+  const nav = useNavigation();
   const { deleteAccount } = useAuthService();
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -56,9 +58,16 @@ const Settings = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Custom back chevron */}
+      <View style={styles.chevronContainer}>
+        <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
+          <FontAwesomeIcon icon={faChevronLeft} size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.header}>Settings</Text>
+        {/* Screen title */}
+        <Text style={styles.header}>Settings</Text>
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
@@ -124,7 +133,7 @@ const Settings = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   scrollView: {
     flex: 1,
@@ -132,11 +141,28 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  // Custom back chevron container (replaces default header)
+  chevronContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    padding: 16,
+  },
+  // Header text style for Settings title
   header: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: themeVariables.textColor,
+    color: themeVariables.blackColor,
     marginVertical: 20,
+  },
+  chevronButton: {
+    backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   section: {
     marginBottom: 30,

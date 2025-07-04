@@ -151,7 +151,7 @@ const EditProfile = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#F9FAFB',
+      backgroundColor: themeVariables.darkGreyColor,
     },
     scrollView: {
       flex: 1,

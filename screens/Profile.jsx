@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
+import { faCheck, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
+import CertificationsList from '../components/CertificationsList';
 import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
@@ -20,6 +22,7 @@ import EventItem from '../components/EventItem';
 import { fetchActivities } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
+import { fetchUserById } from '../services/UserService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCogs, faShareAlt, faFileAlt, faTasks, faCalendarAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import RequestItem from '../components/RequestItem';
@@ -28,7 +31,25 @@ import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyP
 
 const ProfileScreen = ({ navigation }) => {
   const { user, userPosts, userActivities, userEvents, isLoading, token, setUserPosts, setUserActivities, setUserEvents } = useContext(UserContext);
-
+  // Fetch full user data for certifications
+  const [profileCertData, setProfileCertData] = useState({});
+  useEffect(() => {
+    if (user?.id && token) {
+      fetchUserById(user.id, token)
+        .then(data => setProfileCertData(data.certifications || {}))
+        .catch(err => console.error('Failed to fetch user certifications:', err));
+    }
+  }, [user?.id, token]);
+  // Prepare certification badges
+  const certData = profileCertData || {};
+  const badgeDefs = [
+    { flag: certData.isVerified, label: 'Verified User', icon: faCheck, color: '#3e8e41' },
+    { flag: certData.hasChildProtection, label: 'Child Protection Certified', icon: faShieldAlt, color: '#d81b60' },
+    { flag: certData.isLocalAssemblyMember, label: 'LSA Member', icon: faStar, color: '#b71c1c' },
+  ];
+  const certItems = badgeDefs
+    .filter(b => b.flag)
+    .map(b => ({ label: b.label, icon: b.icon, color: b.color }));
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'activities', title: 'Activities' },
@@ -341,7 +362,7 @@ const renderScene = ({ route }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
     const tabWidth = totalWidth / navigationState.routes.length;
     return (
-      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.whiteColor }}>
+      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.darkGreyColor }}>
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
           return (
@@ -379,7 +400,11 @@ const renderScene = ({ route }) => {
       <View style={styles.headerContainer}>
         <View style={styles.headerProfileInfo}>
           <ChangeableProfileImage imageStyle={styles.profilePictureSmall} avatarSize={60} />
-          <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
+          <View style={styles.profileDetails}>
+            <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
+            {/* Certifications badges under name */}
+            <CertificationsList items={certItems} />
+          </View>
         </View>
         <View style={styles.headerActionsContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
@@ -409,7 +434,7 @@ const renderScene = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeVariables.whiteColor, },
+  container: { flex: 1, backgroundColor: themeVariables.darkGreyColor, },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
@@ -512,19 +537,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: '#fff',
+    margin: 16,
+    borderRadius: themeVariables.borderRadiusPill,
+    backgroundColor: themeVariables.whiteColor,
+    // Raised shadow effect similar to ListItem & SearchCard
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
     elevation: 2,
   },
   dashboardHeading: {
-    fontSize: 16,
-    fontWeight: '600',
     color: themeVariables.blackColor,
-    paddingHorizontal: 26,
-    marginBottom: 8,
+    marginHorizontal: 20,    
+    marginBottom: 10,
+    padding: 4,
+    fontWeight: 'bold',
   },
   headerProfileInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   headerActionsContainer: {
     flexDirection: 'row',
@@ -553,6 +585,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
+  },
+  // Container for the user details next to avatar
+  profileDetails: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
   },
   pendingContainer: {
     paddingHorizontal: 16,
