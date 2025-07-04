@@ -14,6 +14,7 @@ import {
   StatusBar,
   Platform,
   Share,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
@@ -60,6 +61,30 @@ const EventDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
+  const handleShare = async () => {
+    const id = event?._id || eventId;
+    if (!id) return;
+    const url = `https://www.liquidspirit.org/events/${id}`;
+    const title = event?.title || 'Liquid Spirit Event';
+    const message = `Check out this event on Liquid Spirit \uD83D\uDC47\n${url}`;
+    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+    const messengerUrl = `fb-messenger://share?link=${encodeURIComponent(url)}`;
+
+    try {
+      if (await Linking.canOpenURL(whatsappUrl)) {
+        await Linking.openURL(whatsappUrl);
+        return;
+      }
+      if (await Linking.canOpenURL(messengerUrl)) {
+        await Linking.openURL(messengerUrl);
+        return;
+      }
+      await Share.share({ message, url, title });
+    } catch (err) {
+      console.error('Error sharing:', err);
+      Alert.alert('Sharing Error', 'Something went wrong while trying to share the event.');
+    }
+  };
   // Add share button in header, styled like back arrow
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -75,11 +100,7 @@ const EventDetailCard = ({ route }) => {
             shadowRadius: 2,
             elevation: 2,
           }}
-          onPress={() => {
-            const title = event?.title || '';
-            const message = `Check out this event: ${title}`;
-            Share.share({ message });
-          }}
+          onPress={handleShare}
         >
           <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
         </TouchableOpacity>
