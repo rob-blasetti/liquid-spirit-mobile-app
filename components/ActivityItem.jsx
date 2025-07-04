@@ -3,7 +3,7 @@ import { API_URL } from '../config';
 import localImages from '../utils/localImages';
 import ListItem from './ListItem';
 
-const ActivityItem = ({ item, onPress }) => {
+const ActivityItem = ({ item, onPress, nextUp }) => {
   let imageSource;
   const uri = item.imageUrl;
   if (uri) {
@@ -54,6 +54,7 @@ const ActivityItem = ({ item, onPress }) => {
       content={item.description}
       commentCount={sessionDisplay}
       countLabel="Next Session"
+      chipText={nextUp ? 'Next Up' : null}
       onPress={onPress}
     />
   );

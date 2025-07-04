@@ -271,9 +271,53 @@ const renderList = (data, type) => {
   const ItemComponent =
     type === 'posts' ? PostItem : type === 'activities' ? ActivityItem : EventItem;
 
+  // Sort items chronologically and identify the next upcoming item
+  const now = Date.now();
+  let listData = [...data];
+  if (type === 'activities') {
+    listData.sort((a, b) => {
+      const nextTime = sess => {
+        if (!Array.isArray(sess.sessions)) return Infinity;
+        const upcoming = sess.sessions
+          .map(s => new Date(s.date || s).getTime())
+          .filter(d => d > now)
+          .sort((x, y) => x - y);
+        return upcoming.length > 0 ? upcoming[0] : Infinity;
+      };
+      return nextTime(a) - nextTime(b);
+    });
+  } else if (type === 'events') {
+    listData.sort((a, b) => {
+      const timeA = new Date(a.startTime || a.date).getTime();
+      const timeB = new Date(b.startTime || b.date).getTime();
+      return timeA - timeB;
+    });
+  }
+  // Determine the first 'Next Up' item
+  let nextUpId = null;
+  if (type === 'activities') {
+    for (const item of listData) {
+      const times = (item.sessions || [])
+        .map(s => new Date(s.date || s).getTime())
+        .filter(d => d > now)
+        .sort((x, y) => x - y);
+      if (times.length > 0) {
+        nextUpId = item._id;
+        break;
+      }
+    }
+  } else if (type === 'events') {
+    for (const item of listData) {
+      const d = new Date(item.startTime || item.date).getTime();
+      if (d > now) {
+        nextUpId = item._id;
+        break;
+      }
+    }
+  }
   return (
     <FlatList
-      data={data}
+      data={listData}
       refreshing={refreshing}
       onRefresh={onRefresh}
       keyExtractor={(item, index) =>
@@ -283,6 +327,7 @@ const renderList = (data, type) => {
         <ItemComponent
           item={item}
           onPress={() => handleItemPress(type, item)}
+          nextUp={item._id === nextUpId}
         />
       )}
     />

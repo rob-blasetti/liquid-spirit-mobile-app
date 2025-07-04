@@ -3,11 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 
-const ListItem = ({ imageSource, title, content, date, time, onPress, commentCount, countLabel = 'Comments' }) => {
+const ListItem = ({ imageSource, title, content, date, time, onPress, commentCount, countLabel = 'Comments', chipText }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {imageSource && (
-        <FastImage source={imageSource} style={styles.image} />
+        <View style={styles.imageContainer}>
+          <FastImage source={imageSource} style={styles.image} />
+          {chipText && (
+            <View style={styles.chip}>
+              <Text style={styles.chipText}>{chipText}</Text>
+            </View>
+          )}
+        </View>
       )}
       <View style={styles.mainContainer}>
         <View style={styles.textContainer}>
@@ -58,7 +65,22 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
+    // remove horizontal margin to center chip under imageContainer
+  },
+  imageContainer: {
     marginRight: 12,
+    alignItems: 'center',
+  },
+  chip: {
+    marginTop: 4,
+    backgroundColor: themeVariables.primaryColor,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  chipText: {
+    fontSize: 12,
+    color: themeVariables.whiteColor,
   },
   textContainer: {
     flex: 1,

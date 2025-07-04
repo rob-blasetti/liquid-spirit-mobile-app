@@ -3,7 +3,7 @@ import { API_URL } from '../config';
 import localImages from '../utils/localImages';
 import ListItem from './ListItem';
 
-const EventItem = ({ item, onPress }) => {
+const EventItem = ({ item, onPress, nextUp }) => {
   let imageSource;
   const uri = item.imageUrl;
   if (uri) {
@@ -33,6 +33,7 @@ const EventItem = ({ item, onPress }) => {
       time={formattedTime}
       commentCount={item.attendees?.length ?? 0}
       countLabel="Attendees"
+      chipText={nextUp ? 'Next Up' : null}
       onPress={onPress}
     />
   );

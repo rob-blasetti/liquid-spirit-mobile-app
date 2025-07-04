@@ -1,6 +1,5 @@
 import React, { useContext, useState, useRef, useMemo, useCallback } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   Linking,
   ActivityIndicator,
   Platform,
+  StatusBar,
 } from 'react-native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faCalendarDays, faSquarePollVertical, faBell } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +23,7 @@ import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Helper: get the next upcoming session date for an activity
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
@@ -54,6 +55,11 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
 const Home = ({ navigation, homeOverview }) => {
+  const insets = useSafeAreaInsets();
+  // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
+  const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;
+  // Extra padding to further push content down and enlarge banner
+  const EXTRA_TOP = 50;
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
   // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {
@@ -101,17 +107,21 @@ const Home = ({ navigation, homeOverview }) => {
   );
   if (userActivities === null || userEvents === null || userPosts === null) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollView}>
         {/* Banner Section */}
-        <View style={styles.bannerContainer}>
+        <View style={[
+          styles.bannerContainer,
+          { marginTop: -statusBarHeight, height: 200 + statusBarHeight + EXTRA_TOP }
+        ]}>
           <Image
             source={{
               uri: Array.isArray(user?.community?.bannerImage)
@@ -122,7 +132,10 @@ const Home = ({ navigation, homeOverview }) => {
             resizeMode="cover"
           />
           <View style={styles.bannerOverlay} />
-          <View style={styles.bannerContent}>
+          <View style={[
+            styles.bannerContent,
+            { top: statusBarHeight + EXTRA_TOP }
+          ]}>
             <TouchableOpacity
               style={styles.notificationButton}
               onPress={() => navigation.navigate('Notifications')}
@@ -472,7 +485,7 @@ const Home = ({ navigation, homeOverview }) => {
         onClose={() => setAssemblyModalVisible(false)}
         members={homeOverview.localSpiritualAssembly || []}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

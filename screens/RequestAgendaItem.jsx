@@ -11,6 +11,7 @@ import {
 import { TextInput, Button, Title, HelperText } from 'react-native-paper';
 import { sendAgendaItemSuggestion } from '../services/AssemblyService';
 import { UserContext } from '../contexts/UserContext';
+import themeVariables from '../styles/theme';
 
 export default function RequestAgendaItem({ navigation, route }) {
   const { communityId, token } = useContext(UserContext);
@@ -89,6 +90,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
     padding: 20,
+    flexGrow: 1,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     marginBottom: 20,
