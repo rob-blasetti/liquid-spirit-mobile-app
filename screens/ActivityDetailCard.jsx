@@ -17,6 +17,7 @@ import {
   Modal,
   StatusBar,
   Share,
+  Alert,
 } from 'react-native';
 import {
   Card,
@@ -70,6 +71,31 @@ const ActivityDetailCard = ({ route }) => {
   const [error, setError] = useState(null);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
+
+  const handleShare = async () => {
+    const id = activity?._id || activityId;
+    if (!id) return;
+    const url = `https://www.liquidspirit.org/activities/${id}`;
+    const title = activity?.title || 'Liquid Spirit Activity';
+    const message = `Check out this activity on Liquid Spirit \uD83D\uDC47\n${url}`;
+    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+    const messengerUrl = `fb-messenger://share?link=${encodeURIComponent(url)}`;
+
+    try {
+      if (await Linking.canOpenURL(whatsappUrl)) {
+        await Linking.openURL(whatsappUrl);
+        return;
+      }
+      if (await Linking.canOpenURL(messengerUrl)) {
+        await Linking.openURL(messengerUrl);
+        return;
+      }
+      await Share.share({ message, url, title });
+    } catch (err) {
+      console.error('Error sharing:', err);
+      Alert.alert('Sharing Error', 'Something went wrong while trying to share the activity.');
+    }
+  };
   // Add share button in header, styled like back arrow
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -85,11 +111,7 @@ const ActivityDetailCard = ({ route }) => {
             shadowRadius: 2,
             elevation: 2,
           }}
-          onPress={() => {
-            const title = activity?.title || '';
-            const message = `Check out this activity: ${title}`;
-            Share.share({ message });
-          }}
+          onPress={handleShare}
         >
           <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
         </TouchableOpacity>
