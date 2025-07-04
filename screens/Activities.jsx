@@ -214,13 +214,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
   },
   controlContainer: {
     flexDirection: 'row',
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    backgroundColor: '#fff', // Dark background to visually group buttons
+    backgroundColor: themeVariables.darkGreyColor, // Dark background to visually group buttons
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12, // Rounded edges to make them feel unified

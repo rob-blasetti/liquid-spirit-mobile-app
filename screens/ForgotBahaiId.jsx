@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useAuthService } from '../services/AuthService';
+import themeVariables from '../styles/theme';
 
 const ForgotBahaiId = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     fontSize: 28,
@@ -96,6 +97,7 @@ const styles = StyleSheet.create({
     height: 50,
     width: '100%',
     paddingHorizontal: 16,
+    backgroundColor: themeVariables.whiteColor,
     borderColor: '#ccc',
     borderWidth: 1,
     borderRadius: 8,
@@ -103,9 +105,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#312783',
+    backgroundColor: themeVariables.primaryColor,
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 40,
     alignItems: 'center',
     width: '100%',
   },

@@ -12,6 +12,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCheckSquare, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
+import themeVariables from '../styles/theme';
 
 const Register = () => {
   const navigation = useNavigation();
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     fontSize: 32,
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#312783',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 40,
     alignItems: 'center',
     width: '100%',
     marginBottom: 16,

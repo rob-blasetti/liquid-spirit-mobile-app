@@ -7,6 +7,7 @@ import {
   Platform
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import themeVariables from '../styles/theme';
 
 const Welcome = ({ closeModal }) => {
   const navigation = useNavigation();
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     fontSize: 32,
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
     width: Platform.select({ ios: 180, android: 180 })
   },
   forgotPasswordText: {
-    color: '#312783',
+    color: '#0485e2',
     fontSize: 14,
     textDecorationLine: 'underline',
     textAlign: 'center',

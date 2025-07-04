@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
+import themeVariables from '../styles/theme';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
   faFilter,
@@ -257,14 +258,14 @@ const Events = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
     padding: 16,
   },
   controlContainer: {
     flexDirection: 'row',
     alignItems: 'center', 
     justifyContent: 'space-between', 
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12, // Rounded edges to make them feel unified

@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useAuthService } from '../services/AuthService';
+import themeVariables from '../styles/theme';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     fontSize: 28,
@@ -103,6 +104,7 @@ const styles = StyleSheet.create({
   input: {
     height: 50,
     width: '100%',
+    backgroundColor: themeVariables.whiteColor,
     paddingHorizontal: 16,
     borderColor: '#ccc',
     borderWidth: 1,

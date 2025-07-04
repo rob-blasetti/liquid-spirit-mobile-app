@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',    
+    backgroundColor: themeVariables.darkGreyColor,    
   },
   title: {
     fontSize: 32,
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#312783',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 30,
     alignItems: 'center',
     width: '100%',
     marginBottom: 16,
@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
   },
   link: {
     marginTop: 16,
+    backgroundColor: themeVariables.darkGreyColor,
   },
   linkText: {
     color: '#0485e2',
