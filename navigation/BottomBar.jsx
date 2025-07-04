@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import { View } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -6,6 +7,7 @@ import { faUser, faCompass, faPlusCircle, faBahai, faSearch } from '@fortawesome
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
+import themeVariables from '../styles/theme';
 import SocialMediaScreen from '../screens/SocialMedia';
 import Home from '../screens/Home';
 import EventsScreen from '../screens/Events';
@@ -42,20 +44,38 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         initialRouteName="Home"
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesomeIcon icon={tabIcons[route.name]} size={size} color={color} />
+          // Hide labels, show icons only
+          tabBarShowLabel: false,
+          // Render icon with active top border
+          tabBarIcon: ({ focused, color, size }) => (
+            <View style={{ alignItems: 'center' }}>
+              {/* Top border bar, above the icon */}
+              {focused && (
+                <View style={{
+                  height: 4,
+                  width: size + 16, // match old marginHorizontal: 12
+                  backgroundColor: themeVariables.primaryColor,
+                  borderBottomLeftRadius: 5,
+                  borderBottomRightRadius: 5,
+                  marginBottom: 6,
+                  transform: [{ translateY: -2 }],
+                }} />
+              )}
+              {/* Icon remains untouched */}
+              <FontAwesomeIcon icon={tabIcons[route.name]} size={size} color={color} />
+            </View>
           ),
-          tabBarActiveTintColor: '#312783',
-          tabBarInactiveTintColor: 'gray',
+          tabBarActiveTintColor: themeVariables.primaryColor,
+          tabBarInactiveTintColor: themeVariables.blackColor,
           tabBarStyle: {
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
             height: 80,
-            backgroundColor: '#fff',
+            backgroundColor: themeVariables.greyColor,
             borderTopWidth: 1,
-            borderTopColor: '#ddd',
+            borderTopColor: themeVariables.blackColor,
           },
         })}
         screenListeners={({ navigation, route }) => ({

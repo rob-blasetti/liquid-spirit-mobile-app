@@ -216,9 +216,8 @@ function formatDate(dateString) {
 
 const styles = StyleSheet.create({
   card: {
-    // fixed width for two-column layout
-    width: '48%',
-    margin: 6,
+    width: '46%',
+    margin: 8,
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 8,
     padding: 12,
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   title: {
     fontSize: 16,

@@ -31,10 +31,10 @@ const ProfileScreen = ({ navigation }) => {
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'posts', title: 'Posts' },
     { key: 'activities', title: 'Activities' },
-    { key: 'events', title: 'Events' },
     { key: 'requests', title: 'Requests' },
+    { key: 'events', title: 'Events' },
+    { key: 'posts', title: 'Posts' },
   ]);
 
   const [posts, setPosts] = useState([]);
@@ -341,31 +341,29 @@ const renderScene = ({ route }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
     const tabWidth = totalWidth / navigationState.routes.length;
     return (
-      <View style={{ flexDirection: 'row', backgroundColor: '#312783' }}>
+      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.whiteColor }}>
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
           return (
-            <TouchableOpacity
+          <TouchableOpacity
               key={route.key}
               style={{
                 width: tabWidth,
                 paddingVertical: 12,
-                alignItems: 'left',
+                alignItems: 'center',
                 justifyContent: 'center',
                 borderBottomWidth: focused ? 2 : 0,
-                borderBottomColor: '#fff',
+                borderBottomColor: themeVariables.primaryColor,
               }}
               onPress={() => jumpTo(route.key)}
             >
-              <Text
-                style={{
-                  color: '#fff',
+              <Text style={{
+                  color: themeVariables.primaryColor,
                   fontSize: 16,
                   textTransform: 'none',
                   textAlign: 'center',
                   flexWrap: 'wrap',
-                }}
-              >
+                }}>
                 {route.title}
               </Text>
             </TouchableOpacity>

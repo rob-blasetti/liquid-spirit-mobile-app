@@ -1,10 +1,11 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet } from 'react-native';
+import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchSearchResults } from '../services/SearchService';
 import SearchCard from '../components/SearchCard';
+import { TabView } from 'react-native-tab-view';
 
 const Search = () => {
   const navigation = useNavigation();
@@ -12,6 +13,100 @@ const Search = () => {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const { token } = useContext(UserContext);
+  // TabView state for result categories
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [searchRoutes] = useState([
+    { key: 'activities', title: 'Activities' },
+    { key: 'events', title: 'Events' },
+    { key: 'posts', title: 'Posts' },
+    { key: 'users', title: 'Users' },
+  ]);
+  // Handler for card press navigation
+  const handleCardPress = (selected) => {
+    if (selected.type === 'member' || selected.type === 'user') {
+      navigation.navigate('PublicUserProfile', { userId: selected._id || selected.id });
+    } else if (selected.type === 'session') {
+      navigation.navigate('ActivityDetailCard', { activityId: selected.activityId });
+    } else if (selected.type === 'activity') {
+      navigation.navigate('ActivityDetailCard', { activityId: selected._id || selected.id });
+    } else if (selected.type === 'event') {
+      navigation.navigate('EventDetailCard', { eventId: selected._id || selected.id });
+    }
+  };
+  // Partition results by type for tabs
+  const activitiesResults = results.filter(item => item.type === 'activity' || item.type === 'session');
+  const eventsResults = results.filter(item => item.type === 'event');
+  const postsResults = results.filter(item => item.type === 'post');
+  const usersResults = results.filter(item => item.type === 'member' || item.type === 'user');
+  // Render each tab scene
+  const renderScene = ({ route }) => {
+    let data = [];
+    switch (route.key) {
+      case 'activities': data = activitiesResults; break;
+      case 'events': data = eventsResults; break;
+      case 'posts': data = postsResults; break;
+      case 'users': data = usersResults; break;
+      default: data = [];
+    }
+    return (
+      <FlatList
+        data={data}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        keyExtractor={(item, index) => (item.id || item._id ? (item.id || item._id).toString() : index.toString())}
+        renderItem={({ item }) => (
+          <SearchCard item={item} onPress={handleCardPress} />
+        )}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            {query.length === 0 ? 'No recent results available.' : `No ${route.title} found`}
+          </Text>
+        }
+      />
+    );
+  };
+  
+  // Custom TabBar: inactive tabs have black bottom border/text, active tab with primary color underline and text
+  const renderSearchTabBar = ({ navigationState, jumpTo, layout }) => {
+    const totalWidth = layout?.width ?? Dimensions.get('window').width;
+    const tabWidth = totalWidth / navigationState.routes.length;
+    return (
+      <View style={{
+          flexDirection: 'row',
+          backgroundColor: themeVariables.greyColor,
+        }}>
+        {navigationState.routes.map((route, idx) => {
+          const focused = navigationState.index === idx;
+          return (
+            <TouchableOpacity
+              key={route.key}
+              style={{
+                width: tabWidth,
+                paddingVertical: 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+                // static bottom border thickness, color depends on focus
+                borderBottomWidth: 2,
+                borderBottomColor: focused ? themeVariables.primaryColor : themeVariables.blackColor,
+                // rounded bottom corners on active tab
+                borderBottomLeftRadius: focused ? 6 : 0,
+                borderBottomRightRadius: focused ? 6 : 0,
+              }}
+              onPress={() => jumpTo(route.key)}
+            >
+              <Text style={{
+                  color: focused ? themeVariables.primaryColor : themeVariables.blackColor,
+                  fontSize: 14,
+                  fontWeight: focused ? 'bold' : 'normal',
+                }}>
+                {route.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    );
+  };
 
   // Fetch recent results on mount (when no query)
   useEffect(() => {
@@ -58,36 +153,17 @@ const Search = () => {
           <Text style={styles.placeholderText}>Loading...</Text>
         </View>
       ) : (
-        <FlatList
-          data={results}
-          numColumns={2}
-          columnWrapperStyle={styles.columnWrapper}
-          keyExtractor={(item, index) => (item.id || item._id ? (item.id || item._id).toString() : index.toString())}
-          renderItem={({ item }) => (
-            <SearchCard
-              item={item}
-              onPress={(selected) => {
-                if (selected.type === 'member' || selected.type === 'user') {
-                  navigation.navigate('PublicUserProfile', { userId: selected._id || selected.id });
-                } else if (selected.type === 'session') {
-                  // Navigate to the parent activity detail for this session
-                  navigation.navigate('ActivityDetailCard', { activityId: selected.activityId });
-                } else if (selected.type === 'activity') {
-                  navigation.navigate('ActivityDetailCard', { activityId: selected._id || selected.id });
-                } else if (selected.type === 'event') {
-                  navigation.navigate('EventDetailCard', { eventId: selected._id || selected.id });
-                }
-              }}
-            />
-          )}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              {query.length === 0
-                ? 'No recent results available.'
-                : 'No results found'}
-            </Text>
-          }
-        />
+        <View style={{ flex: 1 }}>
+          <TabView
+            navigationState={{ index: searchIndex, routes: searchRoutes }}
+            renderScene={renderScene}
+            onIndexChange={setSearchIndex}
+            initialLayout={{ width: Dimensions.get('window').width }}
+            renderTabBar={renderSearchTabBar}
+            sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
+            style={{ backgroundColor: themeVariables.greyColor }}
+          />
+        </View>
       )}
     </SafeAreaView>
   );
@@ -97,7 +173,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: themeVariables.greyColor,
   },
   searchInput: {
     // Indent and padded search bar
@@ -110,7 +186,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 20,
     // Optionally, add a subtle background for contrast
-    backgroundColor: themeVariables.lightGreyColor,
+    backgroundColor: themeVariables.whiteColor,
   },
   placeholderContainer: {
     alignItems: 'center',
