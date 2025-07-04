@@ -115,7 +115,7 @@ const Home = ({ navigation, homeOverview }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scrollView}>
         {/* Banner Section */}
         <View style={[
