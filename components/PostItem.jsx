@@ -24,6 +24,7 @@ const PostItem = ({ item, onPress }) => {
       title={item.title}
       content={item.content}
       date={formatted}
+      commentCount={item.comments?.length}
       onPress={onPress}
     />
   );

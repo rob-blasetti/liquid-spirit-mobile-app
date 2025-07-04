@@ -22,6 +22,7 @@ import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faCogs, faShareAlt, faFileAlt, faTasks, faCalendarAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 
@@ -45,23 +46,29 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   // Filter activities where the user is a facilitator or participant
-  const filterUserActivities = (allActivities, userId) => {
-    return (allActivities || []).filter(activity => {
-      // Check facilitators array; fac.refId may be string or object, fac.details may hold user
-      const isFacilitator = activity.facilitators?.some(fac => {
+const filterUserActivities = (allActivities, userId) => {
+  return (allActivities || []).filter(activity => {
+    const sessions = activity.sessions || [];
+
+    // Check each session for a match
+    return sessions.some(session => {
+      const isFacilitator = session.facilitators?.some(fac => {
         const fid = fac.details?._id
           || (fac.refId && typeof fac.refId === 'object' ? fac.refId._id : fac.refId);
-        return fid === userId;
+        return fid?.toString() === userId.toString();
       });
-      // Check participants array; part.refId may be string or object, part.details may hold user
-      const isParticipant = activity.participants?.some(part => {
+
+      const isParticipant = session.participants?.some(part => {
         const pid = part.details?._id
           || (part.refId && typeof part.refId === 'object' ? part.refId._id : part.refId);
-        return pid === userId;
+        return pid?.toString() === userId.toString();
       });
+
       return isFacilitator || isParticipant;
     });
-  };
+  });
+};
+
 
   // Filter events where the user is an attendee
   const filterUserEvents = (allEvents, userId) => {
@@ -90,22 +97,30 @@ const ProfileScreen = ({ navigation }) => {
   // Pending requests for activities created by or facilitated by user
   const [pendingRequests, setPendingRequests] = useState([]);
   useEffect(() => {
-    if (user?.id && userActivities) {
+    if (user?.id && Array.isArray(userActivities)) {
       const reqs = [];
-      console.log('UserActivities:', userActivities);
+      const now = new Date();
+      console.log('Activities:', userActivities);
       userActivities.forEach(activity => {
+        // Extract upcoming sessions
+        const upcoming = (activity.sessions || [])
+          .map(sess => typeof sess === 'object' ? sess : { date: sess })
+          .filter(sess => new Date(sess.date) > now);
+        if (upcoming.length === 0) return;
+        // Check if user created activity or is facilitator in any upcoming session
         const isCreator = activity.createdBy === user.id
           || (activity.creator && activity.creator._id === user.id);
-        // Detect if current user is a facilitator (refId may be string or embedded object)
-        const isFacilitator = activity.facilitators?.some(f => {
-          // f.refId can be an ID string or an object with _id
-          const fid = f.details?._id
-            || (f.refId && typeof f.refId === 'object' ? f.refId._id : f.refId);
-          return fid === user.id;
-        });
-        if (isCreator || isFacilitator) {
-          (activity.pendingFacilitators || []).forEach(p => {
-            // p may be a string ID or an object; user info may live in details or refId
+        const isFacilitator = upcoming.some(sess =>
+          Array.isArray(sess.facilitators) && sess.facilitators.some(f => {
+            const fid = f.details?._id
+              || (f.refId && typeof f.refId === 'object' ? f.refId._id : f.refId);
+            return fid === user.id;
+          })
+        );
+        if (!(isCreator || isFacilitator)) return;
+        // Collect pending facilitator/participant requests from upcoming sessions
+        upcoming.forEach(sess => {
+          (sess.pendingFacilitators || []).forEach(p => {
             const raw = typeof p === 'string'
               ? { _id: p }
               : (p.details || p.refId || p);
@@ -113,8 +128,7 @@ const ProfileScreen = ({ navigation }) => {
             const request = { ...raw, _id: id };
             reqs.push({ activity, type: 'facilitator', request });
           });
-          (activity.pendingParticipants || []).forEach(p => {
-            // p may be a string ID or an object; user info may live in details or refId
+          (sess.pendingParticipants || []).forEach(p => {
             const raw = typeof p === 'string'
               ? { _id: p }
               : (p.details || p.refId || p);
@@ -122,7 +136,7 @@ const ProfileScreen = ({ navigation }) => {
             const request = { ...raw, _id: id };
             reqs.push({ activity, type: 'participant', request });
           });
-        }
+        });
       });
       setPendingRequests(reqs);
     } else {
@@ -279,43 +293,15 @@ const renderRequests = () => {
       refreshing={refreshing}
       onRefresh={onRefresh}
       keyExtractor={(req, index) =>
-        req.activity._id + '_' + req.request._id + '_' + req.type || index.toString()
+        `${req.activity._id}_${req.request._id}_${req.type}` || index.toString()
       }
-      renderItem={({ item }) => {
-        const req = item;
-        return (
-          <View style={styles.pendingItem}>
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('ActivityDetailCard', {
-                  activityId: req.activity._id,
-                  activityPreload: req.activity,
-                })
-              }
-            >
-              <Text style={styles.pendingActivityTitle}>{req.activity.title}</Text>
-            </TouchableOpacity>
-            <View style={styles.pendingRequestRow}>
-              <FastImage source={{ uri: req.request?.profilePicture }} style={styles.pendingAvatar} />
-              <Text style={styles.pendingRequestText}>
-                {(req.request?.firstName || req.request?.name || req.request?.username)
-                  ? (req.request?.firstName || req.request?.name || req.request?.username) +
-                    (req.request?.lastName ? ` ${req.request.lastName}` : '')
-                  : req.request?._id}
-                {` requested to join as ${req.type}`}
-              </Text>
-            </View>
-            <View style={styles.pendingButtons}>
-              <TouchableOpacity style={styles.acceptButton} onPress={() => handleApprove(req)}>
-                <Text style={styles.buttonText}>Accept</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.declineButton} onPress={() => handleDeny(req)}>
-                <Text style={[styles.buttonText, styles.declineButtonText]}>Decline</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        );
-      }}
+      renderItem={({ item }) => (
+        <RequestItem
+          request={item}
+          onAccept={handleApprove}
+          onDecline={handleDeny}
+        />
+      )}
     />
   );
 };
@@ -417,6 +403,8 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
+        style={{ backgroundColor: themeVariables.darkGreyColor }}
+        sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
       />
     </SafeAreaView>
   );

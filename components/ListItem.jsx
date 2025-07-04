@@ -3,25 +3,38 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 
-const ListItem = ({ imageSource, title, content, date, onPress }) => {
+const ListItem = ({ imageSource, title, content, date, time, onPress, commentCount, countLabel = 'Comments' }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       {imageSource && (
         <FastImage source={imageSource} style={styles.image} />
       )}
-      <View style={styles.textContainer}>
-        {title && (
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-        )}
-        {content && (
-          <Text style={styles.content} numberOfLines={2}>
-            {content}
-          </Text>
-        )}
+      <View style={styles.mainContainer}>
+        <View style={styles.textContainer}>
+          {title && (
+            <Text style={styles.title} numberOfLines={1}>
+              {title}
+            </Text>
+          )}
+          {content && (
+            <Text style={styles.content} numberOfLines={2}>
+              {content}
+            </Text>
+          )}
+        </View>
+        <View style={styles.footerContainer}>
+          {commentCount !== undefined && (
+            <Text style={styles.commentCount}>
+              {countLabel}: {commentCount}
+            </Text>
+          )}
+          {date && (
+            <Text style={styles.date}>
+              {time ? `${time} • ${date}` : date}
+            </Text>
+          )}
+        </View>
       </View>
-      {date && <Text style={styles.date}>{date}</Text>}
     </TouchableOpacity>
   );
 };
@@ -29,7 +42,7 @@ const ListItem = ({ imageSource, title, content, date, onPress }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 12,
@@ -57,13 +70,27 @@ const styles = StyleSheet.create({
   },
   content: {
     fontSize: 14,
-    color: '#312783',
+    color: themeVariables.blackColor,
     marginTop: 4,
   },
   date: {
-    marginLeft: 8,
+    marginLeft: 'auto',
     fontSize: 12,
     color: '#555',
+  },
+  mainContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  commentCount: {
+    fontSize: 12,
+    color: '#555',
+    marginRight: 8,
   },
 });
 
