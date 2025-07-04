@@ -55,18 +55,22 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
           {user.profilePicture && (
             <FastImage source={{ uri: user.profilePicture }} style={styles.userAvatar} />
           )}
-          <Text style={styles.message} numberOfLines={2}>
-            <Text style={styles.userName}>{userName}</Text>
-            {messageSuffix}
-          </Text>
+          <View style={styles.requestTextContainer}>
+            <Text style={styles.requestTitle} numberOfLines={1}>
+              {type === 'participant' ? 'Participation Request:' : 'Facilitator Request:'}
+            </Text>
+            <Text style={styles.userName} numberOfLines={1}>
+              {userName}
+            </Text>
+          </View>
         </View>
       </View>
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={() => onAccept(reqItem)}>
-          <FontAwesomeIcon icon={faCheckCircle} size={20} color={themeVariables.secondaryColor} />
+          <FontAwesomeIcon icon={faCheckCircle} size={24} color={themeVariables.secondaryColor} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={() => onDecline(reqItem)}>
-          <FontAwesomeIcon icon={faTimesCircle} size={20} color={themeVariables.redColor} />
+          <FontAwesomeIcon icon={faTimesCircle} size={24} color={themeVariables.redColor} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -119,9 +123,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginRight: 6,
   },
+  requestTextContainer: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    flexShrink: 1,
+  },
+  requestTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+  },
   userName: {
     fontWeight: '600',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
   },
   actionsContainer: {
     flexDirection: 'row',
