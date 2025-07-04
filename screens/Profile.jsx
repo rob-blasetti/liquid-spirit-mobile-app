@@ -376,17 +376,25 @@ const renderScene = ({ route }) => {
                 borderBottomWidth: focused ? 2 : 0,
                 borderBottomColor: themeVariables.primaryColor,
               }}
-              onPress={() => jumpTo(route.key)}
+            onPress={() => jumpTo(route.key)}
             >
-              <Text style={{
-                  color: themeVariables.primaryColor,
-                  fontSize: 16,
-                  textTransform: 'none',
-                  textAlign: 'center',
-                  flexWrap: 'wrap',
-                }}>
-                {route.title}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{
+                    color: focused ? themeVariables.primaryColor : themeVariables.blackColor,
+                    fontSize: 16,
+                    fontWeight: focused ? 'bold' : 'normal',
+                    textTransform: 'none',
+                    textAlign: 'center',
+                    flexWrap: 'wrap',
+                  }}>
+                  {route.title}
+                </Text>
+                {route.key === 'requests' && pendingRequests.length > 0 && (
+                  <View style={styles.tabBadge}>
+                    <Text style={styles.tabBadgeText}>{pendingRequests.length}</Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -650,6 +658,23 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Badge for number of requests on Requests tab
+  tabBadge: {
+    backgroundColor: themeVariables.redColor,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  tabBadgeText: {
+    color: themeVariables.whiteColor,
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 
