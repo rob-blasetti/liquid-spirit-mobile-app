@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  StatusBar
+  StatusBar,
+  Dimensions
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faImages } from '@fortawesome/free-regular-svg-icons';
@@ -36,9 +37,15 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const navigation = useNavigation();
   const handleClose = onClose ? onClose : () => navigation.goBack();
+  const insets = useSafeAreaInsets();
+  useEffect(() => {
+    console.log('SafeArea insets:', insets);
+    console.log('Window dimensions on mount:', Dimensions.get('window'));
+  }, []);
 
 
   const openCamera = async () => {
+    console.log('openCamera pressed. window dimensions:', Dimensions.get('window'));
     const options = { mediaType: 'mixed', quality: 0.7 };
     launchCamera(options, (response) => {
       if (response.didCancel) return;
@@ -53,6 +60,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
   };
 
   const openLibrary = async () => {
+    console.log('openLibrary pressed. window dimensions:', Dimensions.get('window'));
     const options = { mediaType: 'mixed', quality: 0.7 };
     launchImageLibrary(options, (response) => {
       if (response.didCancel) return;
@@ -126,17 +134,38 @@ export default function CreatePost({ onPostCreated, onClose }) {
         barStyle="dark-content"
         translucent={false}
       />
-      <SafeAreaView style={styles.container} edges={['top']}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
+        ]}
+        onLayout={e => console.log('SafeAreaView layout:', e.nativeEvent.layout)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+          onLayout={e => console.log('KeyboardAvoidingView layout:', e.nativeEvent.layout)}
+        >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.headerRow}>
+          <View
+            style={{ flex: 1 }}
+            onLayout={e => console.log('CreatePost root View layout:', e.nativeEvent.layout)}
+          >
+            <View
+              style={styles.headerRow}
+              onLayout={e => console.log('headerRow layout:', e.nativeEvent.layout)}
+            >
               <Text style={styles.header}>Create a post</Text>
               <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
                 <FontAwesomeIcon icon={faTimes} size={24} color={themeVariables.primaryColor} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content}>
+            <ScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={styles.content}
+              onLayout={e => console.log('ScrollView layout:', e.nativeEvent.layout)}
+              onContentSizeChange={(w, h) => console.log('ScrollView content size:', w, h)}
+            >
 
               <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
                 <FontAwesomeIcon icon={faImages} size={40} color={themeVariables.primaryColor} />
@@ -185,7 +214,10 @@ export default function CreatePost({ onPostCreated, onClose }) {
               )}
 
             </ScrollView>
-            <View style={styles.footer}>
+            <View
+              style={styles.footer}
+              onLayout={e => console.log('footer layout:', e.nativeEvent.layout)}
+            >
               <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
                 <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Create post'}</Text>
               </TouchableOpacity>
@@ -202,8 +234,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: themeVariables.darkGreyColor,
-    // Removed marginTop to allow background to extend under status bar
-    // marginTop: 60,
   },
   content: {
     padding: 20,
