@@ -11,6 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import Video from 'react-native-video';
 import * as Progress from 'react-native-progress';
@@ -108,22 +110,29 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
     };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalBackground}>
-        <View style={styles.modalContainer}>
-            <View style={styles.headerRow}>
-              <Text style={styles.header}>Create a post</Text>
-              <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-                <FontAwesomeIcon
-                  icon={faTimes}
-                  size={24}
-                  color={themeVariables.primaryColor}
-                />
-              </TouchableOpacity>
-            </View>
+      <TouchableWithoutFeedback onPress={handleClose}>
+        <View style={styles.backdrop}>
+          <TouchableWithoutFeedback onPress={() => {}}>
+            <KeyboardAvoidingView
+              style={styles.modalContainer}
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              <View style={styles.headerRow}>
+                <Text style={styles.header}>Create a post</Text>
+                <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
+                  <FontAwesomeIcon
+                    icon={faTimes}
+                    size={24}
+                    color={themeVariables.primaryColor}
+                  />
+                </TouchableOpacity>
+              </View>
 
             <ScrollView contentContainerStyle={styles.content}>
               <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
@@ -191,9 +200,11 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-    </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </View>
+    </TouchableWithoutFeedback>
+  </Modal>
   );
 };
 
@@ -202,12 +213,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalBackground: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
   },
   modalContainer: {
     width: '100%',
