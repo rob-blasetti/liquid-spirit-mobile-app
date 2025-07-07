@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import CreatePost from '../screens/CreatePost';
+import CreatePost from '../modal/PostModal';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { uploadImageWithThumbnail, uploadVideoWithThumbnail, createPost } from '../services/PostService';
 import { UserContext } from '../contexts/UserContext';

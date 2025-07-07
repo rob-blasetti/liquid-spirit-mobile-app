@@ -34,6 +34,7 @@ import BottomBar from './navigation/BottomBar';
 import NotificationScreen from './screens/Notifications';
 // Modal screen for creating posts
 import CreatePostScreen from './screens/CreatePost';
+import PostModal from './modal/PostModal';
 
 // FontAwesome library setup
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -212,7 +213,7 @@ const MainApp = () => {
             {/* Modal for creating posts */}
             <Stack.Screen
               name="CreatePostModal"
-              component={CreatePostScreen}
+              component={PostModal}
               options={{
                 // full-screen modal to cover the status-bar area
                 presentation: 'fullScreenModal',
