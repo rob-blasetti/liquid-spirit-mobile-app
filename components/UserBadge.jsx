@@ -22,16 +22,19 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
   let displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
   let avatarUri = user.profilePicture || null;
   let certifications = [];
+  const verifiedIcon = 'checkmark-circle';
+  const protectionIcon = 'shield-checkmark';
+  const lsaIcon = 'star';
 
   if (type === 'user') {
     if (userCertifications?.isVerified) {
-      certifications.push({ iconName: faCheck, label: 'Verified User', style: styles.verifiedBadge });
+      certifications.push({ iconName: verifiedIcon, label: 'Verified User', style: styles.verifiedBadge });
     }
     if (userCertifications?.hasChildProtection) {
-      certifications.push({ iconName: faShieldAlt, label: 'Child Prot Cert.', style: styles.protectionBadge });
+      certifications.push({ iconName: protectionIcon, label: 'Child Prot Cert.', style: styles.protectionBadge });
     }
     if (userCertifications?.isLocalAssemblyMember) {
-      certifications.push({ iconName: faStar, label: 'LSA Member', style: styles.lsaBadge });
+      certifications.push({ iconName: lsaIcon, label: 'LSA Member', style: styles.lsaBadge });
     }
   }
 

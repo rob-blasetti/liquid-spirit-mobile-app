@@ -32,14 +32,14 @@ const SessionCard = ({
   let statusIcon;
   switch (session.status) {
     case 'Scheduled':
-      statusIcon = faClock;
+      statusIcon = clockIcon;
       break;
     case 'Completed':
-      statusIcon = faCheckCircle;
+      statusIcon = checkCircle;
       break;
     case 'Cancelled':
     case 'Expired':
-      statusIcon = faTimesCircle;
+      statusIcon = timesCircle;
       break;
     default:
       statusIcon = null;
