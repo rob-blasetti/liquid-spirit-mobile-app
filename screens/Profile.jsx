@@ -40,12 +40,12 @@ const ProfileScreen = ({ navigation }) => {
         .catch(err => console.error('Failed to fetch user certifications:', err));
     }
   }, [user?.id, token]);
-  // Prepare certification badges
+  // Prepare certification badges (using Ionicons)
   const certData = profileCertData || {};
   const badgeDefs = [
-    { flag: certData.isVerified, label: 'Verified User', icon: faCheck, color: '#3e8e41' },
-    { flag: certData.hasChildProtection, label: 'Child Protection Certified', icon: faShieldAlt, color: '#d81b60' },
-    { flag: certData.isLocalAssemblyMember, label: 'LSA Member', icon: faStar, color: '#b71c1c' },
+    { flag: certData.isVerified, label: 'Verified User', icon: 'checkmark', color: '#3e8e41' },
+    { flag: certData.hasChildProtection, label: 'Child Protection Certified', icon: 'shield-checkmark', color: '#d81b60' },
+    { flag: certData.isLocalAssemblyMember, label: 'LSA Member', icon: 'star', color: '#b71c1c' },
   ];
   const certItems = badgeDefs
     .filter(b => b.flag)
@@ -243,15 +243,15 @@ const renderList = (data, type) => {
     let message;
     switch (type) {
       case 'posts':
-        icon = faFileAlt;
+        icon = 'document-outline';
         message = 'No posts at the moment';
         break;
       case 'activities':
-        icon = faTasks;
+        icon = 'list-outline';
         message = 'No activities at the moment';
         break;
       case 'events':
-        icon = faCalendarAlt;
+        icon = 'calendar-outline';
         message = 'No events at the moment';
         break;
       default:

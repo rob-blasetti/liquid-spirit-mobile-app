@@ -23,7 +23,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>84</string>
+	<string>85</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -55,6 +55,10 @@
 		<string>facebook</string>
 		<string>instagram</string>	
 	</array>
+	<key>UIAppFonts</key>
+		<array>
+			<string>Ionicons.ttf</string>
+		</array>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>arm64</string>

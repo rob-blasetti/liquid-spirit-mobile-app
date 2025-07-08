@@ -95,11 +95,11 @@ const PublicUserProfile = () => {
   if (certData.hasChildProtection) certs.push('Child Protection');
   if (certData.isLocalAssemblyMember) certs.push('LSA Member');
 
-  // certification badges definitions
+  // certification badges definitions using Ionicons
   const badgeDefs = [
-    { flag: certData.isVerified, icon: faCheck, color: '#3e8e41', label: 'Verified User' },
-    { flag: certData.hasChildProtection, icon: faShieldAlt, color: '#d81b60', label: 'Child Protection' },
-    { flag: certData.isLocalAssemblyMember, icon: faStar, color: '#b71c1c', label: 'LSA Member' },
+    { flag: certData.isVerified, icon: 'checkmark', color: '#3e8e41', label: 'Verified User' },
+    { flag: certData.hasChildProtection, icon: 'shield-checkmark', color: '#d81b60', label: 'Child Protection' },
+    { flag: certData.isLocalAssemblyMember, icon: 'star', color: '#b71c1c', label: 'LSA Member' },
   ];
   const postsCount = Array.isArray(userData.posts) ? userData.posts.length : 0;
   const activitiesCount = Array.isArray(userData.activities) ? userData.activities.length : 0;

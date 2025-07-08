@@ -226,14 +226,14 @@ const Home = ({ navigation, homeOverview }) => {
                       navigation.navigate('Events');
                     }
                   }}
-                  actionIcon={faQuestionCircle}
+                  actionIcon="help-circle-outline"
                   style={styles.smallTileGap}
                 />
                 <SquareTile
                   subheading={`Events this month: ${homeOverview.stats?.eventsCount}`}
                   bgImgColour="red"
                   onPress={() => navigation.navigate('Events')}
-                  actionIcon={faSquarePollVertical}
+                  actionIcon="bar-chart-outline"
                   style={styles.smallTileLast}
                 />
               </View>
@@ -285,14 +285,14 @@ const Home = ({ navigation, homeOverview }) => {
                 <SquareTile
                   subheading="My Local Spiritual Assembly"
                   bgImgColour="red"
-                  actionIcon={faUsers}
+                  actionIcon="people-outline"
                   style={styles.smallTileGap}
                   onPress={() => setAssemblyModalVisible(true)}
                 />
                 <SquareTile
                   subheading="Request Agenda Item"
                   bgImgColour="red"
-                  actionIcon={faAlignLeft}
+                  actionIcon="document-text-outline"
                   style={styles.smallTileLast}
                   onPress={() => navigation.navigate('RequestAgendaItem')}
                 />
@@ -343,14 +343,14 @@ const Home = ({ navigation, homeOverview }) => {
                       navigation.navigate('Activities');
                     }
                   }}
-                  actionIcon={faQuestionCircle}
+                  actionIcon="help-circle-outline"
                   style={styles.smallTileGap}
                 />
                 <SquareTile
                   subheading={`Activities this month: ${homeOverview.stats?.activitiesCount}`}
                   bgImgColour="blue"
                   onPress={() => navigation.navigate('Activities')}
-                  actionIcon={faSquarePollVertical}
+                  actionIcon="bar-chart-outline"
                   style={styles.smallTileLast}
                 />
               </View>
@@ -376,7 +376,7 @@ const Home = ({ navigation, homeOverview }) => {
                 <SquareTile
                   title="See More Posts"
                   onPress={() => navigation.navigate('Feed')}
-                  actionIcon={faArrowRight}
+                  actionIcon="arrow-forward-outline"
                   style={styles.smallTileLast}
                 />
               </View>
