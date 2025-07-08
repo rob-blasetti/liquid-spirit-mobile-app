@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Tooltip } from 'react-native-elements';
 import themeVariables from '../styles/theme';
 
@@ -23,8 +23,8 @@ const CertificationsList = ({ items = [] }) => {
           <View key={idx} style={[styles.badge, { backgroundColor: color }]}> 
             {icon && (
               // Larger icon without label
-              <FontAwesomeIcon
-                icon={icon}
+              <Ionicons
+                name={icon}
                 size={18}
                 color={themeVariables.whiteColor}
               />

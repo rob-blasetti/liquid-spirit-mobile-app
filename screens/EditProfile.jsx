@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
 import { colors } from '../styles/colours';
 import { UserContext } from '../contexts/UserContext';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSave, faUpload, faCamera } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
@@ -106,7 +105,7 @@ const EditProfile = ({ navigation }) => {
         <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.changeAvatarButton} onPress={handleProfilePicturePress}>
-        <FontAwesomeIcon icon={faCamera} color={themeVariables.primaryColor} size={16} />
+        <Ionicons name="camera-outline" color={themeVariables.primaryColor} size={16} />
         <Text style={styles.changeAvatarButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -140,7 +139,7 @@ const EditProfile = ({ navigation }) => {
       ))}
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <FontAwesomeIcon icon={faSave} size={20} color="#fff" />
+        <Ionicons name="save-outline" size={20} color="#fff" />
         <Text style={styles.saveButtonText}>Save Changes</Text>
       </TouchableOpacity>
       </ScrollView>

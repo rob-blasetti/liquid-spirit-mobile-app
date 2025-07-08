@@ -15,8 +15,7 @@ import {
 import Video from 'react-native-video';
 import * as Progress from 'react-native-progress';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faTimes, faImages } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
@@ -117,8 +116,8 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
             <View style={styles.headerRow}>
               <Text style={styles.header}>Create a post</Text>
               <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-                <FontAwesomeIcon
-                  icon={faTimes}
+                <Ionicons
+                  name="close"
                   size={24}
                   color={themeVariables.primaryColor}
                 />
@@ -127,8 +126,8 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
 
             <ScrollView contentContainerStyle={styles.content}>
               <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
-                <FontAwesomeIcon
-                  icon={faImages}
+                <Ionicons
+                  name="images-outline"
                   size={40}
                   color={themeVariables.primaryColor}
                 />

@@ -1,14 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import {
-  faBell,
-  faUsers,
-  faCalendar,
-  faInfo,
-  faAlignLeft,
-} from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
@@ -19,15 +12,15 @@ const NotificationIcon = ({ type }) => {
 
   switch (type) {
     case "post":
-      return <FontAwesomeIcon icon={faUsers} size={20} style={iconStyle} />;
+      return <Ionicons name="people-outline" size={20} style={iconStyle} />;
     case "activity":
-      return <FontAwesomeIcon icon={faAlignLeft} size={20} style={iconStyle} />;
+      return <Ionicons name="list-outline" size={20} style={iconStyle} />;
     case "event":
-      return <FontAwesomeIcon icon={faCalendar} size={20} style={iconStyle} />;        
+      return <Ionicons name="calendar-outline" size={20} style={iconStyle} />;
     case "announcement":
-      return <FontAwesomeIcon icon={faInfo} size={20} style={iconStyle} />;
+      return <Ionicons name="information-circle-outline" size={20} style={iconStyle} />;
     default:
-      return <FontAwesomeIcon icon={faBell} size={20} style={iconStyle} />;
+      return <Ionicons name="notifications-outline" size={20} style={iconStyle} />;
   }
 };
 

@@ -16,9 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faImages } from '@fortawesome/free-regular-svg-icons';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -157,7 +155,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
             >
               <Text style={styles.header}>Create a post</Text>
               <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
-                <FontAwesomeIcon icon={faTimes} size={24} color={themeVariables.primaryColor} />
+                <Ionicons name="close" size={24} color={themeVariables.primaryColor} />
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -168,7 +166,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
             >
 
               <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
-                <FontAwesomeIcon icon={faImages} size={40} color={themeVariables.primaryColor} />
+                <Ionicons name="images-outline" size={40} color={themeVariables.primaryColor} />
                 <Text style={styles.uploadButtonText}>Upload image or video</Text>
               </TouchableOpacity>
 

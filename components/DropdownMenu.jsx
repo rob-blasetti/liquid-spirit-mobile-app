@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, TouchableOpacity, StyleSheet, Text, View, Dimensions } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faFlag, faBan, faVolumeMute, faTrash } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -22,17 +21,17 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost })
       <Animated.View style={[styles.menu, { opacity, transform: [{ translateY }] }]}>
         <TouchableOpacity style={styles.item} onPress={onFlag}>
           <Text style={styles.menuText}>
-            <FontAwesomeIcon icon={faFlag} size={16} color="#312783" /> Report Post
+            <Ionicons name="flag-outline" size={16} color="#312783" /> Report Post
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={onBlock}>
           <Text style={styles.menuText}>
-            <FontAwesomeIcon icon={faBan} size={16} color="#312783" /> Block User
+            <Ionicons name="ban" size={16} color="#312783" /> Block User
           </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={onMute}>
           <Text style={styles.menuText}>
-            <FontAwesomeIcon icon={faVolumeMute} size={16} color="#312783" /> Mute User
+            <Ionicons name="volume-mute-outline" size={16} color="#312783" /> Mute User
           </Text>
         </TouchableOpacity>
         {isOwnPost && (
@@ -40,7 +39,7 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost })
             <View style={styles.seperator} />
             <TouchableOpacity style={styles.item} onPress={onDelete}>
             <Text style={styles.menuText}>
-                <FontAwesomeIcon icon={faTrash} size={16} color="#312783" /> Delete Post
+                <Ionicons name="trash-outline" size={16} color="#312783" /> Delete Post
             </Text>
             </TouchableOpacity>
         </>

@@ -2,14 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCheck, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Avatar from '@flipxyz/react-native-boring-avatars';
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>
     <View style={[styles.badge, style]}>
-      <FontAwesomeIcon icon={iconName} size={16} color="#fff" />
+      <Ionicons name={iconName} size={16} color="#fff" />
     </View>
   </Tooltip>
 );

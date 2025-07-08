@@ -27,12 +27,7 @@ import {
 import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import {
-  faPlusCircle,
-  faVideo,
-  faShare,
-} from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../styles/theme';
 import MapView, { Marker } from 'react-native-maps';
@@ -113,7 +108,7 @@ const ActivityDetailCard = ({ route }) => {
           }}
           onPress={handleShare}
         >
-          <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
+          <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
         </TouchableOpacity>
       ),
     });
@@ -444,7 +439,7 @@ const ActivityCardBody = ({
           <>
             <Text style={styles.mapTitle}>Online Only</Text>
             <View style={styles.onlineRow}>
-              <FontAwesomeIcon icon={faVideo} size={20} color={themeVariables.primaryColor} style={{ marginRight: 8 }} />
+              <Ionicons name="videocam-outline" size={20} color={themeVariables.primaryColor} style={{ marginRight: 8 }} />
               <Text
                 style={[styles.headerInfoText, { color: themeVariables.primaryColor }]}
                 onPress={() => Linking.openURL(onlineLink)}
@@ -583,7 +578,7 @@ const Fact = ({ icon, label, value, onPress, link }) => (
     onPress={onPress}
     activeOpacity={0.7}
   >
-    <FontAwesomeIcon icon={icon} size={18} color="#312783" />
+    <Ionicons name={icon} size={18} color="#312783" />
     <Text style={styles.factLabel}>{label}</Text>
     <Text style={[styles.factValue, link && styles.linkText]} numberOfLines={1}>
       {value}
@@ -598,7 +593,7 @@ const DetailCell = ({ icon, label, main, sub, onPress, isLink }) => (
     disabled={!onPress}
     activeOpacity={0.8}
   >
-    <FontAwesomeIcon icon={icon} size={18} color="#312783" style={styles.detailIcon} />
+    <Ionicons name={icon} size={18} color="#312783" style={styles.detailIcon} />
     <Text style={styles.detailLabel}>{label}</Text>
     <Text style={[styles.detailValue, isLink && styles.linkText]}>{main}</Text>
     {sub ? <Text style={styles.detailSub}>{sub}</Text> : null}

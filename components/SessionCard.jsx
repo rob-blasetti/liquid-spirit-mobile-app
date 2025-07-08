@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Easing, ScrollView, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import UserCell from './UserCell';
 import { BlurView } from '@react-native-community/blur';
-import { faClock } from '@fortawesome/free-regular-svg-icons';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+const plusCircle = 'add-circle-outline';
+const clockIcon = 'time-outline';
+const checkCircle = 'checkmark-circle-outline';
+const timesCircle = 'close-circle-outline';
 
 const SessionCard = ({
   session,
@@ -84,8 +85,8 @@ const closeModal = () => {
         </Text>
         <View style={styles.sessionStatusInline}>
           {statusIcon && (
-            <FontAwesomeIcon
-              icon={statusIcon}
+            <Ionicons
+              name={statusIcon}
               size={14}
               color={themeVariables.whiteColor}
               style={styles.statusIcon}
@@ -139,7 +140,7 @@ const closeModal = () => {
               <Text style={styles.modalTitle}>Facilitators</Text>
               {detailsLoaded && hasFacilitatorSpace && !isUserFacilitator && !hasRequestedFacilitator && (
                 <TouchableOpacity style={styles.requestButtonSmall} onPress={onFacilitatorRequest}>
-                  <FontAwesomeIcon icon={faPlusCircle} size={16} color={themeVariables.whiteColor} />
+                  <Ionicons name={plusCircle} size={16} color={themeVariables.whiteColor} />
                   <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}
@@ -153,7 +154,7 @@ const closeModal = () => {
               <Text style={styles.modalTitle}>Participants</Text>
               {detailsLoaded && hasParticipantSpace && !isUserParticipant && !hasRequestedParticipant && (
                 <TouchableOpacity style={styles.requestButtonSmall} onPress={onParticipantRequest}>
-                  <FontAwesomeIcon icon={faPlusCircle} size={16} color={themeVariables.whiteColor} />
+                  <Ionicons name={plusCircle} size={16} color={themeVariables.whiteColor} />
                   <Text style={styles.requestButtonText}>Request Join</Text>
                 </TouchableOpacity>
               )}

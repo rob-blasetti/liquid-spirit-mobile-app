@@ -37,12 +37,7 @@ import CreatePostScreen from './screens/CreatePost';
 import PostModal from './modal/PostModal';
 
 // FontAwesome library setup
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { fab } from '@fortawesome/free-brands-svg-icons';
-import { faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-
-library.add(fab, faUser, faCompass, faSquarePlus, faBahai, faAlignLeft, faHome);
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Stack = createNativeStackNavigator();
 
@@ -157,8 +152,8 @@ const MainApp = () => {
                       padding: 6,
                     }}
                   >
-                    <FontAwesomeIcon
-                      icon={faChevronLeft}
+                    <Ionicons
+                      name="chevron-back"
                       color={themeVariables.blackColor}
                       size={20}
                     />

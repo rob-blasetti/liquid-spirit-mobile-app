@@ -4,8 +4,7 @@ import themeVariables from '../styles/theme';
 import localImages from '../utils/localImages';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faXmarkCircle, faClock, faSprout } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 /**
  * Card component to display a search result of type activity, event, or member.
@@ -81,8 +80,8 @@ const SearchCard = ({ item, onPress }) => {
         return (
           <>
             <View style={[styles.chip, styles.communityChip]}>
-              <FontAwesomeIcon
-                icon={faSprout}
+              <Ionicons
+                name="leaf-outline"
                 size={12}
                 color={themeVariables.whiteColor}
                 style={styles.chipIcon}
@@ -96,8 +95,8 @@ const SearchCard = ({ item, onPress }) => {
         return (
           <>
             <View style={[styles.chip, styles.communityChip]}>
-              <FontAwesomeIcon
-                icon={faSprout}
+              <Ionicons
+                name="leaf-outline"
                 size={12}
                 color={themeVariables.whiteColor}
                 style={styles.chipIcon}
@@ -114,10 +113,9 @@ const SearchCard = ({ item, onPress }) => {
                       styles.chip,
                       isError ? styles.expiredStatusChip : styles.statusChip,
                   ]}>
-                    <FontAwesomeIcon
-                      icon={isError ? faXmarkCircle : faClock}
+                    <Ionicons
+                      name={isError ? 'close-circle' : 'time-outline'}
                       size={12}
-                      // Status chip icon in black
                       color={themeVariables.blackColor}
                       style={styles.chipIcon}
                     />
@@ -136,7 +134,7 @@ const SearchCard = ({ item, onPress }) => {
       case 'event':
         return (
           <View style={[styles.chip, styles.communityChip]}>
-            <FontAwesomeIcon icon={faSprout} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
+            <Ionicons name="leaf-outline" size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
             <Text style={styles.chipText}>{safeText(item.community)}</Text>
           </View>
         );
@@ -144,7 +142,7 @@ const SearchCard = ({ item, onPress }) => {
       case 'user':
         return (
           <View style={[styles.chip, styles.communityChip]}>
-            <FontAwesomeIcon icon={faSprout} size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
+            <Ionicons name="leaf-outline" size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
             <Text style={styles.chipText}>{safeText(item.community)}</Text>
           </View>
         );

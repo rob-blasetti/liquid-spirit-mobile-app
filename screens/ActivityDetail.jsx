@@ -14,8 +14,7 @@ import FastImage from 'react-native-fast-image';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faClock, faCarSide, faVideo } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 const { height: windowHeight } = Dimensions.get('window');
 
 const ActivityDetail = ({ route }) => {
@@ -76,19 +75,19 @@ const ActivityDetail = ({ route }) => {
             <Text style={styles.type}>{activityPreload.activityType?.name || 'Unknown'}</Text>
 
             <View style={styles.iconRow}>
-              <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
+              <Ionicons name="calendar-outline" size={22} color="#312783" style={styles.iconSpacing} />
               <Text style={styles.date}>Starts: {new Date(activityPreload.date).toLocaleDateString()}</Text>
             </View>
 
             <View style={styles.iconRow}>
-              <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
+              <Ionicons name="time-outline" size={22} color="#312783" style={styles.iconSpacing} />
               <Text style={styles.schedule}>{activityPreload.groupDetails?.day || 'N/A'} - {formatTime(activityPreload.groupDetails?.time) || 'N/A'} ({activityPreload.groupDetails?.frequency || 'One-time'})</Text>
             </View>
 
             <TouchableOpacity onPress={activityPreload.onlineLink ? () => Linking.openURL(activityPreload.onlineLink) : openGoogleMaps}>
               <View style={styles.iconRow}>
-                <FontAwesomeIcon
-                  icon={activityPreload.onlineLink ? faVideo : faCarSide}
+                <Ionicons
+                  name={activityPreload.onlineLink ? 'videocam-outline' : 'car-outline'}
                   size={22}
                   color="#312783"
                   style={styles.iconSpacing}
@@ -141,19 +140,19 @@ const ActivityDetail = ({ route }) => {
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
 
         <View style={styles.iconRow}>
-          <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
+          <Ionicons name="calendar-outline" size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.date}>Starts: {new Date(activity.date).toLocaleDateString()}</Text>
         </View>
 
         <View style={styles.iconRow}>
-          <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
+          <Ionicons name="time-outline" size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.schedule}>{activity.groupDetails?.day || 'N/A'} - {formatTime(activity.groupDetails?.time) || 'N/A'} ({activity.groupDetails?.frequency || 'One-time'})</Text>
         </View>
 
         <TouchableOpacity onPress={activity.onlineLink ? () => Linking.openURL(activity.onlineLink) : openGoogleMaps}>
           <View style={styles.iconRow}>
-            <FontAwesomeIcon
-              icon={activity.onlineLink ? faVideo : faCarSide}
+            <Ionicons
+              name={activity.onlineLink ? 'videocam-outline' : 'car-outline'}
               size={22}
               color="#312783"
               style={styles.iconSpacing}

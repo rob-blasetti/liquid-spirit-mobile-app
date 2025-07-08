@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, ImageBackground } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 
@@ -48,7 +48,7 @@ const BasicTile = ({ heading, subheading, icon, iconColor, headingColor, subhead
         </View>
         {icon && (
           <View style={styles.iconContainer}>
-            <FontAwesomeIcon icon={icon} size={16} color={iconColor || themeVariables.whiteColor} />
+            <Ionicons name={icon} size={16} color={iconColor || themeVariables.whiteColor} />
           </View>
         )}
         {dateTime && (

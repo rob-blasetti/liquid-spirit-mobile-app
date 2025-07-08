@@ -2,8 +2,7 @@ import React, { useContext, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSignOutAlt, faTrash, faBell, faLock, faUser, faMoon, faChevronRight, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { CommonActions } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
@@ -62,7 +61,7 @@ const Settings = ({ navigation }) => {
       {/* Custom back chevron */}
       <View style={styles.chevronContainer}>
         <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
-          <FontAwesomeIcon icon={faChevronLeft} size={20} color={themeVariables.blackColor} />
+          <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
@@ -71,19 +70,19 @@ const Settings = ({ navigation }) => {
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
-          <FontAwesomeIcon icon={faUser} size={20} color="#312783" />
+          <Ionicons name="person-outline" size={20} color="#312783" />
           <Text style={styles.itemText}>Edit Profile</Text>
-          <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
+          <Ionicons name="chevron-forward" size={18} color="#ccc" />
         </TouchableOpacity>
 {/* 
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
-          <FontAwesomeIcon icon={faLock} size={20} color="#312783" />
+          <Ionicons name="lock-closed-outline" size={20} color="#312783" />
           <Text style={styles.itemText}>Change Password</Text>
-          <FontAwesomeIcon icon={faChevronRight} size={18} color="#ccc" />
+          <Ionicons name="chevron-forward" size={18} color="#ccc" />
         </TouchableOpacity> */}
 
         {/* <View style={styles.item}>
-          <FontAwesomeIcon icon={faBell} size={20} color="#312783" />
+          <Ionicons name="notifications-outline" size={20} color="#312783" />
           <Text style={styles.itemText}>Notifications</Text>
           <Switch value={true} />
         </View> */}
@@ -91,12 +90,12 @@ const Settings = ({ navigation }) => {
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
-          <FontAwesomeIcon icon={faSignOutAlt} size={20} color="#d9534f" />
+          <Ionicons name="log-out-outline" size={20} color="#d9534f" />
           <Text style={[styles.itemText, { color: '#d9534f' }]}>Logout</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.item} onPress={openModal}>
-          <FontAwesomeIcon icon={faTrash} size={20} color="#e74c3c" />
+          <Ionicons name="trash-outline" size={20} color="#e74c3c" />
           <Text style={[styles.itemText, { color: '#e74c3c' }]}>Delete Account</Text>
         </TouchableOpacity>
       </View>

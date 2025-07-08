@@ -11,16 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import {
-  faFilter,
-  faSort,
-  faFire,
-  faPrayingHands,
-  faUserShield,
-  faCalendar,
-  faMapMarker,
-} from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
 
@@ -117,11 +108,11 @@ const Events = () => {
         <View style={styles.cardContent}>
           <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
           <View style={styles.infoRow}>
-            <FontAwesomeIcon icon={faCalendar} size={14} color="#666" />
+            <Ionicons name="calendar-outline" size={14} color="#666" />
             <Text style={styles.eventDate}>{formatDate(item.date, item.startTime)}</Text>
           </View>
           <View style={styles.infoRow}>
-            <FontAwesomeIcon icon={faMapMarker} size={16} color="#666" />
+            <Ionicons name="location-outline" size={16} color="#666" />
             <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
           </View>
         </View>
@@ -139,12 +130,12 @@ const Events = () => {
       {/* Control Bar with Filter & Sort */}
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
-        <FontAwesomeIcon icon={faFilter} size={16} color="#fff" />
+        <Ionicons name="filter" size={16} color="#fff" />
         <Text style={styles.buttonText}>Filter</Text>
       </TouchableOpacity>
       
       <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
-        <FontAwesomeIcon icon={faSort} size={16} color="#fff" />
+        <Ionicons name="swap-vertical" size={16} color="#fff" />
         <Text style={styles.buttonText}>
           {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
         </Text>
@@ -174,8 +165,8 @@ const Events = () => {
             setSelectedEventType(selectedEventType === 'Feast' ? null : 'Feast');
           }}
         >
-          <FontAwesomeIcon
-            icon={faFire}
+          <Ionicons
+            name="flame-outline"
             size={20}
             color={selectedEventType === 'Feast' ? '#fff' : '#312783'}
           />
@@ -198,8 +189,8 @@ const Events = () => {
             setSelectedEventType(selectedEventType === 'Holy Day' ? null : 'Holy Day');
           }}
         >
-          <FontAwesomeIcon
-            icon={faPrayingHands}
+          <Ionicons
+            name="hand-left-outline"
             size={20}
             color={selectedEventType === 'Holy Day' ? '#fff' : '#312783'}
           />
@@ -222,8 +213,8 @@ const Events = () => {
             setSelectedEventType(selectedEventType === 'Admin' ? null : 'Admin');
           }}
         >
-          <FontAwesomeIcon
-            icon={faUserShield}
+          <Ionicons
+            name="shield-checkmark-outline"
             size={20}
             color={selectedEventType === 'Admin' ? '#fff' : '#312783'}
           />
