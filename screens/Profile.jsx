@@ -30,7 +30,9 @@ import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, userPosts, userActivities, userEvents, isLoading, token, setUserPosts, setUserActivities, setUserEvents } = useContext(UserContext);
+  const { user, userPosts, userActivities, userEvents, isLoading, token,
+          setUserPosts, setUserActivities, setUserEvents,
+          isTokenExpired, refreshSession } = useContext(UserContext);
   // Fetch full user data for certifications
   const [profileCertData, setProfileCertData] = useState({});
   useEffect(() => {
@@ -121,7 +123,6 @@ const filterUserActivities = (allActivities, userId) => {
     if (user?.id && Array.isArray(userActivities)) {
       const reqs = [];
       const now = new Date();
-      console.log('Activities:', userActivities);
       userActivities.forEach(activity => {
         // Extract upcoming sessions
         const upcoming = (activity.sessions || [])
@@ -169,8 +170,14 @@ const filterUserActivities = (allActivities, userId) => {
     if (!token) return;
     setRefreshing(true);
     try {
+      // Refresh posts, activities, and events (requires auth token)
+      if (!token) return;
+      if (isTokenExpired && isTokenExpired(token)) {
+        await refreshSession();
+        if (!token || (isTokenExpired && isTokenExpired(token))) return;
+      }
       const [newPosts, newActivities, newEvents] = await Promise.all([
-        fetchExploreFeed(),
+        fetchExploreFeed(token),
         fetchActivities(token),
         fetchEvents(token),
       ]);

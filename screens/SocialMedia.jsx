@@ -66,14 +66,21 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     }
   }, [route?.params?.post, explorePosts, forYouPosts, activeTab]);
 
+  // Load Explore tab posts, include auth token
   const fetchExplorePosts = useCallback(async () => {
+    if (!token) return;
     try {
-      const exploreData = await fetchExploreFeed();
+      // Ensure token validity
+      if (isTokenExpired(token)) {
+        await refreshSession();
+        if (!token || isTokenExpired(token)) return;
+      }
+      const exploreData = await fetchExploreFeed(token);
       setExplorePosts(exploreData);
     } catch (error) {
       console.error('Error fetching explore feed:', error);
     }
-  }, []);
+  }, [token, isTokenExpired, refreshSession]);
 
   const fetchForYouPosts = useCallback(async () => {
     if (!token) return;

@@ -1,12 +1,16 @@
 import { API_URL } from '../config';
-import { UserContext } from '../contexts/UserContext';
-import { useContext } from 'react';
+// Note: UserContext/useContext not needed here
 
-export const fetchExploreFeed = async () => {
+// Fetch the "Explore" feed; requires auth token
+export const fetchExploreFeed = async (token) => {
   try {
+      if (!token) {
+        throw new Error('No authentication token provided for explore feed');
+      }
       const response = await fetch(`${API_URL}/api/posts/explore-feed`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
       });
   

@@ -53,7 +53,8 @@ const MainApp = () => {
   const [homeOverviewLoaded, setHomeOverviewLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
-  const { biometricLogin, isLoggedIn, communityId, storageLoaded } = useContext(UserContext);
+  const { biometricLogin, isLoggedIn, communityId, storageLoaded,
+          token, isTokenExpired, refreshSession } = useContext(UserContext);
   const { fetchHomeOverview } = useAuthService();
 
   useEffect(() => {
@@ -67,23 +68,32 @@ const MainApp = () => {
     attemptBiometricLogin();
   }, [storageLoaded]);
 
+  // Prepare initial explore posts after storage & session ready
   useEffect(() => {
-    // 1) Fetch initial posts and keep splash for an extra moment
+    if (!storageLoaded || checkingSession) return;
     const prepareApp = async () => {
+      // If no token or expired, attempt refresh and retry on token change
+      if (!token || isTokenExpired(token)) {
+        try {
+          await refreshSession();
+        } catch (err) {
+          console.error('Token refresh failed during initial load:', err);
+        }
+        return;
+      }
       try {
-        const fetchedPosts = await fetchExploreFeed();
+        const fetchedPosts = await fetchExploreFeed(token);
         setInitialPosts(fetchedPosts);
-        // Keep splash an extra moment
+        // Keep splash an extra moment for smooth transition
         await new Promise(resolve => setTimeout(resolve, 200));
       } catch (error) {
-        console.error('Error loading initial data:', error);
+        console.error('Error loading initial explore feed:', error);
       } finally {
-        // Done -> show the app
         setAppIsReady(true);
       }
     };
     prepareApp();
-  }, []);
+  }, [storageLoaded, checkingSession, token]);
 
   // Fetch home overview whenever communityId becomes available
   useEffect(() => {

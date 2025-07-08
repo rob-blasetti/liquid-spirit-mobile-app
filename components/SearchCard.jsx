@@ -26,7 +26,6 @@ function safeText(val) {
  * Returns an image source for activities, events, or member avatars.
  */
 const SearchCard = ({ item, onPress }) => {
-  console.log('Rendering SearchCard for item:', item);
   // Top section: image (event/activity) or avatar (member/user)
   const renderImageSection = () => {
     if (item.type === 'event') {
