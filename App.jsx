@@ -36,7 +36,6 @@ import NotificationScreen from './screens/Notifications';
 import CreatePostScreen from './screens/CreatePost';
 import PostModal from './modal/PostModal';
 
-// FontAwesome library setup
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Stack = createNativeStackNavigator();
