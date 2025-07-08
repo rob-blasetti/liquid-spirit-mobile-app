@@ -1,8 +1,7 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
@@ -42,8 +41,8 @@ const ProfileStackNavigator = () => {
                 elevation: 2,
               }}
             >
-              <FontAwesomeIcon
-                icon={faChevronLeft}
+              <Ionicons
+                name="chevron-back"
                 color={themeVariables.blackColor}
                 size={20}
               />

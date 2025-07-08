@@ -6,9 +6,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import { fetchUserById } from '../services/UserService';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faFacebook, faInstagram, faTwitter, faLinkedin, faXTwitter, faTiktok } from '@fortawesome/free-brands-svg-icons';
-import { faCheck, faShieldAlt, faStar, faSprout } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Tooltip } from 'react-native-elements';
 import { Chip } from 'react-native-paper';
 import PostGallery from '../components/PostGallery';
@@ -135,7 +133,7 @@ const PublicUserProfile = () => {
         {/* Community Chip in header top-right */}
         {communityName ? (
           <Chip
-            icon={({ size, color }) => <FontAwesomeIcon icon={faSprout} size={size} color={color} />}
+            icon={({ size, color }) => <Ionicons name="leaf-outline" size={size} color={color} />}
             mode="outlined"
             style={styles.communityChip}
           >
@@ -149,27 +147,27 @@ const PublicUserProfile = () => {
         <View style={styles.socialRow}>
           {social.facebook && (
             <TouchableOpacity onPress={() => Linking.openURL(social.facebook)} style={styles.socialButton}>
-              <FontAwesomeIcon icon={faFacebook} size={28} color="#fff" />
+              <Ionicons name="logo-facebook" size={28} color="#fff" />
             </TouchableOpacity>
           )}
           {social.instagram && (
             <TouchableOpacity onPress={() => Linking.openURL(social.instagram)} style={styles.socialButton}>
-              <FontAwesomeIcon icon={faInstagram} size={28} color="#fff" />
+              <Ionicons name="logo-instagram" size={28} color="#fff" />
             </TouchableOpacity>
           )}
           {social.x && (
             <TouchableOpacity onPress={() => Linking.openURL(social.x)} style={styles.socialButton}>
-              <FontAwesomeIcon icon={faXTwitter} size={28} color="#fff" />
+              <Ionicons name="logo-twitter" size={28} color="#fff" />
             </TouchableOpacity>
           )}
           {social.linkedin && (
             <TouchableOpacity onPress={() => Linking.openURL(social.linkedin)} style={styles.socialButton}>
-              <FontAwesomeIcon icon={faLinkedin} size={28} color="#fff" />
+              <Ionicons name="logo-linkedin" size={28} color="#fff" />
             </TouchableOpacity>
           )}
           {social.tiktok && (
             <TouchableOpacity onPress={() => Linking.openURL(social.tiktok)} style={styles.socialButton}>
-              <FontAwesomeIcon icon={faTiktok} size={28} color="#fff" />
+              <Ionicons name="logo-tiktok" size={28} color="#fff" />
             </TouchableOpacity>
           )}
         </View>

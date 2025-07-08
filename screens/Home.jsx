@@ -13,8 +13,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faArrowRight, faUsers, faAlignLeft, faQuestionCircle, faEnvelopeOpen, faBahai, faCalendarDays, faSquarePollVertical, faBell } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -140,7 +139,7 @@ const Home = ({ navigation, homeOverview }) => {
               style={styles.notificationButton}
               onPress={() => navigation.navigate('Notifications')}
             >
-              <FontAwesomeIcon icon={faBell} size={20} color={themeVariables.blackColor} />
+              <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
               {unreadCount > 0 && (
                 <View style={styles.notificationBadge}>
                   <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
@@ -402,15 +401,15 @@ const Home = ({ navigation, homeOverview }) => {
             })}
           >
             <View style={styles.createRowContent}>
-              <FontAwesomeIcon
-                icon={faAlignLeft}
+              <Ionicons
+                name="list-outline"
                 size={16}
                 color={themeVariables.primaryColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>Create Activity</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+            <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity>
           <View style={styles.separator} /> */}
           <TouchableOpacity
@@ -418,15 +417,15 @@ const Home = ({ navigation, homeOverview }) => {
             onPress={() => Linking.openURL(RIDVAN_182_BE)}
           >
             <View style={styles.createRowContent}>
-              <FontAwesomeIcon
-                icon={faEnvelopeOpen}
+              <Ionicons
+                name="mail-open-outline"
                 size={16}
                 color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
+            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <View style={styles.separator} />
           <TouchableOpacity
@@ -434,15 +433,15 @@ const Home = ({ navigation, homeOverview }) => {
             onPress={() => navigation.navigate('Activities')}
           >
             <View style={styles.createRowContent}>
-              <FontAwesomeIcon
-                icon={faAlignLeft}
+              <Ionicons
+                name="list-outline"
                 size={16}
                 color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>View All Activities</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
+            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <View style={styles.separator} />
           <TouchableOpacity
@@ -450,16 +449,15 @@ const Home = ({ navigation, homeOverview }) => {
             onPress={() => navigation.navigate('Events')}
           >
             <View style={styles.createRowContent}>
-              <FontAwesomeIcon
-                // Changed icon to calendar for events
-                icon={faCalendarDays}
+              <Ionicons
+                name="calendar-outline"
                 size={16}
                 color={themeVariables.blackColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>View All Events</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.blackColor} />
+            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
           </TouchableOpacity>
 
           {/* <TouchableOpacity
@@ -467,15 +465,15 @@ const Home = ({ navigation, homeOverview }) => {
             onPress={() => navigation.navigate('Activities')}
           >
             <View style={styles.createRowContent}>
-              <FontAwesomeIcon
-                icon={faUsers}
+              <Ionicons
+                name="people-outline"
                 size={16}
                 color={themeVariables.primaryColor}
                 style={styles.createIcon}
               />
               <Text style={styles.createRowText}>Recent Arrivals</Text>
             </View>
-            <FontAwesomeIcon icon={faArrowRight} size={16} color={themeVariables.primaryColor} />
+            <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity> */}
         </View>
       </ScrollView>

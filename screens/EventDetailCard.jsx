@@ -22,8 +22,7 @@ import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@flipxyz/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faClock, faCarSide, faUsers, faPlusCircle, faFileAlt, faShare } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../styles/theme';
 import { fetchEventDetails, joinEvent } from '../services/EventService';
@@ -102,7 +101,7 @@ const EventDetailCard = ({ route }) => {
           }}
           onPress={handleShare}
         >
-          <FontAwesomeIcon icon={faShare} size={20} color={themeVariables.blackColor} />
+          <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
         </TouchableOpacity>
       ),
     });
@@ -315,7 +314,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>Host</Text>
             {!host && (
               <TouchableOpacity style={styles.requestButton} onPress={() => alert('Request Host')} activeOpacity={0.8}>
-                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
+                <Ionicons name="add-circle-outline" size={18} color={themeVariables.whiteColor} />
                 <Text style={styles.requestButtonText}>Request Host</Text>
               </TouchableOpacity>
             )}
@@ -339,7 +338,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
                     onPress={() => url && Linking.openURL(url)}
                     disabled={!url}
                   >
-                    <FontAwesomeIcon icon={faFileAlt} size={16} color={themeVariables.primaryColor} />
+                    <Ionicons name="document-outline" size={16} color={themeVariables.primaryColor} />
                     <Text style={[styles.materialText, url && styles.linkText]} numberOfLines={1}>
                       {mat.name}
                     </Text>
@@ -387,7 +386,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>Attendees ({attendees.length})</Text>
             {!hasJoined && (
               <TouchableOpacity style={styles.requestButton} onPress={handleJoin} activeOpacity={0.8}>
-                <FontAwesomeIcon icon={faPlusCircle} size={18} color={themeVariables.whiteColor} />
+                <Ionicons name="add-circle-outline" size={18} color={themeVariables.whiteColor} />
                 <Text style={styles.requestButtonText}>Attend</Text>
               </TouchableOpacity>
             )}
@@ -428,7 +427,7 @@ const Fact = ({ icon, label, value, onPress, link }) => (
     onPress={onPress}
     activeOpacity={0.7}
   >
-    <FontAwesomeIcon icon={icon} size={18} color="#312783" />
+    <Ionicons name={icon} size={18} color="#312783" />
     <Text style={styles.factLabel}>{label}</Text>
     <Text style={[styles.factValue, link && styles.linkText]} numberOfLines={1}>
       {value}
@@ -442,7 +441,7 @@ const DetailCell = ({ icon, label, main, sub, onPress, isLink, style: cellStyle,
     disabled={!onPress}
     activeOpacity={0.8}
   >
-    <FontAwesomeIcon icon={icon} size={18} color="#312783" style={styles.detailIcon} />
+    <Ionicons name={icon} size={18} color="#312783" style={styles.detailIcon} />
     <Text style={[styles.detailLabel, labelStyle]}>{label}</Text>
     <Text style={[styles.detailValue, isLink && styles.linkText, mainStyle]}>{main}</Text>
     {sub ? <Text style={[styles.detailSub, subStyle]}>{sub}</Text> : null}

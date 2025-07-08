@@ -8,8 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCheckSquare, faSquare } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
@@ -103,8 +102,8 @@ const Register = () => {
         style={styles.checkboxContainer}
         onPress={() => setIsEulaAccepted(!isEulaAccepted)}
       >
-        <FontAwesomeIcon
-          icon={isEulaAccepted ? faCheckSquare : faSquare}
+        <Ionicons
+          name={isEulaAccepted ? 'checkbox' : 'square-outline'}
           size={24}
           color={isEulaAccepted ? '#312783' : '#aaa'}
         />

@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
-import { faCheck, faShieldAlt, faStar } from '@fortawesome/free-solid-svg-icons';
 import CertificationsList from '../components/CertificationsList';
 import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
@@ -23,8 +22,7 @@ import { fetchActivities } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
 import { fetchUserById } from '../services/UserService';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCogs, faShareAlt, faFileAlt, faTasks, faCalendarAlt, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
@@ -264,8 +262,8 @@ const renderList = (data, type) => {
       <View style={styles.noDataContainer}>
         <Text style={styles.noDataText}>{message}</Text>
         {icon && (
-          <FontAwesomeIcon
-            icon={icon}
+          <Ionicons
+            name={icon}
             size={40}
             color="#999"
             style={styles.noDataIcon}
@@ -351,8 +349,8 @@ const renderRequests = () => {
     return (
       <View style={styles.noDataContainer}>
         <Text style={styles.noDataText}>No requests at the moment</Text>
-        <FontAwesomeIcon
-          icon={faUserPlus}
+        <Ionicons
+          name="person-add-outline"
           size={40}
           color="#999"
           style={styles.noDataIcon}
@@ -468,10 +466,10 @@ const renderScene = ({ route }) => {
         </View>
         <View style={styles.headerActionsContainer}>
           <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-            <FontAwesomeIcon icon={faCogs} size={20} color={themeVariables.blackColor} />
+            <Ionicons name="settings-outline" size={20} color={themeVariables.blackColor} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton} onPress={() => handleShareProfile(user)}>
-            <FontAwesomeIcon icon={faShareAlt} size={20} color={themeVariables.blackColor} />
+            <Ionicons name="share-social-outline" size={20} color={themeVariables.blackColor} />
           </TouchableOpacity>
         </View>
       </View>

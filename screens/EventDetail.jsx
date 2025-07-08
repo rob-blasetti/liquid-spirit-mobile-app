@@ -14,8 +14,7 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { joinEvent, fetchEventDetails } from '../services/EventService';
 import localImages from '../utils/localImages';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCalendar, faClock, faCarSide } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const EventDetail = ({ route }) => {
   const { event: initialEvent, eventId } = route.params || {};
@@ -113,12 +112,12 @@ const EventDetail = ({ route }) => {
         <Text style={styles.type}>{event.eventType || 'Unknown Event'}</Text>
 
         <View style={styles.iconRow}>
-          <FontAwesomeIcon icon={faCalendar} size={22} color="#312783" style={styles.iconSpacing} />
+          <Ionicons name="calendar-outline" size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.iconText}>{formatDate(event.date)}</Text>
         </View>
 
         <View style={styles.iconRow}>
-          <FontAwesomeIcon icon={faClock} size={22} color="#312783" style={styles.iconSpacing} />
+          <Ionicons name="time-outline" size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={styles.iconText}>
             {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -{' '}
             {new Date(event.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -126,7 +125,7 @@ const EventDetail = ({ route }) => {
         </View>
 
         <TouchableOpacity style={styles.iconRow} onPress={openGoogleMaps}>
-          <FontAwesomeIcon icon={faCarSide} size={22} color="#312783" style={styles.iconSpacing} />
+          <Ionicons name="car-outline" size={22} color="#312783" style={styles.iconSpacing} />
           <Text style={[styles.iconText, styles.location]}>{event.venue}</Text>
         </TouchableOpacity>
 

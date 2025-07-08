@@ -10,8 +10,7 @@ import {
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faLock, faSave } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ChangePassword = ({ navigation }) => {
   const { token } = useContext(UserContext);
@@ -58,7 +57,7 @@ const ChangePassword = ({ navigation }) => {
       <Text style={styles.header}>Change Password</Text>
 
       <View style={styles.inputContainer}>
-        <FontAwesomeIcon icon={faLock} size={18} color="#312783" />
+        <Ionicons name="lock-closed-outline" size={18} color="#312783" />
         <TextInput
           style={styles.input}
           placeholder="Current Password"
@@ -69,7 +68,7 @@ const ChangePassword = ({ navigation }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <FontAwesomeIcon icon={faLock} size={18} color="#312783" />
+        <Ionicons name="lock-closed-outline" size={18} color="#312783" />
         <TextInput
           style={styles.input}
           placeholder="New Password"
@@ -80,7 +79,7 @@ const ChangePassword = ({ navigation }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <FontAwesomeIcon icon={faLock} size={18} color="#312783" />
+        <Ionicons name="lock-closed-outline" size={18} color="#312783" />
         <TextInput
           style={styles.input}
           placeholder="Confirm New Password"
@@ -91,7 +90,7 @@ const ChangePassword = ({ navigation }) => {
       </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleChangePassword}>
-        <FontAwesomeIcon icon={faSave} size={20} color="#fff" />
+        <Ionicons name="save-outline" size={20} color="#fff" />
         <Text style={styles.saveButtonText}>Update Password</Text>
       </TouchableOpacity>
     </ScrollView>

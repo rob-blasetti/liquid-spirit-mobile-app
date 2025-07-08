@@ -10,20 +10,7 @@ import {
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import {
-  faMapLocation,
-  faCalendar,
-  faSort,
-  faFilter,
-  faHeart,
-  faBook,
-  faChild,
-  faUsers,
-  faFire,
-  faStar,
-  faVideo,
-} from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 // Helper: get the next upcoming session date for filtering, sorting, and display
 const getNextSessionDate = (activity) => {
@@ -51,12 +38,12 @@ const Activities = ({ navigation }) => {
   console.log(userActivities);
 
   const activityTypes = [
-    { name: "Children's Class", icon: faChild },
-    { name: 'Junior Youth Group', icon: faUsers },
-    { name: 'Study Circle', icon: faBook },
-    { name: 'Devotional', icon: faHeart },
-    { name: 'Independent Initiative', icon: faStar },
-    { name: 'Fireside', icon: faFire },
+    { name: "Children's Class", icon: 'accessibility-outline' },
+    { name: 'Junior Youth Group', icon: 'people-outline' },
+    { name: 'Study Circle', icon: 'book-outline' },
+    { name: 'Devotional', icon: 'heart-outline' },
+    { name: 'Independent Initiative', icon: 'star-outline' },
+    { name: 'Fireside', icon: 'flame-outline' },
   ];
 
   useEffect(() => {
@@ -131,7 +118,7 @@ const Activities = ({ navigation }) => {
         <Text style={styles.activityTitle}>{item.title}</Text>
 
         <View style={styles.infoRow}>
-          <FontAwesomeIcon icon={faCalendar} size={16} color="#666" />
+          <Ionicons name="calendar-outline" size={16} color="#666" />
           <Text style={styles.activityDetails}>
             {getNextSessionDate(item)
               ? getNextSessionDate(item).toDateString()
@@ -140,8 +127,8 @@ const Activities = ({ navigation }) => {
         </View>
 
         <View style={styles.infoRow}>
-          <FontAwesomeIcon
-            icon={item.onlineLink ? faVideo : faMapLocation}
+          <Ionicons
+            name={item.onlineLink ? 'videocam-outline' : 'location-outline'}
             size={16}
             color="#666"
           />
@@ -160,12 +147,12 @@ const Activities = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
-          <FontAwesomeIcon icon={faFilter} size={16} color="#fff" />
+          <Ionicons name="filter" size={16} color="#fff" />
           <Text style={styles.buttonText}>Filter</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
-          <FontAwesomeIcon icon={faSort} size={16} color="#fff" />
+          <Ionicons name="swap-vertical" size={16} color="#fff" />
           <Text style={styles.buttonText}>
             {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
           </Text>
@@ -189,7 +176,7 @@ const Activities = ({ navigation }) => {
                 style={[styles.filterButtonSquare, selectedType === name && styles.selectedFilter]}
                 onPress={() => handleFilterSelection(name)}
               >
-                <FontAwesomeIcon icon={icon} size={24} color={selectedType === name ? '#fff' : '#312783'} />
+                <Ionicons name={icon} size={24} color={selectedType === name ? '#fff' : '#312783'} />
                 <Text style={[styles.filterText, selectedType === name && styles.selectedFilterText]}>
                   {name}
                 </Text>

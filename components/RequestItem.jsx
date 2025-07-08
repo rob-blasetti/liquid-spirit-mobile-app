@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCheckCircle, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { API_URL } from '../config';
 import localImages from '../utils/localImages';
@@ -67,10 +66,10 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
       </View>
       <View style={styles.actionsContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={() => onAccept(reqItem)}>
-          <FontAwesomeIcon icon={faCheckCircle} size={24} color={themeVariables.secondaryColor} />
+          <Ionicons name="checkmark-circle" size={24} color={themeVariables.secondaryColor} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={() => onDecline(reqItem)}>
-          <FontAwesomeIcon icon={faTimesCircle} size={24} color={themeVariables.redColor} />
+          <Ionicons name="close-circle" size={24} color={themeVariables.redColor} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

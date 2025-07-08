@@ -2,8 +2,7 @@ import React, { useContext, useState } from 'react';
 import { View } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faUser, faCompass, faPlusCircle, faBahai, faSearch } from '@fortawesome/free-solid-svg-icons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
@@ -23,11 +22,11 @@ import WelcomeModal from '../modal/WelcomeModal';
 const Tab = createBottomTabNavigator();
 
 const tabIcons = {
-  Home: faBahai,
-  Profile: faUser,
-  Feed: faCompass,
-  Camera: faPlusCircle,
-  Search: faSearch,
+  Home: 'home-outline',
+  Profile: 'person-outline',
+  Feed: 'compass-outline',
+  Camera: 'add-circle-outline',
+  Search: 'search-outline',
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
@@ -67,8 +66,8 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
                   }} />
                 )}
                 {/* Icon colored per route */}
-                <FontAwesomeIcon
-                  icon={tabIcons[route.name]}
+                <Ionicons
+                  name={tabIcons[route.name]}
                   size={size}
                   color={iconColor}
                 />

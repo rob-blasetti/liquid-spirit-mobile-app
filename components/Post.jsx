@@ -12,14 +12,12 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
-import {
-  faEllipsisV,
-  faHeart as solidHeart,
-  faShare
-} from '@fortawesome/free-solid-svg-icons';
-import { faHeart as heartOutline, faComment } from '@fortawesome/free-regular-svg-icons';
+const solidHeart = 'heart';
+const heartOutline = 'heart-outline';
+const ellipsisIcon = 'ellipsis-vertical';
+const shareIcon = 'share-outline';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
@@ -199,7 +197,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           </View>
           <View ref={kebabRef} collapsable={false}>
             <TouchableOpacity onPress={handleToggleMenu}>
-              <FontAwesomeIcon icon={faEllipsisV} size={20} color="#333" />
+              <Ionicons name={ellipsisIcon} size={20} color="#333" />
             </TouchableOpacity>
           </View>
         </View>
@@ -245,15 +243,15 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
       <View style={styles.postFooter}>
         <TouchableOpacity style={styles.postFooterIcon} onPress={debouncedToggleLike}>
-            <FontAwesomeIcon
-              icon={isLiked ? solidHeart : heartOutline}
+            <Ionicons
+              name={isLiked ? solidHeart : heartOutline}
               size={22}
               color="#312783"
             />
             <Text style={styles.footerIconText}></Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
-          <FontAwesomeIcon icon={faComment} size={22} color="#312783" />
+          <Ionicons name="chatbubble-outline" size={22} color="#312783" />
           <Text style={styles.footerIconText}>{commentCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -261,7 +259,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           style={[styles.postFooterIcon, { marginLeft: 'auto' }]}
           onPress={() => handleSharePost(post._id)}
         >
-          <FontAwesomeIcon icon={faShare} size={22} color="#312783" />
+          <Ionicons name={shareIcon} size={22} color="#312783" />
         </TouchableOpacity>
       </View>
 
