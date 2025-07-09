@@ -412,7 +412,7 @@ const renderScene = ({ route }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
     const tabWidth = totalWidth / navigationState.routes.length;
     return (
-      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.darkGreyColor }}>
+      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.darkGreyColor, marginLeft: 10 }}>
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
           return (

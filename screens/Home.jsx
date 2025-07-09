@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
   // Dummy Baha'i date at bottom left of banner
   bahaiDate: {
     position: 'absolute',
-    left: 20,
+    left: 22,
     bottom: 10,
     fontSize: 14,
     color: themeVariables.whiteColor,
