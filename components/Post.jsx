@@ -197,7 +197,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           </View>
           <View ref={kebabRef} collapsable={false}>
             <TouchableOpacity onPress={handleToggleMenu}>
-              <Ionicons name={ellipsisIcon} size={20} color="#333" />
+              <Ionicons name={ellipsisIcon} size={24} color="#333" />
             </TouchableOpacity>
           </View>
         </View>
@@ -245,13 +245,13 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
         <TouchableOpacity style={styles.postFooterIcon} onPress={debouncedToggleLike}>
             <Ionicons
               name={isLiked ? solidHeart : heartOutline}
-              size={22}
+              size={24}
               color="#312783"
             />
             <Text style={styles.footerIconText}></Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
-          <Ionicons name="chatbubble-outline" size={22} color="#312783" />
+          <Ionicons name="chatbubble-outline" size={24} color="#312783" />
           <Text style={styles.footerIconText}>{commentCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -259,7 +259,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
           style={[styles.postFooterIcon, { marginLeft: 'auto' }]}
           onPress={() => handleSharePost(post._id)}
         >
-          <Ionicons name={shareIcon} size={22} color="#312783" />
+          <Ionicons name={shareIcon} size={24} color="#312783" />
         </TouchableOpacity>
       </View>
 
@@ -404,9 +404,8 @@ const styles = StyleSheet.create({
   postFooterIcon: {
     flexDirection: 'row', 
     alignItems: 'center',
-    marginRight: 16,
-    paddingVertical: 10, 
-    paddingHorizontal: 8,
+    paddingVertical: 4, 
+    paddingHorizontal: 4,
   },
   footerIconText: {
     color: '#312783',

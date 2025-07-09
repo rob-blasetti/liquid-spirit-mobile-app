@@ -25,68 +25,75 @@ const tabIcons = {
   Home: 'home-outline',
   Profile: 'person-outline',
   Feed: 'compass-outline',
-  Camera: 'add-circle-outline',
+  Camera: 'add-circle',
   Search: 'search-outline',
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn } = useContext(UserContext);
-  const navigation = useNavigation(); 
+  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
-  // removed unreadCount; notifications accessed via Home banner button
 
   return (
     <>
       <Tab.Navigator
-        // Default to Home tab
         initialRouteName="Home"
         screenOptions={({ route }) => ({
           headerShown: false,
-          // Hide labels, show icons only
           tabBarShowLabel: false,
-          // Render icon with active top border
+
           tabBarIcon: ({ focused, color, size }) => {
-            // Determine icon color: camera retains tint, others always black
-            const iconColor = route.name === 'Camera'
-              ? color
-              : themeVariables.blackColor;
-            // Choose filled icon when focused, outline otherwise
+            // bump every icon +6px for bigger taps & visuals
+            const iconSize = size + 4;
+            // camera keeps tint, others always black
+            const iconColor =
+              route.name === 'Camera' ? color : themeVariables.blackColor;
+            // choose filled when focused, outline otherwise
             const baseName = tabIcons[route.name] || '';
             const iconName = focused
               ? baseName.replace(/-outline$/, '')
               : baseName;
-            // Dimensions for indicator and wrapper
-            const wrapperWidth = size + 6;
+
+            // recalc wrapper to keep icon dead-center in 80px bar
             const barHeight = 80;
             const indicatorHeight = 4;
-            // Calculate top margin for icon to center it (accounting for indicator if focused)
-            // Center icon vertically; if focused, account for indicator height and its top margin
-            const baseMargin = (barHeight - size) / 2;
+            const wrapperWidth = iconSize + 6;
+            const baseMargin = (barHeight - iconSize) / 1.5;
             const iconMarginTop = focused
               ? baseMargin - indicatorHeight - 1
               : baseMargin;
+
             return (
-              <View style={{ width: wrapperWidth, height: barHeight, alignItems: 'center' }}>
+              <View
+                style={{
+                  width: wrapperWidth,
+                  height: barHeight,
+                  alignItems: 'center',
+                }}
+              >
                 {focused && (
-                  <View style={{
-                    height: indicatorHeight,
-                    width: wrapperWidth,
-                    backgroundColor: themeVariables.primaryColor,
-                    borderBottomLeftRadius: 5,
-                    borderBottomRightRadius: 5,
-                    top: 20,
-                  }} />
+                  <View
+                    style={{
+                      height: indicatorHeight,
+                      width: wrapperWidth,
+                      backgroundColor: themeVariables.primaryColor,
+                      borderBottomLeftRadius: 5,
+                      borderBottomRightRadius: 5,
+                      top: 20,
+                    }}
+                  />
                 )}
                 <Ionicons
                   name={iconName}
-                  size={size}
+                  size={iconSize}
                   color={iconColor}
                   style={{ marginTop: iconMarginTop }}
                 />
               </View>
             );
           },
+
           tabBarActiveTintColor: themeVariables.primaryColor,
           tabBarInactiveTintColor: themeVariables.primaryColor,
           tabBarStyle: {
@@ -101,60 +108,54 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           },
         })}
         screenListeners={({ navigation, route }) => ({
-          tabPress: e => {
+          tabPress: (e) => {
             const state = navigation.getState();
             const currentRoute = state.routes[state.index]?.name;
+
             // Intercept Camera tab to open as modal
             if (route.name === 'Camera') {
               e.preventDefault();
               if (!isLoggedIn) {
                 setModalVisible(true);
               } else {
-                // Navigate to the CreatePost modal in parent stack
                 navigation.getParent()?.navigate('CreatePostModal');
               }
               return;
             }
+
             // Require login for other tabs (except Feed)
             if (!isLoggedIn && route.name !== 'Feed') {
               e.preventDefault();
               setModalVisible(true);
               return;
             }
+
             // Scroll to top on Feed if already active
             if (route.name === 'Feed' && currentRoute === 'Feed') {
               e.preventDefault();
-              setScrollToTop(prev => !prev);
+              setScrollToTop((prev) => !prev);
             }
           },
         })}
       >
-        {/* Pass homeOverview as a prop via render callback */}
         <Tab.Screen name="Home">
-          {props => <Home {...props} homeOverview={homeOverview} />}
+          {(props) => <Home {...props} homeOverview={homeOverview} />}
         </Tab.Screen>
         <Tab.Screen name="Feed">
-          {props => <SocialMediaScreen {...props} initialPosts={initialPosts} scrollToTop={scrollToTop} />}
+          {(props) => (
+            <SocialMediaScreen
+              {...props}
+              initialPosts={initialPosts}
+              scrollToTop={scrollToTop}
+            />
+          )}
         </Tab.Screen>
-        <Tab.Screen
-          name="Camera"
-          component={CreatePostScreen}
-        />
-        <Tab.Screen
-          name="Search"
-          component={SearchScreen}
-        />
-
-        <Tab.Screen 
-          name="Profile" 
-          component={ProfileStackNavigator} 
-        />
+        <Tab.Screen name="Camera" component={CreatePostScreen} />
+        <Tab.Screen name="Search" component={SearchScreen} />
+        <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
 
-      <WelcomeModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
+      <WelcomeModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </>
   );
 };

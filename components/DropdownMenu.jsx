@@ -20,27 +20,23 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost })
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose} />
       <Animated.View style={[styles.menu, { opacity, transform: [{ translateY }] }]}>
         <TouchableOpacity style={styles.item} onPress={onFlag}>
-          <Text style={styles.menuText}>
-            <Ionicons name="flag-outline" size={16} color="#312783" /> Report Post
-          </Text>
+          <Ionicons style={styles.menuIcon} name="flag-outline" size={22} color="#312783" />
+          <Text style={styles.menuText}>Report Post</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={onBlock}>
-          <Text style={styles.menuText}>
-            <Ionicons name="ban" size={16} color="#312783" /> Block User
-          </Text>
+          <Ionicons style={styles.menuIcon} name="ban" size={22} color="#312783" />
+          <Text style={styles.menuText}>Block User</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.item} onPress={onMute}>
-          <Text style={styles.menuText}>
-            <Ionicons name="volume-mute-outline" size={16} color="#312783" /> Mute User
-          </Text>
+          <Ionicons style={styles.menuIcon} name="volume-mute-outline" size={22} color="#312783" />
+          <Text style={styles.menuText}>Mute User</Text>
         </TouchableOpacity>
         {isOwnPost && (
         <>
             <View style={styles.seperator} />
             <TouchableOpacity style={styles.item} onPress={onDelete}>
-            <Text style={styles.menuText}>
-                <Ionicons name="trash-outline" size={16} color="#312783" /> Delete Post
-            </Text>
+              <Ionicons style={styles.menuIcon} name="trash-outline" size={22} color="#312783" />
+              <Text style={styles.menuText}>Delete Post</Text>
             </TouchableOpacity>
         </>
         )}
@@ -54,7 +50,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0, left: 0, right: 20,
     width: screenWidth - 30,
-    height: screenHeight,
+    height: screenHeight -10,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
@@ -79,10 +75,17 @@ const styles = StyleSheet.create({
   item: {
     paddingVertical: 8,
     paddingHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   menuText: {
     fontSize: 16,
     color: '#333',
+    textAlign: 'left',
+  },
+  menuIcon: {
+    marginRight: 8,
   },
   seperator: {
     borderBottomWidth: StyleSheet.hairlineWidth,
