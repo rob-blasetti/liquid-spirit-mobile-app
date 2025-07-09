@@ -51,25 +51,38 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             const iconColor = route.name === 'Camera'
               ? color
               : themeVariables.blackColor;
+            // Choose filled icon when focused, outline otherwise
+            const baseName = tabIcons[route.name] || '';
+            const iconName = focused
+              ? baseName.replace(/-outline$/, '')
+              : baseName;
+            // Dimensions for indicator and wrapper
+            const wrapperWidth = size + 6;
+            const barHeight = 80;
+            const indicatorHeight = 4;
+            // Calculate top margin for icon to center it (accounting for indicator if focused)
+            // Center icon vertically; if focused, account for indicator height and its top margin
+            const baseMargin = (barHeight - size) / 2;
+            const iconMarginTop = focused
+              ? baseMargin - indicatorHeight - 1
+              : baseMargin;
             return (
-              <View style={{ alignItems: 'center' }}>
-                {/* Top border bar, above the icon */}
+              <View style={{ width: wrapperWidth, height: barHeight, alignItems: 'center' }}>
                 {focused && (
                   <View style={{
-                    height: 4,
-                    width: size + 6, // match old marginHorizontal: 12
+                    height: indicatorHeight,
+                    width: wrapperWidth,
                     backgroundColor: themeVariables.primaryColor,
                     borderBottomLeftRadius: 5,
                     borderBottomRightRadius: 5,
-                    marginBottom: 6,
-                    transform: [{ translateY: -2 }],
+                    top: 20,
                   }} />
                 )}
-                {/* Icon colored per route */}
                 <Ionicons
-                  name={tabIcons[route.name]}
+                  name={iconName}
                   size={size}
                   color={iconColor}
+                  style={{ marginTop: iconMarginTop }}
                 />
               </View>
             );
