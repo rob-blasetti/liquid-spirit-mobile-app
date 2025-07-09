@@ -18,67 +18,89 @@ export const useAppInitialization = () => {
           token, isTokenExpired, refreshSession } = useContext(UserContext);
   const { fetchHomeOverview } = useAuthService();
 
-  // Attempt biometric login once storage is loaded
+  // Core initialization: biometric login, token refresh, and initial explore feed
   useEffect(() => {
-    if (!storageLoaded) return;
-    const attemptBiometricLogin = async () => {
-      if (!isLoggedIn) await biometricLogin();
-      setCheckingSession(false);
-    };
-    attemptBiometricLogin();
-  }, [storageLoaded]);
+    const initialize = async () => {
+      if (!storageLoaded) return;
 
-  // Prepare app: refresh token and fetch initial explore feed
-  useEffect(() => {
-    if (!storageLoaded || checkingSession) return;
-    const prepareApp = async () => {
-      if (!token || isTokenExpired(token)) {
-        try { await refreshSession(); } catch (err) {
-          console.error('Token refresh failed during initial load:', err);
+      if (checkingSession) {
+        try {
+          if (!isLoggedIn) {
+            await biometricLogin();
+          }
+        } catch (err) {
+          console.error('Biometric login failed:', err);
+        } finally {
+          setCheckingSession(false);
+          // if user is not logged in, skip feed and mark ready
+          if (!isLoggedIn) setAppIsReady(true);
         }
         return;
       }
-      try {
-        const fetched = await fetchExploreFeed(token);
-        setInitialPosts(fetched);
-        // slight delay for splash
-        await new Promise(res => setTimeout(res, 200));
-      } catch (error) {
-        console.error('Error loading initial explore feed:', error);
-      } finally {
-        setAppIsReady(true);
+
+      if (!appIsReady) {
+        if (!token || isTokenExpired(token)) {
+          try {
+            await refreshSession();
+          } catch (err) {
+            console.error('Token refresh failed during initial load:', err);
+          }
+          return;
+        }
+
+        try {
+          const fetched = await fetchExploreFeed(token);
+          setInitialPosts(fetched);
+          // slight delay for splash
+          await new Promise(res => setTimeout(res, 200));
+        } catch (error) {
+          console.error('Error loading initial explore feed:', error);
+        } finally {
+          setAppIsReady(true);
+        }
+        return;
       }
     };
-    prepareApp();
-  }, [storageLoaded, checkingSession, token]);
 
-  // Fetch home overview when communityId changes
+    initialize();
+  }, [
+    storageLoaded,
+    checkingSession,
+    appIsReady,
+    isLoggedIn,
+    token,
+    biometricLogin,
+    isTokenExpired,
+    refreshSession,
+    fetchExploreFeed,
+  ]);
+
+  // Fetch home overview independently
   useEffect(() => {
-    const loadHomeOverview = async () => {
-      if (!communityId) return;
-      setHomeOverviewLoaded(false);
+    if (!communityId) return;
+    setHomeOverviewLoaded(false);
+    (async () => {
       try {
         const result = await fetchHomeOverview(communityId);
-        if (result.ok) setHomeOverview(result.data);
-        else console.warn('Failed to fetch home overview');
+        if (result.ok) {
+          setHomeOverview(result.data);
+        } else {
+          console.warn('Failed to fetch home overview');
+        }
       } catch (error) {
         console.error('Error fetching home overview:', error);
       } finally {
         setHomeOverviewLoaded(true);
       }
-    };
-    loadHomeOverview();
-  }, [communityId]);
+    })();
+  }, [communityId, fetchHomeOverview]);
 
-  // Hide splash when ready
+  // Hide splash once core init is done
   useEffect(() => {
-    if (
-      appIsReady && !checkingSession &&
-      (!isLoggedIn || (communityId && homeOverviewLoaded))
-    ) {
+    if (appIsReady && !checkingSession) {
       setShowSplash(false);
     }
-  }, [appIsReady, checkingSession, isLoggedIn, communityId, homeOverviewLoaded]);
+  }, [appIsReady, checkingSession]);
 
   return { initialPosts, homeOverview, showSplash };
 };
