@@ -51,13 +51,14 @@ export const useAppInitialization = () => {
           console.error('Biometric login failed:', err);
         } finally {
           setCheckingSession(false);
-          // if user is not logged in, skip feed and mark ready
+          // if user is not logged in, mark ready
           if (!isLoggedIn) setAppIsReady(true);
         }
         return;
       }
 
       if (!appIsReady) {
+        // ensure token is valid, else refresh
         if (!token || isTokenExpired(token)) {
           try {
             await refreshSession();
@@ -66,19 +67,8 @@ export const useAppInitialization = () => {
           }
           return;
         }
-
-        try {
-          const fetched = await fetchExploreFeed(token);
-          setInitialPosts(fetched);
-          // cache for next launch
-          await AsyncStorage.setItem('initialExploreFeed', JSON.stringify(fetched));
-          // slight delay for splash
-          await new Promise(res => setTimeout(res, 200));
-        } catch (error) {
-          console.error('Error loading initial explore feed:', error);
-        } finally {
-          setAppIsReady(true);
-        }
+        // mark initial load ready; explore feed will be fetched in background
+        setAppIsReady(true);
         return;
       }
     };
@@ -93,7 +83,6 @@ export const useAppInitialization = () => {
     biometricLogin,
     isTokenExpired,
     refreshSession,
-    fetchExploreFeed,
   ]);
 
   // Fetch home overview independently
@@ -123,5 +112,20 @@ export const useAppInitialization = () => {
       setShowSplash(false);
     }
   }, [checkingSession, storageLoaded]);
+
+  // Background fetch explore feed after home is displayed
+  useEffect(() => {
+    if (showSplash) return;
+    if (!token || isTokenExpired(token)) return;
+    (async () => {
+      try {
+        const fetched = await fetchExploreFeed(token);
+        setInitialPosts(fetched);
+        await AsyncStorage.setItem('initialExploreFeed', JSON.stringify(fetched));
+      } catch (error) {
+        console.error('Error fetching explore feed in background:', error);
+      }
+    })();
+  }, [showSplash, token, isTokenExpired, fetchExploreFeed]);
 
   return { initialPosts, homeOverview, showSplash };};
