@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext } from '../contexts';
 import { fetchExploreFeed, useAuthService } from '../services';
 
@@ -17,6 +18,24 @@ export const useAppInitialization = () => {
   const { biometricLogin, isLoggedIn, communityId, storageLoaded,
           token, isTokenExpired, refreshSession } = useContext(UserContext);
   const { fetchHomeOverview } = useAuthService();
+
+  // Load cached posts and overview for immediate display
+  useEffect(() => {
+    (async () => {
+      try {
+        const cachedPosts = await AsyncStorage.getItem('initialExploreFeed');
+        if (cachedPosts) {
+          setInitialPosts(JSON.parse(cachedPosts));
+        }
+        const cachedOverview = await AsyncStorage.getItem('homeOverview');
+        if (cachedOverview) {
+          setHomeOverview(JSON.parse(cachedOverview));
+        }
+      } catch (err) {
+        console.warn('Failed to load cached data:', err);
+      }
+    })();
+  }, []);
 
   // Core initialization: biometric login, token refresh, and initial explore feed
   useEffect(() => {
@@ -51,6 +70,8 @@ export const useAppInitialization = () => {
         try {
           const fetched = await fetchExploreFeed(token);
           setInitialPosts(fetched);
+          // cache for next launch
+          await AsyncStorage.setItem('initialExploreFeed', JSON.stringify(fetched));
           // slight delay for splash
           await new Promise(res => setTimeout(res, 200));
         } catch (error) {
@@ -84,6 +105,7 @@ export const useAppInitialization = () => {
         const result = await fetchHomeOverview(communityId);
         if (result.ok) {
           setHomeOverview(result.data);
+          await AsyncStorage.setItem('homeOverview', JSON.stringify(result.data));
         } else {
           console.warn('Failed to fetch home overview');
         }
@@ -95,12 +117,11 @@ export const useAppInitialization = () => {
     })();
   }, [communityId, fetchHomeOverview]);
 
-  // Hide splash once core init is done
+  // Hide splash once minimal data is ready
   useEffect(() => {
-    if (appIsReady && !checkingSession) {
+    if (!checkingSession && storageLoaded) {
       setShowSplash(false);
     }
-  }, [appIsReady, checkingSession]);
+  }, [checkingSession, storageLoaded]);
 
-  return { initialPosts, homeOverview, showSplash };
-};
+  return { initialPosts, homeOverview, showSplash };};
