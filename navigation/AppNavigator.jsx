@@ -1,9 +1,11 @@
+import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 
+import { UserContext } from '../contexts';
 import {
   Welcome,
   Login,
@@ -29,10 +31,14 @@ import PostModal from '../modal/PostModal';
 
 const Stack = createNativeStackNavigator();
 
-const AppNavigator = ({ initialPosts, homeOverview }) => (
+const AppNavigator = ({ initialPosts, homeOverview }) => {
+  const { isLoggedIn } = useContext(UserContext);
+  const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
+
+  return (
   <NavigationContainer>
-    <Stack.Navigator
-      initialRouteName="Main"
+      <Stack.Navigator
+      initialRouteName={initialRoute}
       screenOptions={({ navigation }) => ({
         headerStyle: { backgroundColor: themeVariables.whiteColor },
         headerTintColor: themeVariables.primaryColor,
@@ -127,6 +133,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => (
       </Stack.Screen>
     </Stack.Navigator>
   </NavigationContainer>
-);
+  );
+};
 
 export default AppNavigator;

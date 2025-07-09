@@ -23,11 +23,12 @@ const MainApp = () => {
           barStyle={showSplash ? 'light-content' : 'dark-content'}
           backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.whiteColor}
         />
-        <AppNavigator initialPosts={initialPosts} homeOverview={homeOverview} />
-        {showSplash && (
-          <View style={styles.splashOverlay}>
+        {showSplash ? (
+          <View style={styles.splashContainer}>
             <Splash />
           </View>
+        ) : (
+          <AppNavigator initialPosts={initialPosts} homeOverview={homeOverview} />
         )}
       </View>
     </SafeAreaProvider>
@@ -47,8 +48,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  splashOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 9999,
+  splashContainer: {
+    flex: 1,
   },
 });
