@@ -23,14 +23,12 @@ export const useAppInitialization = () => {
   useEffect(() => {
     (async () => {
       try {
-        const cachedPosts = await AsyncStorage.getItem('initialExploreFeed');
-        if (cachedPosts) {
-          setInitialPosts(JSON.parse(cachedPosts));
-        }
-        const cachedOverview = await AsyncStorage.getItem('homeOverview');
-        if (cachedOverview) {
-          setHomeOverview(JSON.parse(cachedOverview));
-        }
+        const [postsPair, overviewPair] = await AsyncStorage.multiGet([
+          'initialExploreFeed',
+          'homeOverview',
+        ]);
+        if (postsPair[1]) setInitialPosts(JSON.parse(postsPair[1]));
+        if (overviewPair[1]) setHomeOverview(JSON.parse(overviewPair[1]));
       } catch (err) {
         console.warn('Failed to load cached data:', err);
       }
