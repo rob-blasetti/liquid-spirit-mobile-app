@@ -26,27 +26,30 @@ export const UserProvider = ({ children }) => {
   useEffect(() => {
     const loadCachedData = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('authToken');
-        const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
-        const storedUser = await AsyncStorage.getItem('user');
-        const storedCommunityId = await AsyncStorage.getItem('communityId');
+        const keys = [
+          'authToken',
+          'refreshToken',
+          'user',
+          'communityId',
+          'userActivities',
+          'userEvents',
+          'userPosts',
+        ];
+        const stores = await AsyncStorage.multiGet(keys);
+        const map = Object.fromEntries(stores);
 
-        if (storedToken) setToken(storedToken);
-        if (storedRefreshToken) setRefreshToken(storedRefreshToken);
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (map.authToken) setToken(map.authToken);
+        if (map.refreshToken) setRefreshToken(map.refreshToken);
+        if (map.user) setUser(JSON.parse(map.user));
         // Set communityId from storage, even if empty string
-        if (storedCommunityId !== null) setCommunityId(storedCommunityId);
+        if (map.communityId !== undefined) setCommunityId(map.communityId);
 
-        const cachedActivities = await AsyncStorage.getItem('userActivities');
-        const cachedEvents = await AsyncStorage.getItem('userEvents');
-        const cachedPosts = await AsyncStorage.getItem('userPosts');
-
-        if (cachedActivities) setUserActivities(JSON.parse(cachedActivities));
-        if (cachedEvents) setUserEvents(JSON.parse(cachedEvents));
-        if (cachedPosts) setUserPosts(JSON.parse(cachedPosts));
-
+        if (map.userActivities)
+          setUserActivities(JSON.parse(map.userActivities));
+        if (map.userEvents) setUserEvents(JSON.parse(map.userEvents));
+        if (map.userPosts) setUserPosts(JSON.parse(map.userPosts));
       } catch (error) {
-        console.error("Error loading cached data:", error);
+        console.error('Error loading cached data:', error);
       }
     };
 
@@ -104,11 +107,6 @@ export const UserProvider = ({ children }) => {
         ['user', JSON.stringify(userData)],
         ['communityId', userData.community?._id || ''],
       ]);
-
-      await AsyncStorage.setItem('authToken', authToken);
-      await AsyncStorage.setItem('user', JSON.stringify(userData));
-      await AsyncStorage.setItem('communityId', userData?.community?._id || '');
-      await AsyncStorage.setItem('refreshToken', refreshToken|| '');
   
       if (email && password) {
         // Store credentials securely without prompting biometric on save (will prompt on retrieval)
@@ -131,12 +129,14 @@ export const UserProvider = ({ children }) => {
       setUserEvents(null);
       setUserPosts(null);
 
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('communityId');
-      await AsyncStorage.removeItem('userActivities');
-      await AsyncStorage.removeItem('userEvents');
-      await AsyncStorage.removeItem('userPosts');
+      await AsyncStorage.multiRemove([
+        'authToken',
+        'user',
+        'communityId',
+        'userActivities',
+        'userEvents',
+        'userPosts',
+      ]);
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -192,8 +192,10 @@ export const UserProvider = ({ children }) => {
       // Extract tokens
       const { accessToken, newRefreshToken } = data;
       
-      await AsyncStorage.setItem('authToken', accessToken);
-      await AsyncStorage.setItem('refreshToken', newRefreshToken || '');
+      await AsyncStorage.multiSet([
+        ['authToken', accessToken],
+        ['refreshToken', newRefreshToken || ''],
+      ]);
 
       setToken(accessToken);
       setRefreshToken(newRefreshToken);
