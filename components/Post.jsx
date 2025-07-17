@@ -14,6 +14,7 @@ import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
+import Lightbox from 'react-native-lightbox';
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
 const ellipsisIcon = 'ellipsis-vertical';
@@ -205,17 +206,41 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
       {/* Image */}
       <View style={styles.mediaContainer}>
-        {isVideo ? (
-          <Video
-            source={{ uri: mediaUrl }}
-            style={styles.video}
-            controls
-            resizeMode="contain"
-            paused
-          />
-        ) : (
-          <FastImage source={{ uri: mediaUrl }} style={styles.postImage} resizeMode={FastImage.resizeMode.cover} />
-        )}
+        <Lightbox
+          underlayColor="transparent"
+          renderContent={() =>
+            isVideo ? (
+              <Video
+                source={{ uri: mediaUrl }}
+                style={styles.fullscreenMedia}
+                controls
+                resizeMode="contain"
+              />
+            ) : (
+              <FastImage
+                source={{ uri: mediaUrl }}
+                style={styles.fullscreenMedia}
+                resizeMode={FastImage.resizeMode.contain}
+              />
+            )
+          }
+        >
+          {isVideo ? (
+            <Video
+              source={{ uri: mediaUrl }}
+              style={styles.video}
+              controls
+              resizeMode="contain"
+              paused
+            />
+          ) : (
+            <FastImage
+              source={{ uri: mediaUrl }}
+              style={styles.postImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          )}
+        </Lightbox>
         <View style={styles.overlayContainer}>
           {expanded ? (
             <View>
@@ -361,6 +386,11 @@ const styles = StyleSheet.create({
   video: {
     width: '100%',
     height: '100%',
+  },
+  fullscreenMedia: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000',
   },
   overlayContainer: {
     position: 'absolute',
