@@ -1183,10 +1183,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@liquidspirit/react-native-boring-avatars@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@liquidspirit/react-native-boring-avatars/-/react-native-boring-avatars-1.0.4.tgz#1538a1c2d62b3213898910f6cf630341e06de942"
-  integrity sha512-/7yTMxQrSe/gQC4GcoIEb1elr5E45emtyQvI9oUCMdEUi1Im8DXDgLyCp6cj53MI02yfrUEDsqPx9U/GRwqaIw==
+"@liquidspirit/react-native-boring-avatars@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@liquidspirit/react-native-boring-avatars/-/react-native-boring-avatars-1.0.5.tgz#4a8e92c7ccd038274cbb2c5392198b4313466428"
+  integrity sha512-ieeB4tDaj+HbPTBT7RPLrMd0CeP77rG6yk3KDFNwAUcdWKLEEToRZyOk/xIHF1+FOhSFdEdVQ99OvjA97TN1UQ==
 
 "@mui/core-downloads-tracker@^7.2.0":
   version "7.2.0"
