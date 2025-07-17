@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { Platform, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
@@ -11,6 +11,32 @@ const Login = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useContext(UserContext);
+
+  useEffect(() => {
+    const loadCredentials = async () => {
+      try {
+        let creds;
+        try {
+          // Attempt Face ID authentication first
+          creds = await Keychain.getGenericPassword({
+            authenticationPrompt: { title: 'Authenticate with Face ID' },
+            authenticationType: Keychain.AUTHENTICATION_TYPE.BIOMETRICS,
+          });
+        } catch (authError) {
+          // If Face ID fails or is unavailable, fall back to plain retrieval
+          creds = await Keychain.getGenericPassword();
+        }
+        if (creds) {
+          setEmail(creds.username);
+          setPassword(creds.password);
+        }
+      } catch (err) {
+        console.log('Failed to load stored credentials', err);
+      }
+    };
+
+    loadCredentials();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,7 +58,7 @@ const Login = ({ navigation }) => {
       if (response.ok) {
         await login(result.user, result.token, result.refreshToken, email, password);
         await Keychain.setGenericPassword(email, password, {
-          accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
+          accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         });
         navigation.navigate('Main', { screen: 'Home' });
       } else {
