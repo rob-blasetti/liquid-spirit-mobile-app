@@ -887,13 +887,6 @@
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.57.1.tgz#de633db3ec2ef6a3c89e2f19038063e8a122e2c2"
   integrity sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==
 
-"@flipxyz/react-native-boring-avatars@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@flipxyz/react-native-boring-avatars/-/react-native-boring-avatars-1.0.1.tgz#d312c880cef1fee0aa58825dd065ab2d63003963"
-  integrity sha512-XOVHqe58v0gKxzr1fyUGcXjxOxnCIFul0YrdfbCUQb07QcHN2kVYIBmqRfdDXDWMCXk2VDX5bOCjzTsMx4NKCg==
-  dependencies:
-    react-native-svg "^12.1.1"
-
 "@hapi/hoek@^9.0.0", "@hapi/hoek@^9.3.0":
   version "9.3.0"
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
@@ -1189,6 +1182,11 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
+
+"@liquidspirit/react-native-boring-avatars@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@liquidspirit/react-native-boring-avatars/-/react-native-boring-avatars-1.0.4.tgz#1538a1c2d62b3213898910f6cf630341e06de942"
+  integrity sha512-/7yTMxQrSe/gQC4GcoIEb1elr5E45emtyQvI9oUCMdEUi1Im8DXDgLyCp6cj53MI02yfrUEDsqPx9U/GRwqaIw==
 
 "@mui/core-downloads-tracker@^7.2.0":
   version "7.2.0"
@@ -6273,7 +6271,7 @@ react-native-size-matters@^0.3.1:
   resolved "https://registry.yarnpkg.com/react-native-size-matters/-/react-native-size-matters-0.3.1.tgz#24d0cfc335a2c730f6d58bd7b43ea5a41be4b49f"
   integrity sha512-mKOfBLIBFBcs9br1rlZDvxD5+mAl8Gfr5CounwJtxI6Z82rGrMO+Kgl9EIg3RMVf3G855a85YVqHJL2f5EDRlw==
 
-react-native-svg@15.12.0, react-native-svg@^12.1.1:
+react-native-svg@15.12.0:
   version "15.12.0"
   resolved "https://registry.yarnpkg.com/react-native-svg/-/react-native-svg-15.12.0.tgz#0e2d476961e8b07f8c549fe4489c99b5130dc150"
   integrity sha512-iE25PxIJ6V0C6krReLquVw6R0QTsRTmEQc4K2Co3P6zsimU/jltcDBKYDy1h/5j9S/fqmMeXnpM+9LEWKJKI6A==

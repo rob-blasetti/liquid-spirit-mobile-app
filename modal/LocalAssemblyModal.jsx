@@ -13,7 +13,7 @@ import {
 import themeVariables from '../styles/theme';
 import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { Button } from 'liquid-spirit-styleguide';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

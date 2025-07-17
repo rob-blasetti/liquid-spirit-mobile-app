@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';

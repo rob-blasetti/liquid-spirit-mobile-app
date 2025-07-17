@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 

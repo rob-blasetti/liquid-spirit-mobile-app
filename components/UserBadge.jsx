@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>

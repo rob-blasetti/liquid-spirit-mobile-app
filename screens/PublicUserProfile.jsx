@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Dimensions } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import Avatar from '@flipxyz/react-native-boring-avatars';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
