@@ -14,7 +14,7 @@ import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
-import Lightbox from 'react-native-lightbox';
+import ImageViewing from 'react-native-image-viewing';
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
 const ellipsisIcon = 'ellipsis-vertical';
@@ -169,6 +169,8 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     lastTapRef.current = now;
   };
 
+  const [viewerVisible, setViewerVisible] = useState(false);
+
   const kebabRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
@@ -206,24 +208,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
       {/* Image */}
       <View style={styles.mediaContainer}>
-        <Lightbox
-          underlayColor="transparent"
-          renderContent={() =>
-            isVideo ? (
-              <Video
-                source={{ uri: mediaUrl }}
-                style={styles.fullscreenMedia}
-                controls
-                resizeMode="contain"
-              />
-            ) : (
-              <FastImage
-                source={{ uri: mediaUrl }}
-                style={styles.fullscreenMedia}
-                resizeMode={FastImage.resizeMode.contain}
-              />
-            )
-          }
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => !isVideo && setViewerVisible(true)}
         >
           {isVideo ? (
             <Video
@@ -240,7 +227,15 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               resizeMode={FastImage.resizeMode.cover}
             />
           )}
-        </Lightbox>
+        </TouchableOpacity>
+        {!isVideo && (
+          <ImageViewing
+            images={[{ uri: mediaUrl }]}
+            imageIndex={0}
+            visible={viewerVisible}
+            onRequestClose={() => setViewerVisible(false)}
+          />
+        )}
         <View style={styles.overlayContainer}>
           {expanded ? (
             <View>

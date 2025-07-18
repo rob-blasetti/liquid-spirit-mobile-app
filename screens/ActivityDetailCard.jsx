@@ -25,6 +25,7 @@ import {
   CardContent,
 } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
+import ImageViewing from 'react-native-image-viewing';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -64,6 +65,7 @@ const ActivityDetailCard = ({ route }) => {
   const [activity, setActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bannerViewerVisible, setBannerViewerVisible] = useState(false);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
 
@@ -407,12 +409,20 @@ const ActivityCardBody = ({
   return (
     <Card style={styles.card}>
       {imageUrl && (
-        <FastImage
-          source={{ uri: imageUrl }}
-          style={styles.banner}
-          resizeMode={FastImage.resizeMode.cover}
-        />
+        <TouchableOpacity onPress={() => setBannerViewerVisible(true)}>
+          <FastImage
+            source={{ uri: imageUrl }}
+            style={styles.banner}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        </TouchableOpacity>
       )}
+      <ImageViewing
+        images={[{ uri: imageUrl }]}
+        imageIndex={0}
+        visible={bannerViewerVisible}
+        onRequestClose={() => setBannerViewerVisible(false)}
+      />
 
       <View style={styles.overlayCard}>
         <CardTitle

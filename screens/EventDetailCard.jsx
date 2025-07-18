@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
+import ImageViewing from 'react-native-image-viewing';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -60,6 +61,7 @@ const EventDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
+  const [bannerViewerVisible, setBannerViewerVisible] = useState(false);
   const handleShare = async () => {
     const id = event?._id || eventId;
     if (!id) return;
@@ -263,12 +265,20 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   return (
     <Card style={styles.card}>
       {imageUrl && (
-        localImages[imageUrl] ? (
-          <Image source={localImages[imageUrl]} style={styles.banner} resizeMode="cover" />
-        ) : (
-          <FastImage source={{ uri: imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover} />
-        )
+        <TouchableOpacity onPress={() => setBannerViewerVisible(true)}>
+          {localImages[imageUrl] ? (
+            <Image source={localImages[imageUrl]} style={styles.banner} resizeMode="cover" />
+          ) : (
+            <FastImage source={{ uri: imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover} />
+          )}
+        </TouchableOpacity>
       )}
+      <ImageViewing
+        images={[{ uri: imageUrl }]}
+        imageIndex={0}
+        visible={bannerViewerVisible}
+        onRequestClose={() => setBannerViewerVisible(false)}
+      />
       <View style={styles.overlayCard}>
         {hasJoined && (
           <View style={styles.statusChip}>

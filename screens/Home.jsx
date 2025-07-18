@@ -23,6 +23,7 @@ import RectangularTile from '../components/RectangularTile';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ImageViewing from 'react-native-image-viewing';
 // Helper: get the next upcoming session date for an activity
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
@@ -75,6 +76,7 @@ const Home = ({ navigation, homeOverview }) => {
   }, [homeOverview.events]);
   const [activeTab, setActiveTab] = useState('Activities');
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
+  const [bannerViewerVisible, setBannerViewerVisible] = useState(false);
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
 
@@ -121,14 +123,26 @@ const Home = ({ navigation, homeOverview }) => {
           styles.bannerContainer,
           { marginTop: -statusBarHeight, height: 200 + statusBarHeight + EXTRA_TOP }
         ]}>
-          <Image
-            source={{
+          <TouchableOpacity onPress={() => setBannerViewerVisible(true)}>
+            <Image
+              source={{
+                uri: Array.isArray(user?.community?.bannerImage)
+                  ? user.community.bannerImage[0]
+                  : user?.community?.bannerImage
+              }}
+              style={styles.bannerImage}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+          <ImageViewing
+            images={[{
               uri: Array.isArray(user?.community?.bannerImage)
                 ? user.community.bannerImage[0]
-                : user?.community?.bannerImage
-            }}
-            style={styles.bannerImage}
-            resizeMode="cover"
+                : user?.community?.bannerImage,
+            }]}
+            imageIndex={0}
+            visible={bannerViewerVisible}
+            onRequestClose={() => setBannerViewerVisible(false)}
           />
           <View style={styles.bannerOverlay} />
           <View style={[
