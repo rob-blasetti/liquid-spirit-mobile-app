@@ -31,11 +31,17 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const [mediaType, setMediaType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
-  const { communityId, token, user } = useContext(UserContext);
+  const { communityId, token, user, userActivities, userEvents } = useContext(UserContext);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [tags, setTags] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigation = useNavigation();
   const handleClose = onClose ? onClose : () => navigation.goBack();
   const insets = useSafeAreaInsets();
+  const tagOptions = [
+    ...(userActivities || []).map(a => a.title).filter(Boolean),
+    ...(userEvents || []).map(e => e.title).filter(Boolean)
+  ];
   useEffect(() => {
     console.log('SafeArea insets:', insets);
     console.log('Window dimensions on mount:', Dimensions.get('window'));
@@ -72,6 +78,12 @@ export default function CreatePost({ onPostCreated, onClose }) {
     });
   };
 
+  const toggleTag = (tag) => {
+    setTags((prev) =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
   const handlePost = async () => {
     if (!content || !communityId) {
       Alert.alert('Missing Fields', 'Please write something.');
@@ -101,6 +113,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
         content,
         mediaUrl: mediaResult ? mediaResult.originalUrl : null,
         mediaThumbnailUrl: mediaResult ? mediaResult.thumbnailUrl : null,
+        tags,
         user: { id: user.id },
         userCommunityId: communityId,
         token,
@@ -113,6 +126,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
       setContent('');
       setMediaUri(null);
       setMediaType(null);
+      setTags([]);
       if (onPostCreated) {
         onPostCreated();
       }
@@ -179,6 +193,42 @@ export default function CreatePost({ onPostCreated, onClose }) {
                 onChangeText={setContent}
                 multiline
               />
+
+              <Text style={styles.label}>Tags</Text>
+              <TouchableOpacity
+                style={styles.dropdown}
+                onPress={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <Text style={styles.dropdownText}>
+                  {tags.length > 0 ? tags.join(', ') : 'Select tags'}
+                </Text>
+                <Ionicons
+                  name={dropdownOpen ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={themeVariables.primaryColor}
+                />
+              </TouchableOpacity>
+              {dropdownOpen && (
+                <View style={styles.dropdownList}>
+                  <ScrollView style={{ maxHeight: 150 }}>
+                    {tagOptions.map((t) => (
+                      <TouchableOpacity
+                        key={t}
+                        style={styles.dropdownItem}
+                        onPress={() => toggleTag(t)}
+                      >
+                        <Ionicons
+                          name={tags.includes(t) ? 'checkbox' : 'square-outline'}
+                          size={20}
+                          color={themeVariables.primaryColor}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Text>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
 
               {mediaUri && mediaType.includes('image') && (
                 <Image
@@ -317,6 +367,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     width: Platform.select({ android: 65 }),
+  },
+  dropdown: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    backgroundColor: themeVariables.whiteColor,
+    marginBottom: 10,
+  },
+  dropdownText: {
+    color: '#333',
+    fontSize: 16,
+  },
+  dropdownList: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    backgroundColor: themeVariables.whiteColor,
+    marginBottom: 10,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 15,
   },
   mediaPreview: {
     width: '100%',

@@ -226,6 +226,15 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             >
               <Text style={styles.communityText}>{authorCommunity}</Text>
             </TouchableOpacity>
+            {Array.isArray(post.tags) && post.tags.length > 0 && (
+              <View style={styles.chipsContainer}>
+                {post.tags.map((tag, idx) => (
+                  <View key={idx} style={styles.communityChip}>
+                    <Text style={styles.communityText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
         <View ref={kebabRef} collapsable={false} style={styles.kebabContainer}>
