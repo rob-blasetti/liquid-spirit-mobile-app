@@ -138,7 +138,7 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
     }
   };
 
-  export const createPost = async ({ title, content, mediaUrl, mediaThumbnailUrl, user, userCommunityId, token }) => {
+  export const createPost = async ({ title, content, mediaUrl, mediaThumbnailUrl, tags = [], user, userCommunityId, token }) => {
     try {
       const response = await fetch(`${API_URL}/api/posts/create`, {
         method: 'POST',
@@ -153,6 +153,7 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
           mediaThumbnails: mediaThumbnailUrl ? [mediaThumbnailUrl] : [],
           author: user.id,
           community: userCommunityId,
+          tags,
         }),
       });
   
