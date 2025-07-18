@@ -17,7 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
@@ -61,6 +61,7 @@ const Home = ({ navigation, homeOverview }) => {
   const EXTRA_TOP = 50;
   const bannerHeight = 200 + statusBarHeight + EXTRA_TOP;
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
+  const isFocused = useIsFocused();
   const bannerData = useMemo(() => {
     const bi = user?.community?.bannerImage;
     if (Array.isArray(bi)) {
@@ -127,7 +128,10 @@ const Home = ({ navigation, homeOverview }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      {/* Only override status bar to white on Home screen */}
+      {isFocused && (
+        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      )}
       <Animated.ScrollView
         contentContainerStyle={styles.scrollView}
         scrollEventThrottle={16}
@@ -506,7 +510,8 @@ const styles = StyleSheet.create({
     top: 0,
     right: 20,
     zIndex: 2,
-    backgroundColor: themeVariables.greyColor,
+    // translucent background for notification bell (increased contrast)
+    backgroundColor: 'rgba(243,243,243,0.6)',
     borderRadius: themeVariables.borderRadiusPill,
     padding: 6,
     // subtle shadow for raised effect
@@ -858,7 +863,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: themeVariables.primaryColor,
+    backgroundColor: themeVariables.blackColor,
   },
   createIcon: {
     marginRight: 8,
