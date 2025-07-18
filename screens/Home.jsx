@@ -15,15 +15,16 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
+import Lightbox from 'react-native-lightbox';
+import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
-import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Helper: get the next upcoming session date for an activity
+
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
   const now = new Date();
@@ -77,6 +78,8 @@ const Home = ({ navigation, homeOverview }) => {
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
+  // animated scroll offset for banner stretch
+  const scrollY = useRef(new Animated.Value(0)).current;
 
 
   // handle tab switch: slide old panel left, then slide in new panel
@@ -115,26 +118,44 @@ const Home = ({ navigation, homeOverview }) => {
   return (
     <View style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
-      <ScrollView contentContainerStyle={styles.scrollView}>
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollView}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+      >
         {/* Banner Section */}
-        <View style={[
+        <Animated.View style={[
           styles.bannerContainer,
           { marginTop: -statusBarHeight, height: 200 + statusBarHeight + EXTRA_TOP }
         ]}>
-          <Image
-            source={{
-              uri: Array.isArray(user?.community?.bannerImage)
-                ? user.community.bannerImage[0]
-                : user?.community?.bannerImage
+          <Lightbox
+            underlayColor="transparent"
+            activeProps={{
+              style: styles.fullscreenBanner,
+              resizeMode: FastImage.resizeMode.contain,
             }}
-            style={styles.bannerImage}
-            resizeMode="cover"
-          />
-          <View style={styles.bannerOverlay} />
-          <View style={[
-            styles.bannerContent,
-            { top: statusBarHeight + EXTRA_TOP }
-          ]}>
+          >
+            <FastImage
+              source={{
+                uri: Array.isArray(user?.community?.bannerImage)
+                  ? user.community.bannerImage[0]
+                  : user?.community?.bannerImage
+              }}
+              style={styles.bannerImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          </Lightbox>
+          <View style={styles.bannerOverlay} pointerEvents="none" />
+          <View
+            style={[
+              styles.bannerContent,
+              { top: statusBarHeight + EXTRA_TOP }
+            ]}
+            pointerEvents="box-none"
+          >
             <TouchableOpacity
               style={styles.notificationButton}
               onPress={() => navigation.navigate('Notifications')}
@@ -146,26 +167,14 @@ const Home = ({ navigation, homeOverview }) => {
                 </View>
               )}
             </TouchableOpacity>
-            <View style={styles.bannerMiddleRow}>
-              <ChangeableProfileImage imageStyle={styles.profileAvatar} avatarSize={55} />
-              <View style={styles.profileColumn}>
-                <Text style={styles.profileName}>
-                  {user?.firstName} {user?.lastName}
-                </Text>
-                <Text style={styles.profileBahaiId}>
-                  {user?.bahaiId}
-                </Text>
-              </View>
-              <View style={styles.communityColumn}>
-                <Text style={styles.communityName}>{user?.community?.name}</Text>
-                <Text style={styles.communityMembers}>{homeOverview.stats?.communityMembersCount} members</Text>
-              </View>
+            {/* Community info at banner bottom-left */}
+            <View style={styles.bannerBottomLeft}>
+              <Text style={styles.communityBannerName}>{user?.community?.name}</Text>
             </View>
+            {/* Date */}
             {(() => {
               const nowDate = new Date();
-              // Gregorian date
               const gregorianDate = nowDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-              // Badi date
               const badi = getBadiDate(nowDate);
               return (
                 <Text style={styles.bahaiDate}>
@@ -174,7 +183,7 @@ const Home = ({ navigation, homeOverview }) => {
               );
             })()}
           </View>
-        </View>
+          </Animated.View>
 
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
@@ -476,7 +485,7 @@ const Home = ({ navigation, homeOverview }) => {
             <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity> */}
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
       {/* Local Spiritual Assembly Members Modal */}
       <LocalAssemblyModal
         visible={assemblyModalVisible}
@@ -495,7 +504,7 @@ const styles = StyleSheet.create({
   // Styles for notification button on banner, matching Profile banner icon style
   notificationButton: {
     position: 'absolute',
-    top: 20,
+    top: 0,
     right: 20,
     zIndex: 2,
     backgroundColor: themeVariables.greyColor,
@@ -544,57 +553,34 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  fullscreenBanner: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'transparent',
+  },
   bannerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   bannerContent: {
     ...StyleSheet.absoluteFillObject,
     paddingHorizontal: 20,
   },
-  bannerMiddleRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  // Community bottom-left in banner
+  bannerBottomLeft: {
+    position: 'absolute',
+    left: 20,
+    bottom: 30,
   },
-  profileColumn: {
-    flex: 1,
-    marginLeft: 10,
-  },
-  communityColumn: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  profileAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: themeVariables.whiteColor,
-    marginBottom: 8,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '600',
+  communityBannerName: {
+    fontSize: 46,
+    fontWeight: 'bold',
     color: themeVariables.whiteColor,
   },
-  profileBahaiId: {
-    fontSize: 14,
-    color: themeVariables.whiteColor,
-    marginBottom: 4,
-  },
-  communityName: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: themeVariables.whiteColor,
-    width: Platform.select({ android: 100 }),
-  },
-  communityMembers: {
-    fontSize: 14,
+  communityBannerMembers: {
+    fontSize: 16,
     color: themeVariables.whiteColor,
     marginTop: 4,
-    width: Platform.select({ android: 100 }),
   },
   statsSection: {
     alignItems: 'center',
