@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-import Lightbox from 'react-native-lightbox';
-import FastImage from 'react-native-fast-image';
+import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
@@ -60,7 +59,18 @@ const Home = ({ navigation, homeOverview }) => {
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;
   // Extra padding to further push content down and enlarge banner
   const EXTRA_TOP = 50;
+  const bannerHeight = 200 + statusBarHeight + EXTRA_TOP;
   const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
+  const bannerData = useMemo(() => {
+    const bi = user?.community?.bannerImage;
+    if (Array.isArray(bi)) {
+      return bi.map(uri => ({ uri }));
+    }
+    if (bi) {
+      return [{ uri: bi }];
+    }
+    return [];
+  }, [user?.community?.bannerImage]);
   // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {
     if (!Array.isArray(homeOverview.events)) return null;
@@ -129,25 +139,14 @@ const Home = ({ navigation, homeOverview }) => {
         {/* Banner Section */}
         <Animated.View style={[
           styles.bannerContainer,
-          { marginTop: -statusBarHeight, height: 200 + statusBarHeight + EXTRA_TOP }
+          { marginTop: -statusBarHeight, height: bannerHeight }
         ]}>
-          <Lightbox
-            underlayColor="transparent"
-            activeProps={{
-              style: styles.fullscreenBanner,
-              resizeMode: FastImage.resizeMode.contain,
-            }}
-          >
-            <FastImage
-              source={{
-                uri: Array.isArray(user?.community?.bannerImage)
-                  ? user.community.bannerImage[0]
-                  : user?.community?.bannerImage
-              }}
-              style={styles.bannerImage}
-              resizeMode={FastImage.resizeMode.cover}
-            />
-          </Lightbox>
+          <Carousel
+            data={bannerData}
+            itemWidth={SCREEN_WIDTH}
+            separatorWidth={0}
+            itemHeight={bannerHeight}
+          />
           <View style={styles.bannerOverlay} pointerEvents="none" />
           <View
             style={[
