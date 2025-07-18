@@ -21,6 +21,7 @@ import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
+import localImages from '../utils/localImages';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -207,21 +208,29 @@ const Home = ({ navigation, homeOverview }) => {
         {activeTab==='Events' && userEvents && userEvents.length > 0 && (() => {
           const now = new Date();
           const upcoming = userEvents
-            .filter(ev => ev.date && new Date(ev.date) >= now)
+            .filter(ev =>
+              ev.date &&
+              new Date(ev.date) >= now &&
+              (
+                ev.eventType === 'Feast' ||
+                ev.eventType === 'Holy Day'
+              )
+            )
             .sort((a, b) => new Date(a.date) - new Date(b.date));
           const nextEvent = upcoming[0];
+          if (!nextEvent) return null;
           // format event date/time for tile
           const eventDate = new Date(nextEvent.startTime);
           const eventDateTime = eventDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-          if (!nextEvent) return null;
           return (
             <View style={styles.dualGrid}>
               {/* Large Upcoming Event Tile */}
               <RectangularTile
-                title="Upcoming"
+                title={nextEvent.title}
                 bgImgColour="green"
+                imageSource={localImages[nextEvent.imageUrl] || { uri: nextEvent.imageUrl }}
                 // Show title and event type separated by a dot
-                subheading={`${nextEvent.title} \u2022 ${nextEvent.eventType || ''}`}
+                subheading={`${nextEvent.eventType || ''}`}
                 dateTime={eventDateTime}
                 onPress={() => navigation.navigate('EventDetailCard', { eventId: nextEvent._id, eventPreload: nextEvent })}
                 style={styles.largeTile}
@@ -286,12 +295,14 @@ const Home = ({ navigation, homeOverview }) => {
           return (
             <View style={styles.dualGrid}>
               <RectangularTile
-                title="Upcoming"
+                title="Local Spiritual Assembly Meeting"
                 bgImgColour="blue"
+                imageSource={localImages[nextLsaEvent.imageUrl] || { uri: nextLsaEvent.imageUrl }}
                 dateTime={dateTimeStr}
-                subheading="Next Local Spiritual Assembly Meeting"
+                subheading="Admin"
                 onPress={() => navigation.navigate('EventDetailCard', { eventId: nextLsaEvent._id, eventPreload: nextLsaEvent })}
                 style={styles.largeTile}
+                showRibbon={false}
               />
               <View style={styles.smallTilesColumn}>
                 <SquareTile
@@ -337,9 +348,9 @@ const Home = ({ navigation, homeOverview }) => {
           return (
             <View style={styles.dualGrid}>
               <RectangularTile
-                title="Upcoming"
+                title={nextAct.title}
                 dateTime={actDateTime}
-                subheading={`${nextAct.title} \u2022 ${nextAct.activityType?.name || ''}`}
+                subheading={`${nextAct.activityType?.name || ''}`}
                 imageSource={{ uri: nextAct.imageUrl }}
                 onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextAct._id, activityPreload: nextAct })}
                 style={styles.largeTile}

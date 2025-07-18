@@ -172,6 +172,25 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const kebabRef = useRef(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
+  // Helper to format relative time ago
+  const computeTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const diffMs = Date.now() - new Date(dateString).getTime();
+    const seconds = Math.floor(diffMs / 1000);
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks}w`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo`;
+    const years = Math.floor(days / 365);
+    return `${years}y`;
+  };
 
   return (
     <TouchableOpacity
@@ -180,27 +199,39 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       onPress={handlePostPress}
     >
       <View style={styles.userInfoContainer}>
-        <TouchableOpacity
-          style={styles.userInfo}
-          onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
-        >
-          <FastImage
-            source={{ uri: profilePic }}
-            style={styles.profilePic}
-            resizeMode={FastImage.resizeMode.cover}
-            onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
-          />
-          <Text style={styles.username}>{authorName}</Text>
-        </TouchableOpacity>
-        <View style={styles.communityContainer}>
-          <View style={styles.communityChip}>
-            <Text style={styles.communityText}>{authorCommunity}</Text>
-          </View>
-          <View ref={kebabRef} collapsable={false}>
-            <TouchableOpacity onPress={handleToggleMenu}>
-              <Ionicons name={ellipsisIcon} size={24} color="#333" />
+        <View style={styles.leftContainer}>
+          <TouchableOpacity
+            style={styles.avatarTouchable}
+            onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
+          >
+            <FastImage
+              source={{ uri: profilePic, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable }}
+              style={styles.profilePic}
+              resizeMode={FastImage.resizeMode.cover}
+              onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
+            />
+          </TouchableOpacity>
+          <View style={styles.infoContainer}>
+            <TouchableOpacity
+              style={styles.nameRow}
+              onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
+            >
+              <Text style={styles.username}>{authorName}</Text>
+              <Text style={styles.dotSeparator}>·</Text>
+              <Text style={styles.timeAgo}>{computeTimeAgo(post.createdAt)}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.communityChip}
+              onPress={() => navigation.navigate('Search', { initialQuery: authorCommunity })}
+            >
+              <Text style={styles.communityText}>{authorCommunity}</Text>
             </TouchableOpacity>
           </View>
+        </View>
+        <View ref={kebabRef} collapsable={false} style={styles.kebabContainer}>
+          <TouchableOpacity onPress={handleToggleMenu}>
+            <Ionicons name={ellipsisIcon} size={24} color="#333" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -208,6 +239,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       <View style={styles.mediaContainer}>
         <Lightbox
           underlayColor="transparent"
+          springConfig={{ tension: 30, friction: 20 }}
+          renderHeader={close => (
+            <TouchableOpacity onPress={close} style={styles.lightboxCloseButton}>
+              <Text style={styles.lightboxCloseText}>×</Text>
+            </TouchableOpacity>
+          )}
           renderContent={() =>
             isVideo ? (
               <Video
@@ -218,7 +255,11 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               />
             ) : (
               <FastImage
-                source={{ uri: mediaUrl }}
+                source={{
+                  uri: mediaUrl,
+                  priority: FastImage.priority.normal,
+                  cache: FastImage.cacheControl.immutable,
+                }}
                 style={styles.fullscreenMedia}
                 resizeMode={FastImage.resizeMode.contain}
               />
@@ -235,7 +276,11 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             />
           ) : (
             <FastImage
-              source={{ uri: mediaUrl }}
+              source={{
+                uri: mediaUrl,
+                priority: FastImage.priority.normal,
+                cache: FastImage.cacheControl.immutable,
+              }}
               style={styles.postImage}
               resizeMode={FastImage.resizeMode.cover}
             />
@@ -309,8 +354,8 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
 const styles = StyleSheet.create({
   postContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: 4,
+    marginBottom: 2,
     marginTop: 4,
     backgroundColor: themeVariables.greyColor,
     borderRadius: themeVariables.borderRadiusPill,
@@ -324,13 +369,32 @@ const styles = StyleSheet.create({
   },
   userInfoContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
   userInfo: {
     flexDirection: 'row',
+    // Top align name and community chip
+    alignItems: 'flex-start',
+  },
+  // Wrapper for name and community chip stacked vertically
+  userInfoText: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  // Row container for username and time separator
+  nameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+  },
+  dotSeparator: {
+    marginHorizontal: 4,
+    color: themeVariables.greyTextColor || '#666',
+  },
+  timeAgo: {
+    fontSize: 14,
+    color: themeVariables.greyTextColor || '#666',
+    marginBottom: 4,
   },
   profilePic: {
     width: 46,
@@ -343,6 +407,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 4,
+    marginTop: -2,
     width: Platform.select({ android: 125 })
   },
   communityContainer: {
@@ -351,18 +417,38 @@ const styles = StyleSheet.create({
   },
   communityChip: {
     backgroundColor: '#312783',
-    paddingVertical: 4,
+    paddingVertical: 2,
     paddingHorizontal: 10,
     borderRadius: 14,
-    marginRight: 8,
     flexShrink: 0,
-    width: Platform.select({ android: 85 })
+    width: Platform.select({ android: 85 }),
+    marginTop: 4,
   },
   communityText: {
     fontSize: 14,
     color: '#fff',
     textAlign: 'center',
     flexShrink: 0,
+  },
+  avatarTouchable: {
+    marginRight: 10,
+  },
+  infoContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    flexShrink: 1,
+  },
+  chipsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  kebabContainer: {
+    marginLeft: 'auto',
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
   },
   imageContainer: {
     position: 'relative',
@@ -426,15 +512,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#eee',
-    paddingTop: 10,
-    marginTop: 10,
+    paddingTop: 5,
+    marginTop: 5,
     // If you want spacing between buttons:
     justifyContent: 'flex-start',
   },
   postFooterIcon: {
     flexDirection: 'row', 
     alignItems: 'center',
-    paddingVertical: 4, 
+    paddingVertical: 0, 
     paddingHorizontal: 4,
   },
   footerIconText: {
@@ -469,6 +555,21 @@ const styles = StyleSheet.create({
   menuItem: {
     fontSize: 16,
     color: '#333',
+  },
+  // Custom close button for lightbox
+  lightboxCloseButton: {
+    position: 'absolute',
+    // Positioned lower and towards right to sit just above the image
+    top: 60,
+    right: 10,
+    zIndex: 2,
+  },
+  lightboxCloseText: {
+    fontSize: 35,
+    color: '#fff',
+    lineHeight: 40,
+    width: 40,
+    textAlign: 'center',
   },
 });
 

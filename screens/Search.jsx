@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchSearchResults } from '../services/SearchService';
@@ -9,6 +9,7 @@ import { TabView } from 'react-native-tab-view';
 
 const Search = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,22 +109,34 @@ const Search = () => {
     );
   };
 
-  // Fetch recent results on mount (when no query)
+  // Fetch recent results on first mount, and handle initialQuery param once
+  const firstMountRef = React.useRef(true);
   useEffect(() => {
-    const loadRecent = async () => {
+    const loadResults = async (text) => {
       setIsLoading(true);
       try {
-        // Fetch initial results with an empty query to show recent items when the screen loads
-        const data = await fetchSearchResults('', token);
+        const data = await fetchSearchResults(text, token);
         setResults(data || []);
+        setQuery(text);
       } catch (err) {
-        console.error('Failed to load recent results:', err);
+        console.error('Failed to load search results:', err);
+        setResults([]);
       } finally {
         setIsLoading(false);
       }
     };
-    loadRecent();
-  }, [token]);
+    const initialQuery = route.params?.initialQuery;
+    if (initialQuery) {
+      // display the query immediately in the input
+      setQuery(initialQuery);
+      loadResults(initialQuery);
+      navigation.setParams({ initialQuery: undefined });
+      firstMountRef.current = false;
+    } else if (firstMountRef.current) {
+      loadResults('');
+      firstMountRef.current = false;
+    }
+  }, [route.params?.initialQuery, token, navigation]);
   
   const handleSearch = async (text) => {
     setQuery(text);

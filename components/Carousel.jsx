@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, FlatList, Dimensions, StyleSheet, Image, Text } from 'react-native';
+import { View, FlatList, Dimensions, StyleSheet, Text } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Lightbox from 'react-native-lightbox';
 
 const { width } = Dimensions.get('window');
@@ -11,6 +12,12 @@ const { width } = Dimensions.get('window');
  * @param {number} [separatorWidth] - Space between items (defaults to 5% of screen width)
  */
 const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05, itemHeight = 200 }) => {
+  // Preload images to improve lightbox opening performance
+  useEffect(() => {
+    if (Array.isArray(data) && data.length) {
+      FastImage.preload(data.map(item => ({ uri: item.uri })));
+    }
+  }, [data]);
   const flatListRef = useRef(null);
   const snapToInterval = itemWidth + separatorWidth;
   const originalDataCount = data.length;
@@ -32,12 +39,21 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
       <View style={{ width: itemWidth, marginRight: separatorWidth, height: itemHeight }}>
         <Lightbox
           underlayColor="transparent"
+          springConfig={{ tension: 30, friction: 20 }}
           activeProps={{
             style: styles.fullscreenImage,
-            resizeMode: 'contain',
+            resizeMode: FastImage.resizeMode.contain,
           }}
         >
-          <Image source={{ uri: item.uri }} style={styles.image} />
+          <FastImage
+            style={styles.image}
+            source={{
+              uri: item.uri,
+              priority: FastImage.priority.normal,
+              cache: FastImage.cacheControl.immutable,
+            }}
+            resizeMode={FastImage.resizeMode.cover}
+          />
         </Lightbox>
       </View>
     ),
