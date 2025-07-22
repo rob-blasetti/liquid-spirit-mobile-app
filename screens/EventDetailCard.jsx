@@ -120,6 +120,7 @@ const EventDetailCard = ({ route }) => {
       fetchEventDetails(eventId, token)
         .then(data => setEvent(data))
         .catch(err => console.error('Error fetching event details:', err));
+        console.log('event date: ', event);
     }
   }, [eventId, token, eventPreload]);
   // Show loading spinner while fetching event details
@@ -164,8 +165,9 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const { user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   // Destructure raw attendees from event; we'll enrich with full user data below
+  console.log('the event: ====> ', event);
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
-    attendees: rawAttendees = [], host, materials = [] } = event;
+    attendees: rawAttendees = [], hosts = [], materials = [] } = event;
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   const dateSub = getDayMonth(dateObj);
@@ -314,16 +316,38 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
 
           {/* Host Section */}
           <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>Host</Text>
-            {!host && (
-              <TouchableOpacity style={styles.requestButton} onPress={() => alert('Request Host')} activeOpacity={0.8}>
-                <Ionicons name="add-circle-outline" size={18} color={themeVariables.whiteColor} />
+            <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>
+              {hosts.length === 1 ? 'Host' : 'Hosts'}
+            </Text>
+            {hosts.length === 0 && (
+              <TouchableOpacity
+                style={styles.requestButton}
+                onPress={() => alert('Request Host')}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name="add-circle-outline"
+                  size={18}
+                  color={themeVariables.whiteColor}
+                />
                 <Text style={styles.requestButtonText}>Request Host</Text>
               </TouchableOpacity>
             )}
           </View>
-          {host ? (
-            <UserBadge user={host} userCertifications={host.certifications} />
+
+          {hosts.length > 0 ? (
+            <View style={styles.userListContainer}>
+              {hosts.map(h => {
+                const hostUser = h.details || h;
+                return (
+                  <UserBadge
+                    key={h._id}
+                    user={hostUser}
+                    userCertifications={h.certifications}
+                  />
+                );
+              })}
+            </View>
           ) : (
             <Text style={styles.headerInfoText}>No host yet</Text>
           )}
