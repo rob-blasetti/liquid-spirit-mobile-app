@@ -337,11 +337,13 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
 
           {hosts.length > 0 ? (
             <View style={styles.userListContainer}>
-              {hosts.map(h => {
+              {hosts.map((h, idx) => {
+                // Ensure each host has a unique key (fallback to index)
                 const hostUser = h.details || h;
+                const key = h._id || (hostUser && hostUser._id) || idx;
                 return (
                   <UserBadge
-                    key={h._id}
+                    key={key}
                     user={hostUser}
                     userCertifications={h.certifications}
                   />
