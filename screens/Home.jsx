@@ -37,11 +37,18 @@ const getNextSessionDate = (activity) => {
   future.sort((a, b) => a - b);
   return future[0];
 };
-// Fallback helper: use session date or root-level date
+// Fallback helper: use session date or root-level date (combine with groupDetails.time)
 const getEffectiveNextDate = (activity) => {
   const nextSession = getNextSessionDate(activity);
   if (nextSession) return nextSession;
   if (activity.date) {
+    // If groupDetails.time provided, combine date and time for correct local datetime
+    const timeStr = activity.groupDetails?.time;
+    if (timeStr) {
+      const [year, month, day] = activity.date.split('T')[0].split('-').map(Number);
+      const [hour, minute] = timeStr.split(':').map(Number);
+      return new Date(year, month - 1, day, hour, minute);
+    }
     const d = new Date(activity.date);
     if (!isNaN(d)) return d;
   }
@@ -285,7 +292,36 @@ const Home = ({ navigation, homeOverview }) => {
               }
             }
           }
-          if (!nextLsaEvent) return null;
+          if (!nextLsaEvent) {
+            // No upcoming assembly meeting: show fallback tile with Coming Soon ribbon
+            return (
+              <View style={styles.dualGrid}>
+                <RectangularTile
+                  title="Local Spiritual Assembly Meeting"
+                  bgImgColour="blue"
+                  style={styles.largeTile}
+                  ribbonText="Coming Soon"
+                  onPress={() => {}}
+                />
+                <View style={styles.smallTilesColumn}>
+                  <SquareTile
+                    subheading="My Local Spiritual Assembly"
+                    bgImgColour="red"
+                    actionIcon="people-outline"
+                    style={styles.smallTileGap}
+                    onPress={() => setAssemblyModalVisible(true)}
+                  />
+                  <SquareTile
+                    subheading="Request Agenda Item"
+                    bgImgColour="red"
+                    actionIcon="document-text-outline"
+                    style={styles.smallTileLast}
+                    onPress={() => navigation.navigate('RequestAgendaItem')}
+                  />
+                </View>
+              </View>
+            );
+          }
           const eventDate = new Date(nextLsaEvent.startTime);
           const day = eventDate.toLocaleDateString(undefined, { weekday: 'short' });
           const date = eventDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
@@ -330,12 +366,13 @@ const Home = ({ navigation, homeOverview }) => {
           const now = new Date();
           // Prepare activities with next dates (session or root date)
           const upcomingWithDate = homeOverview.activities
-            .map(a => ({ activity: a, nextDate: getEffectiveNextDate(a) }))
-            .filter(({ nextDate }) => nextDate && nextDate >= now)
-            .sort((a, b) => a.nextDate - b.nextDate);
+          .map(a => ({ activity: a, nextDate: getEffectiveNextDate(a) }))
+          .filter(({ nextDate }) => nextDate && nextDate >= now)
+          .sort((a, b) => a.nextDate - b.nextDate);
           const upcoming = upcomingWithDate.map(({ activity }) => activity);
           const nextActData = upcomingWithDate[0] || null;
           const nextAct = nextActData?.activity || null;
+          console.log('nextAct: ', nextAct);
           const nextDate = nextActData?.nextDate || null;
           // Next activity with available facilitator slots
           const activityToFacilitate = upcoming.find(a => {

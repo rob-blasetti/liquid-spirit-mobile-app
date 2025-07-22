@@ -439,12 +439,20 @@ const ActivityCardBody = ({
           <>
             <Text style={styles.mapTitle}>Online Only</Text>
             <View style={styles.onlineRow}>
-              <Ionicons name="videocam-outline" size={20} color={themeVariables.primaryColor} style={{ marginRight: 8 }} />
+              <Ionicons
+                name="videocam-outline"
+                size={20}
+                color={themeVariables.primaryColor}
+                style={{ marginRight: 8 }}
+              />
               <Text
-                style={[styles.headerInfoText, { color: themeVariables.primaryColor }]}
+                style={[
+                  styles.headerInfoText,
+                  { color: themeVariables.primaryColor, textDecorationLine: 'underline' },
+                ]}
                 onPress={() => Linking.openURL(onlineLink)}
               >
-                {onlineLink}
+                Join Now
               </Text>
             </View>
             <View style={styles.divider} />

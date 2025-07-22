@@ -25,6 +25,7 @@ const RectangularTile = ({
   bgImgColour,
   style,
   showRibbon = true,
+  ribbonText = 'Upcoming',
 }) => (
   <View style={[styles.container, style]}>
     <BasicTile
@@ -43,7 +44,7 @@ const RectangularTile = ({
 
     {showRibbon && (
       <View style={styles.ribbon}>
-        <Text style={styles.ribbonText}>Upcoming</Text>
+        <Text style={styles.ribbonText}>{ribbonText}</Text>
       </View>
     )}
   </View>
