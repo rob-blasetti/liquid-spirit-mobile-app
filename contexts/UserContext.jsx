@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import NotificationService from '../services/NotificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
@@ -7,13 +7,14 @@ import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
 import { parseJwt } from '../utils/parseJwt';
 import { API_URL } from '../config';
+import { CommunityContext } from './CommunityContext';
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
-  const [communityId, setCommunityId] = useState(null);
+  const { setCommunityId } = useContext(CommunityContext);
   const [userActivities, setUserActivities] = useState(null);
   const [userEvents, setUserEvents] = useState(null);
   const [userPosts, setUserPosts] = useState(null);
@@ -30,7 +31,6 @@ export const UserProvider = ({ children }) => {
           'authToken',
           'refreshToken',
           'user',
-          'communityId',
           'userActivities',
           'userEvents',
           'userPosts',
@@ -41,8 +41,6 @@ export const UserProvider = ({ children }) => {
         if (map.authToken) setToken(map.authToken);
         if (map.refreshToken) setRefreshToken(map.refreshToken);
         if (map.user) setUser(JSON.parse(map.user));
-        // Set communityId from storage, even if empty string
-        if (map.communityId !== undefined) setCommunityId(map.communityId);
 
         if (map.userActivities)
           setUserActivities(JSON.parse(map.userActivities));
@@ -92,7 +90,7 @@ export const UserProvider = ({ children }) => {
     };
 
     loadUserData();
-  }, [communityId, token]);
+  }, [token]);
 
   const login = async (userData, authToken, refreshToken, email, password) => {
     try {
@@ -285,8 +283,6 @@ export const UserProvider = ({ children }) => {
         setUnreadCount,
         userNotifications,
         setUserNotifications,
-        communityId,
-        setCommunityId,
         login,
         logout,
         isLoggedIn: !!token,

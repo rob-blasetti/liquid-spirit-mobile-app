@@ -17,12 +17,14 @@ import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost, d
 import { blockUser, muteUser } from '../services/UserService';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 
 const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
-  const { token, communityId, isTokenExpired, refreshSession, user } = useContext(UserContext);
+  const { token, isTokenExpired, refreshSession, user } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   // Debug logs removed
   const [activeTab, setActiveTab] = useState('explore');
   const [explorePosts, setExplorePosts] = useState(initialPosts || []);

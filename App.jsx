@@ -3,7 +3,7 @@ import { StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import themeVariables from './styles/theme';
 
-import { UserProvider } from './contexts';
+import { UserProvider, CommunityProvider } from './contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
@@ -36,9 +36,11 @@ const MainApp = () => {
 };
 
 const App = () => (
-  <UserProvider>
-    <MainApp />
-  </UserProvider>
+  <CommunityProvider>
+    <UserProvider>
+      <MainApp />
+    </UserProvider>
+  </CommunityProvider>
 );
 
 export default App;

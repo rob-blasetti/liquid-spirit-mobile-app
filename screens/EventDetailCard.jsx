@@ -32,6 +32,7 @@ import UserCell from '../components/UserCell';
 // import OversightBadges from '../components/OversightBadges'; // unused, replaced by avatars
 import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import { API_URL } from '../config';
 // Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
@@ -106,7 +107,8 @@ const EventDetailCard = ({ route }) => {
       ),
     });
   }, [navigation, event]);
-  const { user, token, communityId } = useContext(UserContext);
+  const { user, token } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
 
   // Fetch full event details in the background and update state
@@ -159,7 +161,8 @@ const EventDetailCard = ({ route }) => {
 
 const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOptimisticJoin, oversightMembersPreload }) => {
   // Access current user and community from context for joining
-  const { user, communityId } = useContext(UserContext);
+  const { user } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   // Destructure raw attendees from event; we'll enrich with full user data below
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
     attendees: rawAttendees = [], host, materials = [] } = event;

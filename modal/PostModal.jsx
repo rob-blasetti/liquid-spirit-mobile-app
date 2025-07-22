@@ -18,6 +18,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
 
 const PostModal = ({ visible = true, onPostCreated, onClose }) => {
@@ -27,7 +28,8 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStep, setUploadStep] = useState('');
-  const { communityId, token, user, userActivities, userEvents } = useContext(UserContext);
+  const { token, user, userActivities, userEvents } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const [tags, setTags] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 

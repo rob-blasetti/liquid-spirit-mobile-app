@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserContext } from '../contexts';
+import { UserContext, CommunityContext } from '../contexts';
 import { fetchExploreFeed, useAuthService } from '../services';
 
 /**
@@ -10,25 +10,22 @@ import { fetchExploreFeed, useAuthService } from '../services';
 export const useAppInitialization = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
-  const [homeOverview, setHomeOverview] = useState([]);
-  const [homeOverviewLoaded, setHomeOverviewLoaded] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
-  const { biometricLogin, isLoggedIn, communityId, storageLoaded,
+  const { biometricLogin, isLoggedIn, storageLoaded,
           token, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { communityId, homeOverview, setHomeOverview } = useContext(CommunityContext);
   const { fetchHomeOverview } = useAuthService();
 
-  // Load cached posts and overview for immediate display
+  // Load cached posts for immediate display
   useEffect(() => {
     (async () => {
       try {
-        const [postsPair, overviewPair] = await AsyncStorage.multiGet([
+        const [postsPair] = await AsyncStorage.multiGet([
           'initialExploreFeed',
-          'homeOverview',
         ]);
         if (postsPair[1]) setInitialPosts(JSON.parse(postsPair[1]));
-        if (overviewPair[1]) setHomeOverview(JSON.parse(overviewPair[1]));
       } catch (err) {
         console.warn('Failed to load cached data:', err);
       }
@@ -83,26 +80,6 @@ export const useAppInitialization = () => {
     refreshSession,
   ]);
 
-  // Fetch home overview independently
-  useEffect(() => {
-    if (!communityId) return;
-    setHomeOverviewLoaded(false);
-    (async () => {
-      try {
-        const result = await fetchHomeOverview(communityId);
-        if (result.ok) {
-          setHomeOverview(result.data);
-          await AsyncStorage.setItem('homeOverview', JSON.stringify(result.data));
-        } else {
-          console.warn('Failed to fetch home overview');
-        }
-      } catch (error) {
-        console.error('Error fetching home overview:', error);
-      } finally {
-        setHomeOverviewLoaded(true);
-      }
-    })();
-  }, [communityId, fetchHomeOverview]);
 
   // Hide splash once minimal data is ready
   useEffect(() => {
@@ -126,4 +103,5 @@ export const useAppInitialization = () => {
     })();
   }, [showSplash, token, isTokenExpired, fetchExploreFeed]);
 
-  return { initialPosts, homeOverview, showSplash };};
+  return { initialPosts, homeOverview, showSplash };
+};
