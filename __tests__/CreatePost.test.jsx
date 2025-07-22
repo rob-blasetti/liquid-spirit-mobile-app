@@ -4,6 +4,7 @@ import CreatePost from '../modal/PostModal';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import { uploadImageWithThumbnail, uploadVideoWithThumbnail, createPost } from '../services/PostService';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 
 jest.mock('react-native-image-picker', () => ({
   launchImageLibrary: jest.fn(),
@@ -26,6 +27,13 @@ describe('CreatePost screen', () => {
     token: 'token123',
     user: { id: 'user123' },
   };
+  const communityContextValue = {
+    communityId: 'community123',
+    setCommunityId: jest.fn(),
+    homeOverview: null,
+    setHomeOverview: jest.fn(),
+    storageLoaded: true,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -38,9 +46,9 @@ describe('CreatePost screen', () => {
     });
 
     const { getByText, getByTestId, queryByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -57,9 +65,9 @@ describe('CreatePost screen', () => {
     });
 
     const { getByText, getByTestId, queryByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -76,9 +84,9 @@ describe('CreatePost screen', () => {
     });
 
     const { getByText, getByTestId, queryByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -95,9 +103,9 @@ describe('CreatePost screen', () => {
     });
 
     const { getByText, getByTestId, queryByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -114,9 +122,9 @@ describe('CreatePost screen', () => {
     });
 
     const { getByText, getByTestId, queryByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -139,9 +147,9 @@ describe('CreatePost screen', () => {
 
     const onPostCreated = jest.fn();
     const { getByText, getByPlaceholderText, getByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost onPostCreated={onPostCreated} />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));
@@ -187,9 +195,9 @@ describe('CreatePost screen', () => {
 
     const onPostCreated = jest.fn();
     const { getByText, getByPlaceholderText, getByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <CreatePost onPostCreated={onPostCreated} />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     fireEvent.press(getByText('Upload image or video'));

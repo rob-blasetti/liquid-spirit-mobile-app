@@ -11,10 +11,12 @@ import {
 import { TextInput, Button, Title, HelperText } from 'react-native-paper';
 import { sendAgendaItemSuggestion } from '../services/AssemblyService';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
 
 export default function RequestAgendaItem({ navigation, route }) {
-  const { communityId, token } = useContext(UserContext);
+  const { token } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({});

@@ -12,13 +12,15 @@ import {
 } from 'react-native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import { joinEvent, fetchEventDetails } from '../services/EventService';
 import localImages from '../utils/localImages';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const EventDetail = ({ route }) => {
   const { event: initialEvent, eventId } = route.params || {};
-  const { user, token, communityId } = useContext(UserContext);
+  const { user, token } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
 
   const [event, setEvent] = useState(initialEvent || null);
   const [loading, setLoading] = useState(!initialEvent);

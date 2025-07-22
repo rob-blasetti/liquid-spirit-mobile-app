@@ -21,6 +21,7 @@ import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import { TouchableWithoutFeedback } from 'react-native';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
 import themeVariables from '../styles/theme';
@@ -31,7 +32,8 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const [mediaType, setMediaType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
-  const { communityId, token, user, userActivities, userEvents } = useContext(UserContext);
+  const { token, user, userActivities, userEvents } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [tags, setTags] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);

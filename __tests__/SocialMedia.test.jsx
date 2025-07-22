@@ -2,6 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import SocialMedia from '../screens/SocialMedia';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import * as PostService from '../services/PostService';
 // Mock the Post component to avoid internal implementation details
 jest.mock('../components/Post', () => {
@@ -37,6 +38,13 @@ describe('SocialMedia screen', () => {
     refreshSession: jest.fn(),
     user: { id: 'user123' },
   };
+  const communityContextValue = {
+    communityId: 'community123',
+    setCommunityId: jest.fn(),
+    homeOverview: null,
+    setHomeOverview: jest.fn(),
+    storageLoaded: true,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -57,9 +65,9 @@ describe('SocialMedia screen', () => {
     PostService.fetchForYouFeed.mockResolvedValue([]);
 
     const { getByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
+      <CommunityContext.Provider value={communityContextValue}><UserContext.Provider value={userContextValue}>
         <SocialMedia />
-      </UserContext.Provider>
+      </UserContext.Provider></CommunityContext.Provider>
     );
 
     // Wait for explore feed to load
@@ -85,9 +93,11 @@ describe('SocialMedia screen', () => {
     PostService.fetchForYouFeed.mockResolvedValue([]);
 
     const { getByTestId } = render(
-      <UserContext.Provider value={userContextValue}>
-        <SocialMedia />
-      </UserContext.Provider>
+      <CommunityContext.Provider value={communityContextValue}>
+        <UserContext.Provider value={userContextValue}>
+          <SocialMedia />
+        </UserContext.Provider>
+      </CommunityContext.Provider>
     );
 
     // Wait for explore feed to load

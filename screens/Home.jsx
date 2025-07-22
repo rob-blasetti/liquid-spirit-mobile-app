@@ -17,6 +17,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
@@ -61,7 +62,8 @@ const Home = ({ navigation, homeOverview }) => {
   // Extra padding to further push content down and enlarge banner
   const EXTRA_TOP = 50;
   const bannerHeight = 200 + statusBarHeight + EXTRA_TOP;
-  const { user, communityId, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
+  const { user, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const isFocused = useIsFocused();
   const bannerData = useMemo(() => {
     const bi = user?.community?.bannerImage;
