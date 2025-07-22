@@ -4,6 +4,15 @@ import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-c
 import themeVariables from './styles/theme';
 
 import { UserProvider, CommunityProvider } from './contexts';
+import {
+  AuthProvider,
+  UserProfileProvider,
+  CommunityProvider as CommunityStateProvider,
+  EventsProvider,
+  ActivitiesProvider,
+  NewsProvider,
+  NotificationsProvider,
+} from './src/contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
@@ -36,11 +45,25 @@ const MainApp = () => {
 };
 
 const App = () => (
-  <CommunityProvider>
-    <UserProvider>
-      <MainApp />
-    </UserProvider>
-  </CommunityProvider>
+  <AuthProvider>
+    <UserProfileProvider>
+      <CommunityStateProvider>
+        <EventsProvider>
+          <ActivitiesProvider>
+            <NewsProvider>
+              <NotificationsProvider>
+                <CommunityProvider>
+                  <UserProvider>
+                    <MainApp />
+                  </UserProvider>
+                </CommunityProvider>
+              </NotificationsProvider>
+            </NewsProvider>
+          </ActivitiesProvider>
+        </EventsProvider>
+      </CommunityStateProvider>
+    </UserProfileProvider>
+  </AuthProvider>
 );
 
 export default App;
