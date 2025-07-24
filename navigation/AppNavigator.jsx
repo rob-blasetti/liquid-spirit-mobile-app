@@ -12,11 +12,6 @@ const linking = {
       ActivityDetailCard: 'activities/:activityId',
       EventDetailCard: 'events/:eventId',
       PostDetailCard: 'post/:postId',
-      Main: {
-        screens: {
-          Feed: 'posts/:postId',
-        },
-      },
     },
   },
 };

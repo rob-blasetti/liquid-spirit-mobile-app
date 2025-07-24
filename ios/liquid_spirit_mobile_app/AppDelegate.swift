@@ -2,6 +2,7 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import React_RCTLinking
 
 @main
 class AppDelegate: RCTAppDelegate {
@@ -21,10 +22,18 @@ class AppDelegate: RCTAppDelegate {
   }
 
   override func bundleURL() -> URL? {
-#if DEBUG
-    RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
-#else
-    Bundle.main.url(forResource: "main", withExtension: "jsbundle")
-#endif
+    #if DEBUG
+        RCTBundleURLProvider.sharedSettings().jsBundleURL(forBundleRoot: "index")
+    #else
+        Bundle.main.url(forResource: "main", withExtension: "jsbundle")
+    #endif
+  }
+
+  override func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    return RCTLinkingManager.application(application, open: url, options: options)
+  }
+
+  override func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+    return RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
   }
 }
