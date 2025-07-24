@@ -26,3 +26,4 @@ export { default as SocialMedia } from './SocialMedia';
 export { default as Splash } from './Splash';
 export { default as Verification } from './Verification';
 export { default as Welcome } from './Welcome';
+export { default as PostDetailCard } from './PostDetailCard';

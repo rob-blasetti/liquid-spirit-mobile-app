@@ -11,6 +11,7 @@ const linking = {
     screens: {
       ActivityDetailCard: 'activities/:activityId',
       EventDetailCard: 'events/:eventId',
+      PostDetailCard: 'post/:postId',
       Main: {
         screens: {
           Feed: 'posts/:postId',
@@ -37,6 +38,7 @@ import {
   PublicUserProfile,
   ActivityDetail,
   ActivityDetailCard,
+  PostDetailCard,
   RequestAgendaItem,
   CurriculumDetailScreen,
   Notifications as NotificationScreen,
@@ -108,6 +110,18 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen
         name="ActivityDetailCard"
         component={ActivityDetailCard}
+        options={{
+          headerTransparent: true,
+          headerStyle: { backgroundColor: 'transparent', elevation: 0 },
+          headerTitle: '',
+          headerShadowVisible: false,
+          headerTintColor: themeVariables.blackColor,
+          safeAreaInsets: { top: 0 },
+        }}
+      />
+      <Stack.Screen
+        name="PostDetailCard"
+        component={PostDetailCard}
         options={{
           headerTransparent: true,
           headerStyle: { backgroundColor: 'transparent', elevation: 0 },

@@ -88,6 +88,27 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
     }
   };
 
+export const fetchPostDetails = async (postId, token) => {
+  try {
+    const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch post');
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (err) {
+    console.error('Error fetching post details:', err);
+    throw new Error(`Fetch post details error: ${err.message}`);
+  }
+};
+
   export const likePost = async (postId, token) => {
     try {
       const response = await fetch(`${API_URL}/api/posts/${postId}/like`, {
@@ -298,4 +319,4 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
       throw new Error(`Delete post error: ${error.message}`);
     }
   };
-  
+ 
