@@ -14,8 +14,8 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
 
   const handlePress = (item) => {
     if (item.content) {
-      // ✅ Navigate to the social feed if it's a post
-      navigation.navigate('Feed', { post: item });
+      // Navigate to the post detail card if it's a post
+      navigation.navigate('PostDetailCard', { postPreload: item, postId: item._id });
     } else if (item.title && item.imageUrl) {
       if (item.eventType) {
         // ✅ Navigate to the event detail page if it's an event
