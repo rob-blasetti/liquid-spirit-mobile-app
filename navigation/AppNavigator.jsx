@@ -5,6 +5,21 @@ import { View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 
+const linking = {
+  prefixes: ['https://www.liquidspirit.org', 'https://liquidspirit.org'],
+  config: {
+    screens: {
+      ActivityDetailCard: 'activities/:activityId',
+      EventDetailCard: 'events/:eventId',
+      Main: {
+        screens: {
+          Feed: 'posts/:postId',
+        },
+      },
+    },
+  },
+};
+
 import { UserContext } from '../contexts';
 import {
   Welcome,
@@ -36,7 +51,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
 
   return (
-  <NavigationContainer>
+  <NavigationContainer linking={linking}>
       <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={({ navigation }) => ({
