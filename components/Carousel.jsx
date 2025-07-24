@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, FlatList, Dimensions, StyleSheet, Text } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import Lightbox from 'react-native-lightbox';
+import Lightbox from 'react-native-lightbox-v2';
 
 const { width } = Dimensions.get('window');
 

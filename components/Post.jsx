@@ -14,7 +14,7 @@ import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
-import Lightbox from 'react-native-lightbox';
+import Lightbox from 'react-native-lightbox-v2';
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
 const ellipsisIcon = 'ellipsis-vertical';

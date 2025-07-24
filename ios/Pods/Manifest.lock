@@ -1268,9 +1268,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-maps (1.24.5):
-    - react-native-maps/Maps (= 1.24.5)
-  - react-native-maps/Generated (1.24.5):
+  - react-native-maps (1.24.10):
+    - react-native-maps/Maps (= 1.24.10)
+  - react-native-maps/Generated (1.24.10):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1291,7 +1291,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-maps/Maps (1.24.5):
+  - react-native-maps/Maps (1.24.10):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1800,7 +1800,7 @@ PODS:
     - React-Core
     - SDWebImage (~> 5.11.1)
     - SDWebImageWebPCoder (~> 0.8.4)
-  - RNGestureHandler (2.27.1):
+  - RNGestureHandler (2.27.2):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1930,7 +1930,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNVectorIcons (10.2.0):
+  - RNVectorIcons (10.3.0):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -2258,7 +2258,7 @@ SPEC CHECKSUMS:
   react-native-blur: c4d838e8cd2896379328aec8a600c6ddad589c78
   react-native-config: 644074ab88db883fcfaa584f03520ec29589d7df
   react-native-image-picker: ede3b0b991aae11b3c1d61c187a833720e255277
-  react-native-maps: 0cbc7acfc9e6a6fa5c742d47e33074ae2e1f2452
+  react-native-maps: 0c5a50e7f93d9bc024a74c3cb72b2d76af2be5d0
   react-native-pager-view: 5ce1f4cd84c814749342a23409a7d39d0df0e2a5
   react-native-safe-area-context: 072f0334ce3c7e3ee4ae81871564eacad45c8ac5
   react-native-video: bb03ea28ed6554fd615a71bb6e8c9bddab201555
@@ -2294,11 +2294,11 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: 79cfba789fca205b204f3ce7948b874500129eb4
   RNDateTimePicker: 928f412d4ea9d2f21b0535917449a349024eef05
   RNFastImage: 462a183c4b0b6b26fdfd639e1ed6ba37536c3b87
-  RNGestureHandler: 3ab8e53e9d405a340ea6612d5c2ef42e6e8477e3
+  RNGestureHandler: bb8e7019e9d33e099f5408a566485ceef0323070
   RNKeychain: 8d45ee314f242a6fb81fa9677ed8e0bf39dcecc3
   RNScreens: ef16970d0f91f1750ca82ba0db5d521fc0055fba
   RNSVG: 85f373e6a24cf79a882d4809f3633946ed9facb8
-  RNVectorIcons: bd818296a51dc2bb8c3bd97a3ca399df1afe216d
+  RNVectorIcons: 0e915baaf807d5dfed506a14f23a29476c1f07f9
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
   SDWebImageWebPCoder: 908b83b6adda48effe7667cd2b7f78c897e5111d
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
