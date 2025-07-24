@@ -49,9 +49,11 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   // Handle deep-linking to a specific post: scroll as soon as possible
   useEffect(() => {
     const post = route?.params?.post;
-    if (!post) return;
+    const postIdParam = route?.params?.postId;
+    const targetId = post?._id ?? postIdParam;
+    if (!targetId) return;
     const data = activeTab === 'explore' ? explorePosts : forYouPosts;
-    const idx = data.findIndex(p => p._id === post._id);
+    const idx = data.findIndex(p => p._id === targetId);
     if (idx >= 0 && flatListRef.current) {
       InteractionManager.runAfterInteractions(() => {
         // Delay to allow layout measurement
@@ -62,11 +64,11 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
             // Fallback will be handled by onScrollToIndexFailed
           }
           // Clear navigation param after scrolling
-          navigation?.setParams({ post: undefined });
+          navigation?.setParams({ post: undefined, postId: undefined });
         }, 500);
       });
     }
-  }, [route?.params?.post, explorePosts, forYouPosts, activeTab]);
+  }, [route?.params?.post, route?.params?.postId, explorePosts, forYouPosts, activeTab]);
 
   // Load Explore tab posts, include auth token
   const fetchExplorePosts = useCallback(async () => {
