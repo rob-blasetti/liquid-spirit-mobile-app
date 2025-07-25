@@ -5,6 +5,7 @@ import * as Keychain from 'react-native-keychain';
 import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
+import { fetchUserById } from '../services/UserService.jsx';
 import { parseJwt } from '../utils/parseJwt';
 import { API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
@@ -23,6 +24,8 @@ export const UserProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [userNotifications, setUserNotifications] = useState(null);
   const [storageLoaded, setStorageLoaded] = useState(false);
+  // Detailed user info (including certifications) fetched on startup
+  const [userDetails, setUserDetails] = useState(null);
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -34,6 +37,7 @@ export const UserProvider = ({ children }) => {
           'userActivities',
           'userEvents',
           'userPosts',
+          'userDetails',
         ];
         const stores = await AsyncStorage.multiGet(keys);
         const map = Object.fromEntries(stores);
@@ -46,6 +50,7 @@ export const UserProvider = ({ children }) => {
           setUserActivities(JSON.parse(map.userActivities));
         if (map.userEvents) setUserEvents(JSON.parse(map.userEvents));
         if (map.userPosts) setUserPosts(JSON.parse(map.userPosts));
+        if (map.userDetails) setUserDetails(JSON.parse(map.userDetails));
       } catch (error) {
         console.error('Error loading cached data:', error);
       }
@@ -92,6 +97,26 @@ export const UserProvider = ({ children }) => {
     loadUserData();
   }, [token]);
 
+  // Fetch full user details (including certifications) and sync profile picture on startup
+  useEffect(() => {
+    if (!token || !user?.id) return;
+    const fetchDetails = async () => {
+      try {
+        const data = await fetchUserById(user.id, token);
+        setUserDetails(data);
+        // Persist detailed user to storage
+        await AsyncStorage.setItem('userDetails', JSON.stringify(data));
+        // Sync main user context with profile picture from detailed data
+        if (data.profilePicture) {
+          setUser(prev => ({ ...prev, profilePicture: data.profilePicture }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch user details:', error);
+      }
+    };
+    fetchDetails();
+  }, [token, user?.id]);
+
   const login = async (userData, authToken, refreshToken, email, password) => {
     try {
       setUser(userData);
@@ -134,6 +159,7 @@ export const UserProvider = ({ children }) => {
         'userActivities',
         'userEvents',
         'userPosts',
+        'userDetails',
       ]);
     } catch (error) {
       console.error("Logout error:", error);
@@ -270,6 +296,9 @@ export const UserProvider = ({ children }) => {
     <UserContext.Provider 
       value={{
         user,
+        // Detailed user info including certifications
+        userDetails,
+        setUserDetails,
         setUser,
         userActivities,
         setUserActivities,

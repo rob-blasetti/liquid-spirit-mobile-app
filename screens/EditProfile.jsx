@@ -10,7 +10,7 @@ import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
 
 const EditProfile = ({ navigation }) => {
-  const { user, token, setUser } = useContext(UserContext);
+  const { user, userDetails, setUserDetails, token, setUser } = useContext(UserContext);
   const { updateMe } = useAuthService();
 
   const [firstName, setFirstName] = useState(user.firstName || '');
@@ -26,7 +26,10 @@ const EditProfile = ({ navigation }) => {
   const [linkedin, setLinkedin] = useState(user.socialMedia?.linkedin || '');
   const [instagram, setInstagram] = useState(user.socialMedia?.instagram || '');
   const [tiktok, setTiktok] = useState(user.socialMedia?.tiktok || '');
-  const [imageUri, setImageUri] = useState(user.profilePicture || null);
+  const [imageUri, setImageUri] = useState(
+    // prefer detailed user data if available
+    (userDetails && userDetails.profilePicture) || user.profilePicture || null
+  );
 
   const handleProfilePicturePress = async () => {
     const options = {
@@ -87,7 +90,12 @@ const EditProfile = ({ navigation }) => {
         throw new Error(`Unexpected response: ${JSON.stringify(response)}`);
       }
   
+      // update main user context
       setUser(response.data);
+      // update detailed user context as well
+      if (setUserDetails) {
+        setUserDetails({ ...userDetails, ...response.data });
+      }
       Alert.alert('Success', 'Profile updated successfully!');
       navigation.goBack();
     } catch (error) {
@@ -102,7 +110,8 @@ const EditProfile = ({ navigation }) => {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
       <View style={styles.avatarWrapper}>
         <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
-        <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
+          {/* display the selected or detailed profile picture */}
+          <Image source={{ uri: imageUri }} style={styles.avatar} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.changeAvatarButton} onPress={handleProfilePicturePress}>
         <Ionicons name="camera-outline" color={themeVariables.primaryColor} size={16} />

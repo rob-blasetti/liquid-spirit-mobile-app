@@ -14,8 +14,12 @@ import s3 from '../awsConfig';
  * - imageStyle: style object applied to the FastImage when showing the profile picture
  * - avatarSize: size of the placeholder avatar when no profile picture is set (default: 55)
  */
-const ChangeableProfileImage = ({ imageStyle, avatarSize = 55 }) => {
+const ChangeableProfileImage = ({ imageStyle, avatarSize = 55, userDetails: propUserDetails, setUserDetails: propSetUserDetails }) => {
   const { user, setUser } = useContext(UserContext);
+  // Determine which profile picture to show: prefer detailed user data, fallback to main user
+  const profilePictureUri = (propUserDetails && propUserDetails.profilePicture) || user.profilePicture;
+  // Determine display name for avatar placeholder
+  const displayName = (propUserDetails && propUserDetails.firstName) || user.firstName;
   const { updateMe } = useAuthService();
 
   const getBlob = async (uri) => {
@@ -57,15 +61,20 @@ const ChangeableProfileImage = ({ imageStyle, avatarSize = 55 }) => {
             alert('Failed to update profile on the server.');
             return;
           }
-          // Merge returned data with existing user to preserve nested properties (e.g., community)
-          // updatedUserFields includes the new profilePicture and retains other user fields
-          // Merge returned data but ensure community data (banner, etc.) is preserved
+          // Update main user context, preserving nested community
           setUser({
             ...user,
             ...data,
-            // preserve nested community fields in case response omits them
             community: user.community,
           });
+          // If a userDetails setter was passed, update detailed context (e.g., for Profile screen)
+          if (propSetUserDetails) {
+            propSetUserDetails({
+              ...propUserDetails,
+              // update only profilePicture to preserve certifications and other details
+              profilePicture: s3Upload.Location,
+            });
+          }
         } catch (err) {
           console.error('Error uploading to S3 =>', err);
         }
@@ -75,16 +84,16 @@ const ChangeableProfileImage = ({ imageStyle, avatarSize = 55 }) => {
 
   return (
     <TouchableOpacity onPress={handlePress}>
-      {user?.profilePicture ? (
+      {profilePictureUri ? (
         <FastImage
-          source={{ uri: user.profilePicture }}
+          source={{ uri: profilePictureUri }}
           style={imageStyle}
           resizeMode={FastImage.resizeMode.cover}
         />
       ) : (
         <Avatar
           size={avatarSize}
-          name={user?.firstName}
+          name={displayName}
           variant="beam"
           colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
         />

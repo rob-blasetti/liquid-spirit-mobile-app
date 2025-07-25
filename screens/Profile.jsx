@@ -21,27 +21,17 @@ import EventItem from '../components/EventItem';
 import { fetchActivities } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
-import { fetchUserById } from '../services/UserService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, userPosts, userActivities, userEvents, isLoading, token,
+  const { user, userDetails, setUserDetails, userPosts, userActivities, userEvents, isLoading, token,
           setUserPosts, setUserActivities, setUserEvents,
           isTokenExpired, refreshSession } = useContext(UserContext);
-  // Fetch full user data for certifications
-  const [profileCertData, setProfileCertData] = useState({});
-  useEffect(() => {
-    if (user?.id && token) {
-      fetchUserById(user.id, token)
-        .then(data => setProfileCertData(data.certifications || {}))
-        .catch(err => console.error('Failed to fetch user certifications:', err));
-    }
-  }, [user?.id, token]);
-  // Prepare certification badges (using Ionicons)
-  const certData = profileCertData || {};
+  // Certification data from context
+  const certData = userDetails?.certifications || {};
   const badgeDefs = [
     { flag: certData.isVerified, label: 'Verified User', icon: 'checkmark', color: '#3e8e41' },
     { flag: certData.hasChildProtection, label: 'Child Protection Certified', icon: 'shield-checkmark', color: '#d81b60' },
@@ -394,14 +384,14 @@ const renderScene = ({ route }) => {
 
   const handleShareProfile = async (user) => {
     try {
+      // Construct a shareable message including the profile link
       const profileLink = `https://liquidspirit.org/user/${user?.id}`;
-      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile!`;
-
-      await Share.share({
-        message,
-        subject: 'Profile Link',
-        url: profileLink,
-      });
+      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile on Liquid Spirit! ${profileLink}`;
+      // Use message-only share to avoid encoding issues; pass subject as option
+      await Share.share(
+        { message },
+        { subject: 'Profile Link' }
+      );
     } catch (error) {
       console.error('Error sharing profile:', error);
     }
@@ -457,10 +447,14 @@ const renderScene = ({ route }) => {
       {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.headerProfileInfo}>
-          <ChangeableProfileImage imageStyle={styles.profilePictureSmall} avatarSize={60} />
+          <ChangeableProfileImage
+            imageStyle={styles.profilePictureSmall}
+            avatarSize={60}
+            userDetails={userDetails}
+            setUserDetails={setUserDetails}
+          />
           <View style={styles.profileDetails}>
             <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
-            {/* Certifications badges under name */}
             <CertificationsList items={certItems} />
           </View>
         </View>
