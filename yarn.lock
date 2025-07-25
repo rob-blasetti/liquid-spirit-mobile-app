@@ -3882,9 +3882,9 @@ flow-enums-runtime@^0.0.6:
   integrity sha512-3PYnM29RFXwvAN6Pc/scUfkI7RwhQ/xqyLUyPNlXUp9S40zI8nup9tUSrTLSVnWGBN38FNiGWbwZOB6uR4OGdw==
 
 flow-parser@0.*:
-  version "0.277.0"
-  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.277.0.tgz#9ce94bce4b4849e546f1359744f39842f4b2a64f"
-  integrity sha512-VSmZNRzdayHfb1st+A6cyhqRJfdHy6pEq7p3AET8E3p59D2YFj91n+gjALFR2CuLrGmZM6VR+x/L8OrV+vmwvw==
+  version "0.277.1"
+  resolved "https://registry.yarnpkg.com/flow-parser/-/flow-parser-0.277.1.tgz#306a49125702fa272ee47d8940905d2ee603ced1"
+  integrity sha512-86F5PGl+OrFvCzyK04id9Yf9rxFB8485GPs5sexB4cVLOXmpHbSi1/dYiaemI53I85CpImBu/qHVmZnGQflgmw==
 
 for-each@^0.3.3, for-each@^0.3.5:
   version "0.3.5"

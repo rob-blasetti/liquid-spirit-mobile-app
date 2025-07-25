@@ -84,7 +84,8 @@ const Home = ({ navigation, homeOverview }) => {
   }, [user?.community?.bannerImage]);
   // Determine the next upcoming event without a host from overview
   const eventWithoutHost = useMemo(() => {
-    if (!Array.isArray(homeOverview.events)) return null;
+    // Safely handle null/undefined homeOverview
+    if (!Array.isArray(homeOverview?.events)) return null;
     const now = new Date();
     const upcoming = homeOverview.events
       .filter(e => {
@@ -94,7 +95,7 @@ const Home = ({ navigation, homeOverview }) => {
       })
       .sort((a, b) => new Date(a.startTime || a.date) - new Date(b.startTime || b.date));
     return upcoming.find(e => !e.hosts || (Array.isArray(e.hosts) && e.hosts.length === 0)) || null;
-  }, [homeOverview.events]);
+  }, [homeOverview?.events]);
   const [activeTab, setActiveTab] = useState('Activities');
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
