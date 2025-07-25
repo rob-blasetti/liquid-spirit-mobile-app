@@ -89,10 +89,5 @@
 		<string>NSUserActivityTypeBrowsingWeb</string>
 	</array>
 
-	<key>AssociatedDomains</key>
-	<array>
-		<string>applinks:liquidspirit.org</string>
-		<string>applinks:www.liquidspirit.org</string>
-	</array>
 </dict>
 </plist>
