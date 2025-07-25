@@ -1,5 +1,6 @@
 // no direct React hooks needed; initialization logic moved to useAppInitialization hook
-import { StatusBar, StyleSheet, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, StyleSheet, View, Linking } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import themeVariables from './styles/theme';
 
@@ -18,12 +19,20 @@ import { useAppInitialization } from './hooks/useAppInitialization';
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
 
-
-// Navigation moved into AppNavigator
-
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
 
+  useEffect(() => {
+    Linking.getInitialURL().then(url => {
+      if (url) console.log('Initial URL:', url);
+    });
+
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      console.log('Received URL:', url);
+    });
+
+    return () => sub.remove();
+  }, []);
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>

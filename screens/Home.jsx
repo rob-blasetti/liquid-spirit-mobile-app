@@ -363,7 +363,7 @@ const Home = ({ navigation, homeOverview }) => {
           );
         })()}
         {/* Activities Section (homeOverview) */}
-        {activeTab === 'Activities' && Array.isArray(homeOverview.activities) && homeOverview.activities.length > 0 && (() => {
+        {activeTab === 'Activities' && Array.isArray(homeOverview?.activities) && homeOverview?.activities.length > 0 && (() => {
           const now = new Date();
           // Prepare activities with next dates (session or root date)
           const upcomingWithDate = homeOverview.activities
@@ -544,7 +544,7 @@ const Home = ({ navigation, homeOverview }) => {
       <LocalAssemblyModal
         visible={assemblyModalVisible}
         onClose={() => setAssemblyModalVisible(false)}
-        members={homeOverview.localSpiritualAssembly || []}
+        members={homeOverview?.localSpiritualAssembly || []}
       />
     </View>
   );

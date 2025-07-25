@@ -11,7 +11,7 @@ const linking = {
     screens: {
       ActivityDetailCard: 'activities/:activityId',
       EventDetailCard: 'events/:eventId',
-      PostDetailCard: 'post/:postId',
+      PostDetailCard: 'posts/:postId',
     },
   },
 };
@@ -48,7 +48,12 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
 
   return (
-  <NavigationContainer linking={linking}>
+  <NavigationContainer linking={linking} onReady={() => {
+    console.log('Navigation ready');
+  }}
+  onStateChange={(state) => {
+    console.log('Navigation state changed:', state);
+  }}>
       <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={({ navigation }) => ({
