@@ -207,8 +207,8 @@ const filterUserActivities = (allActivities, userId) => {
   const handleItemPress = (type, item) => {
     console.log(`Navigating to ${type} item:`, item);
     if (type === 'posts') {
-      // Navigate to Feed tab and scroll to the selected post
-      navigation.getParent()?.navigate('Feed', { post: item });
+      // Navigate to Post Detail page
+      navigation.navigate('PostDetailCard', { postId: item._id, postPreload: item });
     } else if (type === 'activities') {
       // Open the activity detail view
       navigation.navigate('ActivityDetailCard', {
