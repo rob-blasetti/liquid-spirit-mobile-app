@@ -17,7 +17,7 @@ import s3 from '../awsConfig';
 const ChangeableProfileImage = ({ imageStyle, avatarSize = 55, userDetails: propUserDetails, setUserDetails: propSetUserDetails }) => {
   const { user, setUser } = useContext(UserContext);
   // Determine which profile picture to show: prefer detailed user data, fallback to main user
-  const profilePictureUri = (propUserDetails && propUserDetails.profilePicture) || user.profilePicture;
+  const profilePictureUri = (propUserDetails && propUserDetails?.profilePicture) || user?.profilePicture;
   // Determine display name for avatar placeholder
   const displayName = (propUserDetails && propUserDetails.firstName) || user.firstName;
   const { updateMe } = useAuthService();

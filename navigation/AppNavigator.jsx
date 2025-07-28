@@ -6,7 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 
 const linking = {
-  prefixes: ['https://www.liquidspirit.org', 'https://liquidspirit.org'],
+  prefixes: ['liquidspirit://', 'https://www.liquidspirit.org', 'https://liquidspirit.org'],
   config: {
     screens: {
       ActivityDetailCard: 'activities/:activityId',
@@ -53,7 +53,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
     console.log('Navigation ready');
   }}
   onStateChange={(state) => {
-    console.log('Navigation state changed:', state);
+    console.log('Navigation state changed:', JSON.stringify(state, null, 2));
   }}>
       <Stack.Navigator
       initialRouteName={initialRoute}

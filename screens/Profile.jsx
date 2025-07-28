@@ -371,6 +371,7 @@ const renderScene = ({ route }) => {
   switch (route.key) {
     case 'posts':
       return renderList(posts, 'posts');
+      
     case 'activities':
       return renderList(activities, 'activities');
     case 'events':
@@ -384,10 +385,13 @@ const renderScene = ({ route }) => {
 
   const handleShareProfile = async (user) => {
     try {
+      // Construct a shareable message including the profile link
       const profileLink = `https://liquidspirit.org/users/${user?.id}`;
+      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile on Liquid Spirit! ${profileLink}`;
+      // Use message-only share to avoid encoding issues; pass subject as option
       await Share.share(
-        { message: profileLink, url: profileLink },
-        { dialogTitle: 'Share Profile Link' }
+        { message },
+        { subject: 'Profile Link' }
       );
     } catch (error) {
       console.error('Error sharing profile:', error);
