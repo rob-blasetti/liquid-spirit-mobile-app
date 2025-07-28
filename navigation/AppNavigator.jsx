@@ -12,6 +12,7 @@ const linking = {
       ActivityDetailCard: 'activities/:activityId',
       EventDetailCard: 'events/:eventId',
       PostDetailCard: 'posts/:postId',
+      PublicUserProfile: 'users/:userId'
     },
   },
 };

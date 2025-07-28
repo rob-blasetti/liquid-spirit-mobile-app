@@ -384,13 +384,10 @@ const renderScene = ({ route }) => {
 
   const handleShareProfile = async (user) => {
     try {
-      // Construct a shareable message including the profile link
-      const profileLink = `https://liquidspirit.org/user/${user?.id}`;
-      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile on Liquid Spirit! ${profileLink}`;
-      // Use message-only share to avoid encoding issues; pass subject as option
+      const profileLink = `https://liquidspirit.org/users/${user?.id}`;
       await Share.share(
-        { message },
-        { subject: 'Profile Link' }
+        { message: profileLink, url: profileLink },
+        { dialogTitle: 'Share Profile Link' }
       );
     } catch (error) {
       console.error('Error sharing profile:', error);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Modal,
   View,
@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   ScrollView,
-  Image,
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { Button } from 'liquid-spirit-styleguide';
+import { CommunityContext } from '../contexts';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 32;
@@ -24,8 +24,11 @@ const ITEM_SIZE = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - GUTTER * 2) / 3;
 // Avatar size (smaller than item container)
 const AVATAR_SIZE = ITEM_SIZE * 0.75;
 
-const LocalAssemblyModal = ({ visible, onClose, members = [] }) => {
+// LocalAssemblyModal now consumes assembly member data from CommunityContext
+const LocalAssemblyModal = ({ visible, onClose }) => {
   const navigation = useNavigation();
+  const { homeOverview } = useContext(CommunityContext);
+  const members = homeOverview?.localSpiritualAssembly || [];
 
   return (
     <Modal

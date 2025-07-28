@@ -538,11 +538,10 @@ const Home = ({ navigation, homeOverview }) => {
           </TouchableOpacity> */}
         </View>
       </Animated.ScrollView>
-      {/* Local Spiritual Assembly Members Modal */}
+      {/* Local Spiritual Assembly Members Modal: members loaded from CommunityContext */}
       <LocalAssemblyModal
         visible={assemblyModalVisible}
         onClose={() => setAssemblyModalVisible(false)}
-        members={homeOverview?.localSpiritualAssembly || []}
       />
     </View>
   );
