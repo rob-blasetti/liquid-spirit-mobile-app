@@ -238,8 +238,6 @@ const Home = ({ navigation, homeOverview }) => {
               <RectangularTile
                 title={nextEvent.title}
                 bgImgColour="green"
-                imageSource={localImages[nextEvent.imageUrl] || { uri: nextEvent.imageUrl }}
-                // Show title and event type separated by a dot
                 subheading={`${nextEvent.eventType || ''}`}
                 dateTime={eventDateTime}
                 onPress={() => navigation.navigate('EventDetailCard', { eventId: nextEvent._id, eventPreload: nextEvent })}
