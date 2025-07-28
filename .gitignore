@@ -21,7 +21,6 @@ DerivedData
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
-ios/Pods/
 
 # Android/IntelliJ
 #
@@ -86,6 +85,7 @@ banyulebahai-6a21c0929211.json
 *.dSYM.zip
 *.dSYM
 ios/build/
+ios/Pods/
 
 #env
 .env
