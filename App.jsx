@@ -18,6 +18,7 @@ import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
+import { XmtpProvider } from '@xmtp/react-native-sdk';
 
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
@@ -63,7 +64,9 @@ const App = () => (
               <NotificationsProvider>
                 <CommunityProvider>
                   <UserProvider>
-                    <MainApp />
+                    <XmtpProvider>
+                      <MainApp />
+                    </XmtpProvider>
                   </UserProvider>
                 </CommunityProvider>
               </NotificationsProvider>
