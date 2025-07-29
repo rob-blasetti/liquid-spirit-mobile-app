@@ -272,6 +272,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       try {
         setOversightLoading(true);
         const members = await fetchUserBodyByEventType(eventType, token);
+        console.log('members: ', members);
         if (isMounted) {
           setOversightBody({ name, members });
           setOversightLoading(false);
@@ -379,26 +380,28 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           {/* Materials */}
           <Text style={styles.mapTitle}>Materials</Text>
           {materials.length > 0 ? (
-            <View style={styles.materialsContainer}>
+            <View style={styles.materialsGrid}>
               {materials.map((mat, idx) => {
                 const url = mat.url || mat.link || mat.fileUrl;
+                // Use filename for display, fallback to title, name, or index
+                const titleText = mat.filename || mat.title || mat.name || `Document ${idx + 1}`;
                 return (
                   <TouchableOpacity
-                    key={mat._id || mat.name || idx}
+                    key={mat._id || titleText || idx}
                     style={styles.materialTile}
                     onPress={() => url && Linking.openURL(url)}
-                    disabled={!url}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="document-outline" size={16} color={themeVariables.primaryColor} />
-                    <Text style={[styles.materialText, url && styles.linkText]} numberOfLines={1}>
-                      {mat.name}
+                    <Ionicons name="document-outline" size={24} color={themeVariables.primaryColor} style={styles.materialTileIcon} />
+                    <Text style={styles.materialTileText} numberOfLines={2}>
+                      {titleText}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
           ) : (
-            <Text style={styles.headerInfoText}>No materials available</Text>
+            <Text style={styles.noDataText}>No materials available</Text>
           )}
           <View style={styles.divider} />
           {/* Oversight Body */}
@@ -414,7 +417,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               <View style={styles.userListContainer}>
                 {oversightBody.members.slice(0, 4).map((member, idx) => (
                   <View key={member._id || idx} style={styles.userListItem}>
-                    <UserCell user={member} type="Member" />
+                    <UserCell user={member} type={member.type} />
                   </View>
                 ))}
               </View>
@@ -778,6 +781,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: Platform.select({ android: 160 }),    
   },
+  /* Legacy container for pill tiles (unused for list) */
   materialsContainer:{
     flexDirection:'row',
     flexWrap:'wrap',
@@ -796,6 +800,31 @@ const styles = StyleSheet.create({
     marginLeft:4,
     fontSize:12,
     color:themeVariables.blackColor,
+  },
+  /* Materials grid of square tiles */
+  materialsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginHorizontal: -8,
+  },
+  materialTile: {
+    flexBasis: '30%',
+    aspectRatio: 1,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8,
+    margin: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  materialTileIcon: {
+    marginBottom: 8,
+  },
+  materialTileText: {
+    fontSize: 12,
+    color: themeVariables.primaryColor,
+    textAlign: 'center',
   },
   noDataText:{
     fontSize:12,

@@ -89,19 +89,32 @@ const PostDetailCard = ({ route }) => {
     setShowCommentBox(false);
     setCommentText('');
   };
-  // Post comment to server
+  // Post comment to server and update local comments list
   const handlePostComment = async () => {
-    if (!commentText.trim()) {
+    const trimmed = commentText.trim();
+    if (!trimmed) {
       Alert.alert('Comments cannot be empty');
       return;
     }
     try {
-      await commentOnPost(post._id, commentText, token || '');
-      setCommentCountState(prev => prev + 1);
+      const result = await commentOnPost(post._id, trimmed, token || '');
+      setPost(prev => {
+        let newComments;
+        if (result && Array.isArray(result.comments)) {
+          newComments = result.comments;
+        } else if (Array.isArray(result)) {
+          newComments = result;
+        } else if (result && result._id) {
+          newComments = [...(prev.comments || []), result];
+        } else {
+          newComments = prev.comments || [];
+        }
+        return { ...prev, comments: newComments };
+      });
       setCommentText('');
-      setShowCommentBox(false);
     } catch (err) {
-      Alert.alert('Error', 'Failed to post comment');
+      console.error('Failed to post comment:', err);
+      Alert.alert('Error', err.message || 'Failed to post comment');
     }
   };
 
