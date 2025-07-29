@@ -84,9 +84,8 @@ const PostDetailCard = ({ route }) => {
   const handleAddComment = () => {
     setShowCommentBox(true);
   };
-  // Cancel commenting
+  // Clear the current comment text
   const handleCancelComment = () => {
-    setShowCommentBox(false);
     setCommentText('');
   };
   // Post comment to server and update local comments list
@@ -140,23 +139,34 @@ const PostDetailCard = ({ route }) => {
     });
   }, [navigation, post]);
 
-  // Load post details if not preloaded, then initialize like/comment state
+  // Always fetch post details to ensure latest state, using postPreload as initial data
   useEffect(() => {
-    if (postPreload) {
-      setLoading(false);
-    } else if (postId) {
-      const load = async () => {
-        try {
-          const data = await fetchPostDetails(postId, token || '');
+    let isActive = true;
+    const load = async () => {
+      // Show loading only if no preload data
+      if (!postPreload) {
+        setLoading(true);
+      }
+      try {
+        const data = await fetchPostDetails(postId, token || '');
+        if (isActive) {
           setPost(data);
-        } catch (err) {
+          setError(null);
+        }
+      } catch (err) {
+        if (isActive) {
           setError(err.message || 'Failed to load post');
-        } finally {
+        }
+      } finally {
+        if (isActive) {
           setLoading(false);
         }
-      };
-      load();
-    }
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
   }, [postId, postPreload, token]);
 
   // Redirect when loaded but no post or error
@@ -337,20 +347,34 @@ const PostDetailCard = ({ route }) => {
               {post.comments.map(comment => (
                 <View key={comment._id} style={styles.commentItem}>
                   <View style={styles.commentRow}>
-                    {comment.user?.profilePicture ? (
-                      <FastImage
-                        source={{ uri: comment.user.profilePicture }}
-                        style={styles.commentAvatar}
-                      />
-                    ) : (
-                      <BoringAvatar
-                        size={32}
-                        name={`${comment.user?.firstName || ''} ${comment.user?.lastName || ''}`.trim()}
-                        variant="beam"
-                        colors={[ '#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C' ]}
-                        style={styles.commentAvatar}
-                      />
-                    )}
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate('PublicUserProfile', {
+                          userId: comment.user?._id || comment.user?.id,
+                        })
+                      }
+                    >
+                      {comment.user?.profilePicture ? (
+                        <FastImage
+                          source={{ uri: comment.user.profilePicture }}
+                          style={styles.commentAvatar}
+                        />
+                      ) : (
+                        <BoringAvatar
+                          size={32}
+                          name={`${comment.user?.firstName || ''} ${comment.user?.lastName || ''}`.trim()}
+                          variant="beam"
+                          colors={[
+                            '#1B263B',
+                            '#0A74DA',
+                            '#6C7A89',
+                            '#F8F9FA',
+                            '#0C0C0C',
+                          ]}
+                          style={styles.commentAvatar}
+                        />
+                      )}
+                    </TouchableOpacity>
                     <View style={styles.commentTextContainer}>
                       <Text style={styles.commentAuthor}>
                         {comment.user?.firstName || ''} {comment.user?.lastName || ''}
