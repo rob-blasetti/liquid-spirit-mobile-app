@@ -40,9 +40,17 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const navigation = useNavigation();
   const handleClose = onClose ? onClose : () => navigation.goBack();
   const insets = useSafeAreaInsets();
+  // Static tag options: one for each activity type (6) and event type (3)
   const tagOptions = [
-    ...(userActivities || []).map(a => a.title).filter(Boolean),
-    ...(userEvents || []).map(e => e.title).filter(Boolean)
+    "Children's Class",
+    'Junior Youth Group',
+    'Study Circle',
+    'Devotional',
+    'Independent Initiative',
+    'Fireside',
+    'Feast',
+    'Holy Day',
+    'Admin',
   ];
   useEffect(() => {
     console.log('SafeArea insets:', insets);

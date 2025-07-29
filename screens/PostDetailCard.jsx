@@ -149,6 +149,7 @@ const PostDetailCard = ({ route }) => {
       }
       try {
         const data = await fetchPostDetails(postId, token || '');
+        console.log('DATAAAA:   ', data)
         if (isActive) {
           setPost(data);
           setError(null);
@@ -302,7 +303,7 @@ const PostDetailCard = ({ route }) => {
           </View>
           <View style={styles.overlayCard}>
           {/* Removed separate community chip here; will display in authorRow */}
-            <View style={[styles.authorRow, { justifyContent: 'space-between' }]}>
+            <View style={styles.authorRow}>
               {profilePic ? (
                 <FastImage source={{ uri: profilePic }} style={styles.avatar} />
               ) : (
@@ -314,14 +315,14 @@ const PostDetailCard = ({ route }) => {
                   style={styles.avatar}
                 />
               )}
-              <View style={{ marginLeft: 8, flex: 1 }}>
+              <View style={styles.authorInfoContainer}>
                 <Text style={styles.authorName}>{authorName}</Text>
+                {authorCommunity && (
+                  <View style={styles.communityChipDetail}>
+                    <Text style={styles.communityChipText}>{authorCommunity}</Text>
+                  </View>
+                )}
               </View>
-              {authorCommunity && (
-                <View style={styles.communityChipDetail}>
-                  <Text style={styles.communityChipText}>{authorCommunity}</Text>
-                </View>
-              )}
             </View>
             <CardContent style={styles.cardContent}>
               {post.content ? (
@@ -340,7 +341,8 @@ const PostDetailCard = ({ route }) => {
         {/* Comment input box */}
         {showCommentBox && (
           <View style={styles.commentBoxContainer}>
-            <Text style={styles.commentHeading}>Comments</Text>
+            <View style={styles.divider} />
+            <Text style={styles.sectionTitle}>Comments</Text>
             {/* Inline comments list */}
             {post.comments && post.comments.length > 0 ? (
               <View style={styles.commentsList}>
@@ -401,10 +403,39 @@ const PostDetailCard = ({ route }) => {
             </View>
           </View>
         )}
+        {/* Tags Section */}
+        {Array.isArray(post.tags) && post.tags.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.sectionTitle}>Tags</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.tagScrollContainer}
+              contentContainerStyle={styles.tagChipsContainer}
+            >
+              {post.tags.map((tag, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={styles.tagChipDetail}
+                  onPress={() =>
+                    navigation.navigate('Main', {
+                      screen: 'Search',
+                      params: { initialQuery: tag },
+                    })
+                  }
+                >
+                  <Text style={styles.tagTextDetail}>{tag}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
         {/* Related Posts */}
         {relatedPosts?.length > 0 && (
           <View style={styles.relatedSection}>
-            <Text style={styles.relatedTitle}>Related Posts</Text>
+            <View style={styles.divider} />
+            <Text style={styles.sectionTitle}>Related Posts</Text>
             <FlatList
               horizontal
               data={relatedPosts.filter(p => p._id !== post._id)}
@@ -484,15 +515,20 @@ const styles = StyleSheet.create({
   },
   authorRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 20,
-    // space-between will push community chip to right
+  },
+  authorInfoContainer: {
+    marginLeft: 8,
+    flex: 1,
+    height: 40,
+    justifyContent: 'space-between',
   },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: themeVariables.greyColor },
-  authorName: { fontSize: 16, fontWeight: '600', color: themeVariables.blackColor },
+  authorName: { fontSize: 14, fontWeight: '600', color: themeVariables.blackColor, marginLeft: 2 },
   authorCommunity: { fontSize: 14, color: '#666' },
   cardContent: { marginTop: 12 },
-  postContent: { fontSize: 16, color: '#333', marginLeft: -15 },
+  postContent: { fontSize: 16, color: '#333', marginLeft: -15, marginTop: 10 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tagChip: {
     backgroundColor: themeVariables.primaryColor,
@@ -565,11 +601,45 @@ const styles = StyleSheet.create({
   postFooterIcon: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
   footerIconText: { color: themeVariables.primaryColor, fontSize: 16, marginLeft: 6 },
   // Community chip below title
-  communityChipDetail: { alignSelf: 'center', backgroundColor: themeVariables.primaryColor, paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, marginTop: 8 },
-  communityChipText: { color: '#fff', fontSize: 14 },
+  communityChipDetail: {
+    alignSelf: 'flex-start',
+    backgroundColor: themeVariables.primaryColor,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginTop: 2,
+  },
+  communityChipText: { color: '#fff', fontSize: 12 },
+  // Tag chips scrollable container (horizontal scroll)
+  tagScrollContainer: { maxWidth: '100%', marginTop: 8, marginBottom: 8, overflow: 'hidden' },
+  // Container for tag chips: align first tag with section heading
+  tagChipsContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 0, paddingRight: 16 },
+  tagChipDetail: { backgroundColor: "#eee", paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, marginRight: 8, flexShrink: 0, borderColor: themeVariables.darkGreyColor, borderWidth: 1 },
+  tagTextDetail: { color: '#555', fontSize: 14 },
+  // Divider before sections
+  divider: {
+    height: 1,
+    backgroundColor: '#ddd',
+    marginVertical: 8,
+  },
+  // Section container (bordered)
+  sectionContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    backgroundColor: themeVariables.whiteColor,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: themeVariables.blackColor,
+    marginBottom: 12,
+    marginTop: 12,
+    textAlign: 'left',
+  },
   // Related posts section
   relatedSection: { marginTop: 16, paddingHorizontal: 16, backgroundColor: themeVariables.whiteColor },
-  relatedTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8, color: themeVariables.blackColor },
+  relatedTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: themeVariables.blackColor },
   relatedItem: { marginRight: 12 },
   relatedImage: { width: 100, height: 100, borderRadius: 8 },
 });

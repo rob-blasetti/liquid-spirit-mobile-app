@@ -8,6 +8,7 @@ import {
   Share,
   Alert,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
@@ -29,6 +30,7 @@ const DOUBLE_TAP_DELAY = 300;
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token, user } = useContext(UserContext);
   const navigation = useNavigation();
+  console.log(post);
 
   // Helper: determine if current user has liked this post
   const hasUserLiked = useCallback((likes, uid) => {
@@ -220,19 +222,36 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               <Text style={styles.dotSeparator}>·</Text>
               <Text style={styles.timeAgo}>{computeTimeAgo(post.createdAt)}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.communityChip}
-              onPress={() => navigation.navigate('Search', { initialQuery: authorCommunity })}
-            >
-              <Text style={styles.communityText}>{authorCommunity}</Text>
-            </TouchableOpacity>
-            {Array.isArray(post.tags) && post.tags.length > 0 && (
-              <View style={styles.chipsContainer}>
-                {post.tags.map((tag, idx) => (
-                  <View key={idx} style={styles.communityChip}>
-                    <Text style={styles.communityText}>{tag}</Text>
-                  </View>
-                ))}
+
+            {(authorCommunity || (Array.isArray(post.tags) && post.tags.length > 0)) && (
+              <View style={styles.chipsRow}>
+                {authorCommunity && (
+                  <TouchableOpacity
+                    style={styles.communityChip}
+                    onPress={() => navigation.navigate('Search', { initialQuery: authorCommunity })}
+                  >
+                    <Text style={styles.communityText}>{authorCommunity}</Text>
+                  </TouchableOpacity>
+                )}
+
+                {Array.isArray(post.tags) && post.tags.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.tagScrollContainer}
+                    contentContainerStyle={styles.tagChipsContainer}
+                  >
+                    {post.tags.map((tag, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        style={styles.tagChip}
+                        onPress={() => navigation.navigate('Search', { initialQuery: tag })}
+                      >
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             )}
           </View>
@@ -451,6 +470,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // Tag chips scrollable container
+  tagScrollContainer: {
+    maxWidth: '100%',
+    marginTop: 4,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  tagChipsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tagChip: {
+    backgroundColor: themeVariables.secondaryColor,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    flexShrink: 0,
+    marginRight: 8,
+  },
+  tagText: {
+    fontSize: 14,
+    color: themeVariables.whiteColor,
+    textAlign: 'center',
+    flexShrink: 0,
+  },
   kebabContainer: {
     marginLeft: 'auto',
   },
@@ -580,6 +624,32 @@ const styles = StyleSheet.create({
     width: 40,
     textAlign: 'center',
   },
+  chipsRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 4,
+},
+tagScrollContainer: {
+  marginLeft: 8,
+  flexGrow: 1,
+},
+tagChipsContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+tagChip: {
+  backgroundColor: '#eee',
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 12,
+  marginRight: 8,
+  borderColor: themeVariables.darkGreyColor,
+  borderWidth: 1,
+},
+tagText: {
+  fontSize: 12,
+  color: '#555',
+},
 });
 
 export default Post;

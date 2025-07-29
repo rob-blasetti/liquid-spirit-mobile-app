@@ -31,11 +31,20 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
   const { token, user, userActivities, userEvents } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [tags, setTags] = useState([]);
+  // Dropdown open state for tag selection chips
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  // Static tag options: one for each activity type (6) and event type (3)
   const tagOptions = [
-    ...(userActivities || []).map(a => a.title).filter(Boolean),
-    ...(userEvents || []).map(e => e.title).filter(Boolean)
+    "Children's Class",
+    'Junior Youth Group',
+    'Study Circle',
+    'Devotional',
+    'Independent Initiative',
+    'Fireside',
+    'Feast',
+    'Holy Day',
+    'Admin',
   ];
 
   // Close handler: use onClose prop if provided, otherwise navigate back
@@ -179,20 +188,16 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
               </TouchableOpacity>
               {dropdownOpen && (
                 <View style={styles.dropdownList}>
-                  <ScrollView style={{ maxHeight: 150 }}>
+                  <ScrollView contentContainerStyle={styles.chipsContainer}>
                     {tagOptions.map(t => (
                       <TouchableOpacity
                         key={t}
-                        style={styles.dropdownItem}
+                        style={[styles.chip, tags.includes(t) && styles.chipSelected]}
                         onPress={() => toggleTag(t)}
                       >
-                        <Ionicons
-                          name={tags.includes(t) ? 'checkbox' : 'square-outline'}
-                          size={20}
-                          color={themeVariables.primaryColor}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text>{t}</Text>
+                        <Text style={[styles.chipText, tags.includes(t) && styles.chipSelectedText]}>
+                          {t}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -367,6 +372,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 15,
+  },
+  // Styles for selectable tag chips
+  chipsContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    margin: 4,
+    backgroundColor: themeVariables.whiteColor,
+  },
+  chipSelected: {
+    backgroundColor: themeVariables.primaryColor,
+  },
+  chipText: {
+    color: themeVariables.primaryColor,
+    fontSize: 14,
+  },
+  chipSelectedText: {
+    color: themeVariables.whiteColor,
   },
   mediaPreview: {
     width: '100%',
