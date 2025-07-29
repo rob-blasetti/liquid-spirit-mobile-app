@@ -61,6 +61,9 @@ const EventDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
+  const [loading, setLoading] = useState(!eventPreload);
+  const [error, setError] = useState(null);
+  const [redirected, setRedirected] = useState(false);
   const handleShare = async () => {
     const id = event?._id || eventId;
     if (!id) return;
@@ -115,21 +118,40 @@ const EventDetailCard = ({ route }) => {
   useEffect(() => {
     if (eventPreload) {
       setEvent(eventPreload);
+      setLoading(false);
     }
     if (eventId && token) {
+      setLoading(true);
       fetchEventDetails(eventId, token)
-        .then(data => setEvent(data))
-        .catch(err => console.error('Error fetching event details:', err));
-        console.log('event date: ', event);
+        .then(data => {
+          if (!data) {
+            setError('Event not found');
+          } else {
+            setEvent(data);
+            setError(null);
+          }
+        })
+        .catch(err => setError(err.message || 'Failed to load event details'))
+        .finally(() => setLoading(false));
     }
   }, [eventId, token, eventPreload]);
-  // Show loading spinner while fetching event details
-  if (!event) {
+  // Redirect to Events if not found
+  useEffect(() => {
+    if (!redirected && !loading && (error || !event)) {
+      navigation.replace('Events', { bannerMessage: 'Sorry, that event no longer exists.' });
+      setRedirected(true);
+    }
+  }, [redirected, loading, error, event, navigation]);
+  if (loading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       </View>
     );
+  }
+  // If error or no event data, redirect is handled via effect; render nothing
+  if (error || !event) {
+    return null;
   }
   return (
     <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useContext, useState, useRef, useCallback } from 'react';
 import {
   View,
   FlatList,
@@ -12,6 +12,7 @@ import {
   Pressable
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SlideBanner from '../components/SlideBanner';
 
 import { likePost, commentOnPost, fetchExploreFeed, fetchForYouFeed, flagPost, deletePost } from '../services/PostService';
 import { blockUser, muteUser } from '../services/UserService';
@@ -36,10 +37,22 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
   const [commentText, setCommentText] = useState('');
+  // Banner message for redirects or alerts
+  const [bannerMessage, setBannerMessage] = useState('');
+  // Offset for banner to slide below the tabs
+  const [bannerOffset, setBannerOffset] = useState(0);
 
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
   const flatListRef = useRef(null);
   const pendingScrollIndexRef = useRef(null);
+  // Listen for banner message passed via navigation params
+  useEffect(() => {
+    const msg = route?.params?.bannerMessage;
+    if (msg) {
+      setBannerMessage(msg);
+      navigation.setParams({ bannerMessage: undefined });
+    }
+  }, [route?.params?.bannerMessage, navigation]);
 
   useEffect(() => {
     if (scrollToTop) {
@@ -230,7 +243,18 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.tabRow}>
+      {/* Banner for messages */}
+      {bannerMessage && (
+        <SlideBanner
+          message={bannerMessage}
+          onClose={() => setBannerMessage('')}
+          slideTo={bannerOffset}
+        />
+      )}
+      <View
+        style={styles.tabRow}
+        onLayout={e => setBannerOffset(e.nativeEvent.layout.height)}
+      >
         <Pressable
           onPress={() => handleTabPress('explore')}
           style={({ pressed }) => [

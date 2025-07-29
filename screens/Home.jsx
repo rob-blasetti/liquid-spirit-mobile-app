@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef, useMemo, useCallback } from 'react';
+import React, { useContext, useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -25,6 +25,7 @@ import RectangularTile from '../components/RectangularTile';
 import localImages from '../utils/localImages';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SlideBanner from '../components/SlideBanner';
 
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
@@ -62,7 +63,7 @@ const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
-const Home = ({ navigation, homeOverview }) => {
+const Home = ({ navigation, homeOverview, route }) => {
   const insets = useSafeAreaInsets();
   // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;
@@ -102,6 +103,15 @@ const Home = ({ navigation, homeOverview }) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   // animated scroll offset for banner stretch
   const scrollY = useRef(new Animated.Value(0)).current;
+  // Banner message for redirects
+  const [bannerMessage, setBannerMessage] = useState('');
+  useEffect(() => {
+    const msg = route?.params?.bannerMessage;
+    if (msg) {
+      setBannerMessage(msg);
+      navigation.setParams({ bannerMessage: undefined });
+    }
+  }, [route?.params?.bannerMessage, navigation]);
 
 
   // handle tab switch: slide old panel left, then slide in new panel
@@ -138,7 +148,15 @@ const Home = ({ navigation, homeOverview }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1 }}>
+      {bannerMessage && (
+        <SlideBanner
+          message={bannerMessage}
+          onClose={() => setBannerMessage('')}
+          slideTo={statusBarHeight + EXTRA_TOP}
+        />
+      )}
+      <View style={styles.container}>
       {/* Only override status bar to white on Home screen */}
       {isFocused && (
         <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
@@ -543,6 +561,7 @@ const Home = ({ navigation, homeOverview }) => {
         visible={assemblyModalVisible}
         onClose={() => setAssemblyModalVisible(false)}
       />
+      </View>
     </View>
   );
 };

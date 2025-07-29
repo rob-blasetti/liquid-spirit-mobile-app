@@ -20,6 +20,7 @@ const PublicUserProfile = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [redirected, setRedirected] = useState(false);
 
   useEffect(() => {
     if (!userId || !token) return;
@@ -33,6 +34,13 @@ const PublicUserProfile = () => {
       .catch(err => setError(err.message || 'Failed to load user'))
       .finally(() => setLoading(false));
   }, [userId, token]);
+  // Redirect to Home if user not found
+  useEffect(() => {
+    if (!redirected && !loading && (error || !userData)) {
+      navigation.replace('Main', { screen: 'Home', params: { bannerMessage: 'Sorry, that user no longer exists.' } });
+      setRedirected(true);
+    }
+  }, [redirected, loading, error, userData, navigation]);
 
   // TabView state (always defined to keep hooks order stable)
   const layout = Dimensions.get('window');

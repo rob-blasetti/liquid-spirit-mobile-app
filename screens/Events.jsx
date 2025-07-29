@@ -1,4 +1,5 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
+import SlideBanner from '../components/SlideBanner';
 import {
   View,
   Text,
@@ -7,16 +8,26 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Animated,
+  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+// navigation prop is provided by the navigator, no need for useNavigation()
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
 
-const Events = () => {
+const Events = ({ navigation, route }) => {
   const { userEvents } = useContext(UserContext);
+  // Banner for missing event redirect
+  const [bannerMessage, setBannerMessage] = useState('');
+  useEffect(() => {
+    const msg = route?.params?.bannerMessage;
+    if (msg) {
+      setBannerMessage(msg);
+      navigation.setParams({ bannerMessage: undefined });
+    }
+  }, [route?.params?.bannerMessage, navigation]);
   const [events, setEvents] = useState(userEvents || []);
   const [loading, setLoading] = useState(userEvents ? false : true);
 
@@ -24,7 +35,6 @@ const Events = () => {
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedEventType, setSelectedEventType] = useState(null); // null means "show all events" by default
 
-  const navigation = useNavigation();
 
   // Animation setup for the filter drawer
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -126,7 +136,9 @@ const Events = () => {
     : events;
 
   return (
-    <View style={styles.container}>
+    <>
+      {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
+      <View style={styles.container}>
       {/* Control Bar with Filter & Sort */}
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
@@ -242,7 +254,8 @@ const Events = () => {
       ) : (
         <Text style={styles.noEvents}>No upcoming events.</Text>
       )}
-    </View>
+      </View>
+    </>
   );
 };
 

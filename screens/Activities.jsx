@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import SlideBanner from '../components/SlideBanner';
 import {
   View,
   Text,
@@ -7,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Animated,
+  Platform,
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
@@ -26,8 +28,17 @@ const getNextSessionDate = (activity) => {
   return futureDates[0];
 };
 
-const Activities = ({ navigation }) => {
+const Activities = ({ navigation, route }) => {
   const { userActivities } = useContext(UserContext);
+  // Banner for missing activity redirect
+  const [bannerMessage, setBannerMessage] = useState('');
+  useEffect(() => {
+    const msg = route?.params?.bannerMessage;
+    if (msg) {
+      setBannerMessage(msg);
+      navigation.setParams({ bannerMessage: undefined });
+    }
+  }, [route?.params?.bannerMessage, navigation]);
   const [activities, setActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +155,9 @@ const Activities = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <>
+      {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
+      <View style={styles.container}>
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
           <Ionicons name="filter" size={16} color="#fff" />
@@ -193,7 +206,8 @@ const Activities = ({ navigation }) => {
       ) : (
         !drawerOpen && <Text style={styles.noActivities}>No matching activities.</Text>
       )}
-    </View>
+      </View>
+    </>
   );
 };
 

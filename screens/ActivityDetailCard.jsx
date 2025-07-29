@@ -64,6 +64,7 @@ const ActivityDetailCard = ({ route }) => {
   const [activity, setActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [redirected, setRedirected] = useState(false);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
 
@@ -118,8 +119,11 @@ const ActivityDetailCard = ({ route }) => {
     const fetchDetails = async () => {
       try {
         const data = await fetchActivityDetails(activityId, token || '');
-        console.log('activity deatils page => activity: ', data);
-        setActivity(data);
+        if (!data) {
+          setError('Activity not found');
+        } else {
+          setActivity(data);
+        }
       } catch (err) {
         setError(err.message || 'Failed to load activity details');
       } finally {
@@ -127,7 +131,14 @@ const ActivityDetailCard = ({ route }) => {
       }
     };
     fetchDetails();
-  }, [activityId]);
+  }, [activityId, token]);
+  // Redirect to Activities screen if not found
+  useEffect(() => {
+    if (!redirected && !loading && (error || !activity)) {
+      navigation.replace('Activities', { bannerMessage: 'Sorry, that activity no longer exists.' });
+      setRedirected(true);
+    }
+  }, [redirected, loading, error, activity, navigation]);
 
   const formatTime = (t) => {
     if (!t) return 'N/A';

@@ -40,6 +40,8 @@ const PostDetailCard = ({ route }) => {
   const [post, setPost] = useState(postPreload || null);
   const [loading, setLoading] = useState(!postPreload);
   const [error, setError] = useState(null);
+  // Redirect to feed if post not found or error occurs
+  const [redirected, setRedirected] = useState(false);
   // Lightbox modal visibility
   const [modalVisible, setModalVisible] = useState(false);
   // Like and comment state
@@ -143,6 +145,18 @@ const PostDetailCard = ({ route }) => {
       load();
     }
   }, [postId, postPreload, token]);
+
+  // Redirect when loaded but no post or error
+  useEffect(() => {
+    if (!redirected && !loading && (error || !post)) {
+      // Navigate to main feed with banner message
+      navigation.replace('Main', {
+        screen: 'Feed',
+        params: { bannerMessage: 'Sorry, that post no longer exists.' }
+      });
+      setRedirected(true);
+    }
+  }, [redirected, loading, error, post, navigation]);
 
   // Initialize like/comment UI state when post or user changes
   // Related posts section: fetch when post community is available
