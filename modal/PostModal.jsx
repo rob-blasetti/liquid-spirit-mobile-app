@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderColor: themeVariables.primaryColor,
+    borderColor: themeVariables.darkGreyColor,
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -390,14 +390,16 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
   },
   chipSelected: {
-    backgroundColor: themeVariables.primaryColor,
+    backgroundColor: themeVariables.secondaryColor,
+    borderWidth: 1,
+    borderColor: themeVariables.blackColor,
   },
   chipText: {
-    color: themeVariables.primaryColor,
+    color: '#555',
     fontSize: 14,
   },
   chipSelectedText: {
-    color: themeVariables.whiteColor,
+    color: themeVariables.blackColor,
   },
   mediaPreview: {
     width: '100%',

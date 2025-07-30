@@ -6,6 +6,11 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from "../services/NotificationService";
 import { Chip } from 'react-native-paper';
+// Removed preloading imports for notifications
+// import { fetchPostDetails } from '../services/PostService';
+// import { fetchActivityDetails } from '../services/ActivityService';
+// import { fetchEventDetails } from '../services/EventService';
+// import { Image } from 'react-native';
 
 const NotificationIcon = ({ type }) => {
   const iconStyle = { color: themeVariables.blackColor };
@@ -100,18 +105,15 @@ export default function Notifications() {
       console.log(item.type);
       switch (item.type) {
         case 'post':
-          // Navigate to Feed tab and scroll to the specific post if needed
-          navigation.navigate('Main', {
-            screen: 'Feed',
-            params: { post: { _id: item.targetId } },
-          });
+          // Navigate to post detail
+          navigation.navigate('PostDetailCard', { postId: item.targetId });
           break;
         case 'activity':
-          // Navigate to activity detail, passing the activity ID
+          // Navigate to activity detail
           navigation.navigate('ActivityDetailCard', { activityId: item.targetId });
           break;
         case 'event':
-          // Navigate to event detail, passing the event ID
+          // Navigate to event detail
           navigation.navigate('EventDetailCard', { eventId: item.targetId });
           break;
         case 'announcement':

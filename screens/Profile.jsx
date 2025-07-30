@@ -204,11 +204,18 @@ const filterUserActivities = (allActivities, userId) => {
   };
 
 
-  const handleItemPress = (type, item) => {
+  /**
+   * Handle item tap: pass imageAspect for posts to detail screen
+   */
+  const handleItemPress = (type, item, imageAspect) => {
     console.log(`Navigating to ${type} item:`, item);
     if (type === 'posts') {
-      // Navigate to Post Detail page
-      navigation.navigate('PostDetailCard', { postId: item._id, postPreload: item });
+      // Navigate to Post Detail page, passing preloaded post and image aspect
+      navigation.navigate('PostDetailCard', {
+        postId: item._id,
+        postPreload: item,
+        imageAspect,
+      });
     } else if (type === 'activities') {
       // Open the activity detail view
       navigation.navigate('ActivityDetailCard', {
@@ -321,7 +328,8 @@ const renderList = (data, type) => {
       renderItem={({ item }) => (
         <ItemComponent
           item={item}
-          onPress={() => handleItemPress(type, item)}
+          // Pass captured imageAspect for posts; undefined for others
+          onPress={(imageAspect) => handleItemPress(type, item, imageAspect)}
           nextUp={item._id === nextUpId}
         />
       )}
@@ -386,7 +394,7 @@ const renderScene = ({ route }) => {
   const handleShareProfile = async (user) => {
     try {
       // Construct a shareable message including the profile link
-      const profileLink = `https://liquidspirit.org/users/${user?.id}`;
+      const profileLink = `https://www.liquidspirit.org/users/${user?.id}`;
       const message = `Check out ${user?.firstName} ${user?.lastName}'s profile on Liquid Spirit! ${profileLink}`;
       // Use message-only share to avoid encoding issues; pass subject as option
       await Share.share(

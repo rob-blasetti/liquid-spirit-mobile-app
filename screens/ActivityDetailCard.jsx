@@ -24,6 +24,7 @@ import {
   CardTitle,
   CardContent,
 } from 'react-native-material-cards';
+import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
@@ -170,16 +171,13 @@ const ActivityDetailCard = ({ route }) => {
           backgroundColor="transparent"
           barStyle="light-content"
         />
-        <ScrollView
+        <SwipeToCloseScrollView
           style={styles.scrollView}
           contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
           overScrollMode="always"
           scrollEventThrottle={16}
-          onScrollEndDrag={({ nativeEvent }) => {
-            if (nativeEvent.contentOffset.y < -HEADER_OFFSET / 2) {
-              navigation.goBack();
-            }
-          }}
+          // swipe down past half the header offset to go back
+          threshold={HEADER_OFFSET / 2}
         >
           <ActivityCardBody
             activity={activityPreload}
@@ -189,7 +187,7 @@ const ActivityDetailCard = ({ route }) => {
             userId={user?.id}
             detailsLoaded={detailsLoaded}
           />
-        </ScrollView>
+        </SwipeToCloseScrollView>
       </SafeAreaView>
     );
   }
@@ -226,16 +224,13 @@ const ActivityDetailCard = ({ route }) => {
         backgroundColor="transparent"
         barStyle="light-content"
       />
-      <ScrollView
+      <SwipeToCloseScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
         overScrollMode="always"
         scrollEventThrottle={16}
-        onScrollEndDrag={({ nativeEvent }) => {
-          if (nativeEvent.contentOffset.y < -HEADER_OFFSET / 2) {
-            navigation.goBack();
-          }
-        }}
+        // swipe down past half the header offset to go back
+        threshold={HEADER_OFFSET / 2}
       >
         <ActivityCardBody
           activity={activity}
@@ -245,7 +240,7 @@ const ActivityDetailCard = ({ route }) => {
           userId={user?.id}
           detailsLoaded={detailsLoaded}
         />
-      </ScrollView>
+      </SwipeToCloseScrollView>
     </SafeAreaView>
   );
 };

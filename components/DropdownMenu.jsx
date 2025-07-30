@@ -49,8 +49,8 @@ const styles = StyleSheet.create({
   overlayContainer: {
     position: 'absolute',
     top: 0, left: 0, right: 20,
-    width: screenWidth - 30,
-    height: screenHeight -10,
+    width: screenWidth -7,
+    height: screenHeight - 25,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,

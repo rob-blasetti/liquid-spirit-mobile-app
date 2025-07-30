@@ -15,6 +15,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
 import BoringAvatar from '@liquidspirit/react-native-boring-avatars';
@@ -35,7 +36,8 @@ const { height: windowHeight } = Dimensions.get('window');
 const PostDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { token, user } = useContext(UserContext);
-  const { postId, postPreload } = route.params || {};
+  // Extract post parameters, including preloaded data and image aspect ratio
+  const { postId, postPreload, imageAspect: initialImageAspect } = route.params || {};
 
   const [post, setPost] = useState(postPreload || null);
   const [loading, setLoading] = useState(!postPreload);
@@ -191,8 +193,8 @@ const PostDetailCard = ({ route }) => {
         .catch(err => console.error('Error fetching related posts:', err));
     }
   }, [post, token]);
-  // Initialize like/comment UI state and compute image aspect ratio when post loads
-  const [imageAspect, setImageAspect] = useState(null);
+  // Initialize image aspect ratio, using preloaded value if available
+  const [imageAspect, setImageAspect] = useState(initialImageAspect || null);
   useEffect(() => {
     if (!post) return;
     // Determine if current user has liked
@@ -263,11 +265,13 @@ const PostDetailCard = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
-      <ScrollView
+      <SwipeToCloseScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
         overScrollMode="always"
         scrollEventThrottle={16}
+        // swipe down past top to dismiss
+        threshold={0}
       >
         <Card style={styles.card}>
           <View style={styles.mediaWrapper}>
@@ -456,7 +460,7 @@ const PostDetailCard = ({ route }) => {
             />
           </View>
         )}
-      </ScrollView>
+      </SwipeToCloseScrollView>
     </SafeAreaView>
   );
 };

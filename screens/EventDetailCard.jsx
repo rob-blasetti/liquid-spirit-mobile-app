@@ -20,6 +20,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
+
+import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -157,16 +159,13 @@ const EventDetailCard = ({ route }) => {
     <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']}>
       {/* Use dark-content for status bar icons */}
       <StatusBar animated translucent backgroundColor="transparent" barStyle="dark-content" />
-      <ScrollView
+      <SwipeToCloseScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
         overScrollMode="always"
         scrollEventThrottle={16}
-        onScrollEndDrag={({ nativeEvent }) => {
-          if (nativeEvent.contentOffset.y < -HEADER_OFFSET / 2) {
-            navigation.goBack();
-          }
-        }}
+        // swipe down past half the header offset to go back
+        threshold={HEADER_OFFSET / 2}
       >
         <EventCardBody
           event={event}
@@ -177,7 +176,7 @@ const EventDetailCard = ({ route }) => {
           setOptimisticJoin={setOptimisticJoin}
           oversightMembersPreload={oversightMembersPreload}
         />
-      </ScrollView>
+      </SwipeToCloseScrollView>
     </SafeAreaView>
   );
 };

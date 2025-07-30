@@ -31,6 +31,14 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const { token, user } = useContext(UserContext);
   const navigation = useNavigation();
   console.log(post);
+  // Ref to track pending single-tap navigation vs double-tap like
+  const singleTapTimeoutRef = useRef(null);
+  // Clean up pending timer on unmount
+  useEffect(() => () => {
+    clearTimeout(singleTapTimeoutRef.current);
+  }, []);
+  // Track loaded image aspect ratio for detail screen
+  const [imageAspect, setImageAspect] = useState(null);
 
   // Helper: determine if current user has liked this post
   const hasUserLiked = useCallback((likes, uid) => {
@@ -137,7 +145,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       if (supported) {
         await Linking.openURL(whatsappUrl);
       } else {
-        // WhatsApp not installed - fallback to native share
         await Share.share({
           message,
           url,
@@ -163,10 +170,24 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   };
 
   const lastTapRef = useRef(0);
+  /**
+   * Handle tap: double-tap to like, single-tap to open detail
+   */
   const handlePostPress = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY && !isLiked) {
-      toggleLike();
+    // Double-tap within delay -> like
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      clearTimeout(singleTapTimeoutRef.current);
+      if (!isLiked) toggleLike();
+    } else {
+      // Single-tap -> navigate to detail after delay
+      singleTapTimeoutRef.current = setTimeout(() => {
+        navigation.navigate('PostDetailCard', {
+          postId: post._id,
+          postPreload: post,
+          imageAspect,
+        });
+      }, DOUBLE_TAP_DELAY);
     }
     lastTapRef.current = now;
   };
@@ -311,6 +332,13 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               }}
               style={styles.postImage}
               resizeMode={FastImage.resizeMode.cover}
+              onLoad={({ nativeEvent }) => {
+                // capture aspect ratio for detail screen
+                const { width, height } = nativeEvent;
+                if (width && height) {
+                  setImageAspect(width / height);
+                }
+              }}
             />
           )}
         </Lightbox>
