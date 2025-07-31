@@ -139,6 +139,22 @@ const Home = ({ navigation, homeOverview, route }) => {
       }
     }, [token])
   );
+  // Fallback redirect to Login if loading takes too long
+  useEffect(() => {
+    let fallbackTimer;
+    if (userActivities === null || userEvents === null || userPosts === null) {
+      // Redirect to login after 10 seconds of unresolved loading
+      fallbackTimer = setTimeout(() => {
+        // Navigate to Login on parent stack
+        navigation.getParent()?.navigate('Login');
+      }, 10000);
+    }
+    return () => {
+      if (fallbackTimer) {
+        clearTimeout(fallbackTimer);
+      }
+    };
+  }, [userActivities, userEvents, userPosts, navigation]);
   if (userActivities === null || userEvents === null || userPosts === null) {
     return (
       <View style={styles.loadingContainer}>
