@@ -287,8 +287,12 @@ const ActivityCardBody = ({
     if (!fullAddr || isOnline) return;
     // Geocode via OpenStreetMap Nominatim
     const q = encodeURIComponent(fullAddr);
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`)
-      .then(res => res.json())
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
+      headers: {
+        'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
+        'Accept-Language': 'en',
+      }
+    }).then(res => res.json())
       .then(results => {
         if (results && results.length > 0) {
           const { lat, lon } = results[0];
@@ -468,7 +472,10 @@ const ActivityCardBody = ({
             <Text style={styles.mapTitle}>Host Address</Text>
             <View style={styles.mapWrapper}>
             {region ? (
-              <MapView style={styles.map} initialRegion={region}>
+              <MapView 
+                provider={Platform.OS === 'android' ? MapView.PROVIDER_GOOGLE : null}
+                style={styles.map} 
+                initialRegion={region}>
                 <Marker coordinate={region} />
               </MapView>
             ) : (

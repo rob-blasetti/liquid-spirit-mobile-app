@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -27,10 +28,12 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../styles/theme';
-import { fetchEventDetails, joinEvent } from '../services/EventService';
+import { fetchEventDetails, joinEvent, addEventMaterials } from '../services/EventService';
+import DocumentPicker from 'react-native-document-picker';
 import localImages from '../utils/localImages';
 import UserBadge from '../components/UserBadge';
 import UserCell from '../components/UserCell';
+import MaterialsItemTile from '../components/MaterialsItemTile';
 // import OversightBadges from '../components/OversightBadges'; // unused, replaced by avatars
 import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
@@ -189,6 +192,9 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   console.log('the event: ====> ', event);
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
     attendees: rawAttendees = [], hosts = [], materials = [] } = event;
+  // Check if current user is admin in any oversight body membership
+  const userBodyMembership = event.userBodyMembership || {};
+  const isAdmin = Object.values(userBodyMembership).some(v => v === true);
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   const dateSub = getDayMonth(dateObj);
@@ -203,8 +209,12 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   useEffect(() => {
     if (!fullAddr) return;
     const q = encodeURIComponent(fullAddr);
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`)
-      .then(res => res.json())
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
+      headers: {
+        'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
+        'Accept-Language': 'en',
+      },
+    }).then(res => res.json())
       .then(results => {
         if (results && results.length > 0) {
           const { lat, lon } = results[0];
@@ -233,6 +243,35 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       setOptimisticJoin(false);
       console.error('Join event failed:', err);
       alert('Failed to join event');
+    }
+  };
+  // Material picker
+  const pickMaterial = async () => {
+    try {
+      const res = await DocumentPicker.pickSingle({ type: DocumentPicker.types.allFiles });
+      setNewMaterialDoc(res);
+    } catch (err) {
+      if (!DocumentPicker.isCancel(err)) console.error('DocumentPicker error:', err);
+    }
+  };
+  // Submit new material
+  const submitMaterial = async () => {
+    if (!newMaterialTitle || !newMaterialDoc) {
+      Alert.alert('Missing fields', 'Please provide a title and select a file.');
+      return;
+    }
+    setUploadingMaterial(true);
+    try {
+      const updated = await addEventMaterials(event._id, newMaterialTitle, newMaterialDoc, token || '');
+      setEvent(updated);
+      setMaterialModalVisible(false);
+      setNewMaterialTitle('');
+      setNewMaterialDoc(null);
+    } catch (err) {
+      console.error('Upload failed:', err);
+      Alert.alert('Upload failed', err.message || 'Try again later.');
+    } finally {
+      setUploadingMaterial(false);
     }
   };
 
@@ -286,6 +325,11 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   }, [eventType, oversightMembersPreload]);
   
   const attendees = enrichedAttendees ?? rawAttendees;
+  // Material upload modal state
+  const [materialModalVisible, setMaterialModalVisible] = useState(false);
+  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [newMaterialDoc, setNewMaterialDoc] = useState(null);
+  const [uploadingMaterial, setUploadingMaterial] = useState(false);
   
   return (
     <Card style={styles.card}>
@@ -309,6 +353,14 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           titleStyle={styles.cardTitleText}
           subtitleStyle={styles.cardSubtitleText}
         />
+        {/* Show admin status if user has any true in body membership */}
+        {isAdmin && (
+          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <Text style={{ color: themeVariables.primaryColor, fontWeight: 'bold', fontSize: 16 }}>
+              Is Admin
+            </Text>
+          </View>
+        )}
         <CardContent style={styles.cardContent}>
           {/* Date & Time */}
           <View style={styles.headerInfoContainer}>
@@ -322,7 +374,10 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           <Text style={styles.mapTitle}>Where is it?</Text>
           <View style={styles.mapWrapper}>
             {region ? (
-              <MapView style={styles.map} initialRegion={region}>
+              <MapView 
+                provider={Platform.OS === 'android' ? MapView.PROVIDER_GOOGLE : null}
+                style={styles.map} 
+                initialRegion={region}>
                 <Marker coordinate={region} />
               </MapView>
             ) : (
@@ -377,27 +432,24 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           )}
           <View style={styles.divider} />
           {/* Materials */}
-          <Text style={styles.mapTitle}>Materials</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>Materials</Text>
+            {isAdmin && (
+              <TouchableOpacity
+                style={styles.addMaterialButton}
+                onPress={() => setMaterialModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add-outline" size={18} color={themeVariables.whiteColor} />
+                <Text style={styles.addMaterialButtonText}>Add Material</Text>
+              </TouchableOpacity>
+            )}
+          </View>
           {materials.length > 0 ? (
-            <View style={styles.materialsGrid}>
-              {materials.map((mat, idx) => {
-                const url = mat.url || mat.link || mat.fileUrl;
-                // Use filename for display, fallback to title, name, or index
-                const titleText = mat.filename || mat.title || mat.name || `Document ${idx + 1}`;
-                return (
-                  <TouchableOpacity
-                    key={mat._id || titleText || idx}
-                    style={styles.materialTile}
-                    onPress={() => url && Linking.openURL(url)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="document-outline" size={24} color={themeVariables.primaryColor} style={styles.materialTileIcon} />
-                    <Text style={styles.materialTileText} numberOfLines={2}>
-                      {titleText}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <View>
+              {materials.map(mat => (
+                <MaterialsItemTile key={mat._id} material={mat} />
+              ))}
             </View>
           ) : (
             <Text style={styles.noDataText}>No materials available</Text>
@@ -469,6 +521,46 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
         list={oversightBody.members}
         title={oversightBody.name}
       />
+      {/* Add Material Modal */}
+      <Modal
+        visible={materialModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setMaterialModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Material</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Title"
+              value={newMaterialTitle}
+              onChangeText={setNewMaterialTitle}
+            />
+            <TouchableOpacity
+              style={styles.modalFilePicker}
+              onPress={pickMaterial}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalFilePickerText} numberOfLines={1}>
+                {newMaterialDoc?.name || 'Select File'}
+              </Text>
+            </TouchableOpacity>
+            {uploadingMaterial ? (
+              <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+            ) : (
+              <View style={styles.modalButtonsRow}>
+                <TouchableOpacity style={styles.modalButton} onPress={submitMaterial} activeOpacity={0.8}>
+                  <Text style={styles.modalButtonText}>Upload</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.modalButton} onPress={() => setMaterialModalVisible(false)} activeOpacity={0.8}>
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Card>
   );
 };
@@ -738,6 +830,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.primaryColor,
+  },
+  addMaterialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    backgroundColor: themeVariables.primaryColor,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  addMaterialButtonText: {
+    color: themeVariables.whiteColor,
+    marginLeft: 6,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 8,
+    marginBottom: 12,
+  },
+  modalFilePicker: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  modalFilePickerText: {
+    fontSize: 16,
+    color: themeVariables.blackColor,
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 8,
+  },
+  modalButton: {
+    backgroundColor: themeVariables.primaryColor,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: themeVariables.whiteColor,
+    fontWeight: '600',
   },
   /* Section container (unused) */
   sectionContainer:{
