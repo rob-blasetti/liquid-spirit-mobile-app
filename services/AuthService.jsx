@@ -1,8 +1,18 @@
 import { useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
-import { jwtDecode } from 'jwt-decode';
+import jwtDecode from 'jwt-decode';
+
 import { API_URL } from '../config';
 
+const decodeToken = (token) => {
+  if (!token) return null;
+  try {
+    return jwtDecode(token);
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return null;
+  }
+};
 // By wrapping our functions into a custom hook, we can retrieve 'token' and 'setToken' only once at the top.
 // Then we can reuse them in the exported methods without repeating useContext calls.
 
@@ -161,16 +171,15 @@ export const useAuthService = () => {
     }
   };
 
+  // Get current user ID from token in hook context
   const getCurrentUserId = () => {
     if (!token) return null;
-
-    try {
-      const decoded = jwtDecode(token);
-      return decoded.userId || decoded.id;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
+    console.log('getCurrentUserId token: ', token);
+    const decoded = jwtDecode(token);
+    console.log('decoded token: ', decoded);
+    // const decoded = decodeToken(token);
+    if (!decoded) return null;
+    return decoded.userId || decoded.id || null;
   };
 
   const checkTokenExpiration = () => {
@@ -187,7 +196,7 @@ export const useAuthService = () => {
     }
 
     try {
-      const decodedToken = jwtDecode(token);
+      const decodedToken = decodeToken(token);
 
       // Check if the token has expired
       if (decodedToken.exp * 1000 < Date.now()) {
@@ -226,16 +235,12 @@ export const useAuthService = () => {
   };
 
   // Retrieve and parse user information from token after Google sign-in
+  // Retrieve and parse user information from token after Google sign-in
   const fetchGoogleUserInfo = () => {
     if (!token) return null;
-
-    try {
-      const decoded = jwtDecode(token);
-      return decoded;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
+    const decoded = decodeToken(token);
+    if (!decoded) return null;
+    return decoded;
   };
 
   const deleteAccount = async (userId, token) => {
@@ -278,4 +283,22 @@ export const useAuthService = () => {
     deleteAccount,
     fetchHomeOverview,
   };
+};
+
+// Static helper to extract user ID from a JWT token
+// Extract user ID from JWT token
+export const getCurrentUserId = (token) => {
+  // if (!token) return null;
+  // const decoded = decodeToken(token);
+  // if (!decoded) return null;
+  // return decoded.userId || decoded.id || null;
+
+  if (!token) return null;
+  console.log('getCurrentUserId token: ', token);
+  const decoded = jwtDecode(token);
+  console.log('decoded token: ', decoded);
+  // const decoded = decodeToken(token);
+  if (!decoded) return null;
+  return decoded.userId || decoded.id || null;
+
 };

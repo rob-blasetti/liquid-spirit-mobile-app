@@ -53,11 +53,14 @@ export const discoverUsers = async () => {
   }
 };
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// Fetch list of community members (requires authentication token from AsyncStorage)
 export const getMemberList = async (communityId) => {
-  const token = localStorage.getItem('token');
+  // Token stored under 'authToken' via UserContext AsyncStorage
+  const token = await AsyncStorage.getItem('authToken');
 
   if (!token) {
-    throw new Error('User is not authenticated. No token found in localStorage.');
+    throw new Error('User is not authenticated.');
   }
 
   try {

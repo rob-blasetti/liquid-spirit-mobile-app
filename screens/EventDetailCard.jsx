@@ -28,18 +28,16 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../styles/theme';
-import { fetchEventDetails, joinEvent, addEventMaterials } from '../services/EventService';
+import { fetchEventDetails, joinEvent, addEventMaterials, addEventHostRequest, addEventHost } from '../services/EventService';
+import { getMemberList } from '../services/UserService';
 import DocumentPicker from 'react-native-document-picker';
 import localImages from '../utils/localImages';
 import UserBadge from '../components/UserBadge';
 import UserCell from '../components/UserCell';
 import MaterialsItemTile from '../components/MaterialsItemTile';
-// import OversightBadges from '../components/OversightBadges'; // unused, replaced by avatars
 import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
-import { API_URL } from '../config';
-// Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
 
 const { height: windowHeight } = Dimensions.get('window');
@@ -188,8 +186,82 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   // Access current user and community from context for joining
   const { user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
+  // Local state to track if a host request has been sent
+  const [hostRequestSent, setHostRequestSent] = useState(false);
+  // On load, pre-check if user already requested hosting
+  useEffect(() => {
+    if (!hostRequestSent && event.hostRequests && Array.isArray(event.hostRequests) && userId) {
+      const requested = event.hostRequests.some(r => r.refId?.toString() === userId.toString());
+      if (requested) {
+        setHostRequestSent(true);
+      }
+    }
+  }, [event.hostRequests, userId]);
+
+  // Admin: Add Host modal state and member search
+  const [addHostModalVisible, setAddHostModalVisible] = useState(false);
+  const [memberList, setMemberList] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberLoading, setMemberLoading] = useState(false);
+
+  // Fetch community members when modal opens
+  useEffect(() => {
+    if (addHostModalVisible) {
+      setMemberLoading(true);
+      getMemberList(communityId)
+        .then(data => {
+          console.log('data: ', data);
+          const members = Array.isArray(data) ? data : (data.data || []);
+          setMemberList(members);
+          setFilteredMembers(members);
+        })
+        .catch(err => {
+          console.error('Error fetching members:', err);
+          Alert.alert('Error', err.message || 'Failed to load members.');
+        })
+        .finally(() => setMemberLoading(false));
+    }
+  }, [addHostModalVisible]);
+
+  // Filter member list based on search query
+  const onMemberSearch = text => {
+    setMemberSearchQuery(text);
+    if (!text) {
+      setFilteredMembers(memberList);
+    } else {
+      const lower = text.toLowerCase();
+      setFilteredMembers(
+        memberList.filter(m => {
+          // Use fullName if provided, else fall back to first+last
+          const nameStr = (m.fullName || `${m.firstName || ''} ${m.lastName || ''}`.trim()).toLowerCase();
+          return nameStr.includes(lower);
+        })
+      );
+    }
+  };
+
+  // Select a member to become host
+  const selectHostMember = async member => {
+    try {
+      const newHost = { refId: member._id, type: 'User' };
+      await addEventHost(event._id, [newHost], token || '');
+      const updatedEvent = await fetchEventDetails(event._id, token || '');
+      setEvent(updatedEvent);
+      // Notify with full name if available
+      const displayName = member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.name || member.email || 'Selected user';
+      Alert.alert('Host added', `${displayName} has been added as host.`);
+    } catch (err) {
+      console.error('Error adding host:', err);
+      Alert.alert('Error', err.message || 'Failed to add host.');
+    } finally {
+      setAddHostModalVisible(false);
+      setMemberSearchQuery('');
+      setMemberList([]);
+      setFilteredMembers([]);
+    }
+  };
   // Destructure raw attendees from event; we'll enrich with full user data below
-  console.log('the event: ====> ', event);
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
     attendees: rawAttendees = [], hosts = [], materials = [] } = event;
   // Check if current user is admin in any oversight body membership
@@ -243,6 +315,58 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       setOptimisticJoin(false);
       console.error('Join event failed:', err);
       alert('Failed to join event');
+    }
+  };
+  
+  // Handle host request submission
+  // Handle host request submission
+  const handleRequestHost = async () => {
+    try {
+      console.log('host request for event: ', event._id);
+      // submit host request then re-fetch full event details to maintain consistent data shape
+      await addEventHostRequest(token, event._id);
+      const updatedEvent = await fetchEventDetails(event._id, token || '');
+      setEvent(updatedEvent);
+      setHostRequestSent(true);
+      Alert.alert('Request submitted', 'Your request to become a host has been submitted.');
+    } catch (err) {
+      console.error('Host request failed:', err);
+      Alert.alert('Error', err.message || 'Failed to request host. Please try again.');
+    }
+  };
+  // Handle direct host addition by admin
+  const handleAddHost = async () => {
+    try {
+      const newHost = { refId: userId, type: 'User' };
+      // add host(s) then re-fetch full event details for consistent data shape
+      await addEventHost(event._id, [newHost], token || '');
+      const updatedEvent = await fetchEventDetails(event._id, token || '');
+      setEvent(updatedEvent);
+      Alert.alert('Host added', 'Host successfully added.');
+    } catch (err) {
+      console.error('Add host failed:', err);
+      Alert.alert('Error', err.message || 'Failed to add host. Please try again.');
+    }
+  };
+  // Track hosts being removed
+  const [removingHosts, setRemovingHosts] = useState([]);
+  // Handle removing a host by admin
+  const handleRemoveHost = async host => {
+    const hostId = host.refId || host._id;
+    setRemovingHosts(prev => [...prev, hostId]);
+    try {
+      // Filter out the removed host and update server
+      const remaining = hosts.filter(hh => (hh.refId || hh._id) !== hostId);
+      const newHosts = remaining.map(hh => ({ refId: hh.refId || hh._id, type: hh.type }));
+      await addEventHost(event._id, newHosts, token || '');
+      const updated = await fetchEventDetails(event._id, token || '');
+      setEvent(updated);
+      Alert.alert('Host removed', 'Host successfully removed.');
+    } catch (err) {
+      console.error('Remove host failed:', err);
+      Alert.alert('Error', err.message || 'Failed to remove host.');
+    } finally {
+      setRemovingHosts(prev => prev.filter(id => id !== hostId));
     }
   };
   // Material picker
@@ -310,7 +434,6 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       try {
         setOversightLoading(true);
         const members = await fetchUserBodyByEventType(eventType, token);
-        console.log('members: ', members);
         if (isMounted) {
           setOversightBody({ name, members });
           setOversightLoading(false);
@@ -353,14 +476,6 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           titleStyle={styles.cardTitleText}
           subtitleStyle={styles.cardSubtitleText}
         />
-        {/* Show admin status if user has any true in body membership */}
-        {isAdmin && (
-          <View style={{ alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: themeVariables.primaryColor, fontWeight: 'bold', fontSize: 16 }}>
-              Is Admin
-            </Text>
-          </View>
-        )}
         <CardContent style={styles.cardContent}>
           {/* Date & Time */}
           <View style={styles.headerInfoContainer}>
@@ -396,39 +511,75 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>
               {hosts.length === 1 ? 'Host' : 'Hosts'}
             </Text>
-            {hosts.length === 0 && (
-              <TouchableOpacity
-                style={styles.requestButton}
-                onPress={() => alert('Request Host')}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name="add-circle-outline"
-                  size={18}
-                  color={themeVariables.whiteColor}
-                />
-                <Text style={styles.requestButtonText}>Request Host</Text>
-              </TouchableOpacity>
-            )}
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.requestButton}
+              onPress={() => setAddHostModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={18}
+                color={themeVariables.whiteColor}
+              />
+              <Text style={styles.requestButtonText}>Add Host</Text>
+            </TouchableOpacity>
+          )}
           </View>
 
           {hosts.length > 0 ? (
             <View style={styles.userListContainer}>
               {hosts.map((h, idx) => {
-                // Ensure each host has a unique key (fallback to index)
                 const hostUser = h.details || h;
                 const key = h._id || (hostUser && hostUser._id) || idx;
                 return (
-                  <UserBadge
-                    key={key}
-                    user={hostUser}
-                    userCertifications={h.certifications}
-                  />
+                  <View key={key} style={{ position: 'relative', marginRight: 12, marginBottom: 12 }}>
+                    <UserBadge
+                      user={hostUser}
+                      userCertifications={h.certifications}
+                    />
+                    {isAdmin && (
+                      <TouchableOpacity
+                        onPress={() => handleRemoveHost(h)}
+                        style={{
+                          position: 'absolute',
+                          top: -4,
+                          right: 6,
+                          backgroundColor: '#fff',
+                          borderRadius: 12,
+                          padding: 2,
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle" size={18} color="red" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 );
               })}
             </View>
           ) : (
-            <Text style={styles.headerInfoText}>No host yet</Text>
+            <>
+              <Text style={styles.headerInfoText}>No host yet</Text>
+              {hostRequestSent ? (
+                <Text style={styles.headerInfoText}>
+                  Thank you for your request, we will contact you shortly.
+                </Text>
+              ) : (
+                <TouchableOpacity
+                  style={styles.requestButton}
+                  onPress={handleRequestHost}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={18}
+                    color={themeVariables.whiteColor}
+                  />
+                  <Text style={styles.requestButtonText}>Request Host</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
           <View style={styles.divider} />
           {/* Materials */}
@@ -440,7 +591,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
                 onPress={() => setMaterialModalVisible(true)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="add-outline" size={18} color={themeVariables.whiteColor} />
+                <Ionicons name="add-circle-outline" size={18} color={themeVariables.whiteColor} />
                 <Text style={styles.addMaterialButtonText}>Add Material</Text>
               </TouchableOpacity>
             )}
@@ -537,27 +688,70 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               value={newMaterialTitle}
               onChangeText={setNewMaterialTitle}
             />
-            <TouchableOpacity
-              style={styles.modalFilePicker}
-              onPress={pickMaterial}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalFilePickerText} numberOfLines={1}>
-                {newMaterialDoc?.name || 'Select File'}
-              </Text>
+            <TouchableOpacity style={styles.uploadButton} onPress={pickMaterial}>
+              <Ionicons name="document-outline" size={40} color={themeVariables.primaryColor} />
+              <Text style={styles.uploadButtonText}>Upload file</Text>
             </TouchableOpacity>
             {uploadingMaterial ? (
               <ActivityIndicator size="large" color={themeVariables.primaryColor} />
             ) : (
               <View style={styles.modalButtonsRow}>
-                <TouchableOpacity style={styles.modalButton} onPress={submitMaterial} activeOpacity={0.8}>
-                  <Text style={styles.modalButtonText}>Upload</Text>
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.modalButton} onPress={() => setMaterialModalVisible(false)} activeOpacity={0.8}>
                   <Text style={styles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
+                <TouchableOpacity style={styles.modalButton} onPress={submitMaterial} activeOpacity={0.8}>
+                  <Text style={styles.modalButtonText}>Upload</Text>
+                </TouchableOpacity>
+
               </View>
             )}
+          </View>
+        </View>
+      </Modal>
+      {/* Add Host Modal */}
+      <Modal
+        visible={addHostModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setAddHostModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Host</Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Search users..."
+              value={memberSearchQuery}
+              onChangeText={onMemberSearch}
+            />
+            {memberLoading ? (
+              <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+            ) : (
+              <ScrollView style={styles.memberList}>
+                {filteredMembers.map(member => (
+                  <TouchableOpacity
+                    key={member._id}
+                    style={styles.memberItem}
+                    onPress={() => selectHostMember(member)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.memberName} numberOfLines={1}>
+                      {/* Display fullName if available, else fallback */}
+                      {member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.name || member.email}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => setAddHostModalVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -668,6 +862,56 @@ const BadgeModal = ({ visible, onClose, list, title }) => {
   );
 };
 const styles = StyleSheet.create({
+  // Modal for adding host
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginBottom: 12,
+  },
+  memberList: {
+    maxHeight: 200,
+    marginBottom: 12,
+  },
+  memberItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  memberName: {
+    fontSize: 16,
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  modalButton: {
+    marginLeft: 12,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: themeVariables.primaryColor,
+  },
   safeArea: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -676,11 +920,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  scroll: {
-    flexGrow: 1,
-    backgroundColor: themeVariables.whiteColor,
-    paddingBottom: 30,
-  },
   headerInfoContainer: {
     alignItems: 'center',
     marginVertical: 8,
@@ -688,13 +927,13 @@ const styles = StyleSheet.create({
   headerInfoText: {
     fontSize: 16,
     color: '#666',
+    marginBottom: 14,
   },
   divider: {
     height: 1,
     backgroundColor: '#ddd',
     marginVertical: 8,
   },
-  // Wrapper for MapView with corner radius matching ActivityDetailCard
   mapWrapper: {
     width: '100%',
     height: 300,
@@ -735,10 +974,6 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
   },
   centered:{flex:1,minHeight:windowHeight,justifyContent:'center',alignItems:'center',backgroundColor:themeVariables.whiteColor},
-  loadingWrapper:{flex:1,backgroundColor:themeVariables.whiteColor},
-  loadingOverlayContainer:{...StyleSheet.absoluteFillObject,backgroundColor:'rgba(255,255,255,0.6)',justifyContent:'center',alignItems:'center'},
-  errorText:{color:'red',fontSize:16},
-  noEventText:{color:'#666',fontSize:18},
   card:{
     width:'100%',
     backgroundColor:'transparent',
@@ -748,26 +983,16 @@ const styles = StyleSheet.create({
   banner:{width:'100%',height:220,borderRadius:0},
   overlayCard:{width:'100%',marginTop:-40,backgroundColor:'#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28,padding:16,shadowColor:'#000',shadowOpacity:0.15,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:4},
   titleBlock:{paddingTop:0},
-  factRow:{flexDirection:'row',justifyContent:'space-between',borderWidth:1,borderColor:'#ddd',borderRadius:12,paddingVertical:10,paddingHorizontal:10,marginBottom:14},
   factBox:{flex:1,alignItems:'center'},
   factLabel:{fontSize:11,color:'#666',marginTop:4},
   factValue:{fontSize:14,fontWeight:'600',color:themeVariables.blackColor},
   linkText:{color:themeVariables.primaryColor,textDecorationLine:'underline'},
   cardContent:{paddingTop:8,marginHorizontal:-15},
-  detailRow:{flexDirection:'row',justifyContent:'space-between',borderWidth:1,borderColor:'#ddd',borderRadius:12,paddingHorizontal:10,paddingVertical:10,marginBottom:14},
   detailCell:{flex:1,alignItems:'center',paddingHorizontal:4},
   detailIcon:{marginBottom:6},
   detailLabel:{fontSize:11,color:'#666',marginBottom:4,textAlign:'center', textAlign: 'center', width: Platform.select({ android: 50 }) },
   detailValue:{fontSize:14,fontWeight:'600',color:'#312783',marginBottom:4,textAlign:'center', width: Platform.select({ android: 140 })},
   detailSub:{fontSize:12,color:'#666',textAlign:'center'},
-  sectionsContainer:{
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    marginBottom: 14,
-    overflow: 'hidden',
-  },
-  sideSection:{flex:1,paddingVertical:10,paddingHorizontal:10,alignItems:'center'},
-  dividerVertical:{width:1,backgroundColor:'#ddd'},
   sectionHeaderRow:{
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -776,9 +1001,7 @@ const styles = StyleSheet.create({
     marginVertical: 14,
   },
   avatarsContainer:{flexDirection:'row',justifyContent:'center',alignItems:'center'},
-  // User list styling copied from SessionCard UserCell layout
   userListContainer:{flexDirection:'row',flexWrap:'wrap'},
-  // Preview list item wrapper for two-column layout
   userListItem:{
     width:'50%',
     paddingVertical:4,
@@ -793,7 +1016,6 @@ const styles = StyleSheet.create({
   modalList:{flexDirection:'row',flexWrap:'wrap',justifyContent:'flex-start'},
   modalBadgeWrap:{width:100,alignItems:'center',margin:8},
   modalCloseButton:{
-    // Limit width to content and center in modal
     alignSelf: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -802,18 +1024,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
-  modalCloseText:{color:themeVariables.whiteColor,fontWeight:'600',fontSize:16},
+  modalCloseText: {
+    color: themeVariables.whiteColor,
+    fontWeight: '600',
+    fontSize: 16
+  },
   requestButton:{
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#312783',
+    backgroundColor: themeVariables.primaryColor,
+    alignSelf: 'flex-start',
   },
-  requestButtonWrapper:{marginTop:8,alignItems:'center'},
-  requestButtonText:{fontSize:14,fontWeight:'600',color:themeVariables.whiteColor,marginLeft:6, width: Platform.select({ android: 100 })},
-  /* See More button for preview lists */
+  requestButtonText:{
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.whiteColor,
+    marginLeft: 6,
+  },
   seeMoreButton: {
     alignSelf: 'center',
     paddingVertical: 6,
@@ -845,7 +1075,7 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     marginLeft: 6,
     fontWeight: '600',
-    fontSize: 14,
+    fontSize: 14
   },
   modalInput: {
     borderWidth: 1,
@@ -875,79 +1105,20 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.primaryColor,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   modalButtonText: {
     color: themeVariables.whiteColor,
     fontWeight: '600',
   },
-  /* Section container (unused) */
-  sectionContainer:{
-    borderWidth:1,
-    borderColor:'#ddd',
-    borderRadius:0,
-    backgroundColor:'#fff',
-    paddingVertical:10,
-    paddingHorizontal:10,
-    marginBottom:14,
-    alignItems:'center',
-  },
-  sectionTitle:{
-    fontSize:14,
-    fontWeight:'bold',
-    textAlign:'center',
-    marginBottom:4,
-    color:themeVariables.blackColor,
-    textAlign: 'center',
-    width: Platform.select({ android: 160 }),    
-  },
-  sectionSubtitle: {
-    fontSize:12,
-    color:'#666',
-    textAlign:'center',
-    marginBottom:8,
-    textAlign: 'center',
-    width: Platform.select({ android: 160 }),    
-  },
-  hostAvatar:{
-    width:40,
-    height:40,
-    borderRadius:20,
-    marginBottom:8,
-  },
-  noHostText:{
-    fontSize:12,
-    color:'#666',
-    marginBottom:8,
-    textAlign: 'center',
-    width: Platform.select({ android: 160 }),    
-  },
-  /* Legacy container for pill tiles (unused for list) */
-  materialsContainer:{
-    flexDirection:'row',
-    flexWrap:'wrap',
-    justifyContent:'center',
-  },
   materialTile:{
-    flexDirection:'row',
-    alignItems:'center',
-    backgroundColor:'#eee',
-    borderRadius:8,
-    paddingVertical:6,
-    paddingHorizontal:10,
-    margin:4,
-  },
-  materialText:{
-    marginLeft:4,
-    fontSize:12,
-    color:themeVariables.blackColor,
-  },
-  /* Materials grid of square tiles */
-  materialsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    marginHorizontal: -8,
+    alignItems: 'center',
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    margin: 4,
   },
   materialTile: {
     flexBasis: '30%',
@@ -959,22 +1130,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 8,
   },
-  materialTileIcon: {
-    marginBottom: 8,
-  },
-  materialTileText: {
-    fontSize: 12,
-    color: themeVariables.primaryColor,
-    textAlign: 'center',
-  },
   noDataText:{
-    fontSize:12,
+    fontSize: 16,
     color:'#666',
-    textAlign: 'center',
-    width: Platform.select({ android: 160 }),    
+    textAlign: 'left', 
   },
   statusChip:{position:'absolute',top:16,right:12,backgroundColor:themeVariables.primaryColor,borderRadius:12,paddingHorizontal:8,paddingVertical:4,zIndex:10},
   statusChipText:{color:themeVariables.whiteColor,fontSize:12,fontWeight:'600', width: Platform.select({ android: 65 })},
+  uploadButton: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+    borderStyle: 'dotted',
+    borderRadius: 12,
+    backgroundColor: themeVariables.whiteColor,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  uploadButtonText: {
+    color: themeVariables.primaryColor,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 8,
+  },
 });
 
 export default EventDetailCard;

@@ -49,12 +49,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
 
   return (
-  <NavigationContainer linking={linking} onReady={() => {
-    console.log('Navigation ready');
-  }}
-  onStateChange={(state) => {
-    console.log('Navigation state changed:', JSON.stringify(state, null, 2));
-  }}>
+  <NavigationContainer linking={linking}>
       <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={({ navigation }) => ({

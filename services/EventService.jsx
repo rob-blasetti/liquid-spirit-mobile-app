@@ -1,5 +1,6 @@
-import { getCurrentUserId } from '../services/AuthService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationService from '../services/NotificationService';
+import { getCurrentUserId } from './AuthService';
 
 import { API_URL } from '../config';
 import { UserContext } from '../contexts/UserContext';
@@ -82,7 +83,6 @@ export const fetchEventDetails = async (eventId, token) => {
     }
 
     const data = await response.json();
-    console.log('fetch event details ;; data', data);
     return data;
   } catch (error) {
     console.error('Error fetching event details:', error);
@@ -110,6 +110,38 @@ export const addEventHost = async (eventId, hosts, token) => {
     return updatedEvent;
   } catch (error) {
     console.error('Error adding event host(s):', error);
+    throw error;
+  }
+};
+
+export const addEventHostRequest = async (token, eventId) => {
+  try {
+    if (!token) throw new Error('User is not authenticated.');
+
+    // Extract user ID from token
+    const userId = getCurrentUserId(token);
+    if (!userId) throw new Error('User ID is missing. Cannot request host privileges.');
+
+    const requestBody = { requester: { refId: userId, type: 'User' } };
+
+    const response = await fetch(`${API_URL}/api/events/${eventId}/hostRequests`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Failed to submit host request: ${errText}`);
+    }
+
+    const updatedEvent = await response.json();
+    return updatedEvent;
+  } catch (error) {
+    console.error('Error submitting host request:', error);
     throw error;
   }
 };

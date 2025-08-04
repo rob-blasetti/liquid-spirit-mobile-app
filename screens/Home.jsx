@@ -405,7 +405,6 @@ const Home = ({ navigation, homeOverview, route }) => {
           const upcoming = upcomingWithDate.map(({ activity }) => activity);
           const nextActData = upcomingWithDate[0] || null;
           const nextAct = nextActData?.activity || null;
-          console.log('nextAct: ', nextAct);
           const nextDate = nextActData?.nextDate || null;
           // Next activity with available facilitator slots
           const activityToFacilitate = upcoming.find(a => {
