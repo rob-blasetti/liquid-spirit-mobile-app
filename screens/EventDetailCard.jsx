@@ -31,6 +31,18 @@ import themeVariables from '../styles/theme';
 import { fetchEventDetails, joinEvent, addEventMaterials, addEventHostRequest, addEventHost } from '../services/EventService';
 import { getMemberList } from '../services/UserService';
 import DocumentPicker from 'react-native-document-picker';
+// Allowed document types for materials
+const allowedMaterialTypes = [
+  DocumentPicker.types.pdf,
+  DocumentPicker.types.doc,
+  DocumentPicker.types.docx,
+  DocumentPicker.types.xls,
+  DocumentPicker.types.xlsx,
+  DocumentPicker.types.ppt,
+  DocumentPicker.types.pptx,
+  DocumentPicker.types.csv,
+  DocumentPicker.types.plainText,
+];
 import localImages from '../utils/localImages';
 import UserBadge from '../components/UserBadge';
 import UserCell from '../components/UserCell';
@@ -266,7 +278,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
     attendees: rawAttendees = [], hosts = [], materials = [] } = event;
   // Check if current user is admin in any oversight body membership
   const userBodyMembership = event.userBodyMembership || {};
-  const isAdmin = Object.values(userBodyMembership).some(v => v === true);
+  const isAdmin = false; //Object.values(userBodyMembership).some(v => v === true);
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   const dateSub = getDayMonth(dateObj);
@@ -371,29 +383,49 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   };
   // Material picker
   const pickMaterial = async () => {
+    // clear previous error
+    setMaterialError(null);
     try {
-      const res = await DocumentPicker.pickSingle({ type: DocumentPicker.types.allFiles });
+      const res = await DocumentPicker.pickSingle({ type: allowedMaterialTypes });
+      // auto-fill title from file name (without extension)
+      let baseName = res.name || res.filename || '';
+      if (!baseName && res.uri) {
+        const parts = res.uri.split('/');
+        baseName = decodeURIComponent(parts[parts.length - 1] || '');
+      }
+      if (baseName.includes('.')) {
+        baseName = baseName.substring(0, baseName.lastIndexOf('.'));
+      }
+      setNewMaterialTitle(baseName);
       setNewMaterialDoc(res);
     } catch (err) {
-      if (!DocumentPicker.isCancel(err)) console.error('DocumentPicker error:', err);
+      if (DocumentPicker.isCancel(err)) {
+        // user cancelled, do nothing
+      } else {
+        console.error('DocumentPicker error:', err);
+        setMaterialError('Failed to pick document');
+      }
     }
   };
   // Submit new material
   const submitMaterial = async () => {
+    // validate inputs
     if (!newMaterialTitle || !newMaterialDoc) {
-      Alert.alert('Missing fields', 'Please provide a title and select a file.');
+      setMaterialError('Please provide a title and select a file.');
       return;
     }
+    setMaterialError(null);
     setUploadingMaterial(true);
     try {
       const updated = await addEventMaterials(event._id, newMaterialTitle, newMaterialDoc, token || '');
       setEvent(updated);
+      // reset state and close modal
       setMaterialModalVisible(false);
       setNewMaterialTitle('');
       setNewMaterialDoc(null);
     } catch (err) {
       console.error('Upload failed:', err);
-      Alert.alert('Upload failed', err.message || 'Try again later.');
+      setMaterialError(err.message || 'Upload failed. Try again later.');
     } finally {
       setUploadingMaterial(false);
     }
@@ -453,6 +485,8 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
   const [newMaterialDoc, setNewMaterialDoc] = useState(null);
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
+  // Error message for material upload issues
+  const [materialError, setMaterialError] = useState(null);
   
   return (
     <Card style={styles.card}>
@@ -560,10 +594,12 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
             </View>
           ) : (
             <>
-              <Text style={styles.headerInfoText}>No host yet</Text>
+              {!hostRequestSent && (
+                <Text style={styles.headerInfoText}>No host yet.</Text>
+              )}
               {hostRequestSent ? (
                 <Text style={styles.headerInfoText}>
-                  Thank you for your request, we will contact you shortly.
+                  No host yet. Thank you for your request, we will contact you shortly.
                 </Text>
               ) : (
                 <TouchableOpacity
@@ -576,7 +612,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
                     size={18}
                     color={themeVariables.whiteColor}
                   />
-                  <Text style={styles.requestButtonText}>Request Host</Text>
+                  <Text style={styles.requestButtonText}>Request To Host</Text>
                 </TouchableOpacity>
               )}
             </>
@@ -585,7 +621,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           {/* Materials */}
           <View style={styles.sectionHeaderRow}>
             <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>Materials</Text>
-            {isAdmin && (
+            {false && isAdmin && (
               <TouchableOpacity
                 style={styles.addMaterialButton}
                 onPress={() => setMaterialModalVisible(true)}
@@ -688,22 +724,47 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               value={newMaterialTitle}
               onChangeText={setNewMaterialTitle}
             />
-            <TouchableOpacity style={styles.uploadButton} onPress={pickMaterial}>
+            <TouchableOpacity
+              style={[styles.uploadButton, uploadingMaterial && { opacity: 0.5 }]} 
+              onPress={pickMaterial}
+              disabled={uploadingMaterial}
+            >
               <Ionicons name="document-outline" size={40} color={themeVariables.primaryColor} />
               <Text style={styles.uploadButtonText}>Upload file</Text>
             </TouchableOpacity>
+            {newMaterialDoc && !uploadingMaterial && (
+              <Text style={styles.fileNameText}>
+                {newMaterialDoc.name || newMaterialDoc.filename}
+              </Text>
+            )}
             {uploadingMaterial ? (
               <ActivityIndicator size="large" color={themeVariables.primaryColor} />
             ) : (
-              <View style={styles.modalButtonsRow}>
-                <TouchableOpacity style={styles.modalButton} onPress={() => setMaterialModalVisible(false)} activeOpacity={0.8}>
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.modalButton} onPress={submitMaterial} activeOpacity={0.8}>
-                  <Text style={styles.modalButtonText}>Upload</Text>
-                </TouchableOpacity>
-
-              </View>
+              <>
+                {materialError && (
+                  <Text style={styles.errorText}>{materialError}</Text>
+                )}
+                <View style={styles.modalButtonsRow}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={() => {
+                      setMaterialModalVisible(false);
+                      setMaterialError(null);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, !newMaterialDoc && { opacity: 0.5 }]}
+                    onPress={submitMaterial}
+                    activeOpacity={0.8}
+                    disabled={!newMaterialDoc}
+                  >
+                    <Text style={styles.modalButtonText}>Upload</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
           </View>
         </View>
@@ -1154,6 +1215,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 8,
+  },
+  // Display selected file name in modal
+  fileNameText: {
+    fontSize: 14,
+    marginBottom: 12,
+    color: '#333',
+    textAlign: 'center',
+  },
+  // Display error messages in modal
+  errorText: {
+    fontSize: 14,
+    marginBottom: 12,
+    color: 'red',
+    textAlign: 'center',
   },
 });
 
