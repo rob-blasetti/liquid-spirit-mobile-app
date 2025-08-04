@@ -278,7 +278,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
     attendees: rawAttendees = [], hosts = [], materials = [] } = event;
   // Check if current user is admin in any oversight body membership
   const userBodyMembership = event.userBodyMembership || {};
-  const isAdmin = false; //Object.values(userBodyMembership).some(v => v === true);
+  const isAdmin = Object.values(userBodyMembership).some(v => v === true);
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   const dateSub = getDayMonth(dateObj);
@@ -691,7 +691,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               })}
             </View>
           ) : (
-            <Text style={styles.headerInfoText}>No attendees</Text>
+            <Text style={styles.headerInfoText}>No attendees registered yet.</Text>
           )}
           <View style={styles.divider} />
         </CardContent>
@@ -1196,10 +1196,22 @@ const styles = StyleSheet.create({
     color:'#666',
     textAlign: 'left', 
   },
-  statusChip:{position:'absolute',top:16,right:12,backgroundColor:themeVariables.primaryColor,borderRadius:12,paddingHorizontal:8,paddingVertical:4,zIndex:10},
-  statusChipText:{color:themeVariables.whiteColor,fontSize:12,fontWeight:'600', width: Platform.select({ android: 65 })},
+  statusChip:{
+    position:'absolute',
+    top:16,
+    right:12,
+    backgroundColor:themeVariables.primaryColor,
+    borderRadius:12,
+    paddingHorizontal:8,
+    paddingVertical:4,
+    zIndex:10
+  },
+  statusChipText:{
+    color:themeVariables.whiteColor,
+    fontSize:12,
+    fontWeight:'600',
+  },
   uploadButton: {
-    width: '100%',
     borderWidth: 1,
     borderColor: themeVariables.primaryColor,
     borderStyle: 'dotted',

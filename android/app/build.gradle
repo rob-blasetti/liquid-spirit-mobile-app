@@ -92,19 +92,19 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    
-
     namespace "com.liquid_spirit_mobile_app"
     defaultConfig {
         applicationId "com.liquid_spirit_mobile_app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 8
-        versionName "1.7.2"
+        versionCode 9
+        versionName "1.7.3"
         
         buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
         buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
         buildConfigField "String", "AWS_REGION", "\"${envProperties.getProperty('AWS_REGION', '')}\""
+        buildConfigField "String", "MAPS_API_KEY", "\"${envProperties.getProperty('MAPS_API_KEY', '')}\""
+        manifestPlaceholders = [ MAPS_API_KEY: envProperties.getProperty('MAPS_API_KEY', '') ]
     }
     signingConfigs {
         debug {
