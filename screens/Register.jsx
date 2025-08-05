@@ -12,6 +12,11 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
+import {
+  isValidEmail,
+  isValidBahaiId,
+  isValidPassword,
+} from '../utils/validation';
 
 const Register = () => {
   const navigation = useNavigation();
@@ -30,8 +35,26 @@ const Register = () => {
       return;
     }
 
+    if (!isValidEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!isValidBahaiId(bahaiId)) {
+      Alert.alert('Error', "Bahá'í ID must contain only numbers.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      Alert.alert(
+        'Error',
+        'Password must be at least 8 characters and include a number and a letter. Special characters are allowed.'
+      );
       return;
     }
 
@@ -77,7 +100,7 @@ const Register = () => {
       <TextInput
         style={styles.input}
         value={bahaiId}
-        onChangeText={setBahaiId}
+        onChangeText={(text) => setBahaiId(text.replace(/[^0-9]/g, ''))}
         keyboardType="numeric"
       />
       {/* Password Label and Input */}
