@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useAuthService } from '../services/AuthService';
 import themeVariables from '../styles/theme';
+import { isValidEmail } from '../utils/validation';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,11 @@ const ForgotPassword = ({ navigation }) => {
   const handleForgotPassword = async () => {
     if (!email) {
       Alert.alert('Error', 'Please enter an email address.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
       return;
     }
 

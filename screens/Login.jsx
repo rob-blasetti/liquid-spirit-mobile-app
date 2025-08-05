@@ -4,6 +4,7 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
+import { isValidEmail, isValidPassword } from '../utils/validation';
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -41,6 +42,19 @@ const Login = ({ navigation }) => {
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      Alert.alert('Error', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!isValidPassword(password)) {
+      Alert.alert(
+        'Error',
+        'Password must be at least 8 characters and include a number and a letter. Special characters are allowed.'
+      );
       return;
     }
 
