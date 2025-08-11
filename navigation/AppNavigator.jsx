@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { navigationRef } from './RootNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -49,7 +50,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
 
   return (
-  <NavigationContainer linking={linking}>
+  <NavigationContainer linking={linking} ref={navigationRef}>
       <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={({ navigation }) => ({

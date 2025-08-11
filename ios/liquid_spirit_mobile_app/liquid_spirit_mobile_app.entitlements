@@ -7,5 +7,7 @@
 		<string>applinks:liquidspirit.org</string>
 		<string>applinks:www.liquidspirit.org</string>
 	</array>
+    <key>aps-environment</key>
+    <string>development</string>
 </dict>
 </plist>

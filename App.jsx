@@ -1,5 +1,5 @@
 // no direct React hooks needed; initialization logic moved to useAppInitialization hook
-import React, { useEffect } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { StatusBar, StyleSheet, View, Linking } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import themeVariables from './styles/theme';
@@ -18,9 +18,12 @@ import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
+import { UserContext } from './contexts/UserContext';
+import { initPushNotifications } from './services/PushService';
 
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
+  const { token } = useContext(UserContext);
 
   useEffect(() => {
     Linking.getInitialURL().then(url => {
@@ -33,6 +36,12 @@ const MainApp = () => {
 
     return () => sub.remove();
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    const cleanup = initPushNotifications(token);
+    return cleanup;
+  }, [token]);
 
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
