@@ -12,6 +12,7 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		A9DBF01A49C7FEB7DAE28EFC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		DAB6073FF8C54AFA94277795 /* libPods-liquid_spirit_mobile_app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B045227FC1CA6E6CCADD8381 /* libPods-liquid_spirit_mobile_app.a */; };
+		E1F5A0012D5A7C9B00ABCDEF /* APNsBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E1F5A0002D5A7C9B00ABCDEF /* APNsBridge.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = liquid_spirit_mobile_app/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B045227FC1CA6E6CCADD8381 /* libPods-liquid_spirit_mobile_app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-liquid_spirit_mobile_app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D4EB1D6DF6641C72B6C6F944 /* Pods-liquid_spirit_mobile_app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-liquid_spirit_mobile_app.release.xcconfig"; path = "Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app.release.xcconfig"; sourceTree = "<group>"; };
+		E1F5A0002D5A7C9B00ABCDEF /* APNsBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = APNsBridge.m; path = liquid_spirit_mobile_app/APNsBridge.m; sourceTree = "<group>"; };
 		E9D80E9DE4FE19EA74E12EAD /* Pods-liquid_spirit_mobile_app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-liquid_spirit_mobile_app.debug.xcconfig"; path = "Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -44,6 +46,7 @@
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
+				E1F5A0002D5A7C9B00ABCDEF /* APNsBridge.m */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
@@ -191,9 +194,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -230,9 +237,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-liquid_spirit_mobile_app/Pods-liquid_spirit_mobile_app-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -247,6 +258,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				E1F5A0012D5A7C9B00ABCDEF /* APNsBridge.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,7 +271,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
+                CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
 				CURRENT_PROJECT_VERSION = 112;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				ENABLE_BITCODE = NO;
@@ -292,7 +304,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
+                CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.release.entitlements;
 				CURRENT_PROJECT_VERSION = 112;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				ENABLE_TESTING_SEARCH_PATHS = NO;
@@ -387,10 +399,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -427,7 +436,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
+				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.release.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -460,10 +469,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

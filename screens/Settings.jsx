@@ -98,6 +98,14 @@ const Settings = ({ navigation }) => {
           <Ionicons name="trash-outline" size={20} color="#e74c3c" />
           <Text style={[styles.itemText, { color: '#e74c3c' }]}>Delete Account</Text>
         </TouchableOpacity>
+
+        {__DEV__ ? (
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('PushDiagnostics')}>
+            <Ionicons name="bug-outline" size={20} color="#312783" />
+            <Text style={styles.itemText}>Push Diagnostics</Text>
+            <Ionicons name="chevron-forward" size={18} color="#ccc" />
+          </TouchableOpacity>
+        ) : null}
       </View>
 
       <Modal animationType="fade" transparent visible={deleteModalVisible}>

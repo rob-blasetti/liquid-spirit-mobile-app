@@ -39,6 +39,7 @@ import {
   RequestAgendaItem,
   CurriculumDetailScreen,
   Notifications as NotificationScreen,
+  PushDiagnostics,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -148,6 +149,11 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
           presentation: 'fullScreenModal',
           headerShown: false,
         }}
+      />
+      <Stack.Screen
+        name="PushDiagnostics"
+        component={PushDiagnostics}
+        options={{ title: 'Push Diagnostics' }}
       />
       <Stack.Screen
         name="CurriculumDetailScreen"

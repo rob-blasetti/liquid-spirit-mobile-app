@@ -30,7 +30,6 @@ const DOUBLE_TAP_DELAY = 300;
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token, user } = useContext(UserContext);
   const navigation = useNavigation();
-  console.log(post);
   // Ref to track pending single-tap navigation vs double-tap like
   const singleTapTimeoutRef = useRef(null);
   // Clean up pending timer on unmount
