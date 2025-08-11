@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { colors } from '../styles/colours';
 import { UserContext } from '../contexts/UserContext';
@@ -12,6 +13,7 @@ import s3 from '../awsConfig';
 const EditProfile = ({ navigation }) => {
   const { user, userDetails, setUserDetails, token, setUser } = useContext(UserContext);
   const { updateMe } = useAuthService();
+  const nav = useNavigation();
 
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
@@ -107,7 +109,14 @@ const EditProfile = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>  
+      {/* Back chevron above content */}
+      <View style={styles.chevronContainer}>
+        <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
+          <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <Text style={styles.header}>Edit Profile</Text>
       <View style={styles.avatarWrapper}>
         <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
           {/* display the selected or detailed profile picture */}
@@ -118,7 +127,7 @@ const EditProfile = ({ navigation }) => {
         <Text style={styles.changeAvatarButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.header}>Edit Profile</Text>
+      
 
       {[
         { label: 'First Name', value: firstName, onChange: setFirstName },
@@ -166,8 +175,26 @@ const styles = StyleSheet.create({
       flex: 1,
     },
     contentContainer: {
-      padding: 20,
+      paddingHorizontal: 20,
+      paddingTop: 10,
       paddingBottom: 60,
+    },
+    chevronContainer: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    chevronButton: {
+      backgroundColor: themeVariables.greyColor,
+      borderRadius: themeVariables.borderRadiusPill,
+      padding: 6,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 2,
     },
     header: {
       fontSize: 28,

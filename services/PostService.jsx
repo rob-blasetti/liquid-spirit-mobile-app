@@ -142,20 +142,30 @@ export const fetchPostDetails = async (postId, token) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          comment: commentText,
-        }),
+        body: JSON.stringify({ comment: commentText }),
       });
-  
-      if (!response.ok) {
-        throw new Error('Failed to comment on the post');
+
+      // Try to parse JSON, but tolerate empty/no-JSON responses
+      let responseData = null;
+      try {
+        responseData = await response.json();
+      } catch (_) {
+        responseData = null;
       }
-  
-      const responseData = await response.json();
-      return responseData.data; // Return updated post data or comment data
+
+      if (!response.ok) {
+        const msg = responseData?.message || 'Failed to comment on the post';
+        throw new Error(msg);
+      }
+
+      // Support various backend shapes: {data: ...} | [...] | single object | null
+      const data = responseData?.data ?? responseData ?? null;
+      return data;
     } catch (error) {
       console.error('Error commenting on post:', error);
-      throw new Error(`Comment post error: ${error.message}`);
+      // Normalize error message to avoid leaking parse errors
+      const msg = error?.message || 'Failed to comment on the post';
+      throw new Error(`Comment post error: ${msg}`);
     }
   };
 

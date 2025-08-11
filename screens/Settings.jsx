@@ -1,5 +1,5 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ScrollView, Switch } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -7,6 +7,7 @@ import { useAuthService } from '../services/AuthService';
 import { CommonActions } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { useNavigation } from '@react-navigation/native';
+// no-op
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
@@ -15,6 +16,10 @@ const Settings = ({ navigation }) => {
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
+  // Notification preferences moved to NotificationSettings screen
+
+  // Legacy state kept for minimal diff; notification switches moved to NotificationSettings screen
+  useEffect(() => {}, []);
 
   const handleLogout = async () => {
     await logout();
@@ -56,6 +61,9 @@ const Settings = ({ navigation }) => {
     setDeleteText('');
   };
 
+  // legacy stub
+  const togglePref = async () => {};
+
   return (
       <SafeAreaView style={styles.container} edges={['top']}>
       {/* Custom back chevron */}
@@ -86,6 +94,14 @@ const Settings = ({ navigation }) => {
           <Text style={styles.itemText}>Notifications</Text>
           <Switch value={true} />
         </View> */}
+      </View>
+
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
+          <Ionicons name="notifications-outline" size={20} color="#312783" />
+          <Text style={styles.itemText}>Notification Settings</Text>
+          <Ionicons name="chevron-forward" size={18} color="#ccc" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -146,20 +162,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
   // Custom back chevron container (replaces default header)
   chevronContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   // Header text style for Settings title
   header: {
     fontSize: 28,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
-    marginVertical: 20,
+    marginTop: 10,
+    marginBottom: 20,
   },
   chevronButton: {
     backgroundColor: themeVariables.greyColor,
@@ -173,6 +194,13 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 8,
+    marginLeft: 4,
   },
   item: {
     flexDirection: 'row',

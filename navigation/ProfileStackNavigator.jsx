@@ -6,6 +6,7 @@ import themeVariables from '../styles/theme';
 import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
 import Settings from '../screens/Settings';
+import NotificationSettings from '../screens/NotificationSettings';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
 import EditProfileScreen from '../screens/EditProfile';
@@ -58,17 +59,22 @@ const ProfileStackNavigator = () => {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettings}
+        options={{
+          // Hide default header; custom back chevron rendered in screen component
+          headerShown: false,
+        }}
+      />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
         options={{
-          // Transparent header with only a back button, no title or shadow
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent' },
-          headerTitle: '',
-          headerShadowVisible: false,
+          // Hide default header; custom back chevron rendered in EditProfile screen
+          headerShown: false,
         }}
       />
       {/* <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'ChangePassword', headerShown: false }} /> */}
