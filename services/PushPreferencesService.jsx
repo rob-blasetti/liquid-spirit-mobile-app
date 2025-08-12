@@ -16,6 +16,9 @@ export const PUSH_PREF_KEYS = [
   'activity_completed',
   'join_event',
   'signup',
+  'session_created',
+  'session_reminder',
+  'session_cancelled',
 ];
 
 // Normalize preferences, defaulting missing keys to true per spec

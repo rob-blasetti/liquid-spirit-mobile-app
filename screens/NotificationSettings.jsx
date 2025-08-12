@@ -38,6 +38,15 @@ const NotificationSettings = () => {
       ],
     },
     {
+      title: 'Sessions',
+      hint: 'Tell me when:',
+      items: [
+        { key: 'session_created', label: 'A new session is created' },
+        { key: 'session_reminder', label: 'A session is coming soon' },
+        { key: 'session_cancelled', label: 'An session is cancelled' },
+      ],
+    },
+    {
       title: 'Events',
       hint: 'Tell me when:',
       items: [
