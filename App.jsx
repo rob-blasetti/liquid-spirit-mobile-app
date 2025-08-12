@@ -19,7 +19,7 @@ import { useAppInitialization } from './hooks/useAppInitialization';
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
 import { UserContext } from './contexts/UserContext';
-import { initPushNotifications } from './services/PushService';
+import { initPushNotifications, getCurrentApnsToken, registerDevice } from './services/PushService';
 
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
@@ -37,10 +37,20 @@ const MainApp = () => {
     return () => sub.remove();
   }, []);
 
+  // Initialize APNs listeners once on mount so cold-start taps are handled
+  useEffect(() => {
+    const cleanup = initPushNotifications(token || null);
+    return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When auth token becomes available later, register the device with backend
   useEffect(() => {
     if (!token) return;
-    const cleanup = initPushNotifications(token);
-    return cleanup;
+    const apnsToken = getCurrentApnsToken?.();
+    if (apnsToken) {
+      registerDevice(token, apnsToken).catch(() => {});
+    }
   }, [token]);
 
   return (

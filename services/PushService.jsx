@@ -1,6 +1,6 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import { API_URL } from '../config';
-import { navigate } from '../navigation/RootNavigation';
+import { navigateWhenReady } from '../navigation/RootNavigation';
 import NotificationService from './NotificationService.jsx';
 
 const log = (...args) => console.log('[PushService]', ...args);
@@ -117,13 +117,13 @@ export function initPushNotifications(authToken) {
       if (!p) return;
       switch (p.type) {
         case 'event':
-          navigate('EventDetailCard', { eventId: p.id });
+          navigateWhenReady('EventDetailCard', { eventId: p.id });
           break;
         case 'activity':
-          navigate('ActivityDetailCard', { activityId: p.id });
+          navigateWhenReady('ActivityDetailCard', { activityId: p.id });
           break;
         case 'post':
-          navigate('PostDetailCard', { postId: p.id });
+          navigateWhenReady('PostDetailCard', { postId: p.id });
           break;
         default:
           // no-op
@@ -236,7 +236,14 @@ export function normalizePayload(userInfo) {
   if (!userInfo || typeof userInfo !== 'object') return null;
   const data = userInfo.data || userInfo.custom || userInfo;
   const typeName = (data.type || data.typeName || data.targetType || '').toString();
-  const targetId = data.targetId || data.id || data.eventId || data.postId || data.activityId;
+  const typeKey = typeName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  const targetId =
+    data.targetId ||
+    data.id ||
+    data.eventId ||
+    data.postId ||
+    data.activityId ||
+    data.activity_id;
 
   // Map backend type names to categories used by navigation
   const typeCategoryMap = {
@@ -261,10 +268,16 @@ export function normalizePayload(userInfo) {
 
   let category = typeCategoryMap[typeName.toLowerCase()];
   if (!category) {
-    // Fallbacks
-    if (data.eventId) category = 'event';
-    else if (data.activityId) category = 'activity';
-    else if (data.postId) category = 'post';
+    // Heuristic fallbacks by type keywords
+    if (typeKey.includes('session')) category = 'activity';
+    else if (typeKey.includes('event')) category = 'event';
+    else if (typeKey.includes('post')) category = 'post';
+    else {
+      // ID-based fallbacks
+      if (data.eventId) category = 'event';
+      else if (data.activityId || data.activity_id) category = 'activity';
+      else if (data.postId) category = 'post';
+    }
   }
 
   if (!category) return null;
