@@ -232,10 +232,10 @@ export async function getApnsHealth(authToken, { connectivity = false } = {}) {
   }
 }
 
-function normalizePayload(userInfo) {
+export function normalizePayload(userInfo) {
   if (!userInfo || typeof userInfo !== 'object') return null;
   const data = userInfo.data || userInfo.custom || userInfo;
-  const typeName = data.type || data.typeName || data.targetType || '';
+  const typeName = (data.type || data.typeName || data.targetType || '').toString();
   const targetId = data.targetId || data.id || data.eventId || data.postId || data.activityId;
 
   // Map backend type names to categories used by navigation
@@ -247,12 +247,19 @@ function normalizePayload(userInfo) {
     join_activity: 'activity',
     activity_updated: 'activity',
     activity: 'activity',
+    // Session-related notifications should open Activity detail
+    session: 'activity',
+    session_created: 'activity',
+    session_updated: 'activity',
+    session_reminder: 'activity',
+    session_cancelled: 'activity',
+    session_canceled: 'activity',
     join_event: 'event',
     event_reminder: 'event',
     event: 'event',
   };
 
-  let category = typeCategoryMap[typeName];
+  let category = typeCategoryMap[typeName.toLowerCase()];
   if (!category) {
     // Fallbacks
     if (data.eventId) category = 'event';
@@ -260,6 +267,23 @@ function normalizePayload(userInfo) {
     else if (data.postId) category = 'post';
   }
 
-  if (!category || !targetId) return null;
-  return { type: category, id: targetId };
+  if (!category) return null;
+
+  // Prefer the correct parent ID when dealing with session payloads
+  // Many session notifications include the parent activity id alongside the session id
+  let resolvedId = targetId;
+  const isSessionType = /^session(_|$)/i.test(typeName);
+  if (category === 'activity' && isSessionType) {
+    // Common fields provided by backend for session notifications
+    resolvedId =
+      data.activityId ||
+      data.activity_id ||
+      (data.activity && (data.activity._id || data.activity.id)) ||
+      data.parentActivityId ||
+      data.parentId ||
+      targetId;
+  }
+
+  if (!resolvedId) return null;
+  return { type: category, id: resolvedId };
 }
