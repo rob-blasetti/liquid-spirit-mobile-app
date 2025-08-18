@@ -124,16 +124,22 @@ export const fetchUserById = async (userId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    const data = await response.json();
+    let data = null;
+    try { data = await response.json(); } catch (_) { data = null; }
     if (!response.ok) {
       // handle errors from API wrapper
-      const msg = data.message || (data.error && data.error.message) || 'Failed to fetch user';
-      throw new Error(msg);
+      const msg = data?.message || (data?.error && data.error.message) || 'Failed to fetch user';
+      const err = new Error(msg);
+      err.status = response.status;
+      throw err;
     }
     // API may return wrapper { data: user } or { user: {...} }
     return data;
   } catch (error) {
-    throw new Error(`fetchUserById error: ${error.message}`);
+    if (error.status) throw error;
+    const e = new Error(`fetchUserById error: ${error.message}`);
+    e.status = error.status;
+    throw e;
   }
 };
 

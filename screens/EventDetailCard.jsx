@@ -125,38 +125,96 @@ const EventDetailCard = ({ route }) => {
       ),
     });
   }, [navigation, event]);
-  const { user, token } = useContext(UserContext);
+  const { user, token, isTokenExpired, refreshSession, storageLoaded } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
+  const [errorStatus, setErrorStatus] = useState(null);
+  const [didRefresh, setDidRefresh] = useState(false);
 
-  // Fetch full event details in the background and update state
+  const normalizeEventId = (raw) => {
+    const str = String(raw || '').trim();
+    const match = str.match(/[a-fA-F0-9]{24}/);
+    return match ? match[0] : null;
+  };
+
+  // Fetch full event details with auth guarding and one-time refresh on 401
   useEffect(() => {
-    if (eventPreload) {
-      setEvent(eventPreload);
-      setLoading(false);
-    }
-    if (eventId && token) {
+    let isMounted = true;
+
+    const run = async () => {
+      if (eventPreload) {
+        setEvent(eventPreload);
+        setLoading(false);
+      }
+
+      const id = normalizeEventId(eventId);
+      if (!id) {
+        setError('Invalid event link');
+        setErrorStatus('invalid_id');
+        setLoading(false);
+        return;
+      }
+
+      if (!storageLoaded) return; // wait for token from storage
+
+      // ensure we have a valid token, try a one-time refresh if needed
+      if (!token || isTokenExpired(token)) {
+        if (!didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return; // wait for token update, effect will rerun
+        } else {
+          setError('Please log in to view this event.');
+          setErrorStatus(401);
+          setLoading(false);
+          return;
+        }
+      }
+
       setLoading(true);
-      fetchEventDetails(eventId, token)
-        .then(data => {
-          if (!data) {
-            setError('Event not found');
-          } else {
-            setEvent(data);
-            setError(null);
-          }
-        })
-        .catch(err => setError(err.message || 'Failed to load event details'))
-        .finally(() => setLoading(false));
-    }
-  }, [eventId, token, eventPreload]);
-  // Redirect to Events if not found
+      try {
+        const data = await fetchEventDetails(id, token);
+        if (!isMounted) return;
+        if (!data) {
+          setError('Event not found');
+          setErrorStatus(404);
+        } else {
+          setEvent(data);
+          setError(null);
+          setErrorStatus(null);
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        if (err?.status === 401 && !didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          // will rerun with new token
+          return;
+        }
+        setError(err?.message || 'Failed to load event details');
+        setErrorStatus(err?.status || 'unknown');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    run();
+    return () => { isMounted = false; };
+  }, [eventId, token, eventPreload, storageLoaded, didRefresh]);
+  // Redirect to Events for specific errors
   useEffect(() => {
-    if (!redirected && !loading && (error || !event)) {
+    if (redirected || loading) return;
+    if (errorStatus === 404) {
       navigation.replace('Events', { bannerMessage: 'Sorry, that event no longer exists.' });
       setRedirected(true);
+    } else if (errorStatus === 401) {
+      navigation.replace('Events', { bannerMessage: 'Please log in to view this event.' });
+      setRedirected(true);
+    } else if (errorStatus === 'invalid_id') {
+      navigation.replace('Events', { bannerMessage: 'Invalid event link.' });
+      setRedirected(true);
     }
-  }, [redirected, loading, error, event, navigation]);
+  }, [redirected, loading, errorStatus, navigation]);
   if (loading) {
     return (
       <View style={styles.centered}>

@@ -98,14 +98,24 @@ export const fetchPostDetails = async (postId, token) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch post');
+      let message = 'Failed to fetch post';
+      try {
+        const errBody = await response.json();
+        if (errBody?.message) message = errBody.message;
+      } catch (_) {}
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
     }
 
     const data = await response.json();
     return data.data;
   } catch (err) {
     console.error('Error fetching post details:', err);
-    throw new Error(`Fetch post details error: ${err.message}`);
+    if (err.status) throw err;
+    const e = new Error(`Fetch post details error: ${err.message}`);
+    e.status = err.status;
+    throw e;
   }
 };
 

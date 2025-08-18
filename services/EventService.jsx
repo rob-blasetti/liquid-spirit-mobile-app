@@ -79,12 +79,22 @@ export const fetchEventDetails = async (eventId, token) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch event details. Please try again.');
+      let message = 'Failed to fetch event details. Please try again.';
+      try {
+        const errBody = await response.json();
+        if (errBody?.message) message = errBody.message;
+      } catch (_) {
+        // ignore JSON parse error
+      }
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
+    // surface status if fetch threw a Response error above
     console.error('Error fetching event details:', error);
     throw error;
   }

@@ -18,8 +18,13 @@ const makeRequest = async (url, method, token, body = null, config = {}) => {
     });
 
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message);
+      let message = 'Request failed';
+      let parsed = null;
+      try { parsed = await response.json(); } catch (_) { parsed = null; }
+      if (parsed?.message) message = parsed.message;
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
     }
 
     return method === 'GET' ? response.json() : true;

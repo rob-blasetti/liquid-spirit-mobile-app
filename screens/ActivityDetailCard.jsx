@@ -59,7 +59,7 @@ const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
    ──────────────────────────────────────────────────────────────────────────── */
 const ActivityDetailCard = ({ route }) => {
   const navigation = useNavigation();
-  const { user, token } = useContext(UserContext);
+  const { user, token, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
   const { activityId, activityPreload } = route.params;
 
   const [activity, setActivity] = useState(activityPreload || null);
@@ -115,31 +115,88 @@ const ActivityDetailCard = ({ route }) => {
       ),
     });
   }, [navigation, activity]);
+  const [errorStatus, setErrorStatus] = useState(null);
+  const [didRefresh, setDidRefresh] = useState(false);
+
+  const normalizeId = (raw) => {
+    const str = String(raw || '').trim();
+    const match = str.match(/[a-fA-F0-9]{24}/);
+    return match ? match[0] : null;
+  };
+
   useEffect(() => {
-    if (!activityId) return;
-    const fetchDetails = async () => {
+    let isMounted = true;
+    const run = async () => {
+      // preload
+      if (activityPreload) {
+        setActivity(activityPreload);
+      }
+
+      const id = normalizeId(activityId);
+      if (!id) {
+        setError('Invalid activity link');
+        setErrorStatus('invalid_id');
+        setLoading(false);
+        return;
+      }
+
+      if (!storageLoaded) return; // wait for storage to hydrate token
+      if (!token || isTokenExpired(token)) {
+        if (!didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return;
+        } else {
+          setError('Please log in to view this activity.');
+          setErrorStatus(401);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
       try {
-        const data = await fetchActivityDetails(activityId, token || '');
+        const data = await fetchActivityDetails(id, token);
+        if (!isMounted) return;
         if (!data) {
           setError('Activity not found');
+          setErrorStatus(404);
         } else {
           setActivity(data);
+          setError(null);
+          setErrorStatus(null);
         }
       } catch (err) {
-        setError(err.message || 'Failed to load activity details');
+        if (!isMounted) return;
+        if (err?.status === 401 && !didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return;
+        }
+        setError(err?.message || 'Failed to load activity details');
+        setErrorStatus(err?.status || 'unknown');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    fetchDetails();
-  }, [activityId, token]);
-  // Redirect to Activities screen if not found
+    run();
+    return () => { isMounted = false; };
+  }, [activityId, token, storageLoaded, didRefresh, activityPreload]);
+
+  // Redirect to Activities screen for specific errors
   useEffect(() => {
-    if (!redirected && !loading && (error || !activity)) {
+    if (redirected || loading) return;
+    if (errorStatus === 404) {
       navigation.replace('Activities', { bannerMessage: 'Sorry, that activity no longer exists.' });
       setRedirected(true);
+    } else if (errorStatus === 401) {
+      navigation.replace('Activities', { bannerMessage: 'Please log in to view this activity.' });
+      setRedirected(true);
+    } else if (errorStatus === 'invalid_id') {
+      navigation.replace('Activities', { bannerMessage: 'Invalid activity link.' });
+      setRedirected(true);
     }
-  }, [redirected, loading, error, activity, navigation]);
+  }, [errorStatus, redirected, loading, navigation]);
 
   const formatTime = (t) => {
     if (!t) return 'N/A';
@@ -1219,4 +1276,3 @@ const styles = StyleSheet.create({
   },
   // Custom back button overlay
 });
-

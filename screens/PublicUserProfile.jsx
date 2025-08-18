@@ -15,32 +15,84 @@ import CertificationsList from '../components/CertificationsList';
 const PublicUserProfile = () => {
   const route = useRoute();
   const navigation = useNavigation();
-  const { token } = useContext(UserContext);
+  const { token, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
   const { userId } = route.params || {};
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
 
+  const [errorStatus, setErrorStatus] = useState(null);
+  const [didRefresh, setDidRefresh] = useState(false);
+
+  const normalizeId = (raw) => {
+    const str = String(raw || '').trim();
+    const match = str.match(/[a-fA-F0-9]{24}/);
+    return match ? match[0] : null;
+  };
+
   useEffect(() => {
-    if (!userId || !token) return;
-    setLoading(true);
-    fetchUserById(userId, token)
-      .then(data => {
-        console.log('User data:', data);
+    let isActive = true;
+    const load = async () => {
+      const id = normalizeId(userId);
+      if (!id) {
+        setError('Invalid profile link');
+        setErrorStatus('invalid_id');
+        setLoading(false);
+        return;
+      }
+
+      if (!storageLoaded) return;
+      if (!token || isTokenExpired(token)) {
+        if (!didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return;
+        } else {
+          setError('Please log in to view this profile.');
+          setErrorStatus(401);
+          setLoading(false);
+          return;
+        }
+      }
+
+      setLoading(true);
+      try {
+        const data = await fetchUserById(id, token);
+        if (!isActive) return;
         setUserData(data);
         setError(null);
-      })
-      .catch(err => setError(err.message || 'Failed to load user'))
-      .finally(() => setLoading(false));
-  }, [userId, token]);
-  // Redirect to Home if user not found
+        setErrorStatus(null);
+      } catch (err) {
+        if (!isActive) return;
+        if (err?.status === 401 && !didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return;
+        }
+        setError(err?.message || 'Failed to load user');
+        setErrorStatus(err?.status || 'unknown');
+      } finally {
+        if (isActive) setLoading(false);
+      }
+    };
+    load();
+    return () => { isActive = false; };
+  }, [userId, token, storageLoaded, didRefresh]);
+  // Redirect to Home if user not found or specific errors
   useEffect(() => {
-    if (!redirected && !loading && (error || !userData)) {
+    if (redirected || loading) return;
+    if (errorStatus === 404) {
       navigation.replace('Main', { screen: 'Home', params: { bannerMessage: 'Sorry, that user no longer exists.' } });
       setRedirected(true);
+    } else if (errorStatus === 401) {
+      navigation.replace('Main', { screen: 'Home', params: { bannerMessage: 'Please log in to view this profile.' } });
+      setRedirected(true);
+    } else if (errorStatus === 'invalid_id') {
+      navigation.replace('Main', { screen: 'Home', params: { bannerMessage: 'Invalid profile link.' } });
+      setRedirected(true);
     }
-  }, [redirected, loading, error, userData, navigation]);
+  }, [redirected, loading, errorStatus, navigation]);
 
   // TabView state (always defined to keep hooks order stable)
   const layout = Dimensions.get('window');

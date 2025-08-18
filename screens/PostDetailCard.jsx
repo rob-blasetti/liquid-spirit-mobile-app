@@ -35,7 +35,7 @@ const { height: windowHeight } = Dimensions.get('window');
 
 const PostDetailCard = ({ route }) => {
   const navigation = useNavigation();
-  const { token, user } = useContext(UserContext);
+  const { token, user, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
   // Extract post parameters, including preloaded data and image aspect ratio
   const { postId, postPreload, imageAspect: initialImageAspect } = route.params || {};
 
@@ -44,6 +44,8 @@ const PostDetailCard = ({ route }) => {
   const [error, setError] = useState(null);
   // Redirect to feed if post not found or error occurs
   const [redirected, setRedirected] = useState(false);
+  const [errorStatus, setErrorStatus] = useState(null);
+  const [didRefresh, setDidRefresh] = useState(false);
   // Lightbox modal visibility
   const [modalVisible, setModalVisible] = useState(false);
   // Like and comment state
@@ -141,48 +143,80 @@ const PostDetailCard = ({ route }) => {
     });
   }, [navigation, post]);
 
-  // Always fetch post details to ensure latest state, using postPreload as initial data
+  const normalizeId = (raw) => {
+    const str = String(raw || '').trim();
+    const match = str.match(/[a-fA-F0-9]{24}/);
+    return match ? match[0] : null;
+  };
+
+  // Always fetch post details to ensure latest state, but guard auth and ID
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      // Show loading only if no preload data
-      if (!postPreload) {
-        setLoading(true);
+      if (postPreload) setPost(postPreload);
+
+      const id = normalizeId(postId);
+      if (!id) {
+        setError('Invalid post link');
+        setErrorStatus('invalid_id');
+        setLoading(false);
+        return;
       }
+
+      if (!storageLoaded) return;
+      if (!token || isTokenExpired(token)) {
+        if (!didRefresh) {
+          setDidRefresh(true);
+          try { await refreshSession(); } catch (_) {}
+          return;
+        } else {
+          setError('Please log in to view this post.');
+          setErrorStatus(401);
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (!postPreload) setLoading(true);
       try {
-        const data = await fetchPostDetails(postId, token || '');
-        console.log('DATAAAA:   ', data)
+        const data = await fetchPostDetails(id, token);
         if (isActive) {
           setPost(data);
           setError(null);
+          setErrorStatus(null);
         }
       } catch (err) {
         if (isActive) {
-          setError(err.message || 'Failed to load post');
+          if (err?.status === 401 && !didRefresh) {
+            setDidRefresh(true);
+            try { await refreshSession(); } catch (_) {}
+            return;
+          }
+          setError(err?.message || 'Failed to load post');
+          setErrorStatus(err?.status || 'unknown');
         }
       } finally {
-        if (isActive) {
-          setLoading(false);
-        }
+        if (isActive) setLoading(false);
       }
     };
     load();
-    return () => {
-      isActive = false;
-    };
-  }, [postId, postPreload, token]);
+    return () => { isActive = false; };
+  }, [postId, postPreload, token, storageLoaded, didRefresh]);
 
-  // Redirect when loaded but no post or error
+  // Redirect when specific errors occur
   useEffect(() => {
-    if (!redirected && !loading && (error || !post)) {
-      // Navigate to main feed with banner message
-      navigation.replace('Main', {
-        screen: 'Feed',
-        params: { bannerMessage: 'Sorry, that post no longer exists.' }
-      });
+    if (redirected || loading) return;
+    if (errorStatus === 404) {
+      navigation.replace('Main', { screen: 'Feed', params: { bannerMessage: 'Sorry, that post no longer exists.' } });
+      setRedirected(true);
+    } else if (errorStatus === 401) {
+      navigation.replace('Main', { screen: 'Feed', params: { bannerMessage: 'Please log in to view this post.' } });
+      setRedirected(true);
+    } else if (errorStatus === 'invalid_id') {
+      navigation.replace('Main', { screen: 'Feed', params: { bannerMessage: 'Invalid post link.' } });
       setRedirected(true);
     }
-  }, [redirected, loading, error, post, navigation]);
+  }, [redirected, loading, errorStatus, navigation]);
 
   // Initialize like/comment UI state when post or user changes
   // Related posts section: fetch when post community is available
@@ -647,4 +681,3 @@ const styles = StyleSheet.create({
   relatedItem: { marginRight: 12 },
   relatedImage: { width: 100, height: 100, borderRadius: 8 },
 });
-
