@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import NotificationService from '../services/NotificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
@@ -26,6 +26,9 @@ export const UserProvider = ({ children }) => {
   const [storageLoaded, setStorageLoaded] = useState(false);
   // Detailed user info (including certifications) fetched on startup
   const [userDetails, setUserDetails] = useState(null);
+  // Concurrency guards
+  const refreshInFlightRef = useRef(null);
+  const biometricInFlightRef = useRef(false);
 
   useEffect(() => {
     const loadCachedData = async () => {
@@ -182,20 +185,29 @@ export const UserProvider = ({ children }) => {
   }
 
   const refreshSession = async () => {
+    // Deduplicate concurrent refresh calls
+    if (refreshInFlightRef.current) {
+      try { await refreshInFlightRef.current; } catch (_) {}
+      return;
+    }
     const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
-    console.log("Retrieved refresh token from storage:", storedRefreshToken);
+    // Avoid logging sensitive tokens
+    console.log('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
     if (!storedRefreshToken) {
-      console.error('No stored refresh token.');
+      console.warn('No stored refresh token.');
+      // Clear any stale session
       logout();
       return;
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/auth/refresh`, {
+      const p = fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: storedRefreshToken }),
       });
+      refreshInFlightRef.current = p;
+      const response = await p;
   
       // parse the JSON body once
       const data = await response.json();
@@ -227,16 +239,15 @@ export const UserProvider = ({ children }) => {
       // Refresh token failed, force logout
       console.error('Refresh error:', error);
       logout();
+    } finally {
+      refreshInFlightRef.current = null;
     }
   };
   // Load notifications on token change
   useEffect(() => {
     if (!token) return;
-    // if token expired, attempt to refresh and defer loading notifications
-    if (isTokenExpired(token)) {
-      refreshSession();
-      return;
-    }
+    // Defer to centralized refresh orchestration; skip if token expired
+    if (isTokenExpired(token)) return;
     const loadNotifications = async () => {
       try {
         const resp = await NotificationService.getAllNotifications(token, { limit: 10, offset: 0 });
@@ -252,6 +263,9 @@ export const UserProvider = ({ children }) => {
   }, [token]);
 
   const biometricLogin = async () => {
+    // Prevent parallel biometric prompts/logins
+    if (biometricInFlightRef.current) return;
+    biometricInFlightRef.current = true;
     try {
       const credentials = await Keychain.getGenericPassword({
         authenticationPrompt: {
@@ -289,6 +303,8 @@ export const UserProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Biometric login exception:', error);
+    } finally {
+      biometricInFlightRef.current = false;
     }
   };  
 

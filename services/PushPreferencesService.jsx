@@ -15,6 +15,7 @@ export const PUSH_PREF_KEYS = [
   'activity_deleted',
   'activity_completed',
   'join_event',
+  'event_reminder',
   'signup',
   'session_created',
   'session_reminder',
@@ -91,4 +92,3 @@ export default {
   normalizePreferences,
   PUSH_PREF_KEYS,
 };
-

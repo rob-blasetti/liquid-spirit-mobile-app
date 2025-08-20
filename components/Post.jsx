@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useContext, useEffect, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,27 @@ import {
   Alert,
   Platform,
   ScrollView,
+  Animated,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Video from 'react-native-video';
-import Lightbox from 'react-native-lightbox-v2';
-const solidHeart = 'heart';
-const heartOutline = 'heart-outline';
-const ellipsisIcon = 'ellipsis-vertical';
-const shareIcon = 'share-outline';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ZoomableImage from './ZoomableImage';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
 import debounce from 'lodash.debounce';
+
+const solidHeart = 'heart';
+const heartOutline = 'heart-outline';
+const ellipsisIcon = 'ellipsis-vertical';
+const shareIcon = 'share-outline';
 
 const DOUBLE_TAP_DELAY = 300;
 
@@ -38,6 +44,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   }, []);
   // Track loaded image aspect ratio for detail screen
   const [imageAspect, setImageAspect] = useState(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
 
   // Helper: determine if current user has liked this post
   const hasUserLiked = useCallback((likes, uid) => {
@@ -88,9 +95,10 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const profilePic = post.author?.profilePicture?.trim()
     ? post.author.profilePicture.trim()
     : 'https://via.placeholder.com/50';
-  const mediaUrl = post.media?.[0] || 'https://via.placeholder.com/200';
-
-  const isVideo = mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov');
+  const mediaUrl = resolveMediaUrl(post) || 'https://via.placeholder.com/200';
+  const isVideo = typeof mediaUrl === 'string' && (
+    mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov')
+  );
   const userId = user?.id || user?._id;
   // initial liked state based on post.likes
   const [isLiked, setIsLiked] = useState(() => hasUserLiked(post.likes, userId));
@@ -181,6 +189,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     } else {
       // Single-tap -> navigate to detail after delay
       singleTapTimeoutRef.current = setTimeout(() => {
+        if (__DEV__) console.log('[Post] navigate PostDetailCard', { id: post._id });
         navigation.navigate('PostDetailCard', {
           postId: post._id,
           postPreload: post,
@@ -212,6 +221,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     if (months < 12) return `${months}mo`;
     const years = Math.floor(days / 365);
     return `${years}y`;
+  };
+
+  // Fade media on load for smoother appearance
+  const mediaOpacity = useRef(new Animated.Value(0.6)).current;
+  const animateMediaIn = () => {
+    Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
   };
 
   return (
@@ -285,35 +300,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
       {/* Image */}
       <View style={styles.mediaContainer}>
-        <Lightbox
-          underlayColor="transparent"
-          springConfig={{ tension: 30, friction: 20 }}
-          renderHeader={close => (
-            <TouchableOpacity onPress={close} style={styles.lightboxCloseButton}>
-              <Text style={styles.lightboxCloseText}>×</Text>
-            </TouchableOpacity>
-          )}
-          renderContent={() =>
-            isVideo ? (
-              <Video
-                source={{ uri: mediaUrl }}
-                style={styles.fullscreenMedia}
-                controls
-                resizeMode="contain"
-              />
-            ) : (
-              <FastImage
-                source={{
-                  uri: mediaUrl,
-                  priority: FastImage.priority.normal,
-                  cache: FastImage.cacheControl.immutable,
-                }}
-                style={styles.fullscreenMedia}
-                resizeMode={FastImage.resizeMode.contain}
-              />
-            )
-          }
-        >
+        <Animated.View style={{ opacity: mediaOpacity }}>
           {isVideo ? (
             <Video
               source={{ uri: mediaUrl }}
@@ -321,26 +308,66 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               controls
               resizeMode="contain"
               paused
+              onLoad={() => { __DEV__ && console.log('[Post] video onLoad'); animateMediaIn(); }}
+              onError={e => __DEV__ && console.log('[Post] video onError', e?.nativeEvent)}
             />
           ) : (
-            <FastImage
-              source={{
-                uri: mediaUrl,
-                priority: FastImage.priority.normal,
-                cache: FastImage.cacheControl.immutable,
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {
+                try { FastImage.preload([{ uri: mediaUrl }]); } catch (_) {}
+                setImageModalVisible(true);
               }}
-              style={styles.postImage}
-              resizeMode={FastImage.resizeMode.cover}
-              onLoad={({ nativeEvent }) => {
-                // capture aspect ratio for detail screen
-                const { width, height } = nativeEvent;
-                if (width && height) {
-                  setImageAspect(width / height);
-                }
-              }}
-            />
+            >
+              <FastImage
+                source={{
+                  uri: mediaUrl,
+                  priority: FastImage.priority.normal,
+                  cache: FastImage.cacheControl.immutable,
+                }}
+                style={styles.postImage}
+                resizeMode={FastImage.resizeMode.cover}
+                onLoadStart={() => __DEV__ && console.log('[Post] image onLoadStart')}
+                onLoad={({ nativeEvent }) => {
+                  const { width, height } = nativeEvent;
+                  if (width && height) {
+                    setImageAspect(width / height);
+                  }
+                  __DEV__ && console.log('[Post] image onLoad', { width: nativeEvent?.width, height: nativeEvent?.height });
+                  animateMediaIn();
+                }}
+                onError={e => __DEV__ && console.log('[Post] image onError', e?.nativeEvent)}
+              />
+            </TouchableOpacity>
           )}
-        </Lightbox>
+        </Animated.View>
+
+        {/* Fullscreen Image Modal */}
+        {!isVideo && (
+          <Modal
+            visible={imageModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setImageModalVisible(false)}
+          >
+            <TouchableOpacity
+              style={styles.modalContainer}
+              activeOpacity={1}
+              onPress={() => setImageModalVisible(false)}
+            >
+              <GestureHandlerRootView style={{ flex: 1, width: '100%' }}>
+                <ZoomableImage
+                  uri={mediaUrl}
+                  style={{ width: '100%', height: '100%' }}
+                  onRequestClose={() => setImageModalVisible(false)}
+                />
+              </GestureHandlerRootView>
+              <TouchableOpacity style={styles.lightboxCloseButton} onPress={() => setImageModalVisible(false)}>
+                <Text style={styles.lightboxCloseText}>×</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          </Modal>
+        )}
         <View style={styles.overlayContainer}>
           {expanded ? (
             <View>
@@ -558,6 +585,13 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#000',
   },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    width: '100%',
+  },
   overlayContainer: {
     position: 'absolute',
     bottom: 0,
@@ -679,4 +713,5 @@ tagText: {
 },
 });
 
-export default Post;
+// Memoize to avoid unnecessary re-renders when parent list updates
+export default memo(Post);

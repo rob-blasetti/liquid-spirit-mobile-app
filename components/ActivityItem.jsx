@@ -19,20 +19,30 @@ const ActivityItem = ({ item, onPress, nextUp }) => {
   const now = new Date();
   let sessionDisplay = 'Not yet set';
   if (Array.isArray(item.sessions) && item.sessions.length > 0) {
-    // Parse session dates and filter to upcoming
+    // Parse session dates and filter to upcoming; treat YYYY-MM-DD as local
+    const rawTime = item?.groupDetails?.time;
+    const [th, tm] = (rawTime || '').split(':').map(Number);
+    const hasGroupTime = Number.isInteger(th) && Number.isInteger(tm);
     const upcoming = item.sessions
-      // sessions array contains objects with a date field
-      .map(s => new Date(s.date || s))
-      .filter(d => d > now)
+      .map(s => {
+        const ds = (s && s.date) || s;
+        if (!ds || typeof ds !== 'string') return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
+          const [y, m, d] = ds.split('-').map(Number);
+          if (hasGroupTime) return new Date(y, m - 1, d, th, tm);
+          return new Date(y, m - 1, d, 0, 0, 0);
+        }
+        return new Date(ds);
+      })
+      .filter(d => d instanceof Date && !isNaN(d) && d > now)
       .sort((a, b) => a - b);
     const next = upcoming.length > 0 ? upcoming[0] : null;
     if (next) {
       const dateStr = next.toLocaleDateString();
       // Use activity's configured time for sessions, format to 12h with AM/PM
-      const rawGroupTime = item.groupDetails?.time;
       let displayTime = null;
-      if (rawGroupTime) {
-        const parts = rawGroupTime.split(':');
+      if (rawTime) {
+        const parts = rawTime.split(':');
         if (parts.length >= 2) {
           let h = parseInt(parts[0], 10);
           const m = parts[1].padStart(2, '0');

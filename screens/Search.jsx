@@ -1,11 +1,12 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchSearchResults } from '../services/SearchService';
 import SearchCard from '../components/SearchCard';
 import { TabView } from 'react-native-tab-view';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Search = () => {
   const navigation = useNavigation();
@@ -13,6 +14,7 @@ const Search = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasPrefilled, setHasPrefilled] = useState(false);
   const { token } = useContext(UserContext);
   // TabView state for result categories
   const [searchIndex, setSearchIndex] = useState(0);
@@ -118,6 +120,11 @@ const Search = () => {
         const data = await fetchSearchResults(text, token);
         setResults(data || []);
         setQuery(text);
+        // Cache last successful results
+        try {
+          await AsyncStorage.setItem('search_cache__query', text || '');
+          await AsyncStorage.setItem('search_cache__results', JSON.stringify(data || []));
+        } catch (_) {}
       } catch (err) {
         console.error('Failed to load search results:', err);
         setResults([]);
@@ -125,6 +132,21 @@ const Search = () => {
         setIsLoading(false);
       }
     };
+    // Preload cached results for instant display
+    if (firstMountRef.current && !hasPrefilled) {
+      (async () => {
+        try {
+          const [q, r] = await AsyncStorage.multiGet(['search_cache__query', 'search_cache__results']);
+          const cachedQuery = q?.[1] ?? '';
+          const cachedResults = r?.[1] ? JSON.parse(r[1]) : [];
+          if (Array.isArray(cachedResults) && cachedResults.length > 0) {
+            setQuery(cachedQuery);
+            setResults(cachedResults);
+            setHasPrefilled(true);
+          }
+        } catch (_) {}
+      })();
+    }
     const initialQuery = route.params?.initialQuery;
     if (initialQuery) {
       // display the query immediately in the input
@@ -133,25 +155,42 @@ const Search = () => {
       navigation.setParams({ initialQuery: undefined });
       firstMountRef.current = false;
     } else if (firstMountRef.current) {
+      // fire network in background; cached results will show instantly if present
       loadResults('');
       firstMountRef.current = false;
     }
   }, [route.params?.initialQuery, token, navigation]);
   
-  const handleSearch = async (text) => {
+  const debounceRef = useRef(null);
+  const handleSearch = (text) => {
     setQuery(text);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
     setIsLoading(true);
-    try {
-      const data = await fetchSearchResults(text, token);
-      console.log('Search results:', data);
-      setResults(data || []);
-    } catch (error) {
-      console.error('Search failed:', error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await fetchSearchResults(text, token);
+        setResults(data || []);
+        try {
+          await AsyncStorage.setItem('search_cache__query', text || '');
+          await AsyncStorage.setItem('search_cache__results', JSON.stringify(data || []));
+        } catch (_) {}
+      } catch (error) {
+        console.error('Search failed:', error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }, 300);
   };
+
+  const LoadingBanner = () => (
+    isLoading ? (
+      <View style={styles.loadingBanner}>
+        <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+        <Text style={styles.loadingText}>Updating results…</Text>
+      </View>
+    ) : null
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -161,23 +200,18 @@ const Search = () => {
         value={query}
         onChangeText={handleSearch}
       />
-      {isLoading ? (
-        <View style={styles.placeholderContainer}>
-          <Text style={styles.placeholderText}>Loading...</Text>
-        </View>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <TabView
-            navigationState={{ index: searchIndex, routes: searchRoutes }}
-            renderScene={renderScene}
-            onIndexChange={setSearchIndex}
-            initialLayout={{ width: Dimensions.get('window').width }}
-            renderTabBar={renderSearchTabBar}
-            sceneContainerStyle={{ backgroundColor: themeVariables.darkGreyColor }}
-            style={{ backgroundColor: themeVariables.darkGreyColor }}
-          />
-        </View>
-      )}
+      <LoadingBanner />
+      <View style={{ flex: 1 }}>
+        <TabView
+          navigationState={{ index: searchIndex, routes: searchRoutes }}
+          renderScene={renderScene}
+          onIndexChange={setSearchIndex}
+          initialLayout={{ width: Dimensions.get('window').width }}
+          renderTabBar={renderSearchTabBar}
+          sceneContainerStyle={{ backgroundColor: themeVariables.darkGreyColor }}
+          style={{ backgroundColor: themeVariables.darkGreyColor }}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -208,6 +242,17 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     color: themeVariables.blackColor,
+  },
+  loadingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+  },
+  loadingText: {
+    color: themeVariables.blackColor,
+    marginLeft: 8,
   },
   resultItem: {
     paddingVertical: 8,

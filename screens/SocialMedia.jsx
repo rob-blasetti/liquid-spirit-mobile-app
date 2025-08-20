@@ -3,13 +3,15 @@ import {
   View,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   RefreshControl,
   InteractionManager,
   TouchableOpacity,
   Alert,
   Text,
-  Pressable
+  Pressable,
+  Animated,
+  Dimensions,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SlideBanner from '../components/SlideBanner';
@@ -22,6 +24,7 @@ import { CommunityContext } from '../contexts/CommunityContext';
 import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
+import SkeletonPost from '../components/SkeletonPost';
 
 const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const { token, isTokenExpired, refreshSession, user } = useContext(UserContext);
@@ -30,7 +33,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const [activeTab, setActiveTab] = useState('explore');
   const [explorePosts, setExplorePosts] = useState(initialPosts || []);
   const [forYouPosts, setForYouPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // Per-tab loading to control skeleton display on first load of each tab
+  const [loadingExplore, setLoadingExplore] = useState(!(initialPosts && initialPosts.length > 0));
+  const [loadingForYou, setLoadingForYou] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
@@ -43,8 +48,12 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const [bannerOffset, setBannerOffset] = useState(0);
 
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
-  const flatListRef = useRef(null);
+  const flatListExploreRef = useRef(null);
+  const flatListForYouRef = useRef(null);
   const pendingScrollIndexRef = useRef(null);
+  // Slide transitions between tabs/content
+  const screenWidth = Dimensions.get('window').width;
+  const slideX = useRef(new Animated.Value(0)).current; // 0 = explore, -screenWidth = foryou
   // Listen for banner message passed via navigation params
   useEffect(() => {
     const msg = route?.params?.bannerMessage;
@@ -55,10 +64,11 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   }, [route?.params?.bannerMessage, navigation]);
 
   useEffect(() => {
+    const ref = activeTab === 'explore' ? flatListExploreRef : flatListForYouRef;
     if (scrollToTop) {
-      flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+      ref.current?.scrollToOffset({ animated: true, offset: 0 });
     }
-  }, [scrollToTop]);
+  }, [scrollToTop, activeTab]);
   // Handle deep-linking to a specific post: scroll as soon as possible
   useEffect(() => {
     const post = route?.params?.post;
@@ -67,12 +77,13 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     if (!targetId) return;
     const data = activeTab === 'explore' ? explorePosts : forYouPosts;
     const idx = data.findIndex(p => p._id === targetId);
-    if (idx >= 0 && flatListRef.current) {
+    const ref = activeTab === 'explore' ? flatListExploreRef : flatListForYouRef;
+    if (idx >= 0 && ref.current) {
       InteractionManager.runAfterInteractions(() => {
         // Delay to allow layout measurement
         setTimeout(() => {
           try {
-            flatListRef.current.scrollToIndex({ index: idx, animated: true });
+            ref.current.scrollToIndex({ index: idx, animated: true });
           } catch (err) {
             // Fallback will be handled by onScrollToIndexFailed
           }
@@ -92,12 +103,19 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
         await refreshSession();
         if (!token || isTokenExpired(token)) return;
       }
+      // Show skeleton only if we don't already have items
+      const shouldSkeleton = (explorePosts?.length || 0) === 0;
+      if (shouldSkeleton) setLoadingExplore(true);
+      // Defer heavy state work until after initial interactions
+      await new Promise(resolve => InteractionManager.runAfterInteractions(resolve));
       const exploreData = await fetchExploreFeed(token);
       setExplorePosts(exploreData);
+      if (shouldSkeleton) setLoadingExplore(false);
     } catch (error) {
       console.error('Error fetching explore feed:', error);
+      setLoadingExplore(false);
     }
-  }, [token, isTokenExpired, refreshSession]);
+  }, [token, isTokenExpired, refreshSession, explorePosts?.length]);
 
   const fetchForYouPosts = useCallback(async () => {
     if (!token) return;
@@ -107,23 +125,58 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
       if (!token || isTokenExpired(token)) return;
     }
     try {
+      const shouldSkeleton = (forYouPosts?.length || 0) === 0;
+      if (shouldSkeleton) setLoadingForYou(true);
+      await new Promise(resolve => InteractionManager.runAfterInteractions(resolve));
       const forYouData = await fetchForYouFeed(communityId, token);
       setForYouPosts(forYouData);
+      if (shouldSkeleton) setLoadingForYou(false);
     } catch (error) {
       console.error('Error fetching for you feed:', error);
+      setLoadingForYou(false);
     }
-  }, [communityId, token, refreshSession, isTokenExpired]);
+  }, [communityId, token, refreshSession, isTokenExpired, forYouPosts?.length]);
 
   useEffect(() => {
     const loadData = async () => {
       if (activeTab === 'explore') {
-        await fetchExplorePosts();
+        fetchExplorePosts();
       } else if (activeTab === 'foryou' && token) {
-        await fetchForYouPosts();
+        fetchForYouPosts();
       }
     };
     loadData();
   }, [activeTab, fetchExplorePosts, fetchForYouPosts, token]);
+
+  // Preload first few images to speed up perception of load
+  useEffect(() => {
+    const data = activeTab === 'explore' ? explorePosts : forYouPosts;
+    const urls = data
+      .slice(0, 4)
+      .map(p => (Array.isArray(p.media) && p.media[0] ? p.media[0] : null))
+      .filter(Boolean)
+      .map(uri => ({ uri }));
+    if (urls.length > 0) {
+      try {
+        // Dynamically require to avoid import cost if not needed
+        const FastImage = require('react-native-fast-image');
+        FastImage.preload(urls);
+      } catch (_) {}
+    }
+  }, [activeTab, explorePosts, forYouPosts]);
+
+  const renderPost = useCallback(({ item }) => (
+    <Post
+      post={item}
+      onLike={handleLike}
+      onComment={openCommentModal}
+      onFlag={handleFlag}
+      onBlock={handleBlock}
+      onMute={handleMute}
+      onDelete={handleDelete}
+      setScrollEnabled={setScrollEnabled}
+    />
+  ), [handleLike, openCommentModal, handleFlag, handleBlock, handleMute, handleDelete]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -139,7 +192,18 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     if (tab === 'foryou' && !token) {
       setWelcomeModalVisible(true);
     } else {
+      // Animate horizontal slide between panes
+      const toValue = tab === 'explore' ? 0 : -screenWidth;
       setActiveTab(tab);
+      Animated.timing(slideX, {
+        toValue,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+      // Kick off skeleton state early if target tab has no items yet
+      if (tab === 'explore' && (explorePosts?.length || 0) === 0) setLoadingExplore(true);
+      if (tab === 'foryou' && (forYouPosts?.length || 0) === 0) setLoadingForYou(true);
     }
   };
 
@@ -294,36 +358,62 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
         </Pressable>
       </View>
 
-      {loading ? (
-        <ActivityIndicator size='large' color='#0485e2' style={{ marginTop: 20 }} />
-      ) : (
-        <FlatList
-          ref={flatListRef}
-          data={activeTab === 'explore' ? explorePosts : forYouPosts}
-          scrollEnabled={scrollEnabled}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <Post
-              post={item}
-              onLike={handleLike}
-              onComment={openCommentModal}
-              onFlag={handleFlag}
-              onBlock={handleBlock}
-              onMute={handleMute}
-              onDelete={handleDelete}
-              setScrollEnabled={setScrollEnabled}
+      <View style={{ flex: 1, overflow: 'hidden' }}>
+        <Animated.View style={{ flexDirection: 'row', width: screenWidth * 2, transform: [{ translateX: slideX }] }}>
+          {/* Explore Pane */}
+          <View style={{ width: screenWidth }}>
+            <FlatList
+              ref={flatListExploreRef}
+              data={explorePosts}
+              scrollEnabled={scrollEnabled}
+              keyExtractor={(item) => item._id}
+              renderItem={renderPost}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              removeClippedSubviews
+              initialNumToRender={3}
+              maxToRenderPerBatch={4}
+              windowSize={9}
+              updateCellsBatchingPeriod={40}
+              ListEmptyComponent={() => (
+                <View style={{ paddingTop: 12 }}>
+                  {[0,1,2].map(i => (
+                    <SkeletonPost key={`skeleton-explore-${i}`} />
+                  ))}
+                </View>
+              )}
+              onScrollToIndexFailed={({ index, averageItemLength }) => {
+                flatListExploreRef.current?.scrollToOffset({ offset: index * averageItemLength, animated: true });
+              }}
             />
-          )}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          // Fallback if scrollToIndex fails
-          onScrollToIndexFailed={({ index, averageItemLength }) => {
-            flatListRef.current?.scrollToOffset({
-              offset: index * averageItemLength,
-              animated: true,
-            });
-          }}
-        />
-      )}
+          </View>
+          {/* For You Pane */}
+          <View style={{ width: screenWidth }}>
+            <FlatList
+              ref={flatListForYouRef}
+              data={forYouPosts}
+              scrollEnabled={scrollEnabled}
+              keyExtractor={(item) => item._id}
+              renderItem={renderPost}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              removeClippedSubviews
+              initialNumToRender={3}
+              maxToRenderPerBatch={4}
+              windowSize={9}
+              updateCellsBatchingPeriod={40}
+              ListEmptyComponent={() => (
+                <View style={{ paddingTop: 12 }}>
+                  {[0,1,2].map(i => (
+                    <SkeletonPost key={`skeleton-foryou-${i}`} />
+                  ))}
+                </View>
+              )}
+              onScrollToIndexFailed={({ index, averageItemLength }) => {
+                flatListForYouRef.current?.scrollToOffset({ offset: index * averageItemLength, animated: true });
+              }}
+            />
+          </View>
+        </Animated.View>
+      </View>
 
       <WelcomeModal 
         visible={welcomeModalVisible} 

@@ -161,6 +161,7 @@ export default function Notifications() {
     join_activity: "activity",
     activity_updated: "activity",
     join_event: "event",
+    event_reminder: "event",
     signup: "announcement",
   };
   

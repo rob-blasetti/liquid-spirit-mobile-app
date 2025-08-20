@@ -51,6 +51,7 @@ const NotificationSettings = () => {
       hint: 'Tell me when:',
       items: [
         { key: 'join_event', label: 'Someone joins an event' },
+        { key: 'event_reminder', label: 'Remind me about upcoming events' },
       ],
     },
     {

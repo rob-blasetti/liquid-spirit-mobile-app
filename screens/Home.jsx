@@ -18,7 +18,7 @@ import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
-import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { useIsFocused } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
 import RectangularTile from '../components/RectangularTile';
@@ -27,33 +27,53 @@ import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SlideBanner from '../components/SlideBanner';
 
+// Safe parser for session dates: treat YYYY-MM-DD as local date, combine with activity time if available
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
   const now = new Date();
+  const rawTime = activity?.groupDetails?.time; // e.g., "09:00"
+  const [th, tm] = (rawTime || '').split(':').map(Number);
+  const hasGroupTime = Number.isInteger(th) && Number.isInteger(tm);
   const future = activity.sessions
     .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
-    .map(s => new Date(s.date))
-    .filter(d => !isNaN(d) && d >= now);
+    .map(s => {
+      const ds = s?.date;
+      if (!ds || typeof ds !== 'string') return null;
+      // Date-only format
+      if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
+        const [y, m, d] = ds.split('-').map(Number);
+        if (hasGroupTime) return new Date(y, m - 1, d, th, tm);
+        return new Date(y, m - 1, d, 0, 0, 0);
+      }
+      // Otherwise trust the runtime to parse (ISO with TZ recommended)
+      return new Date(ds);
+    })
+    .filter(d => d instanceof Date && !isNaN(d) && d >= now);
   if (future.length === 0) return null;
   future.sort((a, b) => a - b);
   return future[0];
 };
-// Fallback helper: use session date or root-level date (combine with groupDetails.time)
+// Fallback helper: use session date or root-level date
+// If date is ISO with time (e.g., 2025-08-23T23:00:00.000Z), trust it and parse as Date (handles timezone correctly)
+// If date is date-only (YYYY-MM-DD), build a local Date using groupDetails.time if provided
 const getEffectiveNextDate = (activity) => {
   const nextSession = getNextSessionDate(activity);
   if (nextSession) return nextSession;
-  if (activity.date) {
-    // If groupDetails.time provided, combine date and time for correct local datetime
-    const timeStr = activity.groupDetails?.time;
+  const ds = activity?.date;
+  if (!ds || typeof ds !== 'string') return null;
+  // Date-only string
+  if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
+    const [y, m, d] = ds.split('-').map(Number);
+    const timeStr = activity.groupDetails?.time; // HH:mm
     if (timeStr) {
-      const [year, month, day] = activity.date.split('T')[0].split('-').map(Number);
-      const [hour, minute] = timeStr.split(':').map(Number);
-      return new Date(year, month - 1, day, hour, minute);
+      const [h, min] = timeStr.split(':').map(Number);
+      return new Date(y, m - 1, d, h || 0, min || 0);
     }
-    const d = new Date(activity.date);
-    if (!isNaN(d)) return d;
+    return new Date(y, m - 1, d, 0, 0, 0);
   }
-  return null;
+  // Otherwise trust the ISO/timestamp
+  const dt = new Date(ds);
+  return isNaN(dt) ? null : dt;
 };
 
 // Constants for bottom squares layout
@@ -64,6 +84,7 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
 const Home = ({ navigation, homeOverview, route }) => {
+  console.log(homeOverview);
   const insets = useSafeAreaInsets();
   // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;
@@ -132,13 +153,7 @@ const Home = ({ navigation, homeOverview, route }) => {
     });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      if (token && isTokenExpired(token)) {
-        refreshSession();
-      }
-    }, [token])
-  );
+  // Removed refresh-on-focus to avoid redundant session refreshes; centralized elsewhere
   // Fallback redirect to Login if loading takes too long
   useEffect(() => {
     let fallbackTimer;

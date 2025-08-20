@@ -14,15 +14,26 @@ import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-// Helper: get the next upcoming session date for filtering, sorting, and display
+// Helper: get the next upcoming session date; parse YYYY-MM-DD as local date
 const getNextSessionDate = (activity) => {
   if (!Array.isArray(activity.sessions)) return null;
   const now = new Date();
-  // Only consider sessions that are Scheduled or Confirmed
+  const rawTime = activity?.groupDetails?.time;
+  const [th, tm] = (rawTime || '').split(':').map(Number);
+  const hasGroupTime = Number.isInteger(th) && Number.isInteger(tm);
   const futureDates = activity.sessions
     .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
-    .map(s => new Date(s.date))
-    .filter(d => !isNaN(d) && d >= now);
+    .map(s => {
+      const ds = s?.date;
+      if (!ds || typeof ds !== 'string') return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
+        const [y, m, d] = ds.split('-').map(Number);
+        if (hasGroupTime) return new Date(y, m - 1, d, th, tm);
+        return new Date(y, m - 1, d, 0, 0, 0);
+      }
+      return new Date(ds);
+    })
+    .filter(d => d instanceof Date && !isNaN(d) && d >= now);
   if (futureDates.length === 0) return null;
   futureDates.sort((a, b) => a - b);
   return futureDates[0];

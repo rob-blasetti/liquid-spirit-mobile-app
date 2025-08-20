@@ -12,6 +12,7 @@ const emitter = Platform.OS === 'ios' && NativeModules.APNs
 let currentApnsToken = null;
 let didHealthConfigCheck = false;
 let didConnectivityProbe = false;
+let listenersInitialized = false;
 
 export async function registerDevice(authToken, apnsToken) {
   if (!authToken || !apnsToken) return { ok: false };
@@ -45,6 +46,10 @@ export async function registerDevice(authToken, apnsToken) {
 
 export function initPushNotifications(authToken) {
   if (Platform.OS !== 'ios' || !NativeModules.APNs) return;
+  if (listenersInitialized && emitter) {
+    log('initPushNotifications: already initialized, skipping duplicate setup');
+    return () => {};
+  }
 
   const apns = NativeModules.APNs;
   const hasRegister = typeof apns.register === 'function';
@@ -141,6 +146,7 @@ export function initPushNotifications(authToken) {
   const subNotification = emitter.addListener('notification', onForeground);
 
   // Request permission and registration; then attempt to get the token if already available
+  listenersInitialized = true;
   apns.register();
   log('called apns.register()');
   apns.getToken().then(token => {
@@ -160,6 +166,7 @@ export function initPushNotifications(authToken) {
     sub.remove();
     subOpen.remove();
     subNotification.remove();
+    listenersInitialized = false;
   };
 }
 

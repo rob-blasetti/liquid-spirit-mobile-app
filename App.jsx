@@ -2,6 +2,7 @@
 import React, { useEffect, useContext } from 'react';
 import { StatusBar, StyleSheet, View, Linking } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import themeVariables from './styles/theme';
 
 import { UserProvider, CommunityProvider } from './contexts';
@@ -73,25 +74,27 @@ const MainApp = () => {
 };
 
 const App = () => (
-  <AuthProvider>
-    <UserProfileProvider>
-      <CommunityStateProvider>
-        <EventsProvider>
-          <ActivitiesProvider>
-            <NewsProvider>
-              <NotificationsProvider>
-                <CommunityProvider>
-                  <UserProvider>
-                    <MainApp />
-                  </UserProvider>
-                </CommunityProvider>
-              </NotificationsProvider>
-            </NewsProvider>
-          </ActivitiesProvider>
-        </EventsProvider>
-      </CommunityStateProvider>
-    </UserProfileProvider>
-  </AuthProvider>
+  <GestureHandlerRootView style={{ flex: 1 }}>
+    <AuthProvider>
+      <UserProfileProvider>
+        <CommunityStateProvider>
+          <EventsProvider>
+            <ActivitiesProvider>
+              <NewsProvider>
+                <NotificationsProvider>
+                  <CommunityProvider>
+                    <UserProvider>
+                      <MainApp />
+                    </UserProvider>
+                  </CommunityProvider>
+                </NotificationsProvider>
+              </NewsProvider>
+            </ActivitiesProvider>
+          </EventsProvider>
+        </CommunityStateProvider>
+      </UserProfileProvider>
+    </AuthProvider>
+  </GestureHandlerRootView>
 );
 
 export default App;

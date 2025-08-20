@@ -13,8 +13,12 @@ import {
   Modal,
   TextInput,
   Image,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ZoomableImage from '../components/ZoomableImage';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
@@ -59,6 +63,9 @@ const PostDetailCard = ({ route }) => {
   const [relatedPosts, setRelatedPosts] = useState([]);
   // Ref for comment TextInput to focus when tapping comment icon
   const commentInputRef = useRef(null);
+  // Fade in overall content and media for smoother entry
+  const contentOpacity = useRef(new Animated.Value(0.6)).current;
+  const mediaOpacity = useRef(new Animated.Value(0.6)).current;
 
   const handleShare = async () => {
     const id = post?._id || postId;
@@ -142,6 +149,10 @@ const PostDetailCard = ({ route }) => {
       ),
     });
   }, [navigation, post]);
+
+  useEffect(() => {
+    Animated.timing(contentOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+  }, [contentOpacity]);
 
   const normalizeId = (raw) => {
     const str = String(raw || '').trim();
@@ -289,7 +300,7 @@ const PostDetailCard = ({ route }) => {
     );
   }
 
-  const mediaUrl = post.media?.[0];
+  const mediaUrl = resolveMediaUrl(post);
   const isVideo = mediaUrl && (mediaUrl.endsWith('.mp4') || mediaUrl.includes('video'));
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
   const authorCommunity = post.community?.name || '';
@@ -307,18 +318,39 @@ const PostDetailCard = ({ route }) => {
         // swipe down past top to dismiss
         threshold={0}
       >
+        <Animated.View style={{ opacity: contentOpacity }}>
         <Card style={styles.card}>
           <View style={styles.mediaWrapper}>
             {mediaUrl && (
               isVideo ? (
-                <Video source={{ uri: mediaUrl }} style={[styles.media, { height: 300 }]} controls resizeMode="contain" />
+                <Animated.View style={{ opacity: mediaOpacity }}>
+                  <Video
+                    source={{ uri: mediaUrl }}
+                    style={[styles.media, { height: 300 }]}
+                    controls
+                    resizeMode="contain"
+                    onLoad={() => {
+                      __DEV__ && console.log('[PostDetail] video onLoad');
+                      Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+                    }}
+                    onError={e => __DEV__ && console.log('[PostDetail] video onError', e?.nativeEvent)}
+                  />
+                </Animated.View>
               ) : imageAspect ? (
                 <TouchableOpacity activeOpacity={1} onPress={() => setModalVisible(true)}>
-                  <FastImage
-                    source={{ uri: mediaUrl }}
-                    style={[styles.media, { aspectRatio: imageAspect }]}
-                    resizeMode={FastImage.resizeMode.cover}
-                  />
+                  <Animated.View style={{ opacity: mediaOpacity }}>
+                    <FastImage
+                      source={{ uri: mediaUrl }}
+                      style={[styles.media, { aspectRatio: imageAspect }]}
+                      resizeMode={FastImage.resizeMode.cover}
+                      onLoadStart={() => __DEV__ && console.log('[PostDetail] image onLoadStart')}
+                      onLoad={() => {
+                        __DEV__ && console.log('[PostDetail] image onLoad');
+                        Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+                      }}
+                      onError={e => __DEV__ && console.log('[PostDetail] image onError', e?.nativeEvent)}
+                    />
+                  </Animated.View>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.mediaPlaceholder}>
@@ -369,11 +401,18 @@ const PostDetailCard = ({ route }) => {
             </CardContent>
           </View>
         </Card>
+        </Animated.View>
         {/* Removed bottom toolbar; icons now overlay the image */}
         {/* Lightbox modal for image */}
         <Modal visible={modalVisible} transparent={true} onRequestClose={() => setModalVisible(false)}>
           <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={() => setModalVisible(false)}>
-            <FastImage source={{ uri: mediaUrl }} style={styles.modalImage} resizeMode={FastImage.resizeMode.contain} />
+            <GestureHandlerRootView style={{ flex: 1, width: '100%' }}>
+              <ZoomableImage
+                uri={mediaUrl}
+                style={{ width: '100%', height: '100%' }}
+                onRequestClose={() => setModalVisible(false)}
+              />
+            </GestureHandlerRootView>
           </TouchableOpacity>
         </Modal>
         {/* Comment input box */}
@@ -581,7 +620,7 @@ const styles = StyleSheet.create({
   // Button style for metrics
   metricButton: { flexDirection: 'row', alignItems: 'center' },
   // Modal for full-screen image
-  modalContainer: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.9)', justifyContent: 'center', alignItems: 'center' },
+  modalContainer: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.9)', justifyContent: 'center', alignItems: 'stretch', width: '100%' },
   modalImage: { width: '100%', height: '100%' },
   // Comment input box styles
   commentBoxContainer: { marginTop: 16, marginHorizontal: 16, backgroundColor: themeVariables.whiteColor, borderRadius: 8 },
