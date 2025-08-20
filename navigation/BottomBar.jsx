@@ -15,6 +15,7 @@ import SearchScreen from '../screens/Search';
 import ActivitiesScreen from '../screens/Activities';
 import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
+import Gather from '../screens/Gather';
 
 // 1. Import the WelcomeModal
 import WelcomeModal from '../modal/WelcomeModal';
@@ -27,6 +28,7 @@ const tabIcons = {
   Feed: 'compass-outline',
   Camera: 'add-circle',
   Search: 'search-outline',
+  Gather: 'map-outline',
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
@@ -151,6 +153,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           )}
         </Tab.Screen>
         <Tab.Screen name="Camera" component={CreatePostScreen} />
+        <Tab.Screen name="Gather" component={Gather} />
         <Tab.Screen name="Search" component={SearchScreen} />
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
