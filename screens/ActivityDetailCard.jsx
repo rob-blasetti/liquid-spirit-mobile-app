@@ -1,6 +1,6 @@
 // Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
-import React, { useContext, useEffect, useState, useLayoutEffect } from 'react';
+import React, { useContext, useEffect, useState, useLayoutEffect, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -40,6 +40,7 @@ import {
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import SessionCard from '../components/SessionCard';
+import { resolveSessionDate } from '../utils/activityDate';
 
 if (
   Platform.OS === 'android' &&
@@ -50,6 +51,105 @@ if (
 
 // Screen dimensions
 const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
+
+const MAP_VENUE_TYPES = new Set(['Residence', 'CommunityVenue']);
+
+const normalizeString = (value) => (typeof value === 'string' ? value.trim() : '');
+
+const coalesceString = (...values) => {
+  for (const value of values) {
+    const trimmed = normalizeString(value);
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+  return '';
+};
+
+const selectPrimaryVenue = (venues) => {
+  if (!Array.isArray(venues) || venues.length === 0) return null;
+  const priority = ['Residence', 'CommunityVenue'];
+  for (const type of priority) {
+    const match = venues.find(venue => venue?.type === type);
+    if (match) return match;
+  }
+  const fallback = venues.find(venue => MAP_VENUE_TYPES.has(venue?.type) || Boolean(venue?.address));
+  return fallback || venues[0] || null;
+};
+
+const formatAddress = (address) => {
+  if (!address || typeof address !== 'object') return '';
+  const parts = [
+    address.streetAddress,
+    address.suburb,
+    address.city,
+    address.state,
+    address.postalCode,
+    address.country,
+  ];
+  return parts
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(part => part.length > 0)
+    .join(', ');
+};
+
+const coerceCoordinates = (value) => {
+  const makePoint = (lat, lng) => {
+    const latitude = Number(lat);
+    const longitude = Number(lng);
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+      return { latitude, longitude };
+    }
+    return null;
+  };
+
+  if (!value) return null;
+  if (Array.isArray(value) && value.length >= 2) {
+    const [lng, lat] = value;
+    return makePoint(lat, lng);
+  }
+  if (typeof value === 'object') {
+    if ('latitude' in value || 'longitude' in value) {
+      return makePoint(value.latitude ?? value.lat, value.longitude ?? value.lng);
+    }
+    if ('lat' in value || 'lng' in value) {
+      return makePoint(value.lat, value.lng);
+    }
+    if (Array.isArray(value.coordinates) && value.coordinates.length >= 2) {
+      const [lng, lat] = value.coordinates;
+      return makePoint(lat, lng);
+    }
+  }
+  return null;
+};
+
+const getVenueCoordinates = (venue) => {
+  if (!venue || typeof venue !== 'object') return null;
+  return (
+    coerceCoordinates(venue.coordinates) ||
+    coerceCoordinates(venue.location) ||
+    coerceCoordinates(venue.address?.coordinates) ||
+    coerceCoordinates(venue.address?.location) ||
+    null
+  );
+};
+
+const normalizeVenueEntry = (entry) => {
+  if (!entry) return null;
+  if (typeof entry === 'string') return null;
+  if (entry.venue) return normalizeVenueEntry(entry.venue);
+  if (entry.venueDetails) return normalizeVenueEntry(entry.venueDetails);
+  return entry;
+};
+
+const getStreetAndSuburb = (address) => {
+  if (!address || typeof address !== 'object') return '';
+  const parts = [address.streetAddress, address.suburb]
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(part => part.length > 0);
+  if (parts.length > 0) return parts.join(', ');
+  return formatAddress(address);
+};
 
 /* ─── Helper Functions ────────────────────────────────────────────── */
 // (Removed getDayName/getDayMonth: using groupDetails.day and formatTime now)
@@ -207,8 +307,12 @@ const ActivityDetailCard = ({ route }) => {
   };
 
   const openGoogleMaps = (addr) => {
-    const query = encodeURIComponent(addr);
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+    const cleaned = normalizeString(addr);
+    if (!cleaned) return;
+    const query = encodeURIComponent(cleaned);
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`).catch(err => {
+      console.warn('Failed to open maps', err);
+    });
   };
 
   /* ── early returns ────────────────────────────────────────────── */
@@ -322,8 +426,9 @@ const ActivityCardBody = ({
     activityType,
     date,
     groupDetails,
-    onlineLink,
+    onlineLink: activityOnlineLink,
     address,
+    venues: activityVenues,
     facilitators = [],
     participants = [],
     facilitatorLimit,
@@ -335,40 +440,158 @@ const ActivityCardBody = ({
   const dayOfWeek = groupDetails?.day ?? 'N/A';
   // Time of session
   const timeMain = formatTime(groupDetails?.time);
-  // Host full address
-  const fullAddr = isOnline ? onlineLink : [address?.streetAddress, address?.suburb, address?.city]
-    .filter(Boolean).join(', ');
+
+  const getNormalizedVenues = (session) => {
+    const source = [];
+    if (session && Array.isArray(session.venues) && session.venues.length > 0) {
+      source.push(...session.venues);
+    }
+    if (Array.isArray(activityVenues) && activityVenues.length > 0) {
+      source.push(...activityVenues);
+    }
+    const seen = new Set();
+    return source
+      .map(normalizeVenueEntry)
+      .filter(Boolean)
+      .filter(venue => {
+        const id = venue?._id || venue?.id;
+        if (!id) return true;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+  };
+
+  const upcomingSessions = useMemo(() => {
+    if (!Array.isArray(activity.sessions)) return [];
+    const now = new Date();
+    return activity.sessions
+      .filter(session => ['Scheduled', 'Confirmed'].includes(session.status))
+      .map(session => {
+        const dateObj = resolveSessionDate(session, activity);
+        return { session, dateObj };
+      })
+      .filter(({ dateObj }) => dateObj instanceof Date && !isNaN(dateObj) && dateObj >= now)
+      .map(({ session, dateObj }) => {
+        const normalizedForSession = getNormalizedVenues(session);
+        const primaryVenue = selectPrimaryVenue(normalizedForSession);
+        const venueAddress = primaryVenue?.address || session.address || address;
+        const displayAddress = normalizeString(getStreetAndSuburb(venueAddress));
+        const displayName = coalesceString(
+          session.name,
+          session.title,
+          primaryVenue?.name,
+          activity.title,
+          'Upcoming Session'
+        );
+        return {
+          ...session,
+          dateObj,
+          normalizedVenues: normalizedForSession,
+          primaryVenue,
+          displayAddress,
+          displayName,
+        };
+      })
+      .sort((a, b) => a.dateObj - b.dateObj);
+  }, [activity]);
+
+  const nextSession = upcomingSessions[0] || null;
+
+  const normalizedVenues = useMemo(() => getNormalizedVenues(nextSession), [nextSession, activityVenues]);
+
+  const mapVenue = useMemo(() => {
+    if (nextSession?.primaryVenue) return nextSession.primaryVenue;
+    return selectPrimaryVenue(normalizedVenues);
+  }, [nextSession, normalizedVenues]);
+
+  const nextSessionVenueAddress = useMemo(() => {
+    if (nextSession?.primaryVenue?.address) return nextSession.primaryVenue.address;
+    if (nextSession?.address) return nextSession.address;
+    if (mapVenue?.address) return mapVenue.address;
+    return address;
+  }, [nextSession, mapVenue, address]);
+
+  const mapAddress = useMemo(() => {
+    const primary = formatAddress(nextSessionVenueAddress);
+    if (primary) return primary;
+    return formatAddress(address);
+  }, [nextSessionVenueAddress, address]);
+
+  const mapDisplayName = coalesceString(nextSession?.displayName, mapVenue?.name, mapVenue?.title, mapVenue?.label, activity.title, 'Upcoming Session');
+  const mapDisplayAddress = coalesceString(nextSession?.displayAddress, getStreetAndSuburb(nextSessionVenueAddress), getStreetAndSuburb(address));
+
+  const mapCoordinates = useMemo(() => getVenueCoordinates(nextSession?.primaryVenue) || getVenueCoordinates(mapVenue), [nextSession, mapVenue]);
+
+  const sessionOnlineLink = useMemo(() => {
+    const onlineVenue = normalizedVenues.find(venue => venue?.type === 'Online' || Boolean(venue?.onlineLink));
+    const raw = onlineVenue?.onlineLink || nextSession?.onlineLink || activityOnlineLink;
+    return normalizeString(raw);
+  }, [normalizedVenues, nextSession, activityOnlineLink]);
+
+  const resolvedOnlineLink = useMemo(() => {
+    if (!sessionOnlineLink) return '';
+    if (/^https?:\/\//i.test(sessionOnlineLink)) return sessionOnlineLink;
+    return `https://${sessionOnlineLink}`;
+  }, [sessionOnlineLink]);
+
+  const showOnlineSection = sessionOnlineLink.length > 0;
+  const showMapSection = Boolean(mapCoordinates) || Boolean(mapDisplayAddress);
+
   // Region state for map
   const [region, setRegion] = useState(null);
   useEffect(() => {
-    if (!fullAddr || isOnline) return;
-    // Geocode via OpenStreetMap Nominatim
-    const q = encodeURIComponent(fullAddr);
+    let cancelled = false;
+    if (!showMapSection) {
+      setRegion(null);
+      return;
+    }
+
+    if (mapCoordinates) {
+      setRegion({
+        latitude: mapCoordinates.latitude,
+        longitude: mapCoordinates.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+      return;
+    }
+
+    if (!mapAddress) {
+      setRegion(null);
+      return;
+    }
+
+    const q = encodeURIComponent(mapAddress);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
       headers: {
         'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
         'Accept-Language': 'en',
-      }
-    }).then(res => res.json())
+      },
+    })
+      .then(res => res.json())
       .then(results => {
-        if (results && results.length > 0) {
+        if (!cancelled && results && results.length > 0) {
           const { lat, lon } = results[0];
-          setRegion({
-            latitude: parseFloat(lat),
-            longitude: parseFloat(lon),
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
+          const latitude = parseFloat(lat);
+          const longitude = parseFloat(lon);
+          if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+            setRegion({
+              latitude,
+              longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
         }
       })
       .catch(err => console.warn('Geocode error', err));
-  }, [fullAddr]);
-  const isOnline = Boolean(onlineLink);
 
-  // Use a shorter label for location in the detail cell (if desired)
-  const locationLabel = isOnline
-    ? 'Join Online'
-    : `${address?.streetAddress ?? 'No Address'}, ${address?.suburb ?? 'No Suburb'}`;
+    return () => {
+      cancelled = true;
+    };
+  }, [mapAddress, mapCoordinates, showMapSection]);
+
 
   const isUserFacilitator = facilitators.some(
     (f) => f.details?._id === userId
@@ -502,9 +725,49 @@ const ActivityCardBody = ({
         </Text>
         {/* Divider above host/location section */}
         <View style={styles.divider} />
-        {isOnline ? (
+        {showMapSection && (
           <>
-            <Text style={styles.mapTitle}>Online Only</Text>
+            <Text style={styles.mapTitle}>Host Address</Text>
+            <View style={styles.mapWrapper}>
+              {region ? (
+                <MapView
+                  provider={Platform.OS === 'android' ? MapView.PROVIDER_GOOGLE : null}
+                  style={styles.map}
+                  initialRegion={region}
+                >
+                  <Marker coordinate={region} />
+                </MapView>
+              ) : (
+                <View style={styles.mapLoader}>
+                  <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+                </View>
+              )}
+            </View>
+            {mapDisplayName || mapDisplayAddress ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => mapAddress && openGoogleMaps(mapAddress)}
+                style={styles.hostAddressContainer}
+              >
+                {mapDisplayName ? (
+                  <Text style={styles.hostAddressTitle}>{mapDisplayName}</Text>
+                ) : null}
+                {mapDisplayAddress ? (
+                  <Text style={styles.hostAddressSubtitle}>{mapDisplayAddress}</Text>
+                ) : null}
+              </TouchableOpacity>
+            ) : (
+              <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
+                Address unavailable
+              </Text>
+            )}
+            <Text style={styles.hostAddressNote}>Address reflects the next upcoming session.</Text>
+            <View style={styles.divider} />
+          </>
+        )}
+        {showOnlineSection && (
+          <>
+            <Text style={styles.mapTitle}>Join Online</Text>
             <View style={styles.onlineRow}>
               <Ionicons
                 name="videocam-outline"
@@ -517,32 +780,19 @@ const ActivityCardBody = ({
                   styles.headerInfoText,
                   { color: themeVariables.primaryColor, textDecorationLine: 'underline' },
                 ]}
-                onPress={() => Linking.openURL(onlineLink)}
+                onPress={() => resolvedOnlineLink && Linking.openURL(resolvedOnlineLink)}
               >
-                Join Now
+                {sessionOnlineLink}
               </Text>
             </View>
             <View style={styles.divider} />
           </>
-        ) : (
+        )}
+        {!showMapSection && !showOnlineSection && (
           <>
-            <Text style={styles.mapTitle}>Host Address</Text>
-            <View style={styles.mapWrapper}>
-            {region ? (
-              <MapView 
-                provider={Platform.OS === 'android' ? MapView.PROVIDER_GOOGLE : null}
-                style={styles.map} 
-                initialRegion={region}>
-                <Marker coordinate={region} />
-              </MapView>
-            ) : (
-              <View style={styles.mapLoader}>
-                <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-              </View>
-            )}
-            </View>
+            <Text style={styles.mapTitle}>Location</Text>
             <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
-              {locationLabel}
+              Location details will be shared soon.
             </Text>
             <View style={styles.divider} />
           </>
@@ -552,43 +802,32 @@ const ActivityCardBody = ({
         {/* Details grid */}
         <CardContent style={styles.cardContent}>
         {/* Upcoming Sessions Carousel */}
-          {Array.isArray(activity.sessions) && (
-            (() => {
-              const now = new Date();
-              const upcoming = activity.sessions
-                .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
-                .map(s => ({ ...s, dateObj: new Date(s.date) }))
-                .filter(s => !isNaN(s.dateObj) && s.dateObj >= now)
-                .sort((a, b) => a.dateObj - b.dateObj);
-              if (upcoming.length === 0) return null;
-              return (
-                <View style={styles.carouselContainer}>
-                  <Text style={styles.carouselTitle}>Upcoming Sessions</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.carouselContent}
-                  >
-                    {upcoming.map((sess, idx) => (
-                      <SessionCard
-                        key={sess._id || idx}
-                        session={sess}
-                        detailsLoaded={detailsLoaded}
-                        hasFacilitatorSpace={hasFacilitatorSpace}
-                        hasParticipantSpace={hasParticipantSpace}
-                        isUserFacilitator={isUserFacilitator}
-                        isUserParticipant={isUserParticipant}
-                        hasRequestedFacilitator={hasRequestedFacilitator}
-                        hasRequestedParticipant={hasRequestedParticipant}
-                        onFacilitatorRequest={handleFacilitatorRequest}
-                        onParticipantRequest={handleParticipantRequest}
-                        width={screenWidth - 32}
-                      />
-                    ))}
-                  </ScrollView>
-                </View>
-              );
-            })()
+          {upcomingSessions.length > 0 && (
+            <View style={styles.carouselContainer}>
+              <Text style={styles.carouselTitle}>Upcoming Sessions</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.carouselContent}
+              >
+                {upcomingSessions.map((sess, idx) => (
+                  <SessionCard
+                    key={sess._id || idx}
+                    session={sess}
+                    detailsLoaded={detailsLoaded}
+                    hasFacilitatorSpace={hasFacilitatorSpace}
+                    hasParticipantSpace={hasParticipantSpace}
+                    isUserFacilitator={isUserFacilitator}
+                    isUserParticipant={isUserParticipant}
+                    hasRequestedFacilitator={hasRequestedFacilitator}
+                    hasRequestedParticipant={hasRequestedParticipant}
+                    onFacilitatorRequest={handleFacilitatorRequest}
+                    onParticipantRequest={handleParticipantRequest}
+                    width={screenWidth - 32}
+                  />
+                ))}
+              </ScrollView>
+            </View>
           )}
 
           {/* Divider before Guidelines and Forms */}
@@ -1119,6 +1358,25 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  hostAddressContainer: {
+    alignSelf: 'flex-start',
+    marginVertical: 12,
+  },
+  hostAddressTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  hostAddressSubtitle: {
+    fontSize: 14,
+    color: themeVariables.textColor || '#555',
+  },
+  hostAddressNote: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
   },
   mapTitle: {
     fontSize: 20,

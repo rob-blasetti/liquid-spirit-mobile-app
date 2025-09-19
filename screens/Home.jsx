@@ -26,55 +26,7 @@ import localImages from '../utils/localImages';
 import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SlideBanner from '../components/SlideBanner';
-
-// Safe parser for session dates: treat YYYY-MM-DD as local date, combine with activity time if available
-const getNextSessionDate = (activity) => {
-  if (!Array.isArray(activity.sessions)) return null;
-  const now = new Date();
-  const rawTime = activity?.groupDetails?.time; // e.g., "09:00"
-  const [th, tm] = (rawTime || '').split(':').map(Number);
-  const hasGroupTime = Number.isInteger(th) && Number.isInteger(tm);
-  const future = activity.sessions
-    .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
-    .map(s => {
-      const ds = s?.date;
-      if (!ds || typeof ds !== 'string') return null;
-      // Date-only format
-      if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
-        const [y, m, d] = ds.split('-').map(Number);
-        if (hasGroupTime) return new Date(y, m - 1, d, th, tm);
-        return new Date(y, m - 1, d, 0, 0, 0);
-      }
-      // Otherwise trust the runtime to parse (ISO with TZ recommended)
-      return new Date(ds);
-    })
-    .filter(d => d instanceof Date && !isNaN(d) && d >= now);
-  if (future.length === 0) return null;
-  future.sort((a, b) => a - b);
-  return future[0];
-};
-// Fallback helper: use session date or root-level date
-// If date is ISO with time (e.g., 2025-08-23T23:00:00.000Z), trust it and parse as Date (handles timezone correctly)
-// If date is date-only (YYYY-MM-DD), build a local Date using groupDetails.time if provided
-const getEffectiveNextDate = (activity) => {
-  const nextSession = getNextSessionDate(activity);
-  if (nextSession) return nextSession;
-  const ds = activity?.date;
-  if (!ds || typeof ds !== 'string') return null;
-  // Date-only string
-  if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
-    const [y, m, d] = ds.split('-').map(Number);
-    const timeStr = activity.groupDetails?.time; // HH:mm
-    if (timeStr) {
-      const [h, min] = timeStr.split(':').map(Number);
-      return new Date(y, m - 1, d, h || 0, min || 0);
-    }
-    return new Date(y, m - 1, d, 0, 0, 0);
-  }
-  // Otherwise trust the ISO/timestamp
-  const dt = new Date(ds);
-  return isNaN(dt) ? null : dt;
-};
+import { getEffectiveNextDate } from '../utils/activityDate';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

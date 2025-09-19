@@ -14,30 +14,7 @@ import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-// Helper: get the next upcoming session date; parse YYYY-MM-DD as local date
-const getNextSessionDate = (activity) => {
-  if (!Array.isArray(activity.sessions)) return null;
-  const now = new Date();
-  const rawTime = activity?.groupDetails?.time;
-  const [th, tm] = (rawTime || '').split(':').map(Number);
-  const hasGroupTime = Number.isInteger(th) && Number.isInteger(tm);
-  const futureDates = activity.sessions
-    .filter(s => ['Scheduled', 'Confirmed'].includes(s.status))
-    .map(s => {
-      const ds = s?.date;
-      if (!ds || typeof ds !== 'string') return null;
-      if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
-        const [y, m, d] = ds.split('-').map(Number);
-        if (hasGroupTime) return new Date(y, m - 1, d, th, tm);
-        return new Date(y, m - 1, d, 0, 0, 0);
-      }
-      return new Date(ds);
-    })
-    .filter(d => d instanceof Date && !isNaN(d) && d >= now);
-  if (futureDates.length === 0) return null;
-  futureDates.sort((a, b) => a - b);
-  return futureDates[0];
-};
+import { getNextSessionDate } from '../utils/activityDate';
 
 const Activities = ({ navigation, route }) => {
   const { userActivities } = useContext(UserContext);
@@ -118,52 +95,67 @@ const Activities = ({ navigation, route }) => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
-  const renderActivity = ({ item }) => (
-    <TouchableOpacity
-      style={styles.activityCard}
-      onPress={() => navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item })}
-    >
-      <View style={styles.imageContainer}>
-        <FastImage
-          source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
-          style={styles.activityImage}
-          resizeMode={FastImage.resizeMode.cover}
-        />
-        {item.activityType?.name && (
-          <View style={styles.activityTag}>
-            <Text style={styles.activityTagText}>{item.activityType.name}</Text>
-          </View>
-        )}
-      </View>
+  const renderActivity = ({ item }) => {
+    const nextSession = getNextSessionDate(item);
+    let sessionLabel = 'TBA';
+    if (nextSession) {
+      const datePart = nextSession.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      const timePart = nextSession.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      });
+      sessionLabel = `${datePart} | ${timePart}`;
+    }
 
-      <View style={styles.cardContent}>
-        <Text style={styles.activityTitle}>{item.title}</Text>
-
-        <View style={styles.infoRow}>
-          <Ionicons name="calendar-outline" size={16} color="#666" />
-          <Text style={styles.activityDetails}>
-            {getNextSessionDate(item)
-              ? getNextSessionDate(item).toDateString()
-              : 'TBA'}
-          </Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Ionicons
-            name={item.onlineLink ? 'videocam-outline' : 'location-outline'}
-            size={16}
-            color="#666"
+    return (
+      <TouchableOpacity
+        style={styles.activityCard}
+        onPress={() => navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item })}
+      >
+        <View style={styles.imageContainer}>
+          <FastImage
+            source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
+            style={styles.activityImage}
+            resizeMode={FastImage.resizeMode.cover}
           />
-          <Text style={styles.activityAddress}>
-            {item.onlineLink
-              ? 'Online'
-              : `${item.address?.streetAddress || 'No Address'}, ${item.address?.suburb || 'No Suburb'}`}
-          </Text>
+          {item.activityType?.name && (
+            <View style={styles.activityTag}>
+              <Text style={styles.activityTagText}>{item.activityType.name}</Text>
+            </View>
+          )}
         </View>
-        
-      </View>
-    </TouchableOpacity>
-  );
+
+        <View style={styles.cardContent}>
+          <Text style={styles.activityTitle}>{item.title}</Text>
+
+          <View style={styles.infoRow}>
+            <Ionicons name="calendar-outline" size={16} color="#666" />
+            <Text style={styles.activityDetails}>{sessionLabel}</Text>
+          </View>
+
+          <View style={styles.infoRow}>
+            <Ionicons
+              name={item.onlineLink ? 'videocam-outline' : 'location-outline'}
+              size={16}
+              color="#666"
+            />
+            <Text style={styles.activityAddress}>
+              {item.onlineLink
+                ? 'Online'
+                : `${item.address?.streetAddress || 'No Address'}, ${item.address?.suburb || 'No Suburb'}`}
+            </Text>
+          </View>
+          
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <>
