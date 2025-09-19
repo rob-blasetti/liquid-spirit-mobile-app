@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Share,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
 import CertificationsList from '../components/CertificationsList';
 import FastImage from 'react-native-fast-image';
@@ -26,7 +26,10 @@ import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 
+const TAB_BAR_HEIGHT = 80;
+
 const ProfileScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { user, userDetails, setUserDetails, userPosts, userActivities, userEvents, isLoading, token,
           setUserPosts, setUserActivities, setUserEvents,
           isTokenExpired, refreshSession } = useContext(UserContext);
@@ -232,6 +235,7 @@ const filterUserActivities = (allActivities, userId) => {
   };
 
 const renderList = (data, type) => {
+  const contentPaddingBottom = Math.max(insets.bottom, 16) + TAB_BAR_HEIGHT;
   if (isLoading) {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
@@ -256,7 +260,7 @@ const renderList = (data, type) => {
         message = `No ${type} at the moment`;
     }
     return (
-      <View style={styles.noDataContainer}>
+      <View style={[styles.noDataContainer, { paddingBottom: contentPaddingBottom }]}>
         <Text style={styles.noDataText}>{message}</Text>
         {icon && (
           <Ionicons
@@ -322,6 +326,7 @@ const renderList = (data, type) => {
       data={listData}
       refreshing={refreshing}
       onRefresh={onRefresh}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
       keyExtractor={(item, index) =>
         item._id ? item._id.toString() : index.toString()
       }
@@ -340,12 +345,13 @@ const renderList = (data, type) => {
 
 // Render pending requests for Requests tab
 const renderRequests = () => {
+  const contentPaddingBottom = Math.max(insets.bottom, 16) + TAB_BAR_HEIGHT;
   if (isLoading) {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
   if (!pendingRequests.length) {
     return (
-      <View style={styles.noDataContainer}>
+      <View style={[styles.noDataContainer, { paddingBottom: contentPaddingBottom }]}>
         <Text style={styles.noDataText}>No requests at the moment</Text>
         <Ionicons
           name="person-add-outline"
@@ -361,6 +367,7 @@ const renderRequests = () => {
       data={pendingRequests}
       refreshing={refreshing}
       onRefresh={onRefresh}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
       keyExtractor={(req, index) =>
         `${req.activity._id}_${req.request._id}_${req.type}` || index.toString()
       }
@@ -487,7 +494,7 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: themeVariables.darkGreyColor }}
+        style={{ backgroundColor: themeVariables.darkGreyColor, flex: 1 }}
         sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
       />
     </SafeAreaView>

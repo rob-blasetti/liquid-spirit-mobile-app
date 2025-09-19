@@ -35,6 +35,17 @@ const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 
+const formatGroupTime = (timeStr) => {
+  if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
+  const [hoursStr, minutesStr] = timeStr.split(':');
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr ?? 0);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+  const temp = new Date();
+  temp.setHours(hours, minutes, 0, 0);
+  return temp.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+};
+
 const Home = ({ navigation, homeOverview, route }) => {
   console.log(homeOverview);
   const insets = useSafeAreaInsets();
@@ -380,9 +391,16 @@ const Home = ({ navigation, homeOverview, route }) => {
           }) || null;
           if (!nextAct || !nextDate) return null;
           // Format date/time for nextAct
-          const actDateTime = nextDate.toLocaleString(undefined, {
-            weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric'
+          const dateLabel = nextDate.toLocaleDateString(undefined, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
           });
+          const timeLabel = formatGroupTime(nextAct?.groupDetails?.time) || nextDate.toLocaleTimeString(undefined, {
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+          const actDateTime = `${dateLabel}, ${timeLabel}`;
           return (
             <View style={styles.dualGrid}>
               <RectangularTile
