@@ -29,6 +29,72 @@ const NotificationIcon = ({ type }) => {
   }
 };
 
+const normalizeIdValue = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const normalized = String(value).trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+  if (typeof value === 'object') {
+    return (
+      normalizeIdValue(value._id) ||
+      normalizeIdValue(value.id) ||
+      null
+    );
+  }
+  return null;
+};
+
+const extractActivityAndSessionIds = (notification) => {
+  if (!notification || typeof notification !== 'object') {
+    return { activityId: null, sessionId: null };
+  }
+
+  const additional = notification.additionalData || {};
+  const target = notification.target || {};
+  const typeName = (notification.type?.typeName || '').toLowerCase();
+
+  const pickFirst = (...values) => values.map(normalizeIdValue).find(Boolean) || null;
+
+  const activityId = pickFirst(
+    additional.activityId,
+    additional.activity_id,
+    additional.activity?.activityId,
+    additional.activity?.activity_id,
+    additional.activity?._id,
+    additional.activity?.id,
+    additional.parentActivityId,
+    additional.parentId,
+    target.activityId,
+    target.activity_id,
+    target.activity?._id,
+    target.activity?.id,
+    target.parentActivityId,
+    target.parentId,
+    target.activity,
+    notification.activityId,
+    notification.activity_id,
+    notification.activity?._id,
+    notification.activity?.id,
+    typeName.includes('session') ? normalizeIdValue(additional.parent?.id) : null
+  );
+
+  const sessionId = pickFirst(
+    additional.sessionId,
+    additional.session_id,
+    additional.session?._id,
+    additional.session?.id,
+    additional.id,
+    target.sessionId,
+    target.session_id,
+    target.session?._id,
+    target.session?.id,
+    typeName.includes('session') ? normalizeIdValue(target._id || target.id) : null
+  );
+
+  return { activityId, sessionId };
+};
+
 export default function Notifications() {
   const navigation = useNavigation();
   const { token, setUnreadCount, userNotifications, setUserNotifications } = useContext(UserContext);
@@ -47,17 +113,30 @@ export default function Notifications() {
     }
     setLoading(false);
     // Format raw notifications
-    const formatted = userNotifications.map((n) => ({
-      id: n._id,
-      scope: n.scope === 'community' ? 'community' : 'personal',
-      type: mapNotificationType(n.type?.typeName || ""),
-      targetId: n.target?._id,
-      title: n.additionalData?.caption || "Notification",
-      message: n.additionalData?.caption || "",
-      time: formatTime(n.createdAt),
-      timeStamp: n.createdAt,
-      read: n.isRead,
-    }));
+    const formatted = userNotifications.map((n) => {
+      const rawType = n.type?.typeName || "";
+      const typeKey = rawType.toLowerCase();
+      const type = mapNotificationType(typeKey);
+      const { activityId, sessionId } = extractActivityAndSessionIds(n);
+      const targetId = normalizeIdValue(n.target?._id) || normalizeIdValue(n.target?.id) || normalizeIdValue(n.targetId);
+      const resolvedActivityId = type === 'activity' ? (activityId || targetId) : null;
+      const resolvedSessionId = sessionId || (type === 'activity' && typeKey.includes('session') ? targetId : null);
+
+      return {
+        id: n._id,
+        scope: n.scope === 'community' ? 'community' : 'personal',
+        type,
+        rawType,
+        targetId,
+        activityId: resolvedActivityId,
+        sessionId: resolvedSessionId,
+        title: n.additionalData?.caption || "Notification",
+        message: n.additionalData?.caption || "",
+        time: formatTime(n.createdAt),
+        timeStamp: n.createdAt,
+        read: n.isRead,
+      };
+    });
     // Group by date
     const grouped = {};
     formatted.forEach((n) => {
@@ -102,7 +181,6 @@ export default function Notifications() {
   const handleNotificationPress = async (item) => {
     try {
       markAsRead(item.id);
-      console.log(item.type);
       switch (item.type) {
         case 'post':
           // Navigate to post detail
@@ -110,7 +188,18 @@ export default function Notifications() {
           break;
         case 'activity':
           // Navigate to activity detail
-          navigation.navigate('ActivityDetailCard', { activityId: item.targetId });
+          {
+            const activityId = item.activityId || item.targetId;
+            if (!activityId) {
+              console.warn('Activity notification missing activityId', item);
+              break;
+            }
+            const params = { activityId };
+            if (item.sessionId) {
+              params.initialSessionId = item.sessionId;
+            }
+            navigation.navigate('ActivityDetailCard', params);
+          }
           break;
         case 'event':
           // Navigate to event detail
@@ -160,13 +249,27 @@ export default function Notifications() {
     new_activity: "activity",
     join_activity: "activity",
     activity_updated: "activity",
+    activity_canceled: "activity",
+    activity_cancelled: "activity",
     join_event: "event",
     event_reminder: "event",
     signup: "announcement",
+    session: "activity",
+    session_created: "activity",
+    session_updated: "activity",
+    session_reminder: "activity",
+    session_cancelled: "activity",
+    session_canceled: "activity",
   };
-  
-  const mapNotificationType = (typeName) => {
-    return typeCategoryMap[typeName] || "general";
+
+  const mapNotificationType = (typeName = "") => {
+    const key = typeName.toLowerCase();
+    if (typeCategoryMap[key]) return typeCategoryMap[key];
+    if (key.includes('session')) return 'activity';
+    if (key.includes('activity')) return 'activity';
+    if (key.includes('event')) return 'event';
+    if (key.includes('post')) return 'post';
+    return "general";
   };
 
   const formatTime = (timestamp) => {

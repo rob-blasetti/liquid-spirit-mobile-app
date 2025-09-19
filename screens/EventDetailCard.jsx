@@ -547,6 +547,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const [materialError, setMaterialError] = useState(null);
   
   return (
+    <>
     <Card style={styles.card}>
       {imageUrl && (
         localImages[imageUrl] ? (
@@ -697,7 +698,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               ))}
             </View>
           ) : (
-            <Text style={styles.noDataText}>No materials available</Text>
+            <Text style={[styles.noDataText, styles.noDataSpacing]}>No materials available yet.</Text>
           )}
           <View style={styles.divider} />
           {/* Oversight Body */}
@@ -875,6 +876,17 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
         </View>
       </Modal>
     </Card>
+    <View style={styles.footerContainer}>
+      <Image
+        source={require('../assets/appstore.png')}
+        style={styles.footerLogo}
+        resizeMode="contain"
+        accessibilityRole="image"
+        accessibilityLabel="Liquid Spirit"
+      />
+      <Text style={styles.footerText}>Liquid Spirit</Text>
+    </View>
+    </>
   );
 };
 
@@ -1033,11 +1045,11 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor || '#fff',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor || '#fff',
   },
   headerInfoContainer: {
     alignItems: 'center',
@@ -1230,6 +1242,24 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     fontWeight: '600',
   },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    paddingBottom: 36,
+    backgroundColor: themeVariables.whiteColor || '#fff',
+  },
+  footerLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  footerText: {
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#999',
+  },
   materialTile:{
     flexDirection: 'row',
     alignItems: 'center',
@@ -1253,6 +1283,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color:'#666',
     textAlign: 'left', 
+  },
+  noDataSpacing: {
+    marginBottom: 12,
   },
   statusChip:{
     position:'absolute',

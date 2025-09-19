@@ -119,27 +119,57 @@ export const fetchPostDetails = async (postId, token) => {
   }
 };
 
-  export const likePost = async (postId, token) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/${postId}/like`, {
+export const likePost = async (postId, token, { userId } = {}) => {
+  try {
+      if (__DEV__) {
+        console.log('[PostService] likePost called', { postId, hasToken: Boolean(token), userId });
+      }
+      const config = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-      });
-  
+      };
+
+      if (userId) {
+        if (__DEV__) {
+          console.log('[PostService] sending userId in body');
+        }
+        config.body = JSON.stringify({ userId });
+      }
+
+      const response = await fetch(`${API_URL}/api/posts/${postId}/like`, config);
+
+      if (__DEV__) {
+        console.log('[PostService] likePost response', { status: response.status });
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to like the post');
+        let errorMessage = 'Failed to like the post';
+        try {
+          const errorBody = await response.json();
+          if (errorBody?.message) {
+            errorMessage = errorBody.message;
+          }
+        } catch (_) {}
+
+        if (__DEV__) {
+          console.log('[PostService] likePost failed', { status: response.status, errorMessage });
+        }
+
+        throw new Error(errorMessage);
       }
   
       const responseData = await response.json();
 
-      console.log('likePost service call: ', responseData);
+      if (__DEV__) {
+        console.log('likePost service call: ', responseData);
+      }
 
       return responseData;
     } catch (error) {
-      console.error('Error liking post:', error);
+      console.error('[PostService] Error liking post:', error);
       throw new Error(`Like post error: ${error.message}`);
     }
   };

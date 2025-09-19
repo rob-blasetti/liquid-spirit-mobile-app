@@ -1,6 +1,6 @@
 // Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
-import React, { useContext, useEffect, useState, useLayoutEffect, useMemo } from 'react';
+import React, { useContext, useEffect, useState, useLayoutEffect, useMemo, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -18,6 +18,7 @@ import {
   StatusBar,
   Share,
   Alert,
+  Image,
 } from 'react-native';
 import {
   Card,
@@ -29,6 +30,7 @@ import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Tooltip } from 'react-native-elements';
 
 import themeVariables from '../styles/theme';
 import MapView, { Marker } from 'react-native-maps';
@@ -151,6 +153,54 @@ const getStreetAndSuburb = (address) => {
   return formatAddress(address);
 };
 
+const isOnlineVenue = (venue) => {
+  if (!venue || typeof venue !== 'object') return false;
+  const type = normalizeString(venue.type).toLowerCase();
+  if (type === 'online') return true;
+  return normalizeString(venue.onlineLink).length > 0;
+};
+
+const hasPhysicalVenueData = (venue) => {
+  if (!venue || typeof venue !== 'object') return false;
+  if (isOnlineVenue(venue)) return false;
+  const hasAddress = formatAddress(venue.address).length > 0;
+  return hasAddress || Boolean(getVenueCoordinates(venue));
+};
+
+const SectionTitle = ({ title, note, showTooltip = true }) => {
+  if (!showTooltip || !note) {
+    return <Text style={styles.mapTitle}>{title}</Text>;
+  }
+
+  const tooltipWidth = 260;
+  const tooltipHeight = note.length > 55 ? 72 : 52;
+
+  return (
+    <View style={styles.titleWithTooltip}>
+      <Text style={styles.mapTitle}>{title}</Text>
+      <Tooltip
+        popover={<Text style={styles.tooltipPopoverText}>{note}</Text>}
+        skipAndroidStatusBar
+        withOverlay={false}
+        backgroundColor="rgba(33, 33, 33, 0.95)"
+        pointerColor="rgba(33, 33, 33, 0.95)"
+        placement="bottom"
+        width={tooltipWidth}
+        height={tooltipHeight}
+        tooltipStyle={styles.tooltipBubble}
+      >
+        <View style={styles.tooltipIconTarget}>
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color={themeVariables.primaryColor}
+          />
+        </View>
+      </Tooltip>
+    </View>
+  );
+};
+
 /* ─── Helper Functions ────────────────────────────────────────────── */
 // (Removed getDayName/getDayMonth: using groupDetails.day and formatTime now)
 
@@ -160,7 +210,7 @@ const getStreetAndSuburb = (address) => {
 const ActivityDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { user, token, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
-  const { activityId, activityPreload } = route.params;
+  const { activityId, activityPreload, initialSessionId = null } = route.params;
 
   const [activity, setActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
@@ -400,6 +450,7 @@ const ActivityDetailCard = ({ route }) => {
           openGoogleMaps={openGoogleMaps}
           userId={user?.id}
           detailsLoaded={detailsLoaded}
+          initialSessionId={initialSessionId}
         />
       </SwipeToCloseScrollView>
     </SafeAreaView>
@@ -419,6 +470,7 @@ const ActivityCardBody = ({
   userId,
   // Indicates that full details have been fetched from backend
   detailsLoaded,
+  initialSessionId,
 }) => {
   const {
     imageUrl,
@@ -496,7 +548,62 @@ const ActivityCardBody = ({
       .sort((a, b) => a.dateObj - b.dateObj);
   }, [activity]);
 
-  const nextSession = upcomingSessions[0] || null;
+  const normalizedInitialSessionId = useMemo(() => normalizeString(initialSessionId), [initialSessionId]);
+
+  const sessionMatchesInitialId = useCallback((sessionCandidate) => {
+    if (!normalizedInitialSessionId || !sessionCandidate) return false;
+    const candidates = [
+      sessionCandidate._id,
+      sessionCandidate.id,
+      sessionCandidate.sessionId,
+      sessionCandidate.session_id,
+      sessionCandidate.session?._id,
+      sessionCandidate.session?.id,
+    ];
+    return candidates.some(value => normalizeString(value) === normalizedInitialSessionId);
+  }, [normalizedInitialSessionId]);
+
+  const highlightedSessionIndex = useMemo(() => {
+    if (!normalizedInitialSessionId) return -1;
+    return upcomingSessions.findIndex(sessionMatchesInitialId);
+  }, [upcomingSessions, normalizedInitialSessionId, sessionMatchesInitialId]);
+
+  const orderedUpcomingSessions = useMemo(() => {
+    if (highlightedSessionIndex <= 0) {
+      return upcomingSessions;
+    }
+    const clone = [...upcomingSessions];
+    const [highlighted] = clone.splice(highlightedSessionIndex, 1);
+    clone.unshift(highlighted);
+    return clone;
+  }, [upcomingSessions, highlightedSessionIndex]);
+
+  const nextSession = orderedUpcomingSessions[0] || null;
+
+  const curriculumLesson = nextSession?.curriculumLesson || activity?.curriculumLesson || null;
+
+  const curriculumDetails = useMemo(() => {
+    if (!curriculumLesson || typeof curriculumLesson !== 'object') return null;
+    const grade = curriculumLesson.grade;
+    const setTitle = normalizeString(curriculumLesson.setTitle || curriculumLesson.set);
+    const lessonNumber = curriculumLesson.lessonNumber;
+    const lessonTitle = normalizeString(curriculumLesson.lessonTitle || curriculumLesson.title);
+    if (grade == null && !setTitle && lessonNumber == null && !lessonTitle) {
+      return null;
+    }
+    const lessonSummary = (() => {
+      if (lessonNumber == null && !lessonTitle) return null;
+      const parts = [];
+      if (lessonNumber != null) parts.push(`Lesson ${lessonNumber}`);
+      if (lessonTitle) parts.push(lessonTitle);
+      return parts.join(': ');
+    })();
+    return {
+      grade,
+      setTitle,
+      lessonSummary,
+    };
+  }, [curriculumLesson]);
 
   const normalizedVenues = useMemo(() => getNormalizedVenues(nextSession), [nextSession, activityVenues]);
 
@@ -536,7 +643,24 @@ const ActivityCardBody = ({
   }, [sessionOnlineLink]);
 
   const showOnlineSection = sessionOnlineLink.length > 0;
-  const showMapSection = Boolean(mapCoordinates) || Boolean(mapDisplayAddress);
+
+  const hasPhysicalSessionLocation = useMemo(() => {
+    const venuesToInspect = [];
+    if (nextSession?.primaryVenue) {
+      venuesToInspect.push(nextSession.primaryVenue);
+    }
+    if (Array.isArray(normalizedVenues) && normalizedVenues.length > 0) {
+      venuesToInspect.push(...normalizedVenues);
+    }
+    if (venuesToInspect.some(hasPhysicalVenueData)) {
+      return true;
+    }
+    return formatAddress(nextSession?.address).length > 0;
+  }, [normalizedVenues, nextSession]);
+
+  const isOnlineOnlySession = showOnlineSection && !hasPhysicalSessionLocation;
+  const isHybridSession = showOnlineSection && hasPhysicalSessionLocation;
+  const showMapSection = !isOnlineOnlySession && (Boolean(mapCoordinates) || Boolean(mapDisplayAddress));
 
   // Region state for map
   const [region, setRegion] = useState(null);
@@ -695,6 +819,7 @@ const ActivityCardBody = ({
     : null;
 
   return (
+    <>
     <Card style={styles.card}>
       {imageUrl && (
         <FastImage
@@ -723,11 +848,76 @@ const ActivityCardBody = ({
         <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
           {activity.description}
         </Text>
-        {/* Divider above host/location section */}
+        {/* Divider above upcoming sessions */}
         <View style={styles.divider} />
+        {orderedUpcomingSessions.length > 0 && (
+          <>
+            <Text style={styles.mapTitle}>Upcoming Sessions</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContent}
+            >
+              {orderedUpcomingSessions.map((sess, idx) => (
+                <SessionCard
+                  key={sess._id || idx}
+                  session={sess}
+                  detailsLoaded={detailsLoaded}
+                  hasFacilitatorSpace={hasFacilitatorSpace}
+                  hasParticipantSpace={hasParticipantSpace}
+                  isUserFacilitator={isUserFacilitator}
+                  isUserParticipant={isUserParticipant}
+                  hasRequestedFacilitator={hasRequestedFacilitator}
+                  hasRequestedParticipant={hasRequestedParticipant}
+                  onFacilitatorRequest={handleFacilitatorRequest}
+                  onParticipantRequest={handleParticipantRequest}
+                  width={screenWidth - 32}
+                />
+              ))}
+            </ScrollView>
+            <View style={styles.divider} />
+          </>
+        )}
+
+        {curriculumDetails && (
+          <>
+            <SectionTitle
+              title="Class Curriculum"
+              note="Curriculum details reflect the next upcoming session."
+            />
+            <View style={styles.curriculumBox}>
+              <View style={styles.curriculumRowContainer}>
+                <Text style={styles.curriculumLabel}>Grade</Text>
+                <Text style={styles.curriculumValue}>
+                  {curriculumDetails.grade != null ? curriculumDetails.grade : '—'}
+                </Text>
+              </View>
+              {(curriculumDetails.setTitle || curriculumDetails.lessonSummary) && (
+                <View style={styles.curriculumDivider} />
+              )}
+              {curriculumDetails.setTitle ? (
+                <View style={styles.curriculumRowContainer}>
+                  <Text style={styles.curriculumLabel}>Set</Text>
+                  <Text style={styles.curriculumValue}>{curriculumDetails.setTitle}</Text>
+                </View>
+              ) : null}
+              {curriculumDetails.lessonSummary ? (
+                <View style={styles.curriculumRowContainer}>
+                  <Text style={styles.curriculumLabel}>Lesson</Text>
+                  <Text style={styles.curriculumValue}>{curriculumDetails.lessonSummary}</Text>
+                </View>
+              ) : null}
+            </View>
+            <View style={styles.divider} />
+          </>
+        )}
+
         {showMapSection && (
           <>
-            <Text style={styles.mapTitle}>Host Address</Text>
+            <SectionTitle
+              title="Host Address"
+              note="Address reflects the next upcoming session."
+            />
             <View style={styles.mapWrapper}>
               {region ? (
                 <MapView
@@ -761,13 +951,16 @@ const ActivityCardBody = ({
                 Address unavailable
               </Text>
             )}
-            <Text style={styles.hostAddressNote}>Address reflects the next upcoming session.</Text>
             <View style={styles.divider} />
           </>
         )}
         {showOnlineSection && (
           <>
-            <Text style={styles.mapTitle}>Join Online</Text>
+            <SectionTitle
+              title="Join Online"
+              note="This session is available in person and online."
+              showTooltip={isHybridSession}
+            />
             <View style={styles.onlineRow}>
               <Ionicons
                 name="videocam-outline"
@@ -782,7 +975,7 @@ const ActivityCardBody = ({
                 ]}
                 onPress={() => resolvedOnlineLink && Linking.openURL(resolvedOnlineLink)}
               >
-                {sessionOnlineLink}
+                Tap to join the online session
               </Text>
             </View>
             <View style={styles.divider} />
@@ -802,36 +995,6 @@ const ActivityCardBody = ({
         {/* Details grid */}
         <CardContent style={styles.cardContent}>
         {/* Upcoming Sessions Carousel */}
-          {upcomingSessions.length > 0 && (
-            <View style={styles.carouselContainer}>
-              <Text style={styles.carouselTitle}>Upcoming Sessions</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.carouselContent}
-              >
-                {upcomingSessions.map((sess, idx) => (
-                  <SessionCard
-                    key={sess._id || idx}
-                    session={sess}
-                    detailsLoaded={detailsLoaded}
-                    hasFacilitatorSpace={hasFacilitatorSpace}
-                    hasParticipantSpace={hasParticipantSpace}
-                    isUserFacilitator={isUserFacilitator}
-                    isUserParticipant={isUserParticipant}
-                    hasRequestedFacilitator={hasRequestedFacilitator}
-                    hasRequestedParticipant={hasRequestedParticipant}
-                    onFacilitatorRequest={handleFacilitatorRequest}
-                    onParticipantRequest={handleParticipantRequest}
-                    width={screenWidth - 32}
-                  />
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Divider before Guidelines and Forms */}
-          <View style={styles.divider} />
 
           {/* Activity Guidelines Section */}
           {activity.guidelines ? (
@@ -884,6 +1047,18 @@ const ActivityCardBody = ({
         title={sessionModalTitle}
       />
     </Card>
+
+    <View style={styles.footerContainer}>
+      <Image
+        source={require('../assets/appstore.png')}
+        style={styles.footerLogo}
+        resizeMode="contain"
+        accessibilityRole="image"
+        accessibilityLabel="Liquid Spirit"
+      />
+      <Text style={styles.footerText}>Liquid Spirit</Text>
+    </View>
+    </>
   );
 };
 
@@ -1014,15 +1189,15 @@ const styles = StyleSheet.create({
   // Primary scroll container style for full-screen background
   container: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor || '#fff',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor || '#fff',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor || '#fff',
   },
   scroll: {
     backgroundColor: 'transparent',
@@ -1373,11 +1548,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: themeVariables.textColor || '#555',
   },
-  hostAddressNote: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
-  },
   mapTitle: {
     fontSize: 20,
     fontWeight: '600',
@@ -1391,6 +1561,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginVertical: 12,
+  },
+  titleWithTooltip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+  },
+  tooltipIconTarget: {
+    padding: 6,
+    marginLeft: 6,
+  },
+  tooltipBubble: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  tooltipPopoverText: {
+    fontSize: 12,
+    color: '#fff',
   },
   map: {
     width: '100%',
@@ -1504,6 +1692,55 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 12,
     alignSelf: 'flex-start',
+  },
+  curriculumBox: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: themeVariables.primaryColor + '0D',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  curriculumRowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    marginVertical: 6,
+  },
+  curriculumLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.textColor || '#333',
+    width: 80,
+  },
+  curriculumValue: {
+    flex: 1,
+    fontSize: 14,
+    color: themeVariables.textColor || '#444',
+    marginLeft: 16,
+  },
+  curriculumDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#ddd',
+    marginVertical: 6,
+  },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    paddingBottom: 36,
+    backgroundColor: themeVariables.whiteColor || '#fff',
+  },
+  footerLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  footerText: {
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#999',
   },
   formLink: {
     paddingVertical: 6,

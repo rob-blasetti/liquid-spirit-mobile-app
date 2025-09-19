@@ -24,7 +24,6 @@ import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
-import debounce from 'lodash.debounce';
 
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
@@ -81,13 +80,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     setIsLiked(hasUserLiked(post.likes, uid));
   }, [post.likes, user, hasUserLiked]);
 
-  const debouncedToggleLike = useCallback(
-    debounce(() => {
-      toggleLike();
-    }, 300),
-    [toggleLike]
-  );
-  
   const [expanded, setExpanded] = useState(false);
 
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || 'Author'}`;
@@ -164,17 +156,70 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     }
   };  
 
-  const toggleLike = async () => {
-    const previousLiked = isLiked;
-    setIsLiked(!previousLiked);
-  
-    try {
-      await onLike(post._id, userId);
-    } catch (error) {
-      setIsLiked(previousLiked);
-      console.error('Error updating like:', error);
+  const isLikedRef = useRef(isLiked);
+  useEffect(() => {
+    isLikedRef.current = isLiked;
+  }, [isLiked]);
+
+  const likeInFlightRef = useRef(false);
+
+  const toggleLike = useCallback(async () => {
+    if (!token) {
+      setWelcomeModalVisible(true);
+      return;
     }
-  };
+
+    if (likeInFlightRef.current) {
+      if (__DEV__) {
+        console.log('[Post] like ignored (in flight)', { postId: post._id, userId });
+      }
+      return;
+    }
+
+    const previousLiked = isLikedRef.current;
+    const optimisticLiked = !previousLiked;
+
+    if (__DEV__) {
+      console.log('[Post] toggling like', {
+        postId: post._id,
+        userId,
+        previousLiked,
+        optimisticLiked,
+      });
+    }
+
+    likeInFlightRef.current = true;
+    setIsLiked(optimisticLiked);
+    isLikedRef.current = optimisticLiked;
+
+    try {
+      const serverLiked = await onLike(post._id, userId);
+      if (__DEV__) {
+        console.log('[Post] like response', {
+          postId: post._id,
+          userId,
+          serverLiked,
+        });
+      }
+      if (typeof serverLiked === 'boolean') {
+        setIsLiked(serverLiked);
+        isLikedRef.current = serverLiked;
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+      setIsLiked(previousLiked);
+      isLikedRef.current = previousLiked;
+    if (__DEV__) {
+      console.log('[Post] like reverted due to error', {
+        postId: post._id,
+        userId,
+        error: String(error),
+      });
+    }
+    } finally {
+      likeInFlightRef.current = false;
+    }
+  }, [onLike, post._id, token, userId]);
 
   const lastTapRef = useRef(0);
   /**
@@ -185,7 +230,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     // Double-tap within delay -> like
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       clearTimeout(singleTapTimeoutRef.current);
-      if (!isLiked) toggleLike();
+      if (!isLikedRef.current) toggleLike();
     } else {
       // Single-tap -> navigate to detail after delay
       singleTapTimeoutRef.current = setTimeout(() => {
@@ -394,7 +439,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       </View>
 
       <View style={styles.postFooter}>
-        <TouchableOpacity style={styles.postFooterIcon} onPress={debouncedToggleLike}>
+        <TouchableOpacity style={styles.postFooterIcon} onPress={toggleLike}>
             <Ionicons
               name={isLiked ? solidHeart : heartOutline}
               size={24}

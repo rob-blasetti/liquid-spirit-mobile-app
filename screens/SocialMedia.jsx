@@ -165,6 +165,23 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     }
   }, [activeTab, explorePosts, forYouPosts]);
 
+  const hasUserLiked = useCallback((likes, uid) => {
+    if (!Array.isArray(likes) || !uid) return false;
+    return likes.some(like => {
+      if (!like) return false;
+      if (typeof like === 'string') {
+        return like === uid;
+      }
+      if (typeof like === 'object') {
+        if (like._id === uid || like.id === uid) return true;
+        if (typeof like.user === 'string' && like.user === uid) return true;
+        if (like.user && typeof like.user === 'object' && (like.user._id === uid || like.user.id === uid)) return true;
+        if (typeof like.userId === 'string' && like.userId === uid) return true;
+      }
+      return false;
+    });
+  }, []);
+
   const renderPost = useCallback(({ item }) => (
     <Post
       post={item}
@@ -214,19 +231,28 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     }
   
     try {
-      const updatedPostResponse = await likePost(postId, token);
+      const updatedPostResponse = await likePost(postId, token, { userId });
       const updatedPost = updatedPostResponse.data;
-  
+
+      if (__DEV__) {
+        console.log('[SocialMedia] like response received', {
+          postId,
+          userId,
+          likeCount: Array.isArray(updatedPost?.likes) ? updatedPost.likes.length : undefined,
+        });
+      }
+
       setExplorePosts((prev) => 
         prev.map((p) => (p._id === postId ? updatedPost : p))
       );
       setForYouPosts((prev) => 
         prev.map((p) => (p._id === postId ? updatedPost : p))
       );
-  
-      const isLiked = updatedPost.likes?.includes(userId);
+
+      const isLiked = hasUserLiked(updatedPost.likes, userId);
       return isLiked;
     } catch (error) {
+      console.error('[SocialMedia] handleLike error', error);
       Alert.alert('Error', 'An error occurred while liking the post');
       return null;
     }

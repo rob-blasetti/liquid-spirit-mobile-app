@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useContext, useLayoutEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -79,15 +79,60 @@ const PostDetailCard = ({ route }) => {
       Alert.alert('Sharing Error', 'Something went wrong while trying to share the post.');
     }
   };
+  const userId = user?.id || user?._id;
+
+  const hasUserLiked = useCallback((likes, uid) => {
+    if (!Array.isArray(likes) || !uid) return false;
+    return likes.some(like => {
+      if (!like) return false;
+      if (typeof like === 'string') {
+        return like === uid;
+      }
+      if (typeof like === 'object') {
+        if (like._id === uid || like.id === uid) return true;
+        if (typeof like.user === 'string' && like.user === uid) return true;
+        if (like.user && typeof like.user === 'object' && (like.user._id === uid || like.user.id === uid)) return true;
+        if (typeof like.userId === 'string' && like.userId === uid) return true;
+      }
+      return false;
+    });
+  }, []);
+
   // Toggle like state and update server
   const handleToggleLike = async () => {
-    setIsLiked(prev => !prev);
-    setLikeCountState(prev => prev + (isLiked ? -1 : 1));
+    if (!token) {
+      Alert.alert('Please sign in to like posts.');
+      return;
+    }
+
+    const previousLiked = isLiked;
+    const previousCount = likeCountState;
+    const optimisticLiked = !previousLiked;
+    const optimisticCount = previousCount + (previousLiked ? -1 : 1);
+
+    setIsLiked(optimisticLiked);
+    setLikeCountState(optimisticCount);
+
     try {
-      await likePost(post._id, token || '');
+      const response = await likePost(post._id, token || '', { userId });
+      const updatedPost = response?.data;
+      if (updatedPost) {
+        if (__DEV__) {
+          console.log('[PostDetail] like response received', {
+            postId: post._id,
+            userId,
+            likeCount: Array.isArray(updatedPost.likes) ? updatedPost.likes.length : undefined,
+          });
+        }
+        setPost(updatedPost);
+        const serverLiked = hasUserLiked(updatedPost.likes, userId);
+        setIsLiked(serverLiked);
+        setLikeCountState(Array.isArray(updatedPost.likes) ? updatedPost.likes.length : optimisticCount);
+      }
     } catch (err) {
-      setIsLiked(prev => !prev);
-      setLikeCountState(prev => prev + (isLiked ? 1 : -1));
+      console.error('Failed to update like:', err);
+      setIsLiked(previousLiked);
+      setLikeCountState(previousCount);
       Alert.alert('Error', 'Failed to update like');
     }
   };
