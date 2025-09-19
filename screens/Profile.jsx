@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Share,
+  Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';

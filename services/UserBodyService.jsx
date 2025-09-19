@@ -1,6 +1,15 @@
-import { jwtDecode } from 'jwt-decode';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+
+const AUTH_ERROR_MESSAGE = 'User is not authenticated.';
+
+const getAuthToken = async () => {
+  const token = await AsyncStorage.getItem('authToken');
+  if (!token) {
+    throw new Error(AUTH_ERROR_MESSAGE);
+  }
+  return token;
+};
 
 /**
  * Fetch Local Spiritual Assembly members.
@@ -96,139 +105,151 @@ export const fetchHolyDaysCommittee = async (token) => {
 };
 
 export const createUserBody = async (userBodyData) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(userBodyData)
-        });
-        if (!response.ok) {
-            throw new Error('Failed to create User-Body relationship');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error creating User-Body:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(userBodyData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create User-Body relationship');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('createUserBody aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error creating User-Body:', error);
+    return null;
+  }
 };
 
 /**
  * Updates a User-Body relationship.
  */
 export const updateUserBody = async (userBodyData) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(userBodyData)
-        });
-        if (!response.ok) {
-            throw new Error('Failed to update User-Body relationship');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error updating User-Body:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(userBodyData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update User-Body relationship');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('updateUserBody aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error updating User-Body:', error);
+    return null;
+  }
 };
 
 /**
  * Deletes a User-Body relationship.
  */
 export const deleteUserBody = async (userId, bodyId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/${userId}/${bodyId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            throw new Error('Failed to delete User-Body relationship');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error deleting User-Body:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies/${userId}/${bodyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete User-Body relationship');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('deleteUserBody aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error deleting User-Body:', error);
+    return null;
+  }
 };
 
 export const fetchIsMemberOfFeastCommittee = async (userId, communityId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/feast-committee/${communityId}/${userId}/is-member`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            throw new Error('Failed to fetch is member of Feast Committee');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching is member of Feast Committee:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies/feast-committee/${communityId}/${userId}/is-member`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch is member of Feast Committee');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('fetchIsMemberOfFeastCommittee aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error fetching is member of Feast Committee:', error);
+    return null;
+  }
 };
 
 export const fetchIsMemberOfHolyDaysCommittee = async (userId, communityId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/holy-days-committee/${communityId}/${userId}/is-member`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            throw new Error('Failed to fetch is member of Holy Days Committee');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching is member of Holy Days Committee:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies/holy-days-committee/${communityId}/${userId}/is-member`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch is member of Holy Days Committee');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('fetchIsMemberOfHolyDaysCommittee aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error fetching is member of Holy Days Committee:', error);
+    return null;
+  }
 };
 
 export const fetchIsMemberOfLocalSpiritualAssembly = async (userId, communityId) => {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/local-spiritual-assembly/${communityId}/${userId}/is-member`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        if (!response.ok) {
-            throw new Error('Failed to fetch is member of Local Spiritual Assembly');
-        }
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching is member of Local Spiritual Assembly:', error);
-        return null;
+  try {
+    const token = await getAuthToken();
+    const response = await fetch(`${API_URL}/api/bodies/local-spiritual-assembly/${communityId}/${userId}/is-member`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch is member of Local Spiritual Assembly');
     }
+    return await response.json();
+  } catch (error) {
+    if (error.message === AUTH_ERROR_MESSAGE) {
+      console.warn('fetchIsMemberOfLocalSpiritualAssembly aborted: user not authenticated.');
+      return null;
+    }
+    console.error('Error fetching is member of Local Spiritual Assembly:', error);
+    return null;
+  }
 };
 /**
  * Fetch the appropriate user body members based on the event type.

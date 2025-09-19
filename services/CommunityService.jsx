@@ -1,8 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+
+const getAuthToken = async () => {
+  const token = await AsyncStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('User is not authenticated.');
+  }
+  return token;
+};
 
 export const fetchCommunity = async (communityId) => {
   try {
-    const token = localStorage.getItem('token');
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/community/${communityId}`, {
       method: 'GET',
       headers: {
@@ -22,7 +31,7 @@ export const fetchCommunity = async (communityId) => {
 
 export const fetchFeastCommittee = async (communityId) => {
   try {
-    const token = localStorage.getItem('token');
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/community/${communityId}/feastcommittee`, {
       method: 'GET',
       headers: {
@@ -42,7 +51,7 @@ export const fetchFeastCommittee = async (communityId) => {
 
 export const fetchHolyDaysCommittee = async (communityId) => {
   try {
-    const token = localStorage.getItem('token');
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/community/${communityId}/holydayscommittee`, {
       method: 'GET',
       headers: {
@@ -62,7 +71,7 @@ export const fetchHolyDaysCommittee = async (communityId) => {
 
 export const fetchLocalSpiritualAssembly = async (communityId) => {
   try {
-    const token = localStorage.getItem('token');
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/community/${communityId}/lsa`, {
       method: 'GET',
       headers: {

@@ -357,96 +357,100 @@ const PostDetailCard = ({ route }) => {
     <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
       <SwipeToCloseScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+        contentContainerStyle={styles.scrollContent}
         overScrollMode="always"
         scrollEventThrottle={16}
         // swipe down past top to dismiss
         threshold={0}
       >
-        <Animated.View style={{ opacity: contentOpacity }}>
-        <Card style={styles.card}>
-          <View style={styles.mediaWrapper}>
-            {mediaUrl && (
-              isVideo ? (
-                <Animated.View style={{ opacity: mediaOpacity }}>
-                  <Video
-                    source={{ uri: mediaUrl }}
-                    style={[styles.media, { height: 300 }]}
-                    controls
-                    resizeMode="contain"
-                    onLoad={() => {
-                      __DEV__ && console.log('[PostDetail] video onLoad');
-                      Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-                    }}
-                    onError={e => __DEV__ && console.log('[PostDetail] video onError', e?.nativeEvent)}
-                  />
-                </Animated.View>
-              ) : imageAspect ? (
-                <TouchableOpacity activeOpacity={1} onPress={() => setModalVisible(true)}>
-                  <Animated.View style={{ opacity: mediaOpacity }}>
-                    <FastImage
-                      source={{ uri: mediaUrl }}
-                      style={[styles.media, { aspectRatio: imageAspect }]}
-                      resizeMode={FastImage.resizeMode.cover}
-                      onLoadStart={() => __DEV__ && console.log('[PostDetail] image onLoadStart')}
-                      onLoad={() => {
-                        __DEV__ && console.log('[PostDetail] image onLoad');
-                        Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-                      }}
-                      onError={e => __DEV__ && console.log('[PostDetail] image onError', e?.nativeEvent)}
-                    />
-                  </Animated.View>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.mediaPlaceholder}>
-                  <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-                </View>
-              )
-            )}
-            {/* Overlay like & comment icons on image */}
-            <View style={styles.imageOverlayIcons}>
-              <TouchableOpacity onPress={handleToggleLike} style={styles.overlayIconBtn}>
-                <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color={themeVariables.primaryColor} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => { setShowCommentBox(true); commentInputRef.current?.focus(); }}
-                style={[styles.overlayIconBtn, { marginLeft: 16 }]}
-              >
-                <Ionicons name="chatbubble-outline" size={22} color={themeVariables.primaryColor} />
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={styles.overlayCard}>
-          {/* Removed separate community chip here; will display in authorRow */}
-            <View style={styles.authorRow}>
-              {profilePic ? (
-                <FastImage source={{ uri: profilePic }} style={styles.avatar} />
-              ) : (
-                <Avatar
-                  size={40}
-                  name={authorName}
-                  variant="beam"
-                  colors={[ '#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C' ]}
-                  style={styles.avatar}
-                />
-              )}
-              <View style={styles.authorInfoContainer}>
-                <Text style={styles.authorName}>{authorName}</Text>
-                {authorCommunity && (
-                  <View style={styles.communityChipDetail}>
-                    <Text style={styles.communityChipText}>{authorCommunity}</Text>
-                  </View>
+        <View style={styles.contentWrapper}>
+          <Animated.View style={{ opacity: contentOpacity }}>
+            <Card style={styles.card}>
+              <View style={styles.mediaWrapper}>
+                {mediaUrl && (
+                  isVideo ? (
+                    <Animated.View style={{ opacity: mediaOpacity }}>
+                      <Video
+                        source={{ uri: mediaUrl }}
+                        style={[styles.media, { height: 300 }]}
+                        controls
+                        resizeMode="contain"
+                        onLoad={() => {
+                          __DEV__ && console.log('[PostDetail] video onLoad');
+                          Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+                        }}
+                        onError={e => __DEV__ && console.log('[PostDetail] video onError', e?.nativeEvent)}
+                      />
+                    </Animated.View>
+                  ) : imageAspect ? (
+                    <TouchableOpacity activeOpacity={1} onPress={() => setModalVisible(true)}>
+                      <Animated.View style={{ opacity: mediaOpacity }}>
+                        <FastImage
+                          source={{ uri: mediaUrl }}
+                          style={[styles.media, { aspectRatio: imageAspect }]}
+                          resizeMode={FastImage.resizeMode.cover}
+                          onLoadStart={() => __DEV__ && console.log('[PostDetail] image onLoadStart')}
+                          onLoad={() => {
+                            __DEV__ && console.log('[PostDetail] image onLoad');
+                            Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
+                          }}
+                          onError={e => __DEV__ && console.log('[PostDetail] image onError', e?.nativeEvent)}
+                        />
+                      </Animated.View>
+                    </TouchableOpacity>
+                  ) : (
+                    <View style={styles.mediaPlaceholder}>
+                      <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+                    </View>
+                  )
                 )}
+                {/* Overlay like & comment icons on image */}
+                <View style={styles.imageOverlayIcons}>
+                  <TouchableOpacity onPress={handleToggleLike} style={styles.overlayIconBtn}>
+                    <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color={themeVariables.primaryColor} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setShowCommentBox(true);
+                      commentInputRef.current?.focus();
+                    }}
+                    style={[styles.overlayIconBtn, { marginLeft: 16 }]}
+                  >
+                    <Ionicons name="chatbubble-outline" size={22} color={themeVariables.primaryColor} />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-            <CardContent style={styles.cardContent}>
-              {post.content ? (
-                <Text style={styles.postContent}>{post.content}</Text>
-              ) : null}
-            </CardContent>
-          </View>
-        </Card>
-        </Animated.View>
+              <View style={styles.overlayCard}>
+                {/* Removed separate community chip here; will display in authorRow */}
+                <View style={styles.authorRow}>
+                  {profilePic ? (
+                    <FastImage source={{ uri: profilePic }} style={styles.avatar} />
+                  ) : (
+                    <Avatar
+                      size={40}
+                      name={authorName}
+                      variant="beam"
+                      colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+                      style={styles.avatar}
+                    />
+                  )}
+                  <View style={styles.authorInfoContainer}>
+                    <Text style={styles.authorName}>{authorName}</Text>
+                    {authorCommunity && (
+                      <View style={styles.communityChipDetail}>
+                        <Text style={styles.communityChipText}>{authorCommunity}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+                <CardContent style={styles.cardContent}>
+                  {post.content ? (
+                    <Text style={styles.postContent}>{post.content}</Text>
+                  ) : null}
+                </CardContent>
+              </View>
+            </Card>
+          </Animated.View>
         {/* Removed bottom toolbar; icons now overlay the image */}
         {/* Lightbox modal for image */}
         <Modal visible={modalVisible} transparent={true} onRequestClose={() => setModalVisible(false)}>
@@ -578,6 +582,17 @@ const PostDetailCard = ({ route }) => {
             />
           </View>
         )}
+          <View style={styles.footerContainer}>
+            <Image
+              source={require('../assets/appstore.png')}
+              style={styles.footerLogo}
+              resizeMode="contain"
+              accessibilityRole="image"
+              accessibilityLabel="Liquid Spirit"
+            />
+            <Text style={styles.footerText}>Liquid Spirit</Text>
+          </View>
+        </View>
       </SwipeToCloseScrollView>
     </SafeAreaView>
   );
@@ -588,11 +603,20 @@ export default PostDetailCard;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor,
   },
   scrollView: {
     flex: 1,
     backgroundColor: themeVariables.whiteColor
+  },
+  scrollContent: {
+    paddingTop: HEADER_OFFSET,
+    paddingBottom: 36,
+    flexGrow: 1,
+  },
+  contentWrapper: {
+    flexGrow: 1,
+    minHeight: '100%',
   },
   centered: {
     flex: 1,
@@ -764,4 +788,23 @@ const styles = StyleSheet.create({
   relatedTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: themeVariables.blackColor },
   relatedItem: { marginRight: 12 },
   relatedImage: { width: 100, height: 100, borderRadius: 8 },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 32,
+    paddingVertical: 24,
+    paddingBottom: 36,
+    backgroundColor: themeVariables.whiteColor || '#fff',
+  },
+  footerLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: 12,
+  },
+  footerText: {
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: '#999',
+  },
 });

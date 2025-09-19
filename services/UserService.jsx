@@ -1,8 +1,17 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
 
+const getAuthToken = async () => {
+  const token = await AsyncStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('User is not authenticated.');
+  }
+  return token;
+};
+
 export const fetchUser = async (userId) => {
-  const token = localStorage.getItem('token');
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/users/getUser/${userId}`, {
       method: 'GET',
       headers: {
@@ -21,13 +30,8 @@ export const fetchUser = async (userId) => {
 };
 
 export const discoverUsers = async () => {
-  const token = localStorage.getItem('token');
-
-  if (!token) {
-    throw new Error('User is not authenticated. No token found in localStorage.');
-  }
-
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/users/discover`, {
       method: 'GET',
       headers: {
@@ -53,17 +57,10 @@ export const discoverUsers = async () => {
   }
 };
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 // Fetch list of community members (requires authentication token from AsyncStorage)
 export const getMemberList = async (communityId) => {
-  // Token stored under 'authToken' via UserContext AsyncStorage
-  const token = await AsyncStorage.getItem('authToken');
-
-  if (!token) {
-    throw new Error('User is not authenticated.');
-  }
-
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/users/getAllMembers/${communityId}`, {
       method: 'GET',
       headers: {
@@ -91,8 +88,8 @@ export const getMemberList = async (communityId) => {
 
 
 export const helloUsers = async () => {
-  const token = localStorage.getItem('token');
   try {
+    const token = await getAuthToken();
     const response = await fetch(`${API_URL}/api/users/hello`, {
       method: 'GET',
       headers: {

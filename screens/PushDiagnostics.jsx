@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
@@ -150,4 +150,3 @@ const styles = StyleSheet.create({
 });
 
 export default PushDiagnostics;
-
