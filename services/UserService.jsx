@@ -140,22 +140,22 @@ export const fetchUserById = async (userId, token) => {
   }
 };
 
-export const blockUser = async (userId, token) => { 
+export const blockUser = async (userId, token) => {
   try {
     const response = await fetch(`${API_URL}/api/users/${userId}/blockUser`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-      }
+      },
     });
-  
+
     const jsonResponse = await response.json();
-  
+
     if (!response.ok) {
       throw new Error(jsonResponse.message || 'Failed to block user.');
     }
-  
+
     return jsonResponse.data;
   } catch (error) {
     console.error('Error blocking user:', error);
@@ -163,22 +163,22 @@ export const blockUser = async (userId, token) => {
   }
 };
 
-export const muteUser = async (userId, token) => { 
+export const muteUser = async (userId, token) => {
   try {
     const response = await fetch(`${API_URL}/api/users/${userId}/muteUser`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
-      }
+      },
     });
-  
+
     const jsonResponse = await response.json();
-  
+
     if (!response.ok) {
       throw new Error(jsonResponse.message || 'Failed to mute user.');
     }
-  
+
     return jsonResponse.data;
   } catch (error) {
     console.error('Error muting user:', error);

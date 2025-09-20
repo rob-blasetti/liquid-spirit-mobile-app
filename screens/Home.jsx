@@ -166,7 +166,7 @@ const Home = ({ navigation, homeOverview, route }) => {
         {/* Banner Section */}
         <Animated.View style={[
           styles.bannerContainer,
-          { marginTop: -statusBarHeight, height: bannerHeight }
+          { marginTop: -statusBarHeight, height: bannerHeight },
         ]}>
           <Carousel
             data={bannerData}
@@ -178,7 +178,7 @@ const Home = ({ navigation, homeOverview, route }) => {
           <View
             style={[
               styles.bannerContent,
-              { top: statusBarHeight + EXTRA_TOP }
+              { top: statusBarHeight + EXTRA_TOP },
             ]}
             pointerEvents="box-none"
           >
@@ -216,10 +216,10 @@ const Home = ({ navigation, homeOverview, route }) => {
           {['Activities','Events', 'Assembly'].map(tab => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tabButton, activeTab===tab && styles.tabButtonActive]}
+              style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
               onPress={() => handleTabPress(tab)}
             >
-              <Text style={[styles.tabButtonText, activeTab===tab && styles.tabButtonTextActive]}>
+              <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
                 {tab}
               </Text>
             </TouchableOpacity>
@@ -227,7 +227,7 @@ const Home = ({ navigation, homeOverview, route }) => {
         </View>
         <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
         {/* Events Section */}
-        {activeTab==='Events' && userEvents && userEvents.length > 0 && (() => {
+        {activeTab === 'Events' && userEvents && userEvents.length > 0 && (() => {
           const now = new Date();
           const upcoming = userEvents
             .filter(ev =>
@@ -282,7 +282,7 @@ const Home = ({ navigation, homeOverview, route }) => {
           );
         })()}
         {/* Assembly Section */}
-        {activeTab==='Assembly' && (() => {
+        {activeTab === 'Assembly' && (() => {
           if (!Array.isArray(homeOverview?.events)) return null;
           const now = new Date();
           const lsaEvents = homeOverview.events.filter(e => e.title === 'Local Spiritual Assembly Meeting');
@@ -437,7 +437,7 @@ const Home = ({ navigation, homeOverview, route }) => {
           );
         })()}
         {/* Posts Section */}
-        {activeTab==='Posts' && userPosts && userPosts.length > 0 && (() => {
+        {activeTab === 'Posts' && userPosts && userPosts.length > 0 && (() => {
           const posts = userPosts;
           const firstPost = posts[0];
           console.log('firstPost: ', firstPost);
@@ -865,7 +865,7 @@ const styles = StyleSheet.create({
   // Tab buttons
   heading: {
     color: themeVariables.blackColor,
-    marginHorizontal: 20,    
+    marginHorizontal: 20,
     marginBottom: 10,
     padding: 4,
     fontWeight: 'bold',

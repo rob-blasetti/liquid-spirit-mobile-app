@@ -6,12 +6,12 @@ import { CommunityContext } from '../contexts/CommunityContext';
 import * as PostService from '../services/PostService';
 // Mock the Post component to avoid internal implementation details
 jest.mock('../components/Post', () => {
-  const React = require('react');
+  const ReactNative = require('react');
   const { View, Text } = require('react-native');
   return ({ post }) => (
-    React.createElement(View, null,
-      React.createElement(Text, { testID: 'post-content' }, post.content),
-      React.createElement(Text, { testID: 'post-media' }, post.media[0])
+    ReactNative.createElement(View, null,
+      ReactNative.createElement(Text, { testID: 'post-content' }, post.content),
+      ReactNative.createElement(Text, { testID: 'post-media' }, post.media[0])
     )
   );
 });

@@ -1,12 +1,12 @@
 import React, { useContext, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert, 
-  ScrollView 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
 } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';

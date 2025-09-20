@@ -151,7 +151,7 @@ const Activities = ({ navigation, route }) => {
                 : `${item.address?.streetAddress || 'No Address'}, ${item.address?.suburb || 'No Suburb'}`}
             </Text>
           </View>
-          
+
         </View>
       </TouchableOpacity>
     );
@@ -166,7 +166,7 @@ const Activities = ({ navigation, route }) => {
           <Ionicons name="filter" size={16} color="#fff" />
           <Text style={styles.buttonText}>Filter</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.buttonBase} onPress={toggleSortOrder}>
           <Ionicons name="swap-vertical" size={16} color="#fff" />
           <Text style={styles.buttonText}>
@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
   },
   controlContainer: {
     flexDirection: 'row',
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: themeVariables.darkGreyColor, // Dark background to visually group buttons
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -243,20 +243,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 5, // Adds space between buttons
     elevation: 2, // Shadow for depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },
   buttonText: {
-    color: '#fff', 
+    color: '#fff',
     fontWeight: 'bold',
     marginLeft: 6,
     textAlign: 'center',
-    width: Platform.select({ android: 90 })
+    width: Platform.select({ android: 90 }),
   },
   drawerContainer: {
     backgroundColor: 'white',
@@ -282,16 +278,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
     padding: 8, // Extra padding for better tap area
-  
+
     // Shadow for iOS
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-  
+
     // Elevation for Android
     elevation: 5,
-  },  
+  },
   selectedFilter: {
     backgroundColor: '#312783', // Purple highlight for selected filters
   },
@@ -304,7 +300,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginTop: 5,
     textAlign: 'center',
-    width: Platform.select({ android: 100 })
+    width: Platform.select({ android: 100 }),
   },
   selectedFilterText: {
     color: '#fff', // White text for selected filters
@@ -346,7 +342,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
-    width: Platform.select({ android: 180 })
+    width: Platform.select({ android: 180 }),
   },
   cardContent: {
     padding: 16,
@@ -373,7 +369,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 6,
     fontWeight: '500',
-  }
+  },
 });
 
 export default Activities;

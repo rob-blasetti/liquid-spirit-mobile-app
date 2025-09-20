@@ -4,13 +4,13 @@ export function parseJwt(token) {
     if (!token) {
       throw new Error('No token provided');
     }
-  
+
     // Split the token into parts: [header, payload, signature]
     const parts = token.split('.');
     if (parts.length !== 3) {
       throw new Error('Token is not a valid JWT');
     }
-  
+
     const encodedPayload = parts[1]; // The payload is in the second position
     try {
       // Convert from base64url to base64 by replacing URL-unsafe chars
@@ -23,4 +23,3 @@ export function parseJwt(token) {
       throw new Error('Error decoding token payload: ' + error.message);
     }
   }
-  

@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    backgroundColor: themeVariables.whiteColor
+    backgroundColor: themeVariables.whiteColor,
   },
   scrollContent: {
     paddingTop: HEADER_OFFSET,
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
   tagScrollContainer: { maxWidth: '100%', marginTop: 8, marginBottom: 8, overflow: 'hidden' },
   // Container for tag chips: align first tag with section heading
   tagChipsContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 0, paddingRight: 16 },
-  tagChipDetail: { backgroundColor: "#eee", paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, marginRight: 8, flexShrink: 0, borderColor: themeVariables.darkGreyColor, borderWidth: 1 },
+  tagChipDetail: { backgroundColor: '#eee', paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, marginRight: 8, flexShrink: 0, borderColor: themeVariables.darkGreyColor, borderWidth: 1 },
   tagTextDetail: { color: '#555', fontSize: 14 },
   // Divider before sections
   divider: {

@@ -17,7 +17,9 @@ const EditProfile = ({ navigation }) => {
 
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [birthday, setBirthday] = useState(user.birthday ? new Date(user.birthday) : new Date());const [email, setEmail] = useState(user.email || '');
+  const [birthday, setBirthday] = useState(user.birthday ? new Date(user.birthday) : new Date());
+  const [, setShowDatePicker] = useState(false);
+  const [email, setEmail] = useState(user.email || '');
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
   const [address, setAddress] = useState(user.address || '');
   const [occupation, setOccupation] = useState(user.occupation || '');
@@ -83,15 +85,15 @@ const EditProfile = ({ navigation }) => {
       preferredLanguage,
       socialMedia: { facebook, x, linkedin, instagram, tiktok },
     };
-  
+
     try {
       const response = await updateMe(updatedUser);
       console.log('Response from server:', response);
-  
+
       if (!response || !response.ok) {
         throw new Error(`Unexpected response: ${JSON.stringify(response)}`);
       }
-  
+
       // update main user context
       setUser(response.data);
       // update detailed user context as well
@@ -105,10 +107,10 @@ const EditProfile = ({ navigation }) => {
       Alert.alert('Error', `Failed to update profile. ${error.message}`);
     }
   };
-  
+
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>  
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Back chevron above content */}
       <View style={styles.chevronContainer}>
         <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
@@ -127,7 +129,7 @@ const EditProfile = ({ navigation }) => {
         <Text style={styles.changeAvatarButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
-      
+
 
       {[
         { label: 'First Name', value: firstName, onChange: setFirstName },
@@ -265,7 +267,7 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
       fontSize: 16,
       marginLeft: 10,
-    }
-  });  
+    },
+  });
 
 export default EditProfile;

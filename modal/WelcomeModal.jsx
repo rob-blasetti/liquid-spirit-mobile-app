@@ -10,9 +10,9 @@ const WelcomeModal = ({ visible, onClose }) => {
       transparent
     >
       {/* Touch outside the modal container to close */}
-      <TouchableOpacity 
-        style={styles.modalBackground} 
-        activeOpacity={1} 
+      <TouchableOpacity
+        style={styles.modalBackground}
+        activeOpacity={1}
         onPress={onClose}
       >
         <View style={styles.modalContainer}>

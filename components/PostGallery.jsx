@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from '
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../config';
-import localImages from '../utils/localImages'
+import localImages from '../utils/localImages';
 import FastImage from 'react-native-fast-image';
 
 const { width } = Dimensions.get('window');
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-  }
+  },
 });
 
 export default PostGallery;

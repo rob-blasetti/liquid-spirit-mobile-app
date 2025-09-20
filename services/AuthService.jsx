@@ -13,6 +13,17 @@ const decodeToken = (token) => {
     return null;
   }
 };
+
+const extractUserId = (decodedToken) => {
+  if (!decodedToken) return null;
+  return decodedToken.userId || decodedToken.id || decodedToken._id || null;
+};
+
+const resolveUserIdFromToken = (tokenValue) => {
+  if (!tokenValue) return null;
+  const decoded = decodeToken(tokenValue);
+  return extractUserId(decoded);
+};
 // By wrapping our functions into a custom hook, we can retrieve 'token' and 'setToken' only once at the top.
 // Then we can reuse them in the exported methods without repeating useContext calls.
 
@@ -103,7 +114,7 @@ export const useAuthService = () => {
       throw new Error(`Sign-up error: ${error.message}`);
     }
   };
-  
+
   const forgotBahaiId = async (email) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/forgot-bahai-id`, {
@@ -127,7 +138,7 @@ export const useAuthService = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
       });
       const data = await response.json();
 
@@ -144,7 +155,7 @@ export const useAuthService = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-        }
+        },
       });
       const data = await response.json();
       return { ok: response.ok, data };
@@ -172,15 +183,7 @@ export const useAuthService = () => {
   };
 
   // Get current user ID from token in hook context
-  const getCurrentUserId = () => {
-    if (!token) return null;
-    console.log('getCurrentUserId token: ', token);
-    const decoded = jwtDecode(token);
-    console.log('decoded token: ', decoded);
-    // const decoded = decodeToken(token);
-    if (!decoded) return null;
-    return decoded.userId || decoded.id || null;
-  };
+  const getCurrentUserId = () => resolveUserIdFromToken(token);
 
   const checkTokenExpiration = () => {
     if (!token) {
@@ -252,14 +255,14 @@ export const useAuthService = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       if (response.status === 204) {
         return { ok: true };
       } else if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete account');
       }
-  
+
       return { ok: true };
     } catch (error) {
       console.error('Delete account error:', error);
@@ -286,19 +289,4 @@ export const useAuthService = () => {
 };
 
 // Static helper to extract user ID from a JWT token
-// Extract user ID from JWT token
-export const getCurrentUserId = (token) => {
-  // if (!token) return null;
-  // const decoded = decodeToken(token);
-  // if (!decoded) return null;
-  // return decoded.userId || decoded.id || null;
-
-  if (!token) return null;
-  console.log('getCurrentUserId token: ', token);
-  const decoded = jwtDecode(token);
-  console.log('decoded token: ', decoded);
-  // const decoded = decodeToken(token);
-  if (!decoded) return null;
-  return decoded.userId || decoded.id || null;
-
-};
+export const getCurrentUserId = (token) => resolveUserIdFromToken(token);

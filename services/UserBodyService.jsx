@@ -25,10 +25,10 @@ export const fetchLocalSpiritualAssembly = async (token) => {
         const response = await fetch(`${API_URL}/api/bodies/local-spiritual-assembly`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
-            }
+                'Authorization': `Bearer ${token}`,
+            },
         });
-        
+
         if (!response.ok) {
             console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
             return [];
@@ -56,8 +56,8 @@ export const fetchFeastCommittee = async (token) => {
         const response = await fetch(`${API_URL}/api/bodies/feast-committee`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
-            }
+                'Authorization': `Bearer ${token}`,
+            },
         });
 
         if (!response.ok) {
@@ -87,8 +87,8 @@ export const fetchHolyDaysCommittee = async (token) => {
         const response = await fetch(`${API_URL}/api/bodies/holy-days-committee`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`
-            }
+                'Authorization': `Bearer ${token}`,
+            },
         });
 
         if (!response.ok) {

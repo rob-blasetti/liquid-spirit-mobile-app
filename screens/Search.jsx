@@ -68,7 +68,7 @@ const Search = () => {
       />
     );
   };
-  
+
   // Custom TabBar: inactive tabs have black bottom border/text, active tab with primary color underline and text
   const renderSearchTabBar = ({ navigationState, jumpTo, layout }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
@@ -160,7 +160,7 @@ const Search = () => {
       firstMountRef.current = false;
     }
   }, [route.params?.initialQuery, token, navigation]);
-  
+
   const debounceRef = useRef(null);
   const handleSearch = (text) => {
     setQuery(text);
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderColor: themeVariables.blackColor,  
+    borderColor: themeVariables.blackColor,
     borderWidth: 1,
     borderRadius: 20,
     // Optionally, add a subtle background for contrast

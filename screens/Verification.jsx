@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Alert, 
-  StyleSheet 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -15,7 +15,7 @@ import { useAuthService } from '../services/AuthService';
 
 const Verification = ({ route }) => {
   const navigation = useNavigation();
-  const { bahaiId, email, password } = route.params; 
+  const { bahaiId, email, password } = route.params;
 
   const [verificationCode, setVerificationCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,20 +61,20 @@ const Verification = ({ route }) => {
 
       <TextInput
         style={styles.input}
-        placeholder='Enter Verification Code'
+        placeholder="Enter Verification Code"
         value={verificationCode}
         onChangeText={setVerificationCode}
-        keyboardType='numeric'
+        keyboardType="numeric"
         maxLength={6}
       />
 
-      <TouchableOpacity 
-        style={styles.button} 
-        onPress={handleVerification} 
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleVerification}
         disabled={loading}
       >
-        {loading 
-          ? <ActivityIndicator color='#fff' /> 
+        {loading
+          ? <ActivityIndicator color="#fff" />
           : <Text style={styles.buttonText}>Verify</Text>
         }
       </TouchableOpacity>

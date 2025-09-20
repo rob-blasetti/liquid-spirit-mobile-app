@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, ImageBackground, Platform } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.whiteColor,
     textDecorationLine: 'underline',
-    marginBottom: 4
+    marginBottom: 4,
   },
   subheading: {
     fontSize: 12,

@@ -28,7 +28,7 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStep, setUploadStep] = useState('');
-  const { token, user, userActivities, userEvents } = useContext(UserContext);
+  const { token, user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [tags, setTags] = useState([]);
   // Dropdown open state for tag selection chips
@@ -76,20 +76,20 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
-  
+
     const handlePost = async () => {
       if (!content || !communityId) {
         Alert.alert('Missing Fields', 'Please write something.');
         return;
       }
-  
+
       let mediaResult = null;
-  
+
       try {
         setIsUploading(true);
         setUploadStep('Uploading media...');
         setUploadProgress(30);
-  
+
         if (mediaUri) {
           if (mediaType.includes('image')) {
             mediaResult = await uploadImageWithThumbnail(mediaUri, mediaType, token);
@@ -97,10 +97,10 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
             mediaResult = await uploadVideoWithThumbnail(mediaUri, mediaType, token);
           }
         }
-  
+
         setUploadStep('Creating post...');
         setUploadProgress(70);
-  
+
         await createPost({
           title: '',
           content,
@@ -111,7 +111,7 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
           userCommunityId: communityId,
           token,
         });
-  
+
         setUploadProgress(100);
         setIsUploading(false);
         setUploadStep('');

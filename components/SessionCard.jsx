@@ -37,7 +37,7 @@ const SessionCard = ({
     default:
       statusIcon = null;
   }
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const overlayOpacity = useState(new Animated.Value(0))[0];
 
@@ -67,7 +67,7 @@ const closeModal = () => {
 };
 
   return (
-    <View style={[styles.sessionCard, { width }]}> 
+    <View style={[styles.sessionCard, { width }]}>
       <View style={styles.sessionCardHeader}>
         <Text style={styles.sessionCardDate}>
           {session.dateObj.toLocaleDateString(undefined, {
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   sessionCardDate: {
     fontSize: 18,
-    color: themeVariables.blackColor
+    color: themeVariables.blackColor,
   },
   sessionStatusInline: {
     flexDirection: 'row', // <-- This makes icon and text appear side-by-side

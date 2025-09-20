@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef, flushPendingNavigation } from './RootNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, TouchableOpacity } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 
@@ -13,7 +13,7 @@ const linking = {
       ActivityDetailCard: 'activities/:activityId',
       EventDetailCard: 'events/:eventId',
       PostDetailCard: 'posts/:postId',
-      PublicUserProfile: 'users/:userId'
+      PublicUserProfile: 'users/:userId',
     },
   },
 };

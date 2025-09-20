@@ -20,7 +20,7 @@ const CertificationsList = ({ items = [] }) => {
         const icon = isObject ? item.icon : null;
         const color = isObject && item.color ? item.color : themeVariables.primaryColor;
         const badge = (
-          <View key={idx} style={[styles.badge, { backgroundColor: color }]}> 
+          <View key={idx} style={[styles.badge, { backgroundColor: color }]}>
             {icon && (
               // Larger icon without label
               <Ionicons

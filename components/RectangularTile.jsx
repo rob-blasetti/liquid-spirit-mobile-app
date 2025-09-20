@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
     textTransform: 'none',
-    left: 60
+    left: 60,
   },
 });
 

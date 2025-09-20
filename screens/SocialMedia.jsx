@@ -229,7 +229,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
       setWelcomeModalVisible(true);
       return;
     }
-  
+
     try {
       const updatedPostResponse = await likePost(postId, token, { userId });
       const updatedPost = updatedPostResponse.data;
@@ -242,10 +242,10 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
         });
       }
 
-      setExplorePosts((prev) => 
+      setExplorePosts((prev) =>
         prev.map((p) => (p._id === postId ? updatedPost : p))
       );
-      setForYouPosts((prev) => 
+      setForYouPosts((prev) =>
         prev.map((p) => (p._id === postId ? updatedPost : p))
       );
 
@@ -322,14 +322,14 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     try {
       await deletePost(postId, token);
       Alert.alert('Delete Post', 'Post has been deleted.');
-  
+
       // filter by post id instead of author id
       setExplorePosts(prev => prev.filter(p => p._id !== postId));
       setForYouPosts(prev => prev.filter(p => p._id !== postId));
     } catch (error) {
       Alert.alert('Error', 'An error occurred while deleting the post.');
     }
-  };  
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -349,7 +349,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
           onPress={() => handleTabPress('explore')}
           style={({ pressed }) => [
             styles.tabItem,
-            pressed && styles.pressedTab
+            pressed && styles.pressedTab,
           ]}
         >
           {({ pressed }) => (
@@ -357,7 +357,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
               styles.tabText,
               activeTab === 'explore' && styles.activeTabText,
               pressed && styles.pressedTabText,
-              activeTab === 'explore' && styles.underlineText
+              activeTab === 'explore' && styles.underlineText,
             ]}>
               Explore
             </Text>
@@ -368,7 +368,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
           onPress={() => handleTabPress('foryou')}
           style={({ pressed }) => [
             styles.tabItem,
-            pressed && styles.pressedTab
+            pressed && styles.pressedTab,
           ]}
         >
           {({ pressed }) => (
@@ -376,7 +376,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
               styles.tabText,
               activeTab === 'foryou' && styles.activeTabText,
               pressed && styles.pressedTabText,
-              activeTab === 'foryou' && styles.underlineText
+              activeTab === 'foryou' && styles.underlineText,
             ]}>
               For You
             </Text>
@@ -441,9 +441,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
         </Animated.View>
       </View>
 
-      <WelcomeModal 
-        visible={welcomeModalVisible} 
-        onClose={() => setWelcomeModalVisible(false)} 
+      <WelcomeModal
+        visible={welcomeModalVisible}
+        onClose={() => setWelcomeModalVisible(false)}
       />
 
       <CommentModal
@@ -459,34 +459,34 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: themeVariables.darkGreyColor,
-    marginBottom: 80
+    marginBottom: 80,
   },
-  tabRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
-    backgroundColor: themeVariables.whiteColor, 
+  tabRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: themeVariables.whiteColor,
     borderBottomWidth: 1,
     borderBottomColor: themeVariables.whiteColor,
   },
-  tabItem: { 
-    flex: 1, 
-    paddingVertical: 12, 
+  tabItem: {
+    flex: 1,
+    paddingVertical: 12,
     backgroundColor: themeVariables.darkGreyColor,
   },
-  tabText: { 
-    fontSize: 16, 
-    fontWeight: '600', 
+  tabText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#333',
     textAlign: 'center',
   },
-  activeTab: { 
-    borderBottomWidth: 3, 
-    borderBottomColor: '#312783' 
+  activeTab: {
+    borderBottomWidth: 3,
+    borderBottomColor: '#312783',
   },
-  activeTabText: { 
+  activeTabText: {
     color: themeVariables.blackColor,
   },
   pressedTab: {

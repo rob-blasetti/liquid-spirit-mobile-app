@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: themeVariables.darkGreyColor,    
+    backgroundColor: themeVariables.darkGreyColor,
   },
   title: {
     fontSize: 32,
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginBottom: 32,
     width: Platform.select({ android: 120 }),
-    textAlign: 'center',    
+    textAlign: 'center',
   },
   // Label above inputs for clarity on all devices
   label: {

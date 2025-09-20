@@ -8,7 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import UserBadge from '../components/UserBadge';
 
@@ -22,7 +21,6 @@ import UserBadge from '../components/UserBadge';
  *  - title: string title of modal
  */
 const BadgeModal = ({ visible, onClose, list = [], title = '' }) => {
-  const navigation = useNavigation();
   return (
     <Modal
       visible={visible}

@@ -76,7 +76,7 @@ const LocalAssemblyModal = ({ visible, onClose }) => {
                         ]}
                       />
                     )}
-                    </TouchableOpacity>                    
+                    </TouchableOpacity>
                     <Text style={styles.name} numberOfLines={2}>
                       {member.firstName} {member.lastName}
                     </Text>

@@ -11,7 +11,6 @@ import {
   ScrollView,
   Animated,
   Modal,
-  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
@@ -95,7 +94,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   // initial liked state based on post.likes
   const [isLiked, setIsLiked] = useState(() => hasUserLiked(post.likes, userId));
   const commentCount = post.comments?.length || 0;
-  const isOwn = post.author._id == userId;
+  const isOwn = post.author._id === userId;
 
   const handleToggleMenu = () => {
     if (!token) {
@@ -127,7 +126,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     onMute(post.author._id);
     handleCloseMenu();
   };
-  
+
   const handleDeletePost = () => {
     onDelete(post._id);
     handleCloseMenu();
@@ -137,10 +136,10 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     const url = `https://www.liquidspirit.org/posts/${id}`;
     const message = `Check out this post on Liquid Spirit 👇\n${url}`;
     const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
-  
+
     try {
       const supported = await Linking.canOpenURL(whatsappUrl);
-  
+
       if (supported) {
         await Linking.openURL(whatsappUrl);
       } else {
@@ -154,7 +153,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       console.error('Error sharing:', err);
       Alert.alert('Sharing Error', 'Something went wrong while trying to share the post.');
     }
-  };  
+  };
 
   const isLikedRef = useRef(isLiked);
   useEffect(() => {
@@ -445,7 +444,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
               size={24}
               color="#312783"
             />
-            <Text style={styles.footerIconText}></Text>
+            <Text style={styles.footerIconText} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.postFooterIcon} onPress={() => onComment(post._id)}>
           <Ionicons name="chatbubble-outline" size={24} color="#312783" />
@@ -536,7 +535,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
     marginTop: -2,
-    width: Platform.select({ android: 125 })
+    width: Platform.select({ android: 125 }),
   },
   communityContainer: {
     flexDirection: 'row',
@@ -617,10 +616,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
   },
-  postImage: {
-    width: '100%',
-    height: '100%',
-  },
   video: {
     width: '100%',
     height: '100%',
@@ -677,9 +672,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   postFooterIcon: {
-    flexDirection: 'row', 
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 0, 
+    paddingVertical: 0,
     paddingHorizontal: 4,
   },
   footerIconText: {
@@ -731,31 +726,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   chipsRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 4,
-},
-tagScrollContainer: {
-  marginLeft: 8,
-  flexGrow: 1,
-},
-tagChipsContainer: {
-  flexDirection: 'row',
-  alignItems: 'center',
-},
-tagChip: {
-  backgroundColor: '#eee',
-  paddingHorizontal: 10,
-  paddingVertical: 4,
-  borderRadius: 12,
-  marginRight: 8,
-  borderColor: themeVariables.darkGreyColor,
-  borderWidth: 1,
-},
-tagText: {
-  fontSize: 12,
-  color: '#555',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
 });
 
 // Memoize to avoid unnecessary re-renders when parent list updates

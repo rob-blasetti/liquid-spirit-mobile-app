@@ -387,7 +387,7 @@ const renderScene = ({ route }) => {
   switch (route.key) {
     case 'posts':
       return renderList(posts, 'posts');
-      
+
     case 'activities':
       return renderList(activities, 'activities');
     case 'events':
@@ -503,7 +503,7 @@ const renderScene = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeVariables.darkGreyColor, },
+  container: { flex: 1, backgroundColor: themeVariables.darkGreyColor },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
@@ -525,8 +525,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 20, fontWeight: 'bold', color: '#fff', textAlign: 'center', width: Platform.select({ android: 105 }) },
   bahaiID: { fontSize: 14, color: '#fff', textAlign: 'center' },
   bannerRight: { alignItems: 'flex-end' },
-  communityName: { fontSize: 18, fontWeight: 'bold', color: '#fff', width: Platform.select({ android: 95 }), textAlign: 'center', },
-  memberCount: { fontSize: 14, color: '#ddd', width: Platform.select({ android: 95 }), textAlign: 'center', },
+  communityName: { fontSize: 18, fontWeight: 'bold', color: '#fff', width: Platform.select({ android: 95 }), textAlign: 'center' },
+  memberCount: { fontSize: 14, color: '#ddd', width: Platform.select({ android: 95 }), textAlign: 'center' },
   profileActionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   },
   dashboardHeading: {
     color: themeVariables.blackColor,
-    marginHorizontal: 20,    
+    marginHorizontal: 20,
     marginBottom: 10,
     padding: 4,
     fontWeight: 'bold',

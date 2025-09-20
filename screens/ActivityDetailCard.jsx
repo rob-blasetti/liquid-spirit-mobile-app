@@ -27,7 +27,6 @@ import {
 } from 'react-native-material-cards';
 import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import FastImage from 'react-native-fast-image';
-import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Tooltip } from 'react-native-elements';
@@ -366,12 +365,13 @@ const ActivityDetailCard = ({ route }) => {
   };
 
   /* ── early returns ────────────────────────────────────────────── */
-  if (!activityId)
+  if (!activityId) {
     return (
       <View style={styles.centered}>
         <Text style={styles.noActivityText}>No activity to display.</Text>
       </View>
     );
+  }
 
   if (loading && activityPreload) {
     return (
@@ -403,21 +403,23 @@ const ActivityDetailCard = ({ route }) => {
     );
   }
 
-  if (error)
+  if (error) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
+  }
 
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       </View>
     );
+  }
 
-  if (!activity)
+  if (!activity) {
     return (
       <View style={styles.centered}>
         <Text style={styles.noActivityText}>
@@ -425,6 +427,7 @@ const ActivityDetailCard = ({ route }) => {
         </Text>
       </View>
     );
+  }
 
   /* ── main render ────────────────────────────────────────────── */
   return (
@@ -476,7 +479,6 @@ const ActivityCardBody = ({
     imageUrl,
     title,
     activityType,
-    date,
     groupDetails,
     onlineLink: activityOnlineLink,
     address,
@@ -733,18 +735,14 @@ const ActivityCardBody = ({
   // Local state for modals for facilitators/participants
   const [facilitatorsModalVisible, setFacilitatorsModalVisible] = useState(false);
   const [participantsModalVisible, setParticipantsModalVisible] = useState(false);
-  // Session-specific modal for upcoming sessions
-  const [sessionModalVisible, setSessionModalVisible] = useState(false);
-  const [sessionModalList, setSessionModalList] = useState([]);
-  const [sessionModalTitle, setSessionModalTitle] = useState('');
   // Optimistic request flags
   const [optimisticFacilitatorRequest, setOptimisticFacilitatorRequest] = useState(false);
   const [optimisticParticipantRequest, setOptimisticParticipantRequest] = useState(false);
 
 
-  
+
   // User context and request handlers (token from context)
-  const { user, token } = useContext(UserContext);
+  const { token } = useContext(UserContext);
   const handleFacilitatorRequest = async () => {
     // Optimistic facilitator request
     setOptimisticFacilitatorRequest(true);
@@ -752,7 +750,7 @@ const ActivityCardBody = ({
       await requestFacilitator(activity._id, userId, token || '');
       // refresh activity data
       const updated = await fetchActivityDetails(activity._id, token || '');
-      setActivity(updated);      
+      setActivity(updated);
     } catch (err) {
       const msg = err.message || 'Failed to send facilitator request';
       // If already requested, treat as pending
@@ -765,7 +763,7 @@ const ActivityCardBody = ({
       } else {
         setOptimisticFacilitatorRequest(false);
       }
-      alert(msg);
+      Alert.alert('Request Error', msg);
     }
   };
   const handleParticipantRequest = async () => {
@@ -788,7 +786,7 @@ const ActivityCardBody = ({
       } else {
         setOptimisticParticipantRequest(false);
       }
-      alert(msg);
+      Alert.alert('Request Error', msg);
     }
   };
   // Determine current user status for display
@@ -808,16 +806,6 @@ const ActivityCardBody = ({
     optimisticFacilitatorRequest || isPendingFacilitator;
   const hasRequestedParticipant =
     optimisticParticipantRequest || isPendingParticipant;
-  const statusLabel = isUserFacilitator
-    ? 'Facilitator'
-    : isUserParticipant
-    ? 'Participant'
-    : hasRequestedFacilitator
-    ? 'Facilitation Requested'
-    : hasRequestedParticipant
-    ? 'Participation Requested'
-    : null;
-
   return (
     <>
     <Card style={styles.card}>
@@ -1039,13 +1027,6 @@ const ActivityCardBody = ({
         list={participants}
         title="Participants"
       />
-      {/* Session Avatar Modal */}
-      <BadgeModal
-        visible={sessionModalVisible}
-        onClose={() => setSessionModalVisible(false)}
-        list={sessionModalList}
-        title={sessionModalTitle}
-      />
     </Card>
 
     <View style={styles.footerContainer}>
@@ -1059,84 +1040,6 @@ const ActivityCardBody = ({
       <Text style={styles.footerText}>Liquid Spirit</Text>
     </View>
     </>
-  );
-};
-
-/* ───────────── Small Helpers ───────────────────────────────────── */
-const Fact = ({ icon, label, value, onPress, link }) => (
-  <TouchableOpacity
-    style={styles.factBox}
-    disabled={!onPress}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <Ionicons name={icon} size={18} color="#312783" />
-    <Text style={styles.factLabel}>{label}</Text>
-    <Text style={[styles.factValue, link && styles.linkText]} numberOfLines={1}>
-      {value}
-    </Text>
-  </TouchableOpacity>
-);
-
-const DetailCell = ({ icon, label, main, sub, onPress, isLink }) => (
-  <TouchableOpacity
-    style={styles.detailCell}
-    onPress={onPress}
-    disabled={!onPress}
-    activeOpacity={0.8}
-  >
-    <Ionicons name={icon} size={18} color="#312783" style={styles.detailIcon} />
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={[styles.detailValue, isLink && styles.linkText]}>{main}</Text>
-    {sub ? <Text style={styles.detailSub}>{sub}</Text> : null}
-  </TouchableOpacity>
-);
-
-/* ───────────── Overlapping Avatars Component ─────────────────────
-   Preview avatars overlapping a little bit, max 2 with overflow count.
-──────────────────────────────────────────────────────────────────────── */
-const OverlappingAvatars = ({ list }) => {
-  const maxDisplay = 2;
-  const extraCount = list.length - maxDisplay;
-  const displayList = list.slice(0, maxDisplay);
-  const navigation = useNavigation();
-  return (
-    <View style={styles.avatarsContainer}>
-      {displayList.map((item, idx) => {
-        const key = item?.details?._id || item?._id || idx;
-        const user = item.details || item;
-        const avatarUri = user.profilePicture || null;
-        const imageStyle = [styles.avatar, idx > 0 && { marginLeft: -15 }];
-        return (
-          <TouchableOpacity
-            key={key}
-            style={imageStyle}
-            onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
-            activeOpacity={0.8}
-          >
-            {avatarUri ? (
-              <FastImage source={{ uri: avatarUri }} style={imageStyle} />
-            ) : (
-              <Avatar
-                size={styles.avatar.width}
-                name={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
-                variant="beam"
-                colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-                style={imageStyle}
-              />
-            )}
-          </TouchableOpacity>
-        );
-      })}
-      {extraCount > 0 && (
-        <View
-          key="extra"
-          style={[styles.avatar, styles.extraCount, { marginLeft: -15 }]}
-        >
-          <Text style={styles.extraCountText}>+{extraCount}</Text>
-        </View>
-      )}
-    </View>
   );
 };
 
@@ -1282,7 +1185,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
-    width: Platform.select({ android: 150 })
+    width: Platform.select({ android: 150 }),
   },
   linkText: {
     color: themeVariables.primaryColor,
@@ -1312,7 +1215,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
     textAlign: 'center',
-    width: Platform.select({ android: 65 })
+    width: Platform.select({ android: 65 }),
   },
   detailValue: {
     fontSize: 14,
@@ -1320,7 +1223,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginBottom: 4,
     textAlign: 'center',
-    width: Platform.select({ android: 65 })
+    width: Platform.select({ android: 65 }),
   },
   detailSub: {
     fontSize: 12,
@@ -1341,11 +1244,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 8,
     color: themeVariables.blackColor,
     textAlign: 'center',
-    width: Platform.select({ android: 150 })
+    width: Platform.select({ android: 150 }),
   },
   avatarsContainer: {
     flexDirection: 'row',
@@ -1644,7 +1546,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-    width: Platform.select({ android: 40 })
+    width: Platform.select({ android: 40 }),
   },
   /* Modal badge list layout */
   modalList: {
@@ -1684,7 +1586,7 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     marginLeft: 6,
   },
-  
+
   /* Activity Guidelines & Forms */
   guidelinesText: {
     fontSize: 14,
@@ -1767,7 +1669,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    width: Platform.select({ android: 100 })
+    width: Platform.select({ android: 100 }),
   },
   // Custom back button overlay
 });

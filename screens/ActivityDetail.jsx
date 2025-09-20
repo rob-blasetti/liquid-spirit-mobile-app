@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Linking,
   Dimensions,
+  Alert,
 } from 'react-native';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
@@ -63,7 +64,7 @@ const ActivityDetail = ({ route }) => {
         <Text style={styles.noActivityIdText}>No activity to display.</Text>
       </View>
     );
-  }  
+  }
 
   if (loading && activityPreload) {
     return <>
@@ -118,7 +119,7 @@ const ActivityDetail = ({ route }) => {
         </View>
       );
     }
-  
+
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.noActivityIdText}>Activity details not available.</Text>
@@ -134,7 +135,7 @@ const ActivityDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}      
+      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>
@@ -179,7 +180,10 @@ const ActivityDetail = ({ route }) => {
 
         {/* Join as Facilitator */}
         {hasFacilitatorSpace && !isUserAFacilitator && !isUserAParticipant && (
-          <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Facilitator Sent!')}>
+          <TouchableOpacity
+            style={styles.joinButton}
+            onPress={() => Alert.alert('Request to Join as Facilitator Sent!')}
+          >
             <Text style={styles.joinButtonText}>Request Join</Text>
           </TouchableOpacity>
         )}
@@ -198,7 +202,10 @@ const ActivityDetail = ({ route }) => {
 
         {/* Join as Participant */}
         {hasParticipantSpace && !isUserAParticipant && !isUserAFacilitator && (
-          <TouchableOpacity style={styles.joinButton} onPress={() => alert('Request to Join as Participant Sent!')}>
+          <TouchableOpacity
+            style={styles.joinButton}
+            onPress={() => Alert.alert('Request to Join as Participant Sent!')}
+          >
             <Text style={styles.joinButtonText}>Request Join</Text>
           </TouchableOpacity>
         )}

@@ -19,8 +19,6 @@ export const UserProvider = ({ children }) => {
   const [userActivities, setUserActivities] = useState(null);
   const [userEvents, setUserEvents] = useState(null);
   const [userPosts, setUserPosts] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [refreshToken, setRefreshToken] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userNotifications, setUserNotifications] = useState(null);
   const [storageLoaded, setStorageLoaded] = useState(false);
@@ -46,11 +44,9 @@ export const UserProvider = ({ children }) => {
         const map = Object.fromEntries(stores);
 
         if (map.authToken) setToken(map.authToken);
-        if (map.refreshToken) setRefreshToken(map.refreshToken);
         if (map.user) setUser(JSON.parse(map.user));
 
-        if (map.userActivities)
-          setUserActivities(JSON.parse(map.userActivities));
+        if (map.userActivities) setUserActivities(JSON.parse(map.userActivities));
         if (map.userEvents) setUserEvents(JSON.parse(map.userEvents));
         if (map.userPosts) setUserPosts(JSON.parse(map.userPosts));
         if (map.userDetails) setUserDetails(JSON.parse(map.userDetails));
@@ -66,7 +62,7 @@ export const UserProvider = ({ children }) => {
 
   useEffect(() => {
     if (!token) return;
-    
+
     if (isTokenExpired(token)) {
       refreshSession();
       return;
@@ -74,9 +70,7 @@ export const UserProvider = ({ children }) => {
 
     const loadUserData = async () => {
       try {
-        setIsLoading(true);
-
-        const [posts, activities, events] = await Promise.all([          
+        const [posts, activities, events] = await Promise.all([
           fetchExploreFeed(token),
           fetchActivities(token),
           fetchEvents(token),
@@ -91,9 +85,8 @@ export const UserProvider = ({ children }) => {
         await AsyncStorage.setItem('userPosts', JSON.stringify(posts));
 
       } catch (error) {
-        console.error("Error loading user data:", error);
+        console.error('Error loading user data:', error);
       } finally {
-        setIsLoading(false);
       }
     };
 
@@ -120,20 +113,19 @@ export const UserProvider = ({ children }) => {
     fetchDetails();
   }, [token, user?.id]);
 
-  const login = async (userData, authToken, refreshToken, email, password) => {
+  const login = async (userData, authToken, newRefreshToken, email, password) => {
     try {
       setUser(userData);
       setToken(authToken);
-      setRefreshToken(refreshToken);
       setCommunityId(userData.community?._id);
-  
+
       await AsyncStorage.multiSet([
         ['authToken', authToken],
-        ['refreshToken', refreshToken],
+        ['refreshToken', newRefreshToken],
         ['user', JSON.stringify(userData)],
         ['communityId', userData.community?._id || ''],
       ]);
-  
+
       if (email && password) {
         // Store credentials securely without prompting biometric on save (will prompt on retrieval)
         await Keychain.setGenericPassword(email, password, {
@@ -165,17 +157,17 @@ export const UserProvider = ({ children }) => {
         'userDetails',
       ]);
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
     }
   };
 
-  function isTokenExpired(token) {
+  function isTokenExpired(jwtToken) {
     try {
-      const { exp } = parseJwt(token);
-  
+      const { exp } = parseJwt(jwtToken);
+
       // If 'exp' doesn't exist or decoding fails, treat token as invalid
       if (!exp) return true;
-  
+
       // Check if the current time is past the token's expiration time
       return Date.now() >= exp * 1000;
     } catch (error) {
@@ -199,7 +191,7 @@ export const UserProvider = ({ children }) => {
       logout();
       return;
     }
-    
+
     try {
       const p = fetch(`${API_URL}/api/auth/refresh`, {
         method: 'POST',
@@ -208,12 +200,12 @@ export const UserProvider = ({ children }) => {
       });
       refreshInFlightRef.current = p;
       const response = await p;
-  
+
       // parse the JSON body once
       const data = await response.json();
-      
+
       if (!response.ok) {
-        console.warn("Invalid refresh token, attempting re-login with stored credentials...");
+        console.warn('Invalid refresh token, attempting re-login with stored credentials...');
         await AsyncStorage.removeItem('refreshToken');
         // Attempt to re-authenticate using stored credentials
         try {
@@ -224,17 +216,16 @@ export const UserProvider = ({ children }) => {
         }
         return;
       }
-  
+
       // Extract tokens
       const { accessToken, newRefreshToken } = data;
-      
+
       await AsyncStorage.multiSet([
         ['authToken', accessToken],
         ['refreshToken', newRefreshToken || ''],
       ]);
 
       setToken(accessToken);
-      setRefreshToken(newRefreshToken);
     } catch (error) {
       // Refresh token failed, force logout
       console.error('Refresh error:', error);
@@ -273,7 +264,7 @@ export const UserProvider = ({ children }) => {
           subtitle: 'Authenticate using Face ID / Touch ID',
         },
       });
-  
+
       if (credentials) {
         const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
@@ -283,9 +274,9 @@ export const UserProvider = ({ children }) => {
             password: credentials.password,
           }),
         });
-  
+
         const data = await response.json();
-  
+
         if (response.ok) {
           await login(
             data.user,
@@ -306,10 +297,10 @@ export const UserProvider = ({ children }) => {
     } finally {
       biometricInFlightRef.current = false;
     }
-  };  
+  };
 
   return (
-    <UserContext.Provider 
+    <UserContext.Provider
       value={{
         user,
         // Detailed user info including certifications
@@ -334,7 +325,7 @@ export const UserProvider = ({ children }) => {
         biometricLogin,
         isTokenExpired,
         refreshSession
-        ,storageLoaded
+        ,storageLoaded,
       }}>
       {children}
     </UserContext.Provider>

@@ -387,7 +387,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
       alert('Failed to join event');
     }
   };
-  
+
   // Handle host request submission
   // Handle host request submission
   const handleRequestHost = async () => {
@@ -503,7 +503,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   // Initialize with preloaded members if available to avoid loading jump
   const [oversightBody, setOversightBody] = useState({ name: defaultOversightName, members: oversightMembersPreload || [] });
   const [oversightLoading, setOversightLoading] = useState(!oversightMembersPreload);
-  
+
   // Fetch appropriate body members based on eventType
   useEffect(() => {
     let isMounted = true;
@@ -536,7 +536,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
     loadBody();
     return () => { isMounted = false; };
   }, [eventType, oversightMembersPreload]);
-  
+
   const attendees = enrichedAttendees ?? rawAttendees;
   // Material upload modal state
   const [materialModalVisible, setMaterialModalVisible] = useState(false);
@@ -545,7 +545,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   // Error message for material upload issues
   const [materialError, setMaterialError] = useState(null);
-  
+
   return (
     <>
     <Card style={styles.card}>
@@ -582,9 +582,9 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           <Text style={styles.mapTitle}>Where is it?</Text>
           <View style={styles.mapWrapper}>
             {region ? (
-              <MapView 
+              <MapView
                 provider={Platform.OS === 'android' ? MapView.PROVIDER_GOOGLE : null}
-                style={styles.map} 
+                style={styles.map}
                 initialRegion={region}>
                 <Marker coordinate={region} />
               </MapView>
@@ -594,7 +594,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
               </View>
             )}
           </View>
-          <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>  
+          <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
             {fullAddr}
           </Text>
           <View style={styles.divider} />
@@ -774,17 +774,17 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
         transparent
         onRequestClose={() => setMaterialModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={styles.modalCenterContainer}>
+          <View style={styles.modalCenterContent}>
             <Text style={styles.modalTitle}>Add Material</Text>
             <TextInput
-              style={styles.modalInput}
+              style={styles.materialModalInput}
               placeholder="Title"
               value={newMaterialTitle}
               onChangeText={setNewMaterialTitle}
             />
             <TouchableOpacity
-              style={[styles.uploadButton, uploadingMaterial && { opacity: 0.5 }]} 
+              style={[styles.uploadButton, uploadingMaterial && { opacity: 0.5 }]}
               onPress={pickMaterial}
               disabled={uploadingMaterial}
             >
@@ -803,24 +803,24 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
                 {materialError && (
                   <Text style={styles.errorText}>{materialError}</Text>
                 )}
-                <View style={styles.modalButtonsRow}>
+                <View style={styles.materialModalButtonsRow}>
                   <TouchableOpacity
-                    style={styles.modalButton}
+                    style={styles.materialModalButton}
                     onPress={() => {
                       setMaterialModalVisible(false);
                       setMaterialError(null);
                     }}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.modalButtonText}>Cancel</Text>
+                    <Text style={styles.materialModalButtonText}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalButton, !newMaterialDoc && { opacity: 0.5 }]}
+                    style={[styles.materialModalButton, !newMaterialDoc && { opacity: 0.5 }]}
                     onPress={submitMaterial}
                     activeOpacity={0.8}
                     disabled={!newMaterialDoc}
                   >
-                    <Text style={styles.modalButtonText}>Upload</Text>
+                    <Text style={styles.materialModalButtonText}>Upload</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -835,8 +835,8 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
         transparent
         onRequestClose={() => setAddHostModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={styles.modalCenterContainer}>
+          <View style={styles.modalCenterContent}>
             <Text style={styles.modalTitle}>Select Host</Text>
             <TextInput
               style={styles.modalInput}
@@ -963,9 +963,9 @@ const BadgeModal = ({ visible, onClose, list, title }) => {
   return (
   <Modal visible={visible} animationType="slide" transparent>
     <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.modalContainer}>
+      <View style={styles.modalSheetContainer}>
         <TouchableWithoutFeedback>
-          <View style={styles.modalContent}>
+          <View style={styles.modalSheetContent}>
             <Text style={styles.modalTitle}>{title}</Text>
             <ScrollView contentContainerStyle={styles.modalList}>
               {list.map((item, idx) => {
@@ -994,13 +994,13 @@ const BadgeModal = ({ visible, onClose, list, title }) => {
 };
 const styles = StyleSheet.create({
   // Modal for adding host
-  modalContainer: {
+  modalCenterContainer: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalContent: {
+  modalCenterContent: {
     width: '85%',
     backgroundColor: '#fff',
     borderRadius: 8,
@@ -1010,6 +1010,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 12,
+    textAlign: 'center',
+    color: themeVariables.blackColor,
   },
   modalInput: {
     borderWidth: 1,
@@ -1104,26 +1106,60 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     color: themeVariables.blackColor,
   },
-  centered:{flex:1,minHeight:windowHeight,justifyContent:'center',alignItems:'center',backgroundColor:themeVariables.whiteColor},
-  card:{
-    width:'100%',
-    backgroundColor:'transparent',
-    margin:0,
-    padding:0,
+  centered: {
+    flex: 1,
+    minHeight: windowHeight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: themeVariables.whiteColor,
   },
-  banner:{width:'100%',height:220,borderRadius:0},
-  overlayCard:{width:'100%',marginTop:-40,backgroundColor:'#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28,padding:16,shadowColor:'#000',shadowOpacity:0.15,shadowRadius:6,shadowOffset:{width:0,height:3},elevation:4},
-  titleBlock:{paddingTop:0},
-  factBox:{flex:1,alignItems:'center'},
-  factLabel:{fontSize:11,color:'#666',marginTop:4},
-  factValue:{fontSize:14,fontWeight:'600',color:themeVariables.blackColor},
-  linkText:{color:themeVariables.primaryColor,textDecorationLine:'underline'},
-  cardContent:{paddingTop:8,marginHorizontal:-15},
-  detailCell:{flex:1,alignItems:'center',paddingHorizontal:4},
-  detailIcon:{marginBottom:6},
-  detailLabel:{fontSize:11,color:'#666',marginBottom:4,textAlign:'center', textAlign: 'center', width: Platform.select({ android: 50 }) },
-  detailValue:{fontSize:14,fontWeight:'600',color:'#312783',marginBottom:4,textAlign:'center', width: Platform.select({ android: 140 })},
-  detailSub:{fontSize:12,color:'#666',textAlign:'center'},
+  card: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    margin: 0,
+    padding: 0,
+  },
+  banner: { width: '100%', height: 220, borderRadius: 0 },
+  overlayCard: {
+    width: '100%',
+    marginTop: -40,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+  },
+  titleBlock: { paddingTop: 0 },
+  factBox: { flex: 1, alignItems: 'center' },
+  factLabel: { fontSize: 11, color: '#666', marginTop: 4 },
+  factValue: { fontSize: 14, fontWeight: '600', color: themeVariables.blackColor },
+  linkText: {
+    color: themeVariables.primaryColor,
+    textDecorationLine: 'underline',
+  },
+  cardContent: { paddingTop: 8, marginHorizontal: -15 },
+  detailCell: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
+  detailIcon: { marginBottom: 6 },
+  detailLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'center',
+    width: Platform.select({ android: 50 }),
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#312783',
+    marginBottom: 4,
+    textAlign: 'center',
+    width: Platform.select({ android: 140 }),
+  },
+  detailSub: { fontSize: 12, color: '#666', textAlign: 'center' },
   sectionHeaderRow:{
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1131,21 +1167,26 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: 14,
   },
-  avatarsContainer:{flexDirection:'row',justifyContent:'center',alignItems:'center'},
-  userListContainer:{flexDirection:'row',flexWrap:'wrap'},
-  userListItem:{
-    width:'50%',
-    paddingVertical:4,
-    paddingHorizontal:4,
+  avatarsContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  userListContainer: { flexDirection: 'row', flexWrap: 'wrap' },
+  userListItem: {
+    width: '50%',
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
-  avatar:{width:40,height:40,borderRadius:20,borderWidth:1,borderColor:'#fff'},
-  extraCount:{backgroundColor:'#666',justifyContent:'center',alignItems:'center'},
-  extraCountText:{color:'#fff',fontSize:14,fontWeight:'600'},
-  modalContainer:{flex:1,backgroundColor:'rgba(0,0,0,0.5)',justifyContent:'flex-end'},
-  modalContent:{backgroundColor:themeVariables.whiteColor,borderTopLeftRadius:16,borderTopRightRadius:16,padding:16,maxHeight:'80%'},
-  modalTitle:{fontSize:18,fontWeight:'bold',textAlign:'center',marginBottom:12,color:themeVariables.blackColor},
-  modalList:{flexDirection:'row',flexWrap:'wrap',justifyContent:'flex-start'},
-  modalBadgeWrap:{width:100,alignItems:'center',margin:8},
+  avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#fff' },
+  extraCount: { backgroundColor: '#666', justifyContent: 'center', alignItems: 'center' },
+  extraCountText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  modalSheetContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalSheetContent: {
+    backgroundColor: themeVariables.whiteColor,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+    maxHeight: '80%',
+  },
+  modalList: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start' },
+  modalBadgeWrap: { width: 100, alignItems: 'center', margin: 8 },
   modalCloseButton:{
     alignSelf: 'center',
     paddingHorizontal: 16,
@@ -1158,7 +1199,7 @@ const styles = StyleSheet.create({
   modalCloseText: {
     color: themeVariables.whiteColor,
     fontWeight: '600',
-    fontSize: 16
+    fontSize: 16,
   },
   requestButton:{
     flexDirection: 'row',
@@ -1206,9 +1247,9 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     marginLeft: 6,
     fontWeight: '600',
-    fontSize: 14
+    fontSize: 14,
   },
-  modalInput: {
+  materialModalInput: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
@@ -1227,18 +1268,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: themeVariables.blackColor,
   },
-  modalButtonsRow: {
+  materialModalButtonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 8,
   },
-  modalButton: {
+  materialModalButton: {
     backgroundColor: themeVariables.primaryColor,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
   },
-  modalButtonText: {
+  materialModalButtonText: {
     color: themeVariables.whiteColor,
     fontWeight: '600',
   },
@@ -1260,15 +1301,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: '#999',
   },
-  materialTile:{
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    margin: 4,
-  },
   materialTile: {
     flexBasis: '30%',
     aspectRatio: 1,
@@ -1282,7 +1314,7 @@ const styles = StyleSheet.create({
   noDataText:{
     fontSize: 16,
     color:'#666',
-    textAlign: 'left', 
+    textAlign: 'left',
   },
   noDataSpacing: {
     marginBottom: 12,
@@ -1295,7 +1327,7 @@ const styles = StyleSheet.create({
     borderRadius:12,
     paddingHorizontal:8,
     paddingVertical:4,
-    zIndex:10
+    zIndex:10,
   },
   statusChipText:{
     color:themeVariables.whiteColor,

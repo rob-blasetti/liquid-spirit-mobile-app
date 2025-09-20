@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   overlayContainer: {
     position: 'absolute',
     top: 0, left: 0, right: 20,
-    width: screenWidth -7,
+    width: screenWidth - 7,
     height: screenHeight - 25,
     justifyContent: 'center',
     alignItems: 'center',
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#aaa',
     marginVertical: 10,
-  }
+  },
 });
 
 export default DropdownMenu;

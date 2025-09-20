@@ -30,7 +30,7 @@ export const fetchEvents = async (token) => {
 };
 
 export const joinEvent = async (eventId, token, eventName, user, communityId) => {
-  const userName = user.firstName + " " + user.lastName;
+  const userName = user.firstName + ' ' + user.lastName;
   const userId = user?._id || user?.id;
 
   try {
@@ -50,11 +50,11 @@ export const joinEvent = async (eventId, token, eventName, user, communityId) =>
 
     try {
       await NotificationService.userJoinedEventNotification(
-        token,       
-        userId,      
-        eventId,     
-        communityId, 
-        eventName,   
+        token,
+        userId,
+        eventId,
+        communityId,
+        eventName,
         userName
       );
     } catch (notifErr) {
@@ -178,7 +178,7 @@ export const addEventMaterials = async (id, title, file, token) => {
     if (!response.ok) {
       throw new Error(updatedEvent.message || 'Failed to add event material(s).');
     }
-    
+
     return updatedEvent;
   } catch (error) {
     console.error('Error adding event material(s):', error);

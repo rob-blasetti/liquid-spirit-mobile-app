@@ -150,7 +150,7 @@ const NotificationService = {
       budgetId,
       'Finance',
       recipientCommunity,
-      { caption: `The community budget has been updated.` },
+      { caption: 'The community budget has been updated.' },
       'community'
     );
   },
@@ -263,15 +263,15 @@ const NotificationService = {
   async getAllNotifications(token, params = {}) {
     try {
       if (!token) throw new Error('Token not available');
-  
+
       const url = new URL(`${API_URL}/api/notifications`);
-  
+
       Object.entries(params).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
           url.searchParams.append(key, value);
         }
       });
-  
+
       // fetch expects a string URL; convert URL object to string
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -280,13 +280,13 @@ const NotificationService = {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       const data = await response.json();
       if (!response.ok) {
         // throw server-provided message if available, else default
         throw new Error(data.error || data.message || 'Failed to fetch notifications');
       }
-  
+
       return data;
     } catch (error) {
       console.error('Error fetching notifications:', error);

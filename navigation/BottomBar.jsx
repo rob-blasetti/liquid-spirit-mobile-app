@@ -3,16 +3,13 @@ import { View } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
 import SocialMediaScreen from '../screens/SocialMedia';
 import Home from '../screens/Home';
-import EventsScreen from '../screens/Events';
 // Removed NotificationScreen import; Notifications handled via Home screen banner
 import SearchScreen from '../screens/Search';
-import ActivitiesScreen from '../screens/Activities';
 import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
@@ -31,7 +28,6 @@ const tabIcons = {
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn } = useContext(UserContext);
-  const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
 

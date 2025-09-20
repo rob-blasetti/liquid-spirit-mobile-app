@@ -12,7 +12,7 @@ import {
   Platform,
   Keyboard,
   StatusBar,
-  Dimensions
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -440,7 +440,6 @@ const styles = StyleSheet.create({
     borderColor: themeVariables.primaryColor,
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: themeVariables.primaryColor,
   },
   submitButtonText: {
     color: themeVariables.primaryColor,

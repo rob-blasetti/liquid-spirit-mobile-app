@@ -1,18 +1,61 @@
 import io from 'socket.io-client';
+import { API_URL } from '../config';
+
+let socketInstance;
+
+const getBaseUrl = () => {
+  const base = API_URL || '';
+  return base.endsWith('/') ? base.slice(0, -1) : base;
+};
 
 export const initializeSocket = () => {
-  const socket = io(import.meta.env.VITE_API_URL);
-  return socket;
+  if (socketInstance && socketInstance.connected) {
+    return socketInstance;
+  }
+
+  const url = getBaseUrl();
+  if (!url) {
+    console.warn('[SocketService] API_URL is not configured; socket not initialized');
+    return null;
+  }
+
+  if (socketInstance && socketInstance.connecting) {
+    return socketInstance;
+  }
+
+  socketInstance = io(url, {
+    transports: ['websocket'],
+  });
+
+  socketInstance.on('disconnect', () => {
+    socketInstance = null;
+  });
+
+  return socketInstance;
 };
 
 export const subscribeToPostUpdates = (socket, callback) => {
-  socket.on('post-updated', callback);
-  socket.on('comment-added', callback);
-  socket.on('like-updated', callback);
+  if (!socket || typeof callback !== 'function') return () => {};
+
+  const events = ['post-updated', 'comment-added', 'like-updated'];
+
+  events.forEach(event => {
+    socket.off(event, callback);
+    socket.on(event, callback);
+  });
+
+  return () => {
+    events.forEach(event => socket.off(event, callback));
+  };
 };
 
 export const disconnectSocket = (socket) => {
-  if (socket) {
-    socket.disconnect();
+  const instance = socket || socketInstance;
+  if (instance) {
+    instance.removeAllListeners?.();
+    instance.disconnect();
+  }
+  if (!socket || socket === socketInstance) {
+    socketInstance = null;
   }
 };

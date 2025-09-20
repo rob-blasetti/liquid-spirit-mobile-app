@@ -13,11 +13,11 @@ export const fetchExploreFeed = async (token) => {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to fetch explore posts');
       }
-  
+
       const responseData = await response.json();
       return responseData.data;
     } catch (error) {
@@ -34,11 +34,11 @@ export const fetchExploreFeed = async (token) => {
   //           'Authorization': `Bearer ${token}`,
   //         },
   //       });
-    
+
   //       if (!response.ok) {
   //         throw new Error('Failed to fetch For You posts');
   //       }
-    
+
   //       const responseData = await response.json();
   //       return responseData.data;
   //     } catch (error) {
@@ -48,25 +48,22 @@ export const fetchExploreFeed = async (token) => {
   //   };
 
 
-export const fetchForYouFeed = async (userCommunityId, token) => {
-  try {
-    return [
-      {
-        _id: 'static-post',
-        media: ['https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/post-media-1741928527423.jpg'], // ✅ Wrap in an object
-        content: 'A special post just for you!',
-        author: { firstName: 'Coming', lastName: 'Soon', profilePicture: 'https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/earth.png' },
-        community: { name: 'Global Community' },
-        likes: [],
-        comments: [],
-      }
-    ];
-  } catch (error) {
-    console.error('Error fetching For You (community feed):', error);
-    throw new Error(`Fetch For You (community feed) error: ${error.message}`);
-  }
-};
-  
+export const fetchForYouFeed = async () => [
+  {
+    _id: 'static-post',
+    media: ['https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/post-media-1741928527423.jpg'],
+    content: 'A special post just for you!',
+    author: {
+      firstName: 'Coming',
+      lastName: 'Soon',
+      profilePicture: 'https://liquid-spirit.s3.us-east-1.amazonaws.com/profile-images/earth.png',
+    },
+    community: { name: 'Global Community' },
+    likes: [],
+    comments: [],
+  },
+];
+
   export const fetchRecentCommunityPosts = async (userCommunityId, token) => {
     try {
       const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
@@ -75,11 +72,11 @@ export const fetchForYouFeed = async (userCommunityId, token) => {
           'Authorization': `Bearer ${token}`,
         },
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to fetch posts');
       }
-  
+
       const responseData = await response.json();
       return responseData.data.slice(0, 5);
     } catch (error) {
@@ -160,7 +157,7 @@ export const likePost = async (postId, token, { userId } = {}) => {
 
         throw new Error(errorMessage);
       }
-  
+
       const responseData = await response.json();
 
       if (__DEV__) {
@@ -227,12 +224,12 @@ export const likePost = async (postId, token, { userId } = {}) => {
           tags,
         }),
       });
-  
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to create post.');
       }
-  
+
       const responseData = await response.json();
       return responseData.data;
     } catch (error) {
@@ -249,7 +246,7 @@ export const likePost = async (postId, token, { userId } = {}) => {
         type: fileType,
         name: `post-media-${Date.now()}.jpg`,
       });
-  
+
       const response = await fetch(`${API_URL}/api/upload/upload-image`, {
         method: 'POST',
         headers: {
@@ -258,11 +255,11 @@ export const likePost = async (postId, token, { userId } = {}) => {
         },
         body: formData,
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to upload image');
       }
-  
+
       const data = await response.json();
       return {
         originalUrl: data.originalUrl,
@@ -272,11 +269,11 @@ export const likePost = async (postId, token, { userId } = {}) => {
       throw new Error('Image upload failed');
     }
   };
-  
+
   export const uploadVideoWithThumbnail = async (fileUri, fileType, token) => {
     try {
       const fileName = `post-media-${Date.now()}.mp4`;
-  
+
       // === Get signed URL
       const signedUrlResponse = await fetch(
         `${API_URL}/api/upload/s3-video-url?fileName=${fileName}&fileType=${fileType}`,
@@ -285,10 +282,10 @@ export const likePost = async (postId, token, { userId } = {}) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       const { url } = await signedUrlResponse.json();
       if (!url) throw new Error('Failed to get signed URL');
-  
+
       // === Upload video to S3
       const fileBlob = await fetch(fileUri).then(res => res.blob());
       const uploadResponse = await fetch(url, {
@@ -297,9 +294,9 @@ export const likePost = async (postId, token, { userId } = {}) => {
         headers: { 'Content-Type': fileType },
       });
       if (!uploadResponse.ok) throw new Error('Failed to upload video');
-  
+
       const videoUrl = url.split('?')[0];
-  
+
       // === Trigger thumbnail generation
       const thumbnailResponse = await fetch(`${API_URL}/api/upload/upload-video`, {
         method: 'POST',
@@ -309,9 +306,9 @@ export const likePost = async (postId, token, { userId } = {}) => {
         },
         body: JSON.stringify({ videoUrl }),
       });
-  
+
       if (!thumbnailResponse.ok) throw new Error('Failed to generate thumbnail');
-  
+
       const data = await thumbnailResponse.json();
       return {
         originalUrl: data.videoUrl,
@@ -322,21 +319,21 @@ export const likePost = async (postId, token, { userId } = {}) => {
     }
   };
 
-  export const flagPost = async (postId, token) => { 
+  export const flagPost = async (postId, token) => {
     try {
       const response = await fetch(`${API_URL}/api/posts/${postId}/flag`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-        }
+        },
       });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to flag post.');
       }
-  
+
       const responseData = await response.json();
       return responseData.data;
     } catch (error) {
@@ -345,7 +342,7 @@ export const likePost = async (postId, token, { userId } = {}) => {
     }
   };
 
-  export const deletePost = async (postId, token) => { 
+  export const deletePost = async (postId, token) => {
     try {
       const response = await fetch(`${API_URL}/api/posts/${postId}`, {
         method: 'DELETE',
@@ -356,12 +353,12 @@ export const likePost = async (postId, token, { userId } = {}) => {
       });
 
       console.log('response: ', response);
-  
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to delete post.');
       }
-  
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -369,4 +366,4 @@ export const likePost = async (postId, token, { userId } = {}) => {
       throw new Error(`Delete post error: ${error.message}`);
     }
   };
- 
+

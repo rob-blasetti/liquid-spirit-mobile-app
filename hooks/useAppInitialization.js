@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext, CommunityContext } from '../contexts';
-import { fetchExploreFeed, useAuthService } from '../services';
+import { fetchExploreFeed } from '../services';
 
 /**
  * Custom hook to initialize the app: session check, token refresh,
@@ -13,10 +13,8 @@ export const useAppInitialization = () => {
   const [checkingSession, setCheckingSession] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
-  const { biometricLogin, isLoggedIn, storageLoaded,
-          token, isTokenExpired, refreshSession } = useContext(UserContext);
-  const { communityId, homeOverview, setHomeOverview } = useContext(CommunityContext);
-  const { fetchHomeOverview } = useAuthService();
+  const { biometricLogin, isLoggedIn, storageLoaded, token, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { homeOverview } = useContext(CommunityContext);
 
   // Load cached posts for immediate display
   useEffect(() => {

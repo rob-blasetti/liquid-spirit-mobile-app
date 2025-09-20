@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 
@@ -14,7 +13,6 @@ const BANNER_HEIGHT = 50;
  *   duration: auto-hide duration (ms)
  */
 const SlideBanner = ({ message, onClose, duration = 4000, slideTo = 0 }) => {
-  const insets = useSafeAreaInsets();
   const bannerAnim = useRef(new Animated.Value(-BANNER_HEIGHT)).current;
   const timerRef = useRef(null);
 

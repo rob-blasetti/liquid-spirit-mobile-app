@@ -33,8 +33,6 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
   // Pending user data
   const user = pendingUser || {};
   const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-  const role = type || '';
-  const messageSuffix = ` is requesting to be a ${role}`;
 
   const handlePress = () => {
     navigation.navigate('ActivityDetailCard', {

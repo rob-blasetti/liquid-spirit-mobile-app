@@ -42,7 +42,6 @@ const MainApp = () => {
   useEffect(() => {
     const cleanup = initPushNotifications(token || null);
     return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // When auth token becomes available later, register the device with backend

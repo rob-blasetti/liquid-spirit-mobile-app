@@ -10,7 +10,7 @@ module.exports = {
   // Transform specific modules that use ESM syntax
   transformIgnorePatterns: [
     // Allow ESM modules in react-native and selected packages to be transformed
-    'node_modules/(?!(react-native|@react-native|react-native-progress|react-native-config|react-native-vector-icons)/)'
+    'node_modules/(?!(react-native|@react-native|react-native-progress|react-native-config|react-native-vector-icons)/)',
   ],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
 };

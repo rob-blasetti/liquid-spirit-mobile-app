@@ -3,26 +3,26 @@ const BADI_EPOCH = new Date(Date.UTC(1844, 2, 21)); // March 21, 1844
 // English-transliterated Badi month names (ASCII, no diacritics)
 // English translations of the 20 Badi month names (in calendar order)
 const BADI_MONTHS = [
-  "Splendor",       // Bahá
-  "Glory",          // Jalál
-  "Beauty",         // Jamál
-  "Grandeur",       // ‘Aẓamat
-  "Light",          // Núr
-  "Mercy",          // Raḥmat
-  "Words",          // Kalimát
-  "Perfection",     // Kamál
-  "Names",          // Asmá’
-  "Might",          // ‘Izzat
-  "Will",           // Mashíyyat
-  "Knowledge",      // ‘Ilm
-  "Power",          // Qudrat
-  "Speech",         // Qawl
-  "Questions",      // Masá’il
-  "Honour",         // S͟haraf
-  "Sovereignty",    // Sulṭán
-  "Dominion",       // Mulk
-  "The Days of Há", // Ayyám-i-Há
-  "Loftiness",      // ‘Alá’
+  'Splendor',       // Bahá
+  'Glory',          // Jalál
+  'Beauty',         // Jamál
+  'Grandeur',       // ‘Aẓamat
+  'Light',          // Núr
+  'Mercy',          // Raḥmat
+  'Words',          // Kalimát
+  'Perfection',     // Kamál
+  'Names',          // Asmá’
+  'Might',          // ‘Izzat
+  'Will',           // Mashíyyat
+  'Knowledge',      // ‘Ilm
+  'Power',          // Qudrat
+  'Speech',         // Qawl
+  'Questions',      // Masá’il
+  'Honour',         // S͟haraf
+  'Sovereignty',    // Sulṭán
+  'Dominion',       // Mulk
+  'The Days of Há', // Ayyám-i-Há
+  'Loftiness',      // ‘Alá’
 ];
 
 // Helper: check if Gregorian year is a leap year
@@ -70,7 +70,7 @@ function getBadiDate(date) {
     badiDay,
     badiMonthName: BADI_MONTHS[badiMonth - 1],
     badiYear,
-    formatted: `${badiDay} ${BADI_MONTHS[badiMonth - 1]} ${badiYear} BE`
+    formatted: `${badiDay} ${BADI_MONTHS[badiMonth - 1]} ${badiYear} BE`,
   };
 }
 

@@ -80,8 +80,8 @@ const EventDetail = ({ route }) => {
       await joinEvent(event._id, token, event.title, user, communityId);
       setHasJoined(true);
       Alert.alert('Success', 'You have joined the event.');
-    } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to join the event.');
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to join the event.');
     } finally {
       setIsJoining(false);
     }

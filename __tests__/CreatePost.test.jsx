@@ -1,14 +1,13 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import CreatePost from '../modal/PostModal';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { uploadImageWithThumbnail, uploadVideoWithThumbnail, createPost } from '../services/PostService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 
 jest.mock('react-native-image-picker', () => ({
   launchImageLibrary: jest.fn(),
-  launchCamera: jest.fn(),
 }));
 
 jest.mock('../services/PostService', () => ({

@@ -5,7 +5,7 @@ export const fetchSearchResults = async (query, token) => {
     const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
     });
 

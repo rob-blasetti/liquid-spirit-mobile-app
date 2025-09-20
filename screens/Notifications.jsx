@@ -1,10 +1,10 @@
-import React, { useContext, useState, useEffect } from "react";
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import React, { useContext, useState, useEffect } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
-import NotificationService from "../services/NotificationService";
+import NotificationService from '../services/NotificationService';
 import { Chip } from 'react-native-paper';
 // Removed preloading imports for notifications
 // import { fetchPostDetails } from '../services/PostService';
@@ -16,13 +16,13 @@ const NotificationIcon = ({ type }) => {
   const iconStyle = { color: themeVariables.blackColor };
 
   switch (type) {
-    case "post":
+    case 'post':
       return <Ionicons name="people-outline" size={20} style={iconStyle} />;
-    case "activity":
+    case 'activity':
       return <Ionicons name="list-outline" size={20} style={iconStyle} />;
-    case "event":
+    case 'event':
       return <Ionicons name="calendar-outline" size={20} style={iconStyle} />;
-    case "announcement":
+    case 'announcement':
       return <Ionicons name="information-circle-outline" size={20} style={iconStyle} />;
     default:
       return <Ionicons name="notifications-outline" size={20} style={iconStyle} />;
@@ -114,7 +114,7 @@ export default function Notifications() {
     setLoading(false);
     // Format raw notifications
     const formatted = userNotifications.map((n) => {
-      const rawType = n.type?.typeName || "";
+      const rawType = n.type?.typeName || '';
       const typeKey = rawType.toLowerCase();
       const type = mapNotificationType(typeKey);
       const { activityId, sessionId } = extractActivityAndSessionIds(n);
@@ -130,8 +130,8 @@ export default function Notifications() {
         targetId,
         activityId: resolvedActivityId,
         sessionId: resolvedSessionId,
-        title: n.additionalData?.caption || "Notification",
-        message: n.additionalData?.caption || "",
+        title: n.additionalData?.caption || 'Notification',
+        message: n.additionalData?.caption || '',
         time: formatTime(n.createdAt),
         timeStamp: n.createdAt,
         read: n.isRead,
@@ -174,7 +174,7 @@ export default function Notifications() {
         return updated;
       });
     } catch (err) {
-      console.error("Failed to mark notification as read:", err);
+      console.error('Failed to mark notification as read:', err);
     }
   };
 
@@ -210,11 +210,11 @@ export default function Notifications() {
           navigation.navigate('Main', { screen: 'Profile' });
           break;
         default:
-          console.warn("Unknown notification type");
-          break;  
-      };
+          console.warn('Unknown notification type');
+          break;
+      }
     } catch (err) {
-      console.error("Notification press error:", err);
+      console.error('Notification press error:', err);
     }
   };
 
@@ -227,7 +227,7 @@ export default function Notifications() {
       const unread = notifs.filter((n) => !n.isRead).length;
       setUnreadCount(unread);
     } catch (error) {
-      console.error("Error refreshing notifications:", error);
+      console.error('Error refreshing notifications:', error);
     } finally {
       setRefreshing(false);
     }
@@ -244,32 +244,32 @@ export default function Notifications() {
   });
 
   const typeCategoryMap = {
-    post_media: "post",
-    post_created: "post",
-    new_activity: "activity",
-    join_activity: "activity",
-    activity_updated: "activity",
-    activity_canceled: "activity",
-    activity_cancelled: "activity",
-    join_event: "event",
-    event_reminder: "event",
-    signup: "announcement",
-    session: "activity",
-    session_created: "activity",
-    session_updated: "activity",
-    session_reminder: "activity",
-    session_cancelled: "activity",
-    session_canceled: "activity",
+    post_media: 'post',
+    post_created: 'post',
+    new_activity: 'activity',
+    join_activity: 'activity',
+    activity_updated: 'activity',
+    activity_canceled: 'activity',
+    activity_cancelled: 'activity',
+    join_event: 'event',
+    event_reminder: 'event',
+    signup: 'announcement',
+    session: 'activity',
+    session_created: 'activity',
+    session_updated: 'activity',
+    session_reminder: 'activity',
+    session_cancelled: 'activity',
+    session_canceled: 'activity',
   };
 
-  const mapNotificationType = (typeName = "") => {
+  const mapNotificationType = (typeName = '') => {
     const key = typeName.toLowerCase();
     if (typeCategoryMap[key]) return typeCategoryMap[key];
     if (key.includes('session')) return 'activity';
     if (key.includes('activity')) return 'activity';
     if (key.includes('event')) return 'event';
     if (key.includes('post')) return 'post';
-    return "general";
+    return 'general';
   };
 
   const formatTime = (timestamp) => {
@@ -343,7 +343,7 @@ export default function Notifications() {
           ) : (
             <Pressable
               onPress={() => handleNotificationPress(item)}
-              style={[styles.notification, { backgroundColor: item.read ? "#f5f5f5" : "#dbeafe" }]}
+              style={[styles.notification, { backgroundColor: item.read ? '#f5f5f5' : '#dbeafe' }]}
             >
               <NotificationIcon type={item.type} />
               <View style={styles.textContainer}>
@@ -385,20 +385,19 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 12,
     color: themeVariables.blackColor,
   },
   notification: {
-    flexDirection: "row",
+    flexDirection: 'row',
     padding: 12,
-    borderRadius: 12,
     marginBottom: 10,
-    alignItems: "center",
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: themeVariables.borderColor, // @LS-SoftGrey
     borderRadius: 20,
-    shadowColor: "#000",           // Shadow
+    shadowColor: '#000',           // Shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -414,11 +413,11 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 12,
     marginRight: 30,
-    color: "#444", // @dark-grey-color
+    color: '#444', // @dark-grey-color
   },
   time: {
     fontSize: 12,
-    color: "#999",
+    color: '#999',
   },
   emptyState: {
     // Center inline empty state below toggles
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderRadius: 20,
-  },  
+  },
   toggleText: {
     fontSize: 16,
     fontWeight: '600',

@@ -62,8 +62,8 @@ const ForgotPassword = ({ navigation }) => {
         style={styles.input}
         value={email}
         onChangeText={setEmail}
-        keyboardType='email-address'
-        autoCapitalize='none'
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
       <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>

@@ -276,14 +276,21 @@ export function normalizePayload(userInfo) {
   let category = typeCategoryMap[typeName.toLowerCase()];
   if (!category) {
     // Heuristic fallbacks by type keywords
-    if (typeKey.includes('session')) category = 'activity';
-    else if (typeKey.includes('event')) category = 'event';
-    else if (typeKey.includes('post')) category = 'post';
-    else {
+    if (typeKey.includes('session')) {
+      category = 'activity';
+    } else if (typeKey.includes('event')) {
+      category = 'event';
+    } else if (typeKey.includes('post')) {
+      category = 'post';
+    } else {
       // ID-based fallbacks
-      if (data.eventId) category = 'event';
-      else if (data.activityId || data.activity_id) category = 'activity';
-      else if (data.postId) category = 'post';
+      if (data.eventId) {
+        category = 'event';
+      } else if (data.activityId || data.activity_id) {
+        category = 'activity';
+      } else if (data.postId) {
+        category = 'post';
+      }
     }
   }
 

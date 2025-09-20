@@ -35,7 +35,7 @@ const Settings = ({ navigation }) => {
     if (deleteText === 'DELETE') {
       try {
         await deleteAccount(user.id, token);
-        
+
         await logout();
         navigation.dispatch(
           CommonActions.reset({
@@ -82,7 +82,7 @@ const Settings = ({ navigation }) => {
           <Text style={styles.itemText}>Edit Profile</Text>
           <Ionicons name="chevron-forward" size={18} color="#ccc" />
         </TouchableOpacity>
-{/* 
+{/*
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
           <Ionicons name="lock-closed-outline" size={20} color="#312783" />
           <Text style={styles.itemText}>Change Password</Text>
@@ -256,18 +256,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
     alignItems: 'center',
   },
-  confirmButton: { 
-    backgroundColor: '#e74c3c', 
-    borderRadius: 20 
+  confirmButton: {
+    backgroundColor: '#e74c3c',
+    borderRadius: 20,
   },
-  cancelButton: { 
+  cancelButton: {
     backgroundColor: '#312783',
-    borderRadius: 20 
+    borderRadius: 20,
   },
-  modalButtonText: { 
-    color: '#fff', 
-    fontWeight: '600' 
-  }
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 });
 
 export default Settings;

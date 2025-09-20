@@ -6,15 +6,12 @@ import {
   Text,
   TextInput,
   ScrollView,
-  Image,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
 } from 'react-native';
 import { Button } from 'liquid-spirit-styleguide';
 import FastImage from 'react-native-fast-image';
-import themeVariables from '../styles/theme';
 
 const CommentModal = ({
   visible,
@@ -157,12 +154,12 @@ const styles = StyleSheet.create({
   },
   commentAuthor: {
     fontWeight: '600',
-    width: Platform.select({ android: 100 })
+    width: Platform.select({ android: 100 }),
   },
   commentDate: {
     color: '#666',
     fontSize: 12,
-    width: Platform.select({ android: 100 })
+    width: Platform.select({ android: 100 }),
 
   },
   commentContent: {
@@ -190,7 +187,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: 'white',
-    width: Platform.select({ android: 100 })
+    width: Platform.select({ android: 100 }),
   },
   cancelButtonText: {
     color: '#312783',
