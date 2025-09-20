@@ -4,9 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Linking,
-  Share,
-  Alert,
   Platform,
   ScrollView,
   Animated,
@@ -23,6 +20,7 @@ import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { UserContext } from '../contexts/UserContext';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
+import { shareContent } from '../utils/shareContent';
 
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
@@ -132,28 +130,17 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     handleCloseMenu();
   };
 
-  const handleSharePost = async (id) => {
+  const handleSharePost = useCallback((id) => {
+    if (!id) return;
     const url = `https://www.liquidspirit.org/posts/${id}`;
-    const message = `Check out this post on Liquid Spirit 👇\n${url}`;
-    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
-
-    try {
-      const supported = await Linking.canOpenURL(whatsappUrl);
-
-      if (supported) {
-        await Linking.openURL(whatsappUrl);
-      } else {
-        await Share.share({
-          message,
-          url,
-          title: 'Liquid Spirit Post',
-        });
-      }
-    } catch (err) {
-      console.error('Error sharing:', err);
-      Alert.alert('Sharing Error', 'Something went wrong while trying to share the post.');
-    }
-  };
+    const message = `Check out this post on Liquid Spirit \uD83D\uDC47\n${url}`;
+    shareContent({
+      url,
+      message,
+      title: 'Liquid Spirit Post',
+      alertMessage: 'Something went wrong while trying to share the post.',
+    });
+  }, []);
 
   const isLikedRef = useRef(isLiked);
   useEffect(() => {
@@ -548,7 +535,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     flexShrink: 0,
     width: Platform.select({ android: 85 }),
-    marginTop: 4,
+    marginRight: 6,
+    marginBottom: 4,
   },
   communityText: {
     fontSize: 14,
@@ -571,7 +559,7 @@ const styles = StyleSheet.create({
   // Tag chips scrollable container
   tagScrollContainer: {
     maxWidth: '100%',
-    marginTop: 4,
+    marginTop: 0,
     marginBottom: 4,
     overflow: 'hidden',
   },
@@ -589,7 +577,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    color: themeVariables.whiteColor,
+    color: themeVariables.blackColor,
     textAlign: 'center',
     flexShrink: 0,
   },

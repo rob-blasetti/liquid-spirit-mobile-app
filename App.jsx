@@ -6,15 +6,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import themeVariables from './styles/theme';
 
 import { UserProvider, CommunityProvider } from './contexts';
-import {
-  AuthProvider,
-  UserProfileProvider,
-  CommunityProvider as CommunityStateProvider,
-  EventsProvider,
-  ActivitiesProvider,
-  NewsProvider,
-  NotificationsProvider,
-} from './src/contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
@@ -74,25 +65,11 @@ const MainApp = () => {
 
 const App = () => (
   <GestureHandlerRootView style={{ flex: 1 }}>
-    <AuthProvider>
-      <UserProfileProvider>
-        <CommunityStateProvider>
-          <EventsProvider>
-            <ActivitiesProvider>
-              <NewsProvider>
-                <NotificationsProvider>
-                  <CommunityProvider>
-                    <UserProvider>
-                      <MainApp />
-                    </UserProvider>
-                  </CommunityProvider>
-                </NotificationsProvider>
-              </NewsProvider>
-            </ActivitiesProvider>
-          </EventsProvider>
-        </CommunityStateProvider>
-      </UserProfileProvider>
-    </AuthProvider>
+    <CommunityProvider>
+      <UserProvider>
+        <MainApp />
+      </UserProvider>
+    </CommunityProvider>
   </GestureHandlerRootView>
 );
 

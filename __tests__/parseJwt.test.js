@@ -1,14 +1,15 @@
+import { Buffer } from 'buffer';
 import { parseJwt } from '../utils/parseJwt';
 
 describe('parseJwt', () => {
   it('parses a valid JWT payload', () => {
     const payload = { sub: '123', role: 'admin', exp: 1_700_000_000 };
-    const base64Payload = Buffer.from(JSON.stringify(payload))
-      .toString('base64')
-      .replace(/=+$/g, '')
+    const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64');
+    const normalizedPayload = base64Payload
+      .replace(new RegExp('=+$'), '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
-    const token = `aaa.${base64Payload}.bbb`;
+    const token = `aaa.${normalizedPayload}.bbb`;
 
     expect(parseJwt(token)).toEqual(payload);
   });

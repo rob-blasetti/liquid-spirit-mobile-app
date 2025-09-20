@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Dimensions,
-  Share,
   Alert,
   Modal,
   TextInput,
@@ -32,6 +31,7 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchPostDetails, likePost, commentOnPost, fetchRecentCommunityPosts } from '../services/PostService';
 import { Button } from 'liquid-spirit-styleguide';
+import { shareContent } from '../utils/shareContent';
 
 const HEADER_OFFSET = 0;
 
@@ -67,18 +67,18 @@ const PostDetailCard = ({ route }) => {
   const contentOpacity = useRef(new Animated.Value(0.6)).current;
   const mediaOpacity = useRef(new Animated.Value(0.6)).current;
 
-  const handleShare = async () => {
+  const handleShare = useCallback(() => {
     const id = post?._id || postId;
     if (!id) return;
     const url = `https://www.liquidspirit.org/posts/${id}`;
     const message = `Check out this post on Liquid Spirit \uD83D\uDC47\n${url}`;
-    try {
-      await Share.share({ message, url, title: 'Liquid Spirit Post' });
-    } catch (err) {
-      console.error('Error sharing:', err);
-      Alert.alert('Sharing Error', 'Something went wrong while trying to share the post.');
-    }
-  };
+    shareContent({
+      url,
+      message,
+      title: 'Liquid Spirit Post',
+      alertMessage: 'Something went wrong while trying to share the post.',
+    });
+  }, [post, postId]);
   const userId = user?.id || user?._id;
 
   const hasUserLiked = useCallback((likes, uid) => {
@@ -193,7 +193,7 @@ const PostDetailCard = ({ route }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, post]);
+  }, [navigation, handleShare]);
 
   useEffect(() => {
     Animated.timing(contentOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();

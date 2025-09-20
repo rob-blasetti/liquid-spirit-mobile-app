@@ -1,5 +1,0 @@
-screens/EventDetailCard.jsx:203:              <Text style={styles.sectionTitle}>Host</Text>
-screens/EventDetailCard.jsx:218:              <Text style={styles.sectionTitle}>Materials</Text>
-screens/EventDetailCard.jsx:251:              <Text style={styles.sectionTitle}>Oversight Body</Text>
-screens/EventDetailCard.jsx:264:              <Text style={styles.sectionTitle}>Attendees ({attendees.length})</Text>
-screens/EventDetailCard.jsx:457:  sectionTitle:{

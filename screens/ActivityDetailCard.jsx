@@ -16,7 +16,6 @@ import {
   Platform,
   Modal,
   StatusBar,
-  Share,
   Alert,
   Image,
 } from 'react-native';
@@ -42,6 +41,7 @@ import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import SessionCard from '../components/SessionCard';
 import { resolveSessionDate } from '../utils/activityDate';
+import { shareContent } from '../utils/shareContent';
 
 if (
   Platform.OS === 'android' &&
@@ -218,30 +218,19 @@ const ActivityDetailCard = ({ route }) => {
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
 
-  const handleShare = async () => {
+  const handleShare = useCallback(() => {
     const id = activity?._id || activityId;
     if (!id) return;
     const url = `https://www.liquidspirit.org/activities/${id}`;
     const title = activity?.title || 'Liquid Spirit Activity';
     const message = `Check out this activity on Liquid Spirit \uD83D\uDC47\n${url}`;
-    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
-    const messengerUrl = `fb-messenger://share?link=${encodeURIComponent(url)}`;
-
-    try {
-      if (await Linking.canOpenURL(whatsappUrl)) {
-        await Linking.openURL(whatsappUrl);
-        return;
-      }
-      if (await Linking.canOpenURL(messengerUrl)) {
-        await Linking.openURL(messengerUrl);
-        return;
-      }
-      await Share.share({ message, url, title });
-    } catch (err) {
-      console.error('Error sharing:', err);
-      Alert.alert('Sharing Error', 'Something went wrong while trying to share the activity.');
-    }
-  };
+    shareContent({
+      url,
+      message,
+      title,
+      alertMessage: 'Something went wrong while trying to share the activity.',
+    });
+  }, [activity, activityId]);
   // Add share button in header, styled like back arrow
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -263,7 +252,7 @@ const ActivityDetailCard = ({ route }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, activity]);
+  }, [navigation, handleShare]);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
 

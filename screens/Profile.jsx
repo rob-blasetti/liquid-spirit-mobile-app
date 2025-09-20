@@ -7,7 +7,6 @@ import {
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  Share,
   Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +25,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
+import { shareContent } from '../utils/shareContent';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -399,19 +399,21 @@ const renderScene = ({ route }) => {
   }
 };
 
-  const handleShareProfile = async (user) => {
-    try {
-      // Construct a shareable message including the profile link
-      const profileLink = `https://www.liquidspirit.org/users/${user?.id}`;
-      const message = `Check out ${user?.firstName} ${user?.lastName}'s profile on Liquid Spirit! ${profileLink}`;
-      // Use message-only share to avoid encoding issues; pass subject as option
-      await Share.share(
-        { message },
-        { subject: 'Profile Link' }
-      );
-    } catch (error) {
-      console.error('Error sharing profile:', error);
-    }
+  const handleShareProfile = async (targetUser) => {
+    const userId = targetUser?.id || targetUser?._id;
+    if (!userId) return;
+    const profileLink = `https://www.liquidspirit.org/users/${userId}`;
+    const firstName = targetUser?.firstName || '';
+    const lastName = targetUser?.lastName || '';
+    const displayName = `${firstName} ${lastName}`.trim() || 'this user';
+    const message = `Check out ${displayName}'s profile on Liquid Spirit! ${profileLink}`;
+    await shareContent({
+      url: profileLink,
+      message,
+      title: 'Profile Link',
+      alertMessage: 'Something went wrong while trying to share the profile.',
+      shareOptions: { subject: 'Profile Link' },
+    });
   };
 
   // Custom TabBar to ensure full labels are visible and centered on Android

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useLayoutEffect } from 'react';
+import React, { useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,6 @@ import {
   Image,
   StatusBar,
   Platform,
-  Share,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,6 +49,7 @@ import MaterialsItemTile from '../components/MaterialsItemTile';
 import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
+import { shareContent } from '../utils/shareContent';
 const HEADER_OFFSET = 0;
 
 const { height: windowHeight } = Dimensions.get('window');
@@ -79,30 +79,19 @@ const EventDetailCard = ({ route }) => {
   const [loading, setLoading] = useState(!eventPreload);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
-  const handleShare = async () => {
+  const handleShare = useCallback(() => {
     const id = event?._id || eventId;
     if (!id) return;
     const url = `https://www.liquidspirit.org/events/${id}`;
     const title = event?.title || 'Liquid Spirit Event';
     const message = `Check out this event on Liquid Spirit \uD83D\uDC47\n${url}`;
-    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
-    const messengerUrl = `fb-messenger://share?link=${encodeURIComponent(url)}`;
-
-    try {
-      if (await Linking.canOpenURL(whatsappUrl)) {
-        await Linking.openURL(whatsappUrl);
-        return;
-      }
-      if (await Linking.canOpenURL(messengerUrl)) {
-        await Linking.openURL(messengerUrl);
-        return;
-      }
-      await Share.share({ message, url, title });
-    } catch (err) {
-      console.error('Error sharing:', err);
-      Alert.alert('Sharing Error', 'Something went wrong while trying to share the event.');
-    }
-  };
+    shareContent({
+      url,
+      message,
+      title,
+      alertMessage: 'Something went wrong while trying to share the event.',
+    });
+  }, [event, eventId]);
   // Add share button in header, styled like back arrow
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -124,7 +113,7 @@ const EventDetailCard = ({ route }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, event]);
+  }, [navigation, handleShare]);
   const { user, token, isTokenExpired, refreshSession, storageLoaded } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
