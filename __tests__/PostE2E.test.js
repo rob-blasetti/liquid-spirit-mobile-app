@@ -14,22 +14,110 @@ import { API_URL } from '../config';
 import * as PostService from '../services/PostService';
 import NotificationService from '../services/NotificationService';
 
-// Increase timeout for network interactions
+// Increase timeout for async operations
 jest.setTimeout(60000);
 
-// Skipping end-to-end tests in CI environment
-describe.skip('End-to-end Post and Feed Integration', () => {
+const buildJsonResponse = (data, { ok = true, status = 200 } = {}) => ({
+  ok,
+  status,
+  json: async () => data,
+});
+
+describe('End-to-end Post and Feed Integration', () => {
   let token;
   let user;
   let communityId;
   // Hold created posts for cleanup
   let createdImagePost;
   let createdVideoPost;
+  const posts = [];
+  const notifications = [];
+
+  const mockFetchImplementation = async (input, init = {}) => {
+    const url = typeof input === 'string' ? input : input.url;
+    const { method = 'GET', headers = {}, body } = init;
+    const { pathname, searchParams } = new URL(url);
+
+    if (pathname === '/api/auth/login' && method === 'POST') {
+      return buildJsonResponse({ token: 'test-token' });
+    }
+
+    if (pathname === '/api/auth/me' && method === 'GET') {
+      return buildJsonResponse({
+        data: {
+          user: {
+            _id: 'user-123',
+            community: 'community-456',
+          },
+        },
+      });
+    }
+
+    if (pathname === '/api/posts/create' && method === 'POST') {
+      if (!headers.Authorization) {
+        return buildJsonResponse({ message: 'Missing auth header' }, { ok: false, status: 401 });
+      }
+
+      const payload = JSON.parse(body);
+      const newPost = {
+        _id: `post-${posts.length + 1}`,
+        media: payload.media,
+        content: payload.content,
+      };
+      posts.push(newPost);
+      notifications.push({
+        _id: `notif-${notifications.length + 1}`,
+        target: newPost._id,
+      });
+      return buildJsonResponse({ data: newPost });
+    }
+
+    if (pathname === '/api/posts/explore-feed' && method === 'GET') {
+      if (!headers.Authorization) {
+        return buildJsonResponse({ message: 'Missing auth header' }, { ok: false, status: 401 });
+      }
+
+      return buildJsonResponse({ data: posts });
+    }
+
+    if (pathname.startsWith('/api/posts/') && method === 'DELETE') {
+      const postId = pathname.split('/').pop();
+      const index = posts.findIndex(p => p._id === postId);
+      if (index >= 0) {
+        posts.splice(index, 1);
+      }
+      return buildJsonResponse({ success: true });
+    }
+
+    if (pathname === '/api/notifications' && method === 'GET') {
+      if (!headers.Authorization) {
+        return buildJsonResponse({ message: 'Missing auth header' }, { ok: false, status: 401 });
+      }
+
+      const limit = searchParams.get('limit');
+      const offset = Number(searchParams.get('offset') || 0);
+      const sliceEnd = limit ? offset + Number(limit) : undefined;
+      return buildJsonResponse({ data: notifications.slice(offset, sliceEnd) });
+    }
+
+    if (pathname.startsWith('/api/notifications/') && method === 'DELETE') {
+      const notificationId = pathname.split('/').pop();
+      const index = notifications.findIndex(n => n._id === notificationId);
+      if (index >= 0) {
+        notifications.splice(index, 1);
+      }
+      return buildJsonResponse({ success: true });
+    }
+
+    throw new Error(`Unhandled fetch request: ${method} ${url}`);
+  };
 
   beforeAll(async () => {
+    jest.spyOn(global, 'fetch').mockImplementation(mockFetchImplementation);
+
     // Require test credentials via environment variables
-    const email = process.env.TEST_EMAIL;
-    const password = process.env.TEST_PASSWORD;
+    const email = process.env.TEST_EMAIL ?? 'test@example.com';
+    const password = process.env.TEST_PASSWORD ?? 'password123';
     if (!email || !password) {
       throw new Error('Please set TEST_EMAIL and TEST_PASSWORD environment variables for E2E test.');
     }
@@ -82,7 +170,7 @@ describe.skip('End-to-end Post and Feed Integration', () => {
     expect(created).toBeDefined();
     expect(created._id).toBeDefined();
     // Fetch the explore feed and verify the new post is present
-    const feed = await PostService.fetchExploreFeed();
+    const feed = await PostService.fetchExploreFeed(token);
     const found = feed.find(p => p._id === created._id);
     expect(found).toBeDefined();
     expect(found.media).toContain(mediaUrl);
@@ -107,7 +195,7 @@ describe.skip('End-to-end Post and Feed Integration', () => {
     });
     expect(created).toBeDefined();
     expect(created._id).toBeDefined();
-    const feed = await PostService.fetchExploreFeed();
+    const feed = await PostService.fetchExploreFeed(token);
     const found = feed.find(p => p._id === created._id);
     expect(found).toBeDefined();
     expect(found.media).toContain(mediaUrl);
@@ -127,8 +215,8 @@ describe.skip('End-to-end Post and Feed Integration', () => {
     // Delete related notifications
     try {
       const notifRes = await NotificationService.getAllNotifications(token, { limit: 100, offset: 0 });
-      const notifications = notifRes.data || notifRes;
-      const related = (notifications || []).filter(n => {
+      const fetchedNotifications = notifRes.data || notifRes;
+      const related = (fetchedNotifications || []).filter(n => {
         const tgt = n.target && typeof n.target === 'object' ? n.target._id : n.target;
         return tgt === createdImagePost?._id || tgt === createdVideoPost?._id;
       });
@@ -144,5 +232,7 @@ describe.skip('End-to-end Post and Feed Integration', () => {
     } catch (err) {
       console.error('Cleanup notifications failed:', err);
     }
+
+    jest.restoreAllMocks();
   });
 });
