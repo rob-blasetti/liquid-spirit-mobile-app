@@ -6,6 +6,8 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService from '../services/NotificationService';
 import { Chip } from 'react-native-paper';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 // Removed preloading imports for notifications
 // import { fetchPostDetails } from '../services/PostService';
 // import { fetchActivityDetails } from '../services/ActivityService';
@@ -97,7 +99,7 @@ const extractActivityAndSessionIds = (notification) => {
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { token, setUnreadCount, userNotifications, setUserNotifications } = useContext(UserContext);
+  const { token, isTokenExpired, setUnreadCount, userNotifications, setUserNotifications } = useContext(UserContext);
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -183,8 +185,7 @@ export default function Notifications() {
       markAsRead(item.id);
       switch (item.type) {
         case 'post':
-          // Navigate to post detail
-          navigation.navigate('PostDetailCard', { postId: item.targetId });
+          navigateToPostDetail({ navigation, postId: item.targetId, token, isTokenExpired });
           break;
         case 'activity':
           // Navigate to activity detail
@@ -202,8 +203,7 @@ export default function Notifications() {
           }
           break;
         case 'event':
-          // Navigate to event detail
-          navigation.navigate('EventDetailCard', { eventId: item.targetId });
+          navigateToEventDetail({ navigation, eventId: item.targetId, token, isTokenExpired });
           break;
         case 'announcement':
           // Navigate to Profile tab

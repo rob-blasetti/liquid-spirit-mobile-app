@@ -3,6 +3,7 @@ import { API_URL } from '../config';
 import localImages from '../utils/localImages';
 import ListItem from './ListItem';
 import { Image } from 'react-native';
+import { cachePostImageAspect, getPostImageAspect } from '../utils/navigateToPostDetail';
 
 const PostItem = ({ item, onPress }) => {
   let imageSource;
@@ -16,28 +17,37 @@ const PostItem = ({ item, onPress }) => {
       imageSource = { uri };
     }
   }
+  const remoteUri = typeof imageSource === 'object' ? imageSource.uri : null;
   const date = item.createdAt || item.updatedAt;
   const formatted = date ? new Date(date).toLocaleDateString() : 'N/A';
 
   // Track image aspect ratio for detail screen
-  const [imageAspect, setImageAspect] = useState(null);
+  const [imageAspect, setImageAspect] = useState(() => getPostImageAspect(item._id, remoteUri));
   useEffect(() => {
     if (imageSource) {
       // Local image (require) as number
       if (typeof imageSource === 'number') {
         const { width, height } = Image.resolveAssetSource(imageSource);
-        if (width && height) setImageAspect(width / height);
+        if (width && height) {
+          const ratio = width / height;
+          setImageAspect(ratio);
+          cachePostImageAspect(item._id, remoteUri, ratio);
+        }
       }
       // Remote URI
       else if (imageSource.uri) {
         Image.getSize(
           imageSource.uri,
-          (w, h) => setImageAspect(w / h),
+          (w, h) => {
+            const ratio = w / h;
+            setImageAspect(ratio);
+            cachePostImageAspect(item._id, remoteUri, ratio);
+          },
           () => {}
         );
       }
     }
-  }, [imageSource]);
+  }, [imageSource, item._id, remoteUri]);
 
   return (
     <ListItem

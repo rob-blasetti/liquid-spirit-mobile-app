@@ -10,7 +10,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { Button } from 'liquid-spirit-styleguide';
+import { Button } from 'liquid-spirit-styleguide/native';
 import FastImage from 'react-native-fast-image';
 
 const CommentModal = ({
@@ -21,8 +21,11 @@ const CommentModal = ({
   setCommentText,
   onSubmit,
 }) => {
+  const normalizedCommentText = commentText ?? '';
+  const isSubmitDisabled = normalizedCommentText.trim().length === 0;
+
   const handleSubmit = () => {
-    if (commentText.trim() === '') return;
+    if (isSubmitDisabled) return;
     onSubmit();
     setCommentText('');
   };
@@ -76,18 +79,15 @@ const CommentModal = ({
 
               <TextInput
                 style={styles.textInput}
-                value={commentText}
+                value={normalizedCommentText}
                 onChangeText={setCommentText}
                 placeholder="Write your comment..."
                 multiline
               />
 
               <View style={styles.buttonRow}>
-                <Button primary label="Submit" onPress={handleSubmit} />
                 <Button secondary label="Cancel" onPress={onClose} />
-                {/* <Pressable style={styles.cancelButton} onPress={onClose}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </Pressable> */}
+                <Button primary label="Submit" onPress={handleSubmit} disabled={isSubmitDisabled} />
               </View>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
@@ -179,19 +179,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 40,
-  },
-  cancelButton: {
-    borderColor: '#312783',
-    borderWidth: 2,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: 'white',
-    width: Platform.select({ android: 100 }),
-  },
-  cancelButtonText: {
-    color: '#312783',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

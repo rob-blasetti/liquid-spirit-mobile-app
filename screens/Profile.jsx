@@ -26,6 +26,8 @@ import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { shareContent } from '../utils/shareContent';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -213,13 +215,16 @@ const filterUserActivities = (allActivities, userId) => {
    */
   const handleItemPress = (type, item, imageAspect) => {
     console.log(`Navigating to ${type} item:`, item);
-    if (type === 'posts') {
-      // Navigate to Post Detail page, passing preloaded post and image aspect
-      navigation.navigate('PostDetailCard', {
-        postId: item._id,
-        postPreload: item,
-        imageAspect,
-      });
+  if (type === 'posts') {
+    // Navigate to Post Detail page, passing preloaded post and image aspect
+    navigateToPostDetail({
+      navigation,
+      post: item,
+      postId: item._id,
+      imageAspect,
+      token,
+      isTokenExpired,
+    });
     } else if (type === 'activities') {
       // Open the activity detail view
       navigation.navigate('ActivityDetailCard', {
@@ -228,10 +233,7 @@ const filterUserActivities = (allActivities, userId) => {
       });
     } else if (type === 'events') {
       // Open the event detail view
-      navigation.navigate('EventDetailCard', {
-        eventId: item._id,
-        eventPreload: item,
-      });
+      navigateToEventDetail({ navigation, event: item, token, isTokenExpired });
     }
   };
 

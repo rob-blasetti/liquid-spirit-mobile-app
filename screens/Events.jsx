@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
+import React, { useState, useContext, useRef, useEffect, useCallback } from 'react';
 import SlideBanner from '../components/SlideBanner';
 import {
   View,
@@ -16,9 +16,10 @@ import themeVariables from '../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import localImages from '../utils/localImages';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 
 const Events = ({ navigation, route }) => {
-  const { userEvents } = useContext(UserContext);
+  const { userEvents, token, isTokenExpired } = useContext(UserContext);
   // Banner for missing event redirect
   const [bannerMessage, setBannerMessage] = useState('');
   useEffect(() => {
@@ -89,6 +90,13 @@ const Events = ({ navigation, route }) => {
     })} | ${formattedTime}`;
   };
 
+  const handleEventPress = useCallback(
+    (eventData) => {
+      navigateToEventDetail({ navigation, event: eventData, token, isTokenExpired });
+    },
+    [navigation, token, isTokenExpired],
+  );
+
   const RenderEvent = ({ item }) => {
     let imageSource;
     // Support both remote S3 URLs and local images
@@ -101,7 +109,7 @@ const Events = ({ navigation, route }) => {
     return (
       <TouchableOpacity
         style={styles.eventCard}
-        onPress={() => navigation.navigate('EventDetailCard', { eventId: item._id, eventPreload: item })}
+        onPress={() => handleEventPress(item)}
       >
         <View style={styles.imageContainer}>
           <FastImage

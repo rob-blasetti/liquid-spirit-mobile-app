@@ -50,6 +50,8 @@ import { fetchUserBodyByEventType } from '../services/UserBodyService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import { shareContent } from '../utils/shareContent';
+import FooterBrand from '../components/FooterBrand';
+import { Button } from 'liquid-spirit-styleguide/native';
 const HEADER_OFFSET = 0;
 
 const { height: windowHeight } = Dimensions.get('window');
@@ -119,6 +121,7 @@ const EventDetailCard = ({ route }) => {
   const [optimisticJoin, setOptimisticJoin] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
 
   const normalizeEventId = (raw) => {
     const str = String(raw || '').trim();
@@ -132,11 +135,17 @@ const EventDetailCard = ({ route }) => {
 
     const run = async () => {
       if (eventPreload) {
-        setEvent(eventPreload);
+        setEvent(prev => {
+          if (!prev) return eventPreload;
+          if (prev._id && eventPreload._id && prev._id !== eventPreload._id) {
+            return eventPreload;
+          }
+          return { ...prev, ...eventPreload };
+        });
         setLoading(false);
       }
 
-      const id = normalizeEventId(eventId);
+      const id = normalizeEventId(eventId || eventPreload?._id);
       if (!id) {
         setError('Invalid event link');
         setErrorStatus('invalid_id');
@@ -155,12 +164,22 @@ const EventDetailCard = ({ route }) => {
         } else {
           setError('Please log in to view this event.');
           setErrorStatus(401);
-          setLoading(false);
+          if (!eventPreload) {
+            setLoading(false);
+          }
           return;
         }
       }
 
-      setLoading(true);
+      const useFullScreenSpinner = !eventPreload;
+      let usedBackgroundRefresh = false;
+      if (useFullScreenSpinner) {
+        setLoading(true);
+      } else {
+        setBackgroundRefreshing(true);
+        usedBackgroundRefresh = true;
+      }
+
       try {
         const data = await fetchEventDetails(id, token);
         if (!isMounted) return;
@@ -183,7 +202,12 @@ const EventDetailCard = ({ route }) => {
         setError(err?.message || 'Failed to load event details');
         setErrorStatus(err?.status || 'unknown');
       } finally {
-        if (isMounted) setLoading(false);
+        if (!isMounted) return;
+        if (useFullScreenSpinner) {
+          setLoading(false);
+        } else if (usedBackgroundRefresh) {
+          setBackgroundRefreshing(false);
+        }
       }
     };
 
@@ -219,6 +243,11 @@ const EventDetailCard = ({ route }) => {
     <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']}>
       {/* Use dark-content for status bar icons */}
       <StatusBar animated translucent backgroundColor="transparent" barStyle="dark-content" />
+      {backgroundRefreshing && (
+        <View style={styles.refreshIndicator}>
+          <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+        </View>
+      )}
       <SwipeToCloseScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
@@ -708,13 +737,14 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
                 ))}
               </View>
               {oversightBody.members.length > 4 && (
-                <TouchableOpacity
-                  style={styles.seeMoreButton}
+                <Button
+                  secondary
+                  size="small"
+                  label="See More"
                   onPress={() => setOversightModalVisible(true)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.seeMoreButtonText}>See More</Text>
-                </TouchableOpacity>
+                  style={styles.seeMoreButton}
+                  textStyle={styles.seeMoreButtonText}
+                />
               )}
             </>
           ) : (
@@ -865,16 +895,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
         </View>
       </Modal>
     </Card>
-    <View style={styles.footerContainer}>
-      <Image
-        source={require('../assets/appstore.png')}
-        style={styles.footerLogo}
-        resizeMode="contain"
-        accessibilityRole="image"
-        accessibilityLabel="Liquid Spirit"
-      />
-      <Text style={styles.footerText}>Liquid Spirit</Text>
-    </View>
+    <FooterBrand containerStyle={styles.footerContainer} />
     </>
   );
 };
@@ -1042,6 +1063,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: themeVariables.whiteColor || '#fff',
   },
+  refreshIndicator: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderRadius: 16,
+    marginBottom: 12,
+  },
   headerInfoContainer: {
     alignItems: 'center',
     marginVertical: 8,
@@ -1207,20 +1237,12 @@ const styles = StyleSheet.create({
   },
   seeMoreButton: {
     alignSelf: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: themeVariables.whiteColor,
-    color: themeVariables.primaryColor,
-    borderStyle: 'solid',
-    borderColor: themeVariables.primaryColor,
-    borderWidth: 1,
-    borderRadius: 16,
     marginVertical: 8,
+    marginBottom: 12,
   },
   seeMoreButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: themeVariables.primaryColor,
   },
   addMaterialButton: {
     flexDirection: 'row',
@@ -1278,17 +1300,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingBottom: 36,
     backgroundColor: themeVariables.whiteColor || '#fff',
-  },
-  footerLogo: {
-    width: 120,
-    height: 120,
-    marginBottom: 12,
-  },
-  footerText: {
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#999',
   },
   materialTile: {
     flexBasis: '30%',

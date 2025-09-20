@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Animated, Easing, Scro
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import UserCell from './UserCell';
-import { BlurView } from '@react-native-community/blur';
+import { Button } from 'liquid-spirit-styleguide/native';
 const plusCircle = 'add-circle-outline';
 const clockIcon = 'time-outline';
 const checkCircle = 'checkmark-circle-outline';
@@ -100,10 +100,14 @@ const closeModal = () => {
         </View>
       </View>
 
-      <TouchableOpacity onPress={openModal} style={styles.seeMoreContainer}>
-        <BlurView style={styles.blurView} blurType="light" blurAmount={10} />
-        <Text style={styles.seeMoreText}>See More</Text>
-      </TouchableOpacity>
+      <Button
+        secondary
+        size="small"
+        label="See More"
+        onPress={openModal}
+        style={styles.seeMoreButton}
+        textStyle={styles.seeMoreButtonText}
+      />
 
       <Modal animationType="fade" transparent visible={modalVisible}>
   <TouchableWithoutFeedback onPress={closeModal}>
@@ -215,35 +219,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  seeMoreContainer: {
-    position: 'relative',
-    alignSelf: 'stretch',
-    padding: 10,
-    alignItems: 'center',
+  seeMoreButton: {
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 8,
   },
-  blurView: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  seeMoreText: {
+  seeMoreButtonText: {
     fontWeight: '600',
-    backgroundColor: themeVariables.whiteColor,
-    color: themeVariables.primaryColor,
-    borderStyle: 'solid',
-    borderColor: themeVariables.primaryColor,
-    borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
   },
   modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  justifyContent: 'flex-end',
-},
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
   modalContent: {
     backgroundColor: themeVariables.whiteColor,
     padding: 20,

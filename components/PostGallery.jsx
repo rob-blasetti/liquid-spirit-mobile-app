@@ -1,25 +1,35 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
 import { API_URL } from '../config';
 import localImages from '../utils/localImages';
 import FastImage from 'react-native-fast-image';
+import { UserContext } from '../contexts/UserContext';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 2 - 15;
 
 const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
   const navigation = useNavigation();
+  const { token, isTokenExpired } = useContext(UserContext);
 
   const handlePress = (item) => {
     if (item.content) {
       // Navigate to the post detail card if it's a post
-      navigation.navigate('PostDetailCard', { postPreload: item, postId: item._id });
+      navigateToPostDetail({
+        navigation,
+        post: item,
+        postId: item._id,
+        token,
+        isTokenExpired,
+      });
     } else if (item.title && item.imageUrl) {
       if (item.eventType) {
         // ✅ Navigate to the event detail page if it's an event
-        navigation.navigate('EventDetailCard', { eventPreload: item });
+        navigateToEventDetail({ navigation, event: item, token, isTokenExpired });
       } else {
         // ✅ Navigate to the activity detail page if it's an activity
         navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item });

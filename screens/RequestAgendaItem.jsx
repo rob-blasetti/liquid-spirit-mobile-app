@@ -8,11 +8,12 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { TextInput, Button, Title, HelperText } from 'react-native-paper';
+import { TextInput, Title, HelperText } from 'react-native-paper';
 import { sendAgendaItemSuggestion } from '../services/AssemblyService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
+import { Button } from 'liquid-spirit-styleguide/native';
 
 export default function RequestAgendaItem({ navigation, route }) {
   const { token } = useContext(UserContext);
@@ -75,9 +76,14 @@ export default function RequestAgendaItem({ navigation, route }) {
         <HelperText type="error" visible={!!errors.description}>
           {errors.description}
         </HelperText>
-        <Button mode="contained" onPress={handleSend} loading={loading} disabled={loading} style={styles.button}>
-          Send
-        </Button>
+        <Button
+          primary
+          size="medium"
+          label={loading ? 'Sending...' : 'Send'}
+          onPress={handleSend}
+          disabled={loading}
+          style={styles.button}
+        />
       </ScrollView>
       {loading && (
         <View style={styles.loadingOverlay}>
@@ -107,7 +113,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 10,
-    backgroundColor: '#312783',
+    alignSelf: 'stretch',
   },
   loadingOverlay: {
     position: 'absolute',

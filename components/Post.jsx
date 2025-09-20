@@ -18,6 +18,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ZoomableImage from './ZoomableImage';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { UserContext } from '../contexts/UserContext';
+import { navigateToPostDetail, cachePostImageAspect, getPostImageAspect } from '../utils/navigateToPostDetail';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
 import { shareContent } from '../utils/shareContent';
@@ -30,8 +31,10 @@ const shareIcon = 'share-outline';
 const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
-  const { token, user } = useContext(UserContext);
+  const { token, user, isTokenExpired } = useContext(UserContext);
   const navigation = useNavigation();
+  const mediaUrl = resolveMediaUrl(post) || 'https://via.placeholder.com/200';
+  const cachedAspect = getPostImageAspect(post._id, mediaUrl) || post.imageAspect || null;
   // Ref to track pending single-tap navigation vs double-tap like
   const singleTapTimeoutRef = useRef(null);
   // Clean up pending timer on unmount
@@ -39,7 +42,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     clearTimeout(singleTapTimeoutRef.current);
   }, []);
   // Track loaded image aspect ratio for detail screen
-  const [imageAspect, setImageAspect] = useState(null);
+  const [imageAspect, setImageAspect] = useState(cachedAspect);
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   // Helper: determine if current user has liked this post
@@ -84,7 +87,6 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
   const profilePic = post.author?.profilePicture?.trim()
     ? post.author.profilePicture.trim()
     : 'https://via.placeholder.com/50';
-  const mediaUrl = resolveMediaUrl(post) || 'https://via.placeholder.com/200';
   const isVideo = typeof mediaUrl === 'string' && (
     mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov')
   );
@@ -221,10 +223,13 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
       // Single-tap -> navigate to detail after delay
       singleTapTimeoutRef.current = setTimeout(() => {
         if (__DEV__) console.log('[Post] navigate PostDetailCard', { id: post._id });
-        navigation.navigate('PostDetailCard', {
+        navigateToPostDetail({
+          navigation,
+          post,
           postId: post._id,
-          postPreload: post,
           imageAspect,
+          token,
+          isTokenExpired,
         });
       }, DOUBLE_TAP_DELAY);
     }
@@ -362,7 +367,9 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
                 onLoad={({ nativeEvent }) => {
                   const { width, height } = nativeEvent;
                   if (width && height) {
-                    setImageAspect(width / height);
+                    const ratio = width / height;
+                    setImageAspect(ratio);
+                    cachePostImageAspect(post._id, mediaUrl, ratio);
                   }
                   __DEV__ && console.log('[Post] image onLoad', { width: nativeEvent?.width, height: nativeEvent?.height });
                   animateMediaIn();

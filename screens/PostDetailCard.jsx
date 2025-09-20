@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useLayoutEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
   Alert,
   Modal,
   TextInput,
-  Image,
+  Image as RNImage,
   Animated,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ZoomableImage from '../components/ZoomableImage';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
@@ -30,16 +30,19 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchPostDetails, likePost, commentOnPost, fetchRecentCommunityPosts } from '../services/PostService';
-import { Button } from 'liquid-spirit-styleguide';
+import { Button } from 'liquid-spirit-styleguide/native';
 import { shareContent } from '../utils/shareContent';
+import FooterBrand from '../components/FooterBrand';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 
 const HEADER_OFFSET = 0;
 
-const { height: windowHeight } = Dimensions.get('window');
+const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
 
 const PostDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { token, user, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { bottom: safeAreaBottom } = useSafeAreaInsets();
   // Extract post parameters, including preloaded data and image aspect ratio
   const { postId, postPreload, imageAspect: initialImageAspect } = route.params || {};
 
@@ -50,6 +53,7 @@ const PostDetailCard = ({ route }) => {
   const [redirected, setRedirected] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
+  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   // Lightbox modal visibility
   const [modalVisible, setModalVisible] = useState(false);
   // Like and comment state
@@ -59,6 +63,8 @@ const PostDetailCard = ({ route }) => {
   // Comment input visibility (shown by default) and text
   const [showCommentBox, setShowCommentBox] = useState(true);
   const [commentText, setCommentText] = useState('');
+  const normalizedCommentText = commentText ?? '';
+  const isPostButtonDisabled = normalizedCommentText.trim().length === 0;
   // Related posts state
   const [relatedPosts, setRelatedPosts] = useState([]);
   // Ref for comment TextInput to focus when tapping comment icon
@@ -66,6 +72,18 @@ const PostDetailCard = ({ route }) => {
   // Fade in overall content and media for smoother entry
   const contentOpacity = useRef(new Animated.Value(0.6)).current;
   const mediaOpacity = useRef(new Animated.Value(0.6)).current;
+  const scrollContentStyle = useMemo(
+    () => [styles.scrollContent, { paddingBottom: Math.max(48, safeAreaBottom + 36) }],
+    [safeAreaBottom]
+  );
+  const footerContainerStyle = useMemo(
+    () => [styles.footerContainer, { paddingBottom: Math.max(36, safeAreaBottom + 20) }],
+    [safeAreaBottom]
+  );
+  const commentBoxContainerStyle = useMemo(
+    () => [styles.commentBoxContainer, { marginBottom: Math.max(24, safeAreaBottom + 16) }],
+    [safeAreaBottom]
+  );
 
   const handleShare = useCallback(() => {
     const id = post?._id || postId;
@@ -146,7 +164,7 @@ const PostDetailCard = ({ route }) => {
   };
   // Post comment to server and update local comments list
   const handlePostComment = async () => {
-    const trimmed = commentText.trim();
+    const trimmed = normalizedCommentText.trim();
     if (!trimmed) {
       Alert.alert('Comments cannot be empty');
       return;
@@ -209,9 +227,18 @@ const PostDetailCard = ({ route }) => {
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      if (postPreload) setPost(postPreload);
+      if (postPreload) {
+        setPost(prev => {
+          if (!prev) return postPreload;
+          if (prev._id && postPreload._id && prev._id !== postPreload._id) {
+            return postPreload;
+          }
+          return { ...prev, ...postPreload };
+        });
+        setLoading(false);
+      }
 
-      const id = normalizeId(postId);
+      const id = normalizeId(postId || postPreload?._id);
       if (!id) {
         setError('Invalid post link');
         setErrorStatus('invalid_id');
@@ -228,12 +255,19 @@ const PostDetailCard = ({ route }) => {
         } else {
           setError('Please log in to view this post.');
           setErrorStatus(401);
-          setLoading(false);
+          if (!postPreload) {
+            setLoading(false);
+          }
           return;
         }
       }
 
-      if (!postPreload) setLoading(true);
+      const useFullScreenSpinner = !postPreload;
+      if (useFullScreenSpinner) {
+        setLoading(true);
+      } else {
+        setBackgroundRefreshing(true);
+      }
       try {
         const data = await fetchPostDetails(id, token);
         if (isActive) {
@@ -252,7 +286,12 @@ const PostDetailCard = ({ route }) => {
           setErrorStatus(err?.status || 'unknown');
         }
       } finally {
-        if (isActive) setLoading(false);
+        if (!isActive) return;
+        if (useFullScreenSpinner) {
+          setLoading(false);
+        } else {
+          setBackgroundRefreshing(false);
+        }
       }
     };
     load();
@@ -286,6 +325,12 @@ const PostDetailCard = ({ route }) => {
   // Initialize image aspect ratio, using preloaded value if available
   const [imageAspect, setImageAspect] = useState(initialImageAspect || null);
   useEffect(() => {
+    if (initialImageAspect && initialImageAspect !== imageAspect) {
+      setImageAspect(initialImageAspect);
+    }
+  }, [initialImageAspect, imageAspect]);
+  const mediaUrl = useMemo(() => resolveMediaUrl(post), [post]);
+  useEffect(() => {
     if (!post) return;
     // Determine if current user has liked
     const uid = user?.id || user?._id;
@@ -306,12 +351,30 @@ const PostDetailCard = ({ route }) => {
     setIsLiked(liked);
     setLikeCountState(post.likes?.length || 0);
     setCommentCountState(post.comments?.length || 0);
-    // Compute image aspect ratio for full display
-    const url = post.media?.[0];
-    if (url && !(url.endsWith('.mp4') || url.includes('video'))) {
-      Image.getSize(url, (w, h) => setImageAspect(w / h), () => {});
+    // Use provided image aspect ratio if available; fallback to size lookup once
+    if (!imageAspect) {
+      if (post.imageAspect) {
+        setImageAspect(post.imageAspect);
+        return;
+      }
+      if (initialImageAspect) {
+        setImageAspect(initialImageAspect);
+        return;
+      }
     }
-  }, [post, user]);
+    if (!imageAspect && mediaUrl && !(mediaUrl.endsWith('.mp4') || mediaUrl.includes('video'))) {
+      RNImage.getSize(mediaUrl, (w, h) => setImageAspect(w / h), () => {});
+    }
+  }, [post, user, mediaUrl, imageAspect, initialImageAspect]);
+
+  const isVideo = mediaUrl && (mediaUrl.endsWith('.mp4') || mediaUrl.includes('video'));
+  const displayAspect = imageAspect || initialImageAspect || 1;
+  const mediaHeight = useMemo(() => {
+    if (!displayAspect) return 300;
+    const computed = screenWidth / displayAspect;
+    if (!Number.isFinite(computed) || computed <= 0) return 300;
+    return Math.max(computed, 220);
+  }, [displayAspect]);
 
   if (!postId) {
     return (
@@ -345,8 +408,6 @@ const PostDetailCard = ({ route }) => {
     );
   }
 
-  const mediaUrl = resolveMediaUrl(post);
-  const isVideo = mediaUrl && (mediaUrl.endsWith('.mp4') || mediaUrl.includes('video'));
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
   const authorCommunity = post.community?.name || '';
   const profilePic = post.author?.profilePicture?.trim();
@@ -354,10 +415,10 @@ const PostDetailCard = ({ route }) => {
   const commentCount = post.comments?.length || 0;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <SwipeToCloseScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={scrollContentStyle}
         overScrollMode="always"
         scrollEventThrottle={16}
         // swipe down past top to dismiss
@@ -372,7 +433,7 @@ const PostDetailCard = ({ route }) => {
                     <Animated.View style={{ opacity: mediaOpacity }}>
                       <Video
                         source={{ uri: mediaUrl }}
-                        style={[styles.media, { height: 300 }]}
+                        style={[styles.media, { height: mediaHeight }]}
                         controls
                         resizeMode="contain"
                         onLoad={() => {
@@ -387,7 +448,7 @@ const PostDetailCard = ({ route }) => {
                       <Animated.View style={{ opacity: mediaOpacity }}>
                         <FastImage
                           source={{ uri: mediaUrl }}
-                          style={[styles.media, { aspectRatio: imageAspect }]}
+                          style={[styles.media, { height: mediaHeight }]}
                           resizeMode={FastImage.resizeMode.cover}
                           onLoadStart={() => __DEV__ && console.log('[PostDetail] image onLoadStart')}
                           onLoad={() => {
@@ -399,9 +460,7 @@ const PostDetailCard = ({ route }) => {
                       </Animated.View>
                     </TouchableOpacity>
                   ) : (
-                    <View style={styles.mediaPlaceholder}>
-                      <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-                    </View>
+                    <View style={[styles.mediaPlaceholder, { height: mediaHeight }]} />
                   )
                 )}
                 {/* Overlay like & comment icons on image */}
@@ -466,7 +525,7 @@ const PostDetailCard = ({ route }) => {
         </Modal>
         {/* Comment input box */}
         {showCommentBox && (
-          <View style={styles.commentBoxContainer}>
+          <View style={commentBoxContainerStyle}>
             <View style={styles.divider} />
             <Text style={styles.sectionTitle}>Comments</Text>
             {/* Inline comments list */}
@@ -520,12 +579,12 @@ const PostDetailCard = ({ route }) => {
               ref={commentInputRef}
               style={styles.commentInput}
               placeholder="Write a comment..."
-              value={commentText}
+              value={normalizedCommentText}
               onChangeText={setCommentText}
             />
             <View style={styles.commentButtonsRow}>
               <Button label="Clear" secondary onPress={handleCancelComment} />
-              <Button label="Post" primary onPress={handlePostComment} />
+              <Button label="Post" primary onPress={handlePostComment} disabled={isPostButtonDisabled} />
             </View>
           </View>
         )}
@@ -570,7 +629,15 @@ const PostDetailCard = ({ route }) => {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.relatedItem}
-                  onPress={() => navigation.push('PostDetailCard', { postId: item._id, postPreload: item })}
+                  onPress={() =>
+                    navigateToPostDetail({
+                      navigation,
+                      post: item,
+                      postId: item._id,
+                      token,
+                      isTokenExpired,
+                    })
+                  }
                 >
                   <FastImage
                     source={{ uri: item.media?.[0] }}
@@ -582,16 +649,7 @@ const PostDetailCard = ({ route }) => {
             />
           </View>
         )}
-          <View style={styles.footerContainer}>
-            <Image
-              source={require('../assets/appstore.png')}
-              style={styles.footerLogo}
-              resizeMode="contain"
-              accessibilityRole="image"
-              accessibilityLabel="Liquid Spirit"
-            />
-            <Text style={styles.footerText}>Liquid Spirit</Text>
-          </View>
+        <FooterBrand containerStyle={footerContainerStyle} />
         </View>
       </SwipeToCloseScrollView>
     </SafeAreaView>
@@ -633,7 +691,7 @@ const styles = StyleSheet.create({
     margin: 0,
     overflow: 'hidden',
   },
-  media: { width: '100%', height: undefined },
+  media: { width: '100%', height: undefined, minHeight: 220 },
   overlayCard: {
     width: '100%',
     marginTop: -40,
@@ -695,14 +753,12 @@ const styles = StyleSheet.create({
   commentBoxContainer: { marginTop: 16, marginHorizontal: 16, backgroundColor: themeVariables.whiteColor, borderRadius: 8 },
   commentInput: { borderWidth: 1, borderColor: '#ccc', borderRadius: 20, padding: 8, backgroundColor: '#fff' },
   commentButtonsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-  commentButton: { marginLeft: 16 },
-  commentButtonText: { color: themeVariables.primaryColor, fontSize: 16, fontWeight: '600' },
   metricText: { marginLeft: 4, fontSize: 14, color: themeVariables.blackColor },
   // Image loading placeholder
   // Placeholder area for image loading to reserve space
   mediaPlaceholder: {
     width: '100%',
-    height: 300,
+    minHeight: 220,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
@@ -795,16 +851,5 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingBottom: 36,
     backgroundColor: themeVariables.whiteColor || '#fff',
-  },
-  footerLogo: {
-    width: 120,
-    height: 120,
-    marginBottom: 12,
-  },
-  footerText: {
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#999',
   },
 });

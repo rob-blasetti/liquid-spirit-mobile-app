@@ -27,6 +27,7 @@ import LocalAssemblyModal from '../modal/LocalAssemblyModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SlideBanner from '../components/SlideBanner';
 import { getEffectiveNextDate } from '../utils/activityDate';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -96,6 +97,13 @@ const Home = ({ navigation, homeOverview, route }) => {
       navigation.setParams({ bannerMessage: undefined });
     }
   }, [route?.params?.bannerMessage, navigation]);
+
+  const handleNavigateToEvent = useCallback(
+    (eventData) => {
+      navigateToEventDetail({ navigation, event: eventData, token, isTokenExpired });
+    },
+    [navigation, token, isTokenExpired],
+  );
 
 
   // handle tab switch: slide old panel left, then slide in new panel
@@ -252,7 +260,7 @@ const Home = ({ navigation, homeOverview, route }) => {
                 bgImgColour="green"
                 subheading={`${nextEvent.eventType || ''}`}
                 dateTime={eventDateTime}
-                onPress={() => navigation.navigate('EventDetailCard', { eventId: nextEvent._id, eventPreload: nextEvent })}
+                onPress={() => handleNavigateToEvent(nextEvent)}
                 style={styles.largeTile}
               />
               {/* Adjacent Square Tiles */}
@@ -262,7 +270,7 @@ const Home = ({ navigation, homeOverview, route }) => {
                   bgImgColour="red"
                   onPress={() => {
                     if (eventWithoutHost) {
-                      navigation.navigate('EventDetailCard', { eventId: eventWithoutHost._id, eventPreload: eventWithoutHost });
+                      handleNavigateToEvent(eventWithoutHost);
                     } else {
                       navigation.navigate('Events');
                     }
@@ -349,7 +357,7 @@ const Home = ({ navigation, homeOverview, route }) => {
                 imageSource={localImages[nextLsaEvent.imageUrl] || { uri: nextLsaEvent.imageUrl }}
                 dateTime={dateTimeStr}
                 subheading="Admin"
-                onPress={() => navigation.navigate('EventDetailCard', { eventId: nextLsaEvent._id, eventPreload: nextLsaEvent })}
+                onPress={() => handleNavigateToEvent(nextLsaEvent)}
                 style={styles.largeTile}
                 showRibbon={false}
               />

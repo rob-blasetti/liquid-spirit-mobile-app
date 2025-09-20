@@ -17,7 +17,6 @@ import {
   Modal,
   StatusBar,
   Alert,
-  Image,
 } from 'react-native';
 import {
   Card,
@@ -39,6 +38,7 @@ import {
 } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
+import FooterBrand from '../components/FooterBrand';
 import SessionCard from '../components/SessionCard';
 import { resolveSessionDate } from '../utils/activityDate';
 import { shareContent } from '../utils/shareContent';
@@ -1018,16 +1018,7 @@ const ActivityCardBody = ({
       />
     </Card>
 
-    <View style={styles.footerContainer}>
-      <Image
-        source={require('../assets/appstore.png')}
-        style={styles.footerLogo}
-        resizeMode="contain"
-        accessibilityRole="image"
-        accessibilityLabel="Liquid Spirit"
-      />
-      <Text style={styles.footerText}>Liquid Spirit</Text>
-    </View>
+    <FooterBrand containerStyle={styles.footerContainer} />
     </>
   );
 };
@@ -1621,17 +1612,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingBottom: 36,
     backgroundColor: themeVariables.whiteColor || '#fff',
-  },
-  footerLogo: {
-    width: 120,
-    height: 120,
-    marginBottom: 12,
-  },
-  footerText: {
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: '#999',
   },
   formLink: {
     paddingVertical: 6,
