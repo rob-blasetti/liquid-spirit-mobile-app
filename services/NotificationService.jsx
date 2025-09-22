@@ -1,5 +1,51 @@
 import { API_URL } from '../config';
 
+const normalizeEntityId = (value) => {
+  if (!value) return null;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const normalized = String(value).trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+  if (typeof value === 'object') {
+    return (
+      normalizeEntityId(value._id) ||
+      normalizeEntityId(value.id) ||
+      null
+    );
+  }
+  return null;
+};
+
+const isPostCreationType = (typeName = '') => {
+  const normalized = typeName.toString().toLowerCase().replace(/[^a-z]/g, '');
+  if (!normalized) return false;
+  if (normalized === 'postcreated' || normalized === 'postcreate') return true;
+  return normalized.includes('post') && normalized.includes('create');
+};
+
+export const filterOutSelfAuthoredPostNotifications = (notifications, currentUserId) => {
+  if (!Array.isArray(notifications) || notifications.length === 0) return notifications || [];
+  const normalizedUserId = normalizeEntityId(currentUserId);
+  if (!normalizedUserId) return notifications;
+
+  return notifications.filter((notification) => {
+    if (!notification) return false;
+    const rawType = notification.type?.typeName || notification.type;
+    if (!isPostCreationType(rawType)) {
+      return true;
+    }
+
+    const actorId =
+      normalizeEntityId(notification.actor) ||
+      normalizeEntityId(notification.actorId) ||
+      normalizeEntityId(notification.additionalData?.actor) ||
+      normalizeEntityId(notification.additionalData?.actorId);
+
+    if (!actorId) return true;
+    return actorId !== normalizedUserId;
+  });
+};
+
 const NotificationService = {
   async sendNotification(token, type, actorId, targetId, targetType, recipientCommunity, additionalData, scope) {
     try {

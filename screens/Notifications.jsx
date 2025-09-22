@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
-import NotificationService from '../services/NotificationService';
+import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
 import { Chip } from 'react-native-paper';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
@@ -99,7 +99,7 @@ const extractActivityAndSessionIds = (notification) => {
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { token, isTokenExpired, setUnreadCount, userNotifications, setUserNotifications } = useContext(UserContext);
+  const { token, isTokenExpired, setUnreadCount, userNotifications, setUserNotifications, user } = useContext(UserContext);
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -223,8 +223,10 @@ export default function Notifications() {
     try {
       const response = await NotificationService.getAllNotifications(token, { limit: LIMIT, offset: 0 });
       const notifs = response.data || [];
-      setUserNotifications(notifs);
-      const unread = notifs.filter((n) => !n.isRead).length;
+      const currentUserId = user?.id || user?._id;
+      const sanitized = filterOutSelfAuthoredPostNotifications(notifs, currentUserId);
+      setUserNotifications(sanitized);
+      const unread = sanitized.filter((n) => !n.isRead).length;
       setUnreadCount(unread);
     } catch (error) {
       console.error('Error refreshing notifications:', error);

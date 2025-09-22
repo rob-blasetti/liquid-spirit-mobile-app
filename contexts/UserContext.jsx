@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
-import NotificationService from '../services/NotificationService';
+import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 import { fetchActivities } from '../services/ActivityService.jsx';
@@ -235,23 +235,26 @@ export const UserProvider = ({ children }) => {
     }
   };
   // Load notifications on token change
+  const derivedUserId = user?.id || user?._id;
+
   useEffect(() => {
-    if (!token) return;
+    if (!token || !derivedUserId) return;
     // Defer to centralized refresh orchestration; skip if token expired
     if (isTokenExpired(token)) return;
     const loadNotifications = async () => {
       try {
         const resp = await NotificationService.getAllNotifications(token, { limit: 10, offset: 0 });
         const notifs = resp.data || [];
-        setUserNotifications(notifs);
-        const unread = notifs.filter(n => !n.isRead).length;
+        const sanitized = filterOutSelfAuthoredPostNotifications(notifs, derivedUserId);
+        setUserNotifications(sanitized);
+        const unread = sanitized.filter(n => !n.isRead).length;
         setUnreadCount(unread);
       } catch (error) {
         console.error('Error loading notifications:', error);
       }
     };
     loadNotifications();
-  }, [token]);
+  }, [token, derivedUserId]);
 
   const biometricLogin = async () => {
     // Prevent parallel biometric prompts/logins
