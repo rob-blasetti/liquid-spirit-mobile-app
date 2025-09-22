@@ -65,6 +65,8 @@ const ProfileScreen = ({ navigation }) => {
   // Filter activities where the user is a facilitator or participant
 const filterUserActivities = (allActivities, userId) => {
   return (allActivities || []).filter(activity => {
+    const status = (activity?.status ?? '').toString().toLowerCase();
+    if (status !== 'active') return false;
     const sessions = activity.sessions || [];
 
     // Check each session for a match
