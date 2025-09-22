@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import themeVariables from '../styles/theme';
 import localImages from '../utils/localImages';
+import { API_URL } from '../config';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,6 +20,26 @@ function safeText(val) {
   if (typeof val === 'string' || typeof val === 'number') return val;
   if (typeof val === 'object' && 'name' in val) return val.name;
   return JSON.stringify(val);
+}
+
+function isVideoUrl(url = '') {
+  if (typeof url !== 'string') return false;
+  return /\.(mp4|mov|m4v|3gp|avi)$/i.test(url) || url.includes('/video');
+}
+
+function resolveMediaSource(url) {
+  if (!url) return null;
+  if (localImages[url]) return localImages[url];
+  if (/^https?:/i.test(url) || /^data:/i.test(url)) return { uri: url };
+  const normalized = url.startsWith('/') ? url.slice(1) : url;
+  return { uri: `${API_URL}/${normalized}` };
+}
+
+function truncateText(text, limit) {
+  if (!text) return '';
+  const str = String(text);
+  if (str.length <= limit) return str;
+  return `${str.slice(0, limit).trimEnd()}...`;
 }
 
 /**
@@ -65,6 +86,30 @@ const SearchCard = ({ item, onPress }) => {
               colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
               style={StyleSheet.absoluteFill}
             />
+          )}
+          <View style={styles.overlayChipContainer}>{renderChipsOverlay()}</View>
+        </View>
+      );
+    }
+    if (item.type === 'post') {
+      const thumbnail = Array.isArray(item.mediaThumbnails) && item.mediaThumbnails.length > 0
+        ? item.mediaThumbnails[0]
+        : null;
+      const media = Array.isArray(item.media) && item.media.length > 0 ? item.media[0] : null;
+      const previewUri = thumbnail || media;
+      const source = resolveMediaSource(previewUri) || require('../assets/img/placeholder.png');
+      const videoBadgeVisible = isVideoUrl(media);
+      return (
+        <View style={styles.imageContainer}>
+          <FastImage
+            source={source}
+            style={StyleSheet.absoluteFill}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          {videoBadgeVisible && (
+            <View style={styles.videoBadge}>
+              <Ionicons name="play" size={16} color={themeVariables.whiteColor} />
+            </View>
           )}
           <View style={styles.overlayChipContainer}>{renderChipsOverlay()}</View>
         </View>
@@ -146,6 +191,16 @@ const SearchCard = ({ item, onPress }) => {
             <Text style={styles.chipText}>{safeText(item.community)}</Text>
           </View>
         );
+      case 'post': {
+        const communityText = safeText(item.community);
+        if (!communityText) return null;
+        return (
+          <View style={[styles.chip, styles.communityChip]}>
+            <Ionicons name="leaf-outline" size={12} color={themeVariables.whiteColor} style={styles.chipIcon} />
+            <Text style={styles.chipText}>{communityText}</Text>
+          </View>
+        );
+      }
       default:
         return null;
     }
@@ -178,6 +233,22 @@ const SearchCard = ({ item, onPress }) => {
             <Text style={styles.field}>Baha'i ID: {safeText(item.bahaiId)}</Text>
           </>
         );
+      case 'post': {
+        const rawContent = safeText(item.content || item.title);
+        const content = truncateText(rawContent, 25) || 'View post details';
+        const authorName = [safeText(item.author?.firstName), safeText(item.author?.lastName)]
+          .filter(Boolean)
+          .join(' ');
+        return (
+          <>
+            <Text style={styles.postContent}>{content}</Text>
+            {authorName ? <Text style={styles.postMetaText}>By {authorName}</Text> : null}
+            {item.createdAt ? (
+              <Text style={styles.postMetaText}>{formatDate(item.createdAt)}</Text>
+            ) : null}
+          </>
+        );
+      }
       default:
         return <Text style={styles.field}>{JSON.stringify(item)}</Text>;
     }
@@ -298,9 +369,29 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
   },
+  videoBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    borderRadius: 12,
+    padding: 4,
+  },
   content: {
     paddingHorizontal: 0,
     paddingBottom: 0,
+  },
+  postContent: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: themeVariables.blackColor,
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  postMetaText: {
+    fontSize: 12,
+    color: themeVariables.blackColor,
+    marginBottom: 4,
   },
 });
 
