@@ -23,3 +23,30 @@ export const fetchSearchResults = async (query, token) => {
     throw new Error(`Fetch search results error: ${error.message}`);
   }
 };
+
+export const fetchSearchAutocomplete = async (query, token) => {
+  const trimmedQuery = query?.trim?.() ?? '';
+  if (!trimmedQuery) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/search/autocomplete?q=${encodeURIComponent(trimmedQuery)}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch autocomplete suggestions');
+    }
+
+    const responseData = await response.json();
+    console.log('Fetched autocomplete suggestions:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('Error fetching search autocomplete:', error);
+    return [];
+  }
+};
