@@ -387,15 +387,23 @@ const Search = () => {
         const sessionStatus = safeText(item.sessionStatus || item.status).trim();
         const nextSessionCandidate = item.nextSessionDate || item.nextSession?.date || item.date;
         const formattedNextSessionDate = normalizedDate(nextSessionCandidate);
+        const hasNextSessionDate = Boolean(formattedNextSessionDate);
+        const hasRawNextSessionValue = (() => {
+          if (nextSessionCandidate == null) return false;
+          if (typeof nextSessionCandidate === 'string') return nextSessionCandidate.trim().length > 0;
+          return true;
+        })();
         const groupDay = safeText(item.groupDetails?.day).trim();
         const rawGroupTime = item.groupDetails?.time;
         const formattedGroupTime = formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
         const scheduleParts = [groupDay, formattedGroupTime].filter(Boolean);
-        const subtitle = formattedNextSessionDate
+        const subtitle = hasNextSessionDate
           ? `Next Session: ${formattedNextSessionDate}`
-          : scheduleParts.length
-            ? 'Next Session:'
-            : undefined;
+          : !hasRawNextSessionValue
+            ? 'Next Session: TBA'
+            : scheduleParts.length
+              ? 'Next Session:'
+              : undefined;
         const secondarySubtitle = scheduleParts.length
           ? scheduleParts.join(' • ')
           : undefined;
