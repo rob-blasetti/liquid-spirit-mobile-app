@@ -3,12 +3,19 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 
-const ListItem = ({ imageSource, title, content, date, time, onPress, commentCount, countLabel = 'Comments', chipText }) => {
+const ListItem = ({ imageSource, leadingComponent, title, content, date, time, onPress, commentCount, countLabel = 'Comments', chipText }) => {
+  const hasLeading = Boolean(imageSource) || Boolean(leadingComponent);
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      {imageSource && (
+      {hasLeading && (
         <View style={styles.imageContainer}>
-          <FastImage source={imageSource} style={styles.image} />
+          {leadingComponent ? (
+            <View style={styles.customImageWrapper}>
+              {leadingComponent}
+            </View>
+          ) : (
+            <FastImage source={imageSource} style={styles.image} />
+          )}
           {chipText && (
             <View style={styles.chip}>
               <Text style={styles.chipText}>{chipText}</Text>
@@ -70,6 +77,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginRight: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   chip: {
     marginTop: 4,
@@ -113,6 +121,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#555',
     marginRight: 8,
+  },
+  customImageWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

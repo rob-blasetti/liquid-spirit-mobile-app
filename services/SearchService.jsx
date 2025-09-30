@@ -1,8 +1,13 @@
 import { API_URL } from '../config';
 
-export const fetchSearchResults = async (query, token) => {
+export const fetchSearchResults = async (query, token, communityId) => {
   try {
-    const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`, {
+    let url = `${API_URL}/api/search?q=${encodeURIComponent(query)}`;
+    if (communityId) {
+      url += `&communityId=${encodeURIComponent(communityId)}`;
+    }
+
+    const response = await fetch(url, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Content-Type': 'application/json',
@@ -24,14 +29,19 @@ export const fetchSearchResults = async (query, token) => {
   }
 };
 
-export const fetchSearchAutocomplete = async (query, token) => {
+export const fetchSearchAutocomplete = async (query, token, communityId) => {
   const trimmedQuery = query?.trim?.() ?? '';
   if (!trimmedQuery) {
     return [];
   }
 
   try {
-    const response = await fetch(`${API_URL}/api/search/autocomplete?q=${encodeURIComponent(trimmedQuery)}`, {
+    let url = `${API_URL}/api/search/autocomplete?q=${encodeURIComponent(trimmedQuery)}`;
+    if (communityId) {
+      url += `&communityId=${encodeURIComponent(communityId)}`;
+    }
+
+    const response = await fetch(url, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Content-Type': 'application/json',

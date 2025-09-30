@@ -1,12 +1,104 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
-import { SafeAreaView, View, TextInput, FlatList, Text, StyleSheet, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView, View, TextInput, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { fetchSearchResults, fetchSearchAutocomplete } from '../services/SearchService';
-import SearchCard from '../components/SearchCard';
-import { TabView } from 'react-native-tab-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config';
+import localImages from '../utils/localImages';
+import SearchItem from '../components/SearchItem';
+import { CommunityContext } from '../contexts/CommunityContext';
+import Avatar from '@liquidspirit/react-native-boring-avatars';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const placeholderImage = require('../assets/img/placeholder.png');
+
+function safeText(val) {
+  if (val == null) return '';
+  if (typeof val === 'string' || typeof val === 'number') return String(val);
+  if (typeof val === 'object' && 'name' in val) return String(val.name);
+  try {
+    return JSON.stringify(val);
+  } catch (_) {
+    return '';
+  }
+}
+
+function truncateText(text, limit) {
+  if (!text) return '';
+  const str = String(text);
+  if (str.length <= limit) return str;
+  return `${str.slice(0, limit).trimEnd()}...`;
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return String(dateString);
+  const day = d.getDate();
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear().toString().slice(-2);
+  const j = day % 10;
+  const k = day % 100;
+  let suffix = 'th';
+  if (j === 1 && k !== 11) suffix = 'st';
+  else if (j === 2 && k !== 12) suffix = 'nd';
+  else if (j === 3 && k !== 13) suffix = 'rd';
+  return `${day}${suffix} ${month} '${year}`;
+}
+
+function getDayName(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return dayNames[d.getDay()] || '';
+}
+
+function formatGroupTime(timeStr) {
+  if (typeof timeStr !== 'string' || !timeStr.includes(':')) return '';
+  const [hoursStr, minutesStr] = timeStr.split(':');
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr ?? 0);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return '';
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatEventTime(timeValue) {
+  if (!timeValue) return '';
+  const date = new Date(timeValue);
+  if (!Number.isFinite(date.getTime())) return '';
+  const formatted = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return typeof formatted === 'string'
+    ? formatted.replace(/(am|pm)/gi, match => match.toUpperCase())
+    : '';
+}
+
+function resolveImageSource(uri) {
+  if (!uri) return placeholderImage;
+  if (localImages[uri]) return localImages[uri];
+  if (typeof uri === 'object' && uri.uri) return uri;
+  const stringUri = typeof uri === 'string' ? uri : null;
+  if (!stringUri) return placeholderImage;
+  if (/^https?:/i.test(stringUri) || /^data:/i.test(stringUri)) {
+    return { uri: stringUri };
+  }
+  const normalized = stringUri.startsWith('/') ? stringUri.slice(1) : stringUri;
+  return { uri: `${API_URL}/${normalized}` };
+}
+
+function extractMediaUrl(media) {
+  if (!media) return null;
+  if (typeof media === 'string') return media;
+  if (typeof media === 'object') {
+    return media.url || media.uri || media.path || null;
+  }
+  return null;
+}
 
 const Search = () => {
   const navigation = useNavigation();
@@ -18,18 +110,23 @@ const Search = () => {
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
   const { token } = useContext(UserContext);
-  // TabView state for result categories
-  const [searchIndex, setSearchIndex] = useState(0);
-  const [searchRoutes] = useState([
-    { key: 'activities', title: 'Activities' },
-    { key: 'events', title: 'Events' },
-    { key: 'posts', title: 'Posts' },
-    { key: 'users', title: 'Users' },
-  ]);
+  const { communityId } = useContext(CommunityContext);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const debounceRef = useRef(null);
   const autocompleteDebounceRef = useRef(null);
+  const inputRef = useRef(null);
+  const latestSearchIdRef = useRef(0);
+
+  const cancelAutocomplete = useCallback(() => {
+    if (autocompleteDebounceRef.current) {
+      clearTimeout(autocompleteDebounceRef.current);
+      autocompleteDebounceRef.current = null;
+    }
+    setIsAutocompleteLoading(false);
+  }, []);
   // Handler for card press navigation
-  const handleCardPress = (selected) => {
+  const handleCardPress = useCallback((selected) => {
     if (selected.type === 'member' || selected.type === 'user') {
       navigation.navigate('PublicUserProfile', { userId: selected._id || selected.id });
     } else if (selected.type === 'session') {
@@ -39,82 +136,8 @@ const Search = () => {
     } else if (selected.type === 'event') {
       navigation.navigate('EventDetailCard', { eventId: selected._id || selected.id });
     }
-  };
-  // Partition results by type for tabs
-  const activitiesResults = results.filter(item => item.type === 'activity' || item.type === 'session');
-  const eventsResults = results.filter(item => item.type === 'event');
-  const postsResults = results.filter(item => item.type === 'post');
-  const usersResults = results.filter(item => item.type === 'member' || item.type === 'user');
-  // Render each tab scene
-  const renderScene = ({ route }) => {
-    let data = [];
-    switch (route.key) {
-      case 'activities': data = activitiesResults; break;
-      case 'events': data = eventsResults; break;
-      case 'posts': data = postsResults; break;
-      case 'users': data = usersResults; break;
-      default: data = [];
-    }
-    return (
-      <FlatList
-        data={data}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        keyExtractor={(item, index) => (item.id || item._id ? (item.id || item._id).toString() : index.toString())}
-        renderItem={({ item }) => (
-          <SearchCard item={item} onPress={handleCardPress} />
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>
-            {query.length === 0 ? 'No recent results available.' : `No ${route.title} found`}
-          </Text>
-        }
-      />
-    );
-  };
-
-  // Custom TabBar: inactive tabs have black bottom border/text, active tab with primary color underline and text
-  const renderSearchTabBar = ({ navigationState, jumpTo, layout }) => {
-    const totalWidth = layout?.width ?? Dimensions.get('window').width;
-    const tabWidth = totalWidth / navigationState.routes.length;
-    return (
-      <View style={{
-          flexDirection: 'row',
-          backgroundColor: themeVariables.darkGreyColor,
-        }}>
-        {navigationState.routes.map((route, idx) => {
-          const focused = navigationState.index === idx;
-          return (
-            <TouchableOpacity
-              key={route.key}
-              style={{
-                width: tabWidth,
-                paddingVertical: 8,
-                alignItems: 'center',
-                justifyContent: 'center',
-                // static bottom border thickness, color depends on focus
-                borderBottomWidth: focused ? 2 : 0,
-                borderBottomColor: focused ? themeVariables.primaryColor : themeVariables.blackColor,
-                // rounded bottom corners on active tab
-                // borderBottomLeftRadius: focused ? 6 : 0,
-                // borderBottomRightRadius: focused ? 6 : 0,
-              }}
-              onPress={() => jumpTo(route.key)}
-            >
-              <Text style={{
-                  color: focused ? themeVariables.primaryColor : themeVariables.blackColor,
-                  fontSize: 16,
-                  fontWeight: focused ? 'bold' : 'normal',
-                }}>
-                {route.title}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    );
-  };
-
+  }, [navigation]);
+  // Partition results by type for grouped sections
   const getSuggestionLabel = useCallback((suggestion) => {
     if (!suggestion) return '';
     if (typeof suggestion === 'string') return suggestion;
@@ -135,25 +158,72 @@ const Search = () => {
     return key ? key.toString() : index.toString();
   }, [getSuggestionLabel]);
 
+  const updateRecentSearches = useCallback((rawText) => {
+    const trimmed = rawText?.trim?.();
+    if (!trimmed) return;
+    setRecentSearches(prev => {
+      const normalizedTrimmed = trimmed.toLowerCase();
+      const filtered = prev.filter(item => item.toLowerCase() !== normalizedTrimmed);
+      const next = [trimmed, ...filtered].slice(0, 5);
+      AsyncStorage.setItem('search_cache__recent_queries', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
   const executeSearch = useCallback(async (text) => {
+    const normalizedQuery = text ?? '';
+    const requestId = ++latestSearchIdRef.current;
     setIsLoading(true);
     try {
-      const data = await fetchSearchResults(text, token);
-      setResults(data || []);
+      const data = await fetchSearchResults(normalizedQuery, token, communityId);
+      console.log('Search results for query', normalizedQuery, data);
+      if (latestSearchIdRef.current !== requestId) return;
+      const nextResults = Array.isArray(data) ? data : [];
+      setResults(nextResults);
       try {
-        await AsyncStorage.setItem('search_cache__query', text || '');
-        await AsyncStorage.setItem('search_cache__results', JSON.stringify(data || []));
+        await AsyncStorage.setItem('search_cache__query', normalizedQuery);
+        await AsyncStorage.setItem('search_cache__results', JSON.stringify(nextResults));
       } catch (_) {}
+      if (normalizedQuery.trim().length > 0 && !isSearchFocused) {
+        updateRecentSearches(normalizedQuery);
+      }
     } catch (error) {
       console.error('Search failed:', error);
-      setResults([]);
+      if (latestSearchIdRef.current === requestId) {
+        setResults([]);
+      }
     } finally {
-      setIsLoading(false);
+      if (latestSearchIdRef.current === requestId) {
+        setIsLoading(false);
+      }
     }
-  }, [token]);
+  }, [token, communityId, updateRecentSearches, isSearchFocused]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await AsyncStorage.getItem('search_cache__recent_queries');
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          const sanitized = parsed.filter(item => typeof item === 'string');
+          const unique = [];
+          sanitized.forEach(entry => {
+            if (!entry) return;
+            const lower = entry.toLowerCase();
+            if (!unique.some(existing => existing.toLowerCase() === lower)) {
+              unique.push(entry);
+            }
+          });
+          setRecentSearches(unique.slice(0, 5));
+        }
+      } catch (_) {}
+    })();
+  }, []);
 
   // Fetch recent results on first mount, and handle initialQuery param once
   const firstMountRef = React.useRef(true);
+
   useEffect(() => {
     if (firstMountRef.current && !hasPrefilled) {
       (async () => {
@@ -192,17 +262,21 @@ const Search = () => {
   const handleAutocomplete = useCallback((text) => {
     if (autocompleteDebounceRef.current) {
       clearTimeout(autocompleteDebounceRef.current);
+      autocompleteDebounceRef.current = null;
     }
     const trimmed = text?.trim?.() ?? '';
     if (!trimmed) {
       setAutocompleteSuggestions([]);
       setIsAutocompleteLoading(false);
+      autocompleteDebounceRef.current = null;
       return;
     }
     setIsAutocompleteLoading(true);
     autocompleteDebounceRef.current = setTimeout(async () => {
+      autocompleteDebounceRef.current = null;
       try {
-        const suggestions = await fetchSearchAutocomplete(trimmed, token);
+        const suggestions = await fetchSearchAutocomplete(trimmed, token, communityId);
+        console.log('Autocomplete suggestions for query', trimmed, suggestions);
         const sanitized = Array.isArray(suggestions)
           ? suggestions.filter(item => {
               const label = getSuggestionLabel(item);
@@ -217,7 +291,7 @@ const Search = () => {
         setIsAutocompleteLoading(false);
       }
     }, 200);
-  }, [token, getSuggestionLabel]);
+  }, [token, getSuggestionLabel, communityId]);
 
   const handleSearch = useCallback((text) => {
     setQuery(text);
@@ -231,76 +305,350 @@ const Search = () => {
   const handleSuggestionPress = useCallback((suggestion) => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
+      debounceRef.current = null;
     }
     const label = getSuggestionLabel(suggestion);
+    cancelAutocomplete();
     setAutocompleteSuggestions([]);
-    setIsAutocompleteLoading(false);
     setQuery(label);
+    updateRecentSearches(label);
+    inputRef.current?.blur?.();
+    setIsSearchFocused(false);
     executeSearch(label);
-  }, [executeSearch, getSuggestionLabel]);
+  }, [executeSearch, getSuggestionLabel, updateRecentSearches, cancelAutocomplete]);
+
+  const handleRecentSearchPress = useCallback((value) => {
+    if (!value) return;
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    cancelAutocomplete();
+    setAutocompleteSuggestions([]);
+    setQuery(value);
+    updateRecentSearches(value);
+    inputRef.current?.blur?.();
+    setIsSearchFocused(false);
+    executeSearch(value);
+  }, [executeSearch, updateRecentSearches, cancelAutocomplete]);
+
+  const handleRecentSearchRemove = useCallback((value) => {
+    if (!value) return;
+    const target = value.toLowerCase();
+    setRecentSearches(prev => {
+      const next = prev.filter(entry => entry.toLowerCase() !== target);
+      AsyncStorage.setItem('search_cache__recent_queries', JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
 
   const renderSuggestionItem = ({ item }) => {
     const label = getSuggestionLabel(item);
     if (!label) return null;
     const typeLabel = getSuggestionType(item);
     return (
-      <TouchableOpacity style={styles.autocompleteItem} onPress={() => handleSuggestionPress(item)}>
-        <Text style={styles.autocompleteText}>{label}</Text>
-        {typeLabel ? <Text style={styles.autocompleteTypeText}>{typeLabel}</Text> : null}
+      <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionPress(item)} activeOpacity={0.85}>
+        <View style={styles.suggestionIconWrapper}>
+          <Ionicons name="search" size={20} color={themeVariables.blackColor} />
+        </View>
+        <View style={styles.suggestionContent}>
+          <Text style={styles.suggestionTitle} numberOfLines={1}>
+            {label}
+          </Text>
+          {typeLabel ? (
+            <Text style={styles.suggestionSubtitle} numberOfLines={1}>
+              {typeLabel}
+            </Text>
+          ) : null}
+        </View>
       </TouchableOpacity>
     );
   };
 
-  const shouldShowAutocomplete = query.trim().length > 0 && (isAutocompleteLoading || autocompleteSuggestions.length > 0);
+  const shouldShowAutocomplete = autocompleteSuggestions.length > 0;
+  const showSuggestionPanel = isSearchFocused;
+  const showResults = !showSuggestionPanel;
+  const showSearchSpinner = isLoading || (isSearchFocused && isAutocompleteLoading);
+  const trimmedQuery = query.trim();
+  const hasAnyResults = results.length > 0;
 
-  const LoadingBanner = () => (
-    isLoading ? (
-      <View style={styles.loadingBanner}>
-        <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-        <Text style={styles.loadingText}>Updating results…</Text>
-      </View>
-    ) : null
-  );
+  const getListItemProps = useCallback((item) => {
+    if (!item) return null;
+    const communityText = safeText(item.community);
+    const normalizedDate = (value) => {
+      const formatted = formatDate(value);
+      return formatted ? formatted : undefined;
+    };
+    const onPress = () => handleCardPress(item);
+    switch (item.type) {
+      case 'activity':
+      case 'session': {
+        const title = safeText(item.title || item.name);
+        const sessionStatus = safeText(item.sessionStatus || item.status).trim();
+        const nextSessionCandidate = item.nextSessionDate || item.nextSession?.date || item.date;
+        const formattedNextSessionDate = normalizedDate(nextSessionCandidate);
+        const groupDay = safeText(item.groupDetails?.day).trim();
+        const rawGroupTime = item.groupDetails?.time;
+        const formattedGroupTime = formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
+        const scheduleParts = [groupDay, formattedGroupTime].filter(Boolean);
+        const subtitle = formattedNextSessionDate
+          ? `Next Session: ${formattedNextSessionDate}`
+          : scheduleParts.length
+            ? 'Next Session:'
+            : undefined;
+        const secondarySubtitle = scheduleParts.length
+          ? scheduleParts.join(' • ')
+          : undefined;
+        return {
+          imageSource: resolveImageSource(item.imageUrl),
+          title: title || 'Activity',
+          subtitle,
+          secondarySubtitle,
+          tagText: safeText(item.activityType) || 'Activity',
+          sessionStatusTagText: sessionStatus || undefined,
+          communityTagText: communityText || undefined,
+          onPress,
+        };
+      }
+      case 'event': {
+        const title = safeText(item.title);
+        const subtitleParts = [safeText(item.location)];
+        const rawTime = item.startTime || item.time;
+        const timeField = formatEventTime(rawTime) || safeText(rawTime);
+        const dayOfWeek = getDayName(item.date);
+        const formattedDate = normalizedDate(item.date);
+        const dateLabelParts = [];
+        if (dayOfWeek) dateLabelParts.push(dayOfWeek);
+        if (formattedDate) dateLabelParts.push(formattedDate);
+        return {
+          imageSource: resolveImageSource(item.imageUrl),
+          title: title || 'Event',
+          date: dateLabelParts.join(' • ') || undefined,
+          time: timeField || undefined,
+          subtitle: subtitleParts.filter(Boolean).join(' • ') || undefined,
+          tagText: safeText(item.eventType) || 'Event',
+          communityTagText: communityText || undefined,
+          isEvent: true,
+          onPress,
+        };
+      }
+      case 'post': {
+        const thumbnails = Array.isArray(item.mediaThumbnails) ? item.mediaThumbnails : [];
+        const mediaArray = Array.isArray(item.media) ? item.media : [];
+        const previewUri = extractMediaUrl(thumbnails[0]) || extractMediaUrl(mediaArray[0]);
+        const rawContent = safeText(item.content || item.title);
+        const content = truncateText(rawContent, 80) || 'View post details';
+        const authorName = [safeText(item.author?.firstName), safeText(item.author?.lastName)]
+          .filter(Boolean)
+          .join(' ');
+        const truncatedAuthorName = truncateText(authorName, 24);
+        return {
+          imageSource: resolveImageSource(previewUri),
+          title: content,
+          subtitle: undefined,
+          date: normalizedDate(item.createdAt),
+          metaText: typeof item.commentCount === 'number'
+            ? `Comments: ${item.commentCount}`
+            : undefined,
+          tagText: safeText(item.category) || 'Post',
+          communityTagText: communityText || undefined,
+          secondaryFooterText: truncatedAuthorName ? `By ${truncatedAuthorName}` : undefined,
+          onPress,
+        };
+      }
+      case 'member':
+      case 'user': {
+        const title = [safeText(item.firstName), safeText(item.lastName)].filter(Boolean).join(' ').trim();
+        const communityName = communityText ? `Member of ${communityText}` : '';
+        const subtitleParts = [];
+        const hasProfilePicture = Boolean(item.profilePicture);
+        const leadingComponent = hasProfilePicture ? null : (
+          <Avatar
+            size={60}
+            name={title || safeText(item.displayName) || safeText(item.email) || 'Member'}
+            variant="beam"
+            colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+          />
+        );
+        return {
+          imageSource: hasProfilePicture ? resolveImageSource(item.profilePicture) : null,
+          leadingComponent,
+          title: title || safeText(item.displayName) || 'Member',
+          subtitle: communityName || subtitleParts.filter(Boolean).join(' • ') || undefined,
+          tagText: undefined,
+          communityTagText: undefined,
+          onPress,
+        };
+      }
+      default: {
+        const fallbackTitle = safeText(item.title || item.name || item.displayName || item.id);
+        return {
+          imageSource: resolveImageSource(item.imageUrl),
+          title: fallbackTitle || 'Result',
+          subtitle: undefined,
+          communityTagText: communityText || undefined,
+          onPress,
+        };
+      }
+    }
+  }, [handleCardPress]);
+
+  const handleCancel = useCallback(() => {
+    inputRef.current?.clear?.();
+    inputRef.current?.blur?.();
+    setIsSearchFocused(false);
+    cancelAutocomplete();
+    setAutocompleteSuggestions([]);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    (async () => {
+      try {
+        const [storedQuery, storedResults] = await AsyncStorage.multiGet([
+          'search_cache__query',
+          'search_cache__results',
+        ]);
+        const restoredQuery = storedQuery?.[1] ?? '';
+        const parsedResults = storedResults?.[1] ? JSON.parse(storedResults[1]) : [];
+        setQuery(restoredQuery);
+        setResults(Array.isArray(parsedResults) ? parsedResults : []);
+      } catch (_) {
+        setQuery('');
+        setResults([]);
+      }
+    })();
+  }, [cancelAutocomplete]);
 
   return (
     <SafeAreaView style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search..."
-        value={query}
-        onChangeText={handleSearch}
-        onFocus={() => handleAutocomplete(query)}
-      />
-      {shouldShowAutocomplete ? (
-        <View style={styles.autocompleteContainer}>
-          {isAutocompleteLoading ? (
-            <View style={styles.autocompleteLoadingContainer}>
-              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-              <Text style={styles.autocompleteLoadingText}>Searching suggestions…</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={autocompleteSuggestions}
-              keyExtractor={suggestionKeyExtractor}
-              renderItem={renderSuggestionItem}
-              keyboardShouldPersistTaps="handled"
-              ItemSeparatorComponent={() => <View style={styles.autocompleteSeparator} />}
+      <View style={styles.searchBarRow}>
+        <View style={[styles.searchInputContainer, !isSearchFocused && styles.searchInputContainerCollapsed]}>
+          <TextInput
+            ref={inputRef}
+            style={styles.searchInput}
+            placeholder="Search..."
+            value={query}
+            onChangeText={handleSearch}
+            onFocus={() => {
+              setIsSearchFocused(true);
+              handleAutocomplete(query);
+            }}
+            onBlur={() => {
+              setIsSearchFocused(false);
+              if (query.trim().length > 0) {
+                updateRecentSearches(query);
+              }
+            }}
+            returnKeyType="search"
+            onSubmitEditing={() => {
+              cancelAutocomplete();
+              setAutocompleteSuggestions([]);
+              inputRef.current?.blur?.();
+              setIsSearchFocused(false);
+              if (query.trim().length > 0) {
+                updateRecentSearches(query);
+              }
+              executeSearch(query);
+            }}
+          />
+          {showSearchSpinner ? (
+            <ActivityIndicator
+              size="small"
+              color={themeVariables.primaryColor}
+              style={styles.searchSpinner}
             />
-          )}
+          ) : null}
+        </View>
+        {isSearchFocused ? (
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} activeOpacity={0.7}>
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      {showSuggestionPanel ? (
+        <View style={styles.autocompleteContainer}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.suggestionContentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            {shouldShowAutocomplete ? (
+              <View style={styles.suggestionSection}>
+                <Text style={styles.suggestionSectionTitle}>Suggested Searches</Text>
+                {autocompleteSuggestions.map((item, index) => (
+                  <View key={suggestionKeyExtractor(item, index)}>
+                    {renderSuggestionItem({ item })}
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {recentSearches.length > 0 ? (
+              <View style={styles.suggestionSection}>
+                <Text style={styles.suggestionSectionTitle}>Recent Searches</Text>
+                {recentSearches.map(value => (
+                  <TouchableOpacity
+                    key={value}
+                    style={[styles.suggestionItem, styles.recentSuggestionItem]}
+                    onPress={() => handleRecentSearchPress(value)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={[styles.suggestionIconWrapper, styles.recentIconWrapper]}>
+                      <Ionicons name="time-outline" size={20} color={themeVariables.blackColor} />
+                    </View>
+                    <View style={styles.suggestionContent}>
+                      <Text style={styles.suggestionTitle} numberOfLines={1}>
+                        {value}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.recentRemoveButton}
+                      onPress={(event) => {
+                        event.stopPropagation?.();
+                        handleRecentSearchRemove(value);
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      activeOpacity={0.6}
+                    >
+                      <Ionicons name="close" size={18} color={themeVariables.blackColor} />
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+          </ScrollView>
         </View>
       ) : null}
-      <LoadingBanner />
-      <View style={{ flex: 1 }}>
-        <TabView
-          navigationState={{ index: searchIndex, routes: searchRoutes }}
-          renderScene={renderScene}
-          onIndexChange={setSearchIndex}
-          initialLayout={{ width: Dimensions.get('window').width }}
-          renderTabBar={renderSearchTabBar}
-          sceneContainerStyle={{ backgroundColor: themeVariables.darkGreyColor }}
-          style={{ backgroundColor: themeVariables.darkGreyColor }}
-        />
-      </View>
+      {showResults ? (
+        <ScrollView
+          contentContainerStyle={styles.resultsContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.resultsList}>
+            {results.map((item, index) => {
+              const key = item.id || item._id || `result-${index}`;
+              const listItemProps = getListItemProps(item);
+              if (!listItemProps) return null;
+              return (
+                <View key={key} style={styles.resultItem}>
+                  <SearchItem {...listItemProps} />
+                </View>
+              );
+            })}
+          </View>
+
+          {!hasAnyResults && trimmedQuery.length > 0 ? (
+            <Text style={styles.emptyTextOverall}>No results match this search.</Text>
+          ) : null}
+
+          {!hasAnyResults && trimmedQuery.length === 0 ? (
+            <Text style={styles.emptyTextOverall}>
+              Start typing to search for activities, events, members, or posts.
+            </Text>
+          ) : null}
+        </ScrollView>
+      ) : null}
     </SafeAreaView>
   );
 };
@@ -308,96 +656,131 @@ const Search = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 0,
     marginBottom: 80,
     backgroundColor: themeVariables.darkGreyColor,
   },
   searchInput: {
-    // Indent and padded search bar
     height: 48,
-    marginHorizontal: 8,
-    marginBottom: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderColor: themeVariables.blackColor,
     borderWidth: 1,
     borderRadius: 20,
-    // Optionally, add a subtle background for contrast
     backgroundColor: themeVariables.whiteColor,
+    paddingRight: 40,
+    width: '100%',
+  },
+  searchBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginHorizontal: 12,
+  },
+  searchInputContainer: {
+    flex: 1,
+    marginRight: 12,
+    position: 'relative',
+  },
+  searchInputContainerCollapsed: {
+    marginRight: 0,
+  },
+  searchSpinner: {
+    position: 'absolute',
+    right: 24,
+    top: 24,
+    marginTop: -10,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  cancelButtonText: {
+    color: themeVariables.primaryColor,
+    fontSize: 16,
   },
   autocompleteContainer: {
     marginHorizontal: 8,
     marginBottom: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: themeVariables.lightGreyColor,
-    backgroundColor: themeVariables.whiteColor,
-    maxHeight: 220,
-    overflow: 'hidden',
-    shadowColor: '#000000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: 0,
   },
-  autocompleteLoadingContainer: {
+  suggestionContentContainer: {
+    paddingVertical: 8,
+  },
+  suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    gap: 8,
+    marginHorizontal: 8,
+    marginVertical: 6,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: themeVariables.lightGreyColor,
   },
-  autocompleteLoadingText: {
-    color: themeVariables.blackColor,
-    marginLeft: 8,
+  recentSuggestionItem: {
+    marginHorizontal: 8,
   },
-  autocompleteSeparator: {
-    height: 1,
+  suggestionIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: themeVariables.lightGreyColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  autocompleteItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+  suggestionContent: {
+    flex: 1,
   },
-  autocompleteText: {
-    color: themeVariables.blackColor,
+  suggestionTitle: {
     fontSize: 16,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
   },
-  autocompleteTypeText: {
-    marginTop: 4,
-    color: 'rgba(0, 0, 0, 0.6)',
+  suggestionSubtitle: {
+    marginTop: 2,
     fontSize: 12,
+    color: '#555',
   },
-  placeholderContainer: {
-    alignItems: 'center',
-    marginTop: 32,
+  suggestionSection: {
+    marginBottom: 12,
   },
-  placeholderText: {
+  suggestionSectionTitle: {
+    marginHorizontal: 8,
+    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: '600',
     color: themeVariables.blackColor,
   },
-  loadingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  recentIconWrapper: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  recentRemoveButton: {
+    marginLeft: 12,
+  },
+  emptyTextOverall: {
+    textAlign: 'center',
+    marginTop: 24,
+    color: themeVariables.blackColor,
     paddingHorizontal: 16,
-    paddingBottom: 8,
   },
-  loadingText: {
-    color: themeVariables.blackColor,
-    marginLeft: 8,
+  resultsContent: {
+    paddingBottom: 32,
+  },
+  resultsList: {
+    paddingHorizontal: 0,
   },
   resultItem: {
-    paddingVertical: 8,
-    borderBottomColor: themeVariables.lightGreyColor,
-    borderBottomWidth: 1,
-  },
-  emptyText: {
-    textAlign: 'center',
-    marginTop: 16,
-    color: themeVariables.blackColor,
-  },
-  columnWrapper: {
-    justifyContent: 'space-between',
+    marginBottom: 8,
   },
 });
 
