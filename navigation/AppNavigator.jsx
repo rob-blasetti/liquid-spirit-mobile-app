@@ -47,39 +47,46 @@ import PostModal from '../modal/PostModal';
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = ({ initialPosts, homeOverview }) => {
-  const { isLoggedIn } = useContext(UserContext);
+  const { isLoggedIn, ensureValidSession } = useContext(UserContext);
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
 
   return (
-  <NavigationContainer linking={linking} ref={navigationRef} onReady={flushPendingNavigation}>
-      <Stack.Navigator
-      initialRouteName={initialRoute}
-      screenOptions={({ navigation }) => ({
-        headerStyle: { backgroundColor: themeVariables.whiteColor },
-        headerTintColor: themeVariables.primaryColor,
-        headerTitleStyle: { fontWeight: 'bold' },
-        headerBackTitleVisible: false,
-        headerBackTitle: '',
-        headerLeftContainerStyle: { paddingLeft: 16 },
-        headerLeft: () =>
-          navigation.canGoBack() ? (
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={{
-                backgroundColor: themeVariables.greyColor,
-                borderRadius: themeVariables.borderRadiusPill,
-                padding: 6,
-              }}
-            >
-              <Ionicons
-                name="chevron-back"
-                color={themeVariables.blackColor}
-                size={20}
-              />
-            </TouchableOpacity>
-          ) : null,
-      })}
+    <NavigationContainer
+      linking={linking}
+      ref={navigationRef}
+      onReady={flushPendingNavigation}
+      onStateChange={() => {
+        ensureValidSession?.();
+      }}
     >
+      <Stack.Navigator
+        initialRouteName={initialRoute}
+        screenOptions={({ navigation }) => ({
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.primaryColor,
+          headerTitleStyle: { fontWeight: 'bold' },
+          headerBackTitleVisible: false,
+          headerBackTitle: '',
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: () =>
+            navigation.canGoBack() ? (
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={{
+                  backgroundColor: themeVariables.greyColor,
+                  borderRadius: themeVariables.borderRadiusPill,
+                  padding: 6,
+                }}
+              >
+                <Ionicons
+                  name="chevron-back"
+                  color={themeVariables.blackColor}
+                  size={20}
+                />
+              </TouchableOpacity>
+            ) : null,
+        })}
+      >
       <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
       <Stack.Screen name="Login" component={Login} options={{ title: 'Login' }} />
       <Stack.Screen name="Register" component={Register} options={{ title: 'Register' }} />

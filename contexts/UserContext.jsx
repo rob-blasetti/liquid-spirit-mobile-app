@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
@@ -9,6 +9,7 @@ import { fetchUserById } from '../services/UserService.jsx';
 import { parseJwt } from '../utils/parseJwt';
 import { API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
+import { AppState } from 'react-native';
 
 export const UserContext = createContext();
 
@@ -138,7 +139,7 @@ export const UserProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       setUser(null);
       setToken(null);
@@ -159,7 +160,7 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
+  }, [setCommunityId]);
 
   function isTokenExpired(jwtToken) {
     try {
@@ -176,64 +177,102 @@ export const UserProvider = ({ children }) => {
     }
   }
 
-  const refreshSession = async () => {
-    // Deduplicate concurrent refresh calls
+  const refreshSession = useCallback(async () => {
     if (refreshInFlightRef.current) {
-      try { await refreshInFlightRef.current; } catch (_) {}
-      return;
+      try {
+        return await refreshInFlightRef.current;
+      } catch (error) {
+        throw error;
+      }
     }
-    const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
-    // Avoid logging sensitive tokens
-    console.log('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
-    if (!storedRefreshToken) {
-      console.warn('No stored refresh token.');
-      // Clear any stale session
-      logout();
-      return;
+
+    const refreshPromise = (async () => {
+      const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+      console.log('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
+
+      if (!storedRefreshToken) {
+        console.warn('No stored refresh token.');
+        await logout();
+        return null;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: storedRefreshToken }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.warn('Invalid refresh token, attempting re-login with stored credentials...');
+          await AsyncStorage.removeItem('refreshToken');
+          try {
+            await biometricLogin();
+          } catch (err) {
+            console.error('Re-login failed:', err);
+            await logout();
+          }
+          return null;
+        }
+
+        const { accessToken, newRefreshToken } = data;
+
+        await AsyncStorage.multiSet([
+          ['authToken', accessToken],
+          ['refreshToken', newRefreshToken || storedRefreshToken],
+        ]);
+
+        setToken(accessToken);
+        return accessToken;
+      } catch (error) {
+        console.error('Refresh error:', error);
+        await logout();
+        return null;
+      } finally {
+        refreshInFlightRef.current = null;
+      }
+    })();
+
+    refreshInFlightRef.current = refreshPromise;
+    return refreshPromise;
+  }, [biometricLogin, logout]);
+
+  const ensureValidSession = useCallback(async () => {
+    if (!token) return null;
+
+    if (!isTokenExpired(token)) {
+      return token;
     }
 
     try {
-      const p = fetch(`${API_URL}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken: storedRefreshToken }),
-      });
-      refreshInFlightRef.current = p;
-      const response = await p;
-
-      // parse the JSON body once
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.warn('Invalid refresh token, attempting re-login with stored credentials...');
-        await AsyncStorage.removeItem('refreshToken');
-        // Attempt to re-authenticate using stored credentials
-        try {
-          await biometricLogin();
-        } catch (err) {
-          console.error('Re-login failed:', err);
-          logout();
-        }
-        return;
-      }
-
-      // Extract tokens
-      const { accessToken, newRefreshToken } = data;
-
-      await AsyncStorage.multiSet([
-        ['authToken', accessToken],
-        ['refreshToken', newRefreshToken || ''],
-      ]);
-
-      setToken(accessToken);
+      const refreshed = await refreshSession();
+      return refreshed || null;
     } catch (error) {
-      // Refresh token failed, force logout
-      console.error('Refresh error:', error);
-      logout();
-    } finally {
-      refreshInFlightRef.current = null;
+      console.error('Failed to ensure valid session:', error);
+      return null;
     }
-  };
+  }, [token, refreshSession]);
+
+  const appStateRef = useRef(AppState.currentState);
+
+  useEffect(() => {
+    const handleAppStateChange = nextAppState => {
+      const wasBackground = appStateRef.current === 'background' || appStateRef.current === 'inactive';
+      appStateRef.current = nextAppState;
+
+      if (wasBackground && nextAppState === 'active') {
+        ensureValidSession();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [ensureValidSession]);
   // Load notifications on token change
   const derivedUserId = user?.id || user?._id;
 
@@ -327,8 +366,9 @@ export const UserProvider = ({ children }) => {
         isLoggedIn: !!token,
         biometricLogin,
         isTokenExpired,
-        refreshSession
-        ,storageLoaded,
+        refreshSession,
+        ensureValidSession,
+        storageLoaded,
       }}>
       {children}
     </UserContext.Provider>
