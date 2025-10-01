@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Dimensions } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
@@ -6,29 +6,38 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { TabView, TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import { fetchUserById } from '../services/UserService';
+import { fetchUserActivities } from '../services/ActivityService';
+import { fetchEventsForAttendee } from '../services/EventService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Tooltip } from 'react-native-elements';
-import { Chip } from 'react-native-paper';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import PostGallery from '../components/PostGallery';
 import CertificationsList from '../components/CertificationsList';
 import resolveImageSource from '../utils/imageSource';
 
-const extractId = (source) => {
-  if (!source) return null;
-  if (typeof source === 'string' || typeof source === 'number') return source.toString();
-  if (typeof source === 'object') {
-    if (source._id) return source._id.toString();
-    if (source.id) return source.id.toString();
-    if (source.userId) return source.userId.toString();
-    if (source.details) return extractId(source.details);
-    if (source.refId) return extractId(source.refId);
-  }
-  return null;
+const normalizeId = (raw) => {
+  const str = String(raw || '').trim();
+  const match = str.match(/[a-fA-F0-9]{24}/);
+  return match ? match[0] : null;
 };
 
-const listHasUser = (list, userId) => {
-  if (!userId || !Array.isArray(list)) return false;
-  return list.some(item => extractId(item) === userId);
+const normalizeActivitiesPayload = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload.filter(Boolean);
+  if (Array.isArray(payload.activities)) return payload.activities.filter(Boolean);
+  if (Array.isArray(payload.data?.activities)) return payload.data.activities.filter(Boolean);
+  if (Array.isArray(payload.data)) return payload.data.filter(Boolean);
+  if (Array.isArray(payload.results)) return payload.results.filter(Boolean);
+  return [];
+};
+
+const normalizeEventsPayload = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload.filter(Boolean);
+  if (Array.isArray(payload.events)) return payload.events.filter(Boolean);
+  if (Array.isArray(payload.data?.events)) return payload.data.events.filter(Boolean);
+  if (Array.isArray(payload.data)) return payload.data.filter(Boolean);
+  if (Array.isArray(payload.results)) return payload.results.filter(Boolean);
+  return [];
 };
 
 const PublicUserProfile = () => {
@@ -43,21 +52,28 @@ const PublicUserProfile = () => {
 
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
+  const [userActivities, setUserActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [activitiesError, setActivitiesError] = useState(null);
+  const [userEvents, setUserEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState(null);
 
-  const normalizeId = (raw) => {
-    const str = String(raw || '').trim();
-    const match = str.match(/[a-fA-F0-9]{24}/);
-    return match ? match[0] : null;
-  };
+  const normalizedRouteUserId = useMemo(() => normalizeId(userId), [userId]);
 
   useEffect(() => {
     let isActive = true;
     const load = async () => {
-      const id = normalizeId(userId);
-      if (!id) {
+      if (!normalizedRouteUserId) {
         setError('Invalid profile link');
         setErrorStatus('invalid_id');
         setLoading(false);
+        setUserActivities([]);
+        setActivitiesError(null);
+        setActivitiesLoading(false);
+        setUserEvents([]);
+        setEventsError(null);
+        setEventsLoading(false);
         return;
       }
 
@@ -67,21 +83,58 @@ const PublicUserProfile = () => {
           setDidRefresh(true);
           try { await refreshSession(); } catch (_) {}
           return;
-        } else {
-          setError('Please log in to view this profile.');
-          setErrorStatus(401);
-          setLoading(false);
-          return;
         }
+        setError('Please log in to view this profile.');
+        setErrorStatus(401);
+        setLoading(false);
+        setActivitiesLoading(false);
+        setUserActivities([]);
+        setEventsLoading(false);
+        setUserEvents([]);
+        return;
       }
 
       setLoading(true);
+      setActivitiesLoading(true);
+      setEventsLoading(true);
       try {
-        const data = await fetchUserById(id, token);
+        const data = await fetchUserById(normalizedRouteUserId, token);
         if (!isActive) return;
         setUserData(data);
         setError(null);
         setErrorStatus(null);
+
+        try {
+          const activityResponse = await fetchUserActivities(normalizedRouteUserId, token);
+          if (!isActive) return;
+          setUserActivities(normalizeActivitiesPayload(activityResponse));
+          setActivitiesError(null);
+        } catch (activityErr) {
+          if (!isActive) return;
+          if (activityErr?.status === 401 && !didRefresh) {
+            setDidRefresh(true);
+            try { await refreshSession(); } catch (_) {}
+            return;
+          }
+          setActivitiesError(activityErr?.message || 'Failed to load activities');
+          setUserActivities([]);
+        }
+
+        try {
+          const eventsResponse = await fetchEventsForAttendee(normalizedRouteUserId, token);
+          if (!isActive) return;
+          setUserEvents(normalizeEventsPayload(eventsResponse));
+          setEventsError(null);
+        } catch (eventsErr) {
+          if (!isActive) return;
+          if (eventsErr?.status === 401 && !didRefresh) {
+            setDidRefresh(true);
+            try { await refreshSession(); } catch (_) {}
+            return;
+          }
+          setEventsError(eventsErr?.message || 'Failed to load events');
+          setUserEvents([]);
+        }
       } catch (err) {
         if (!isActive) return;
         if (err?.status === 401 && !didRefresh) {
@@ -91,13 +144,80 @@ const PublicUserProfile = () => {
         }
         setError(err?.message || 'Failed to load user');
         setErrorStatus(err?.status || 'unknown');
+        setUserData(null);
+        setUserActivities([]);
+        setActivitiesError(null);
+        setUserEvents([]);
+        setEventsError(null);
       } finally {
-        if (isActive) setLoading(false);
+        if (isActive) {
+          setLoading(false);
+          setActivitiesLoading(false);
+          setEventsLoading(false);
+        }
       }
     };
     load();
-    return () => { isActive = false; };
-  }, [userId, token, storageLoaded, didRefresh]);
+    return () => {
+      isActive = false;
+    };
+  }, [normalizedRouteUserId, token, storageLoaded, didRefresh]);
+
+  const handleRefreshActivities = useCallback(async () => {
+    if (!normalizedRouteUserId) return;
+
+    if (!token || isTokenExpired(token)) {
+      if (!didRefresh) {
+        setDidRefresh(true);
+        try { await refreshSession(); } catch (_) {}
+      }
+      return;
+    }
+
+    setActivitiesLoading(true);
+    try {
+      const activityResponse = await fetchUserActivities(normalizedRouteUserId, token);
+      setUserActivities(normalizeActivitiesPayload(activityResponse));
+      setActivitiesError(null);
+    } catch (activityErr) {
+      if (activityErr?.status === 401 && !didRefresh) {
+        setDidRefresh(true);
+        try { await refreshSession(); } catch (_) {}
+        return;
+      }
+      setActivitiesError(activityErr?.message || 'Failed to load activities');
+    } finally {
+      setActivitiesLoading(false);
+    }
+  }, [normalizedRouteUserId, token, isTokenExpired, didRefresh, refreshSession]);
+
+  const handleRefreshEvents = useCallback(async () => {
+    if (!normalizedRouteUserId) return;
+
+    if (!token || isTokenExpired(token)) {
+      if (!didRefresh) {
+        setDidRefresh(true);
+        try { await refreshSession(); } catch (_) {}
+      }
+      return;
+    }
+
+    setEventsLoading(true);
+    try {
+      const eventsResponse = await fetchEventsForAttendee(normalizedRouteUserId, token);
+      setUserEvents(normalizeEventsPayload(eventsResponse));
+      setEventsError(null);
+    } catch (eventsErr) {
+      if (eventsErr?.status === 401 && !didRefresh) {
+        setDidRefresh(true);
+        try { await refreshSession(); } catch (_) {}
+        return;
+      }
+      setEventsError(eventsErr?.message || 'Failed to load events');
+    } finally {
+      setEventsLoading(false);
+    }
+  }, [normalizedRouteUserId, token, isTokenExpired, didRefresh, refreshSession]);
   // Redirect to Home if user not found or specific errors
   useEffect(() => {
     if (redirected || loading) return;
@@ -121,7 +241,6 @@ const PublicUserProfile = () => {
     { key: 'activities', title: 'Activities' },
     { key: 'events', title: 'Events' },
   ]);
-  const normalizedUserId = useMemo(() => extractId(userData?.user), [userData?.user]);
   const sortedPosts = useMemo(() => {
     if (!Array.isArray(userData?.posts)) return [];
     const items = userData.posts.filter(Boolean).slice();
@@ -133,33 +252,48 @@ const PublicUserProfile = () => {
     };
     return items.sort((a, b) => getTimestamp(b) - getTimestamp(a));
   }, [userData?.posts]);
-  const filteredActivities = useMemo(() => {
-    if (!Array.isArray(userData?.activities)) return [];
-    if (!normalizedUserId) return [];
-    return userData.activities.filter(activity => {
-      if (!activity) return false;
-      if (listHasUser(activity.facilitators, normalizedUserId)) return true;
-      if (listHasUser(activity.participants, normalizedUserId)) return true;
-      const sessions = Array.isArray(activity.sessions) ? activity.sessions : [];
-      return sessions.some(session =>
-        listHasUser(session?.facilitators, normalizedUserId) ||
-        listHasUser(session?.participants, normalizedUserId)
-      );
-    });
-  }, [userData?.activities, normalizedUserId]);
-  const filteredEvents = useMemo(() => {
-    if (!Array.isArray(userData?.events)) return [];
-    if (!normalizedUserId) return [];
-    return userData.events.filter(event => listHasUser(event?.attendees, normalizedUserId));
-  }, [userData?.events, normalizedUserId]);
+  const filteredActivities = useMemo(
+    () => (Array.isArray(userActivities) ? userActivities.filter(Boolean) : []),
+    [userActivities]
+  );
+  const filteredEvents = useMemo(
+    () => (Array.isArray(userEvents) ? userEvents.filter(Boolean) : []),
+    [userEvents]
+  );
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'posts':
         return <PostGallery posts={sortedPosts} refreshing={false} onRefresh={() => {}} />;
       case 'activities':
-        return <PostGallery posts={filteredActivities} refreshing={false} onRefresh={() => {}} />;
+        if (activitiesError) {
+          return (
+            <View style={styles.tabMessageContainer}>
+              <Text style={styles.errorText}>{activitiesError}</Text>
+            </View>
+          );
+        }
+        return (
+          <PostGallery
+            posts={filteredActivities}
+            refreshing={activitiesLoading}
+            onRefresh={handleRefreshActivities}
+          />
+        );
       case 'events':
-        return <PostGallery posts={filteredEvents} refreshing={false} onRefresh={() => {}} />;
+        if (eventsError) {
+          return (
+            <View style={styles.tabMessageContainer}>
+              <Text style={styles.errorText}>{eventsError}</Text>
+            </View>
+          );
+        }
+        return (
+          <PostGallery
+            posts={filteredEvents}
+            refreshing={eventsLoading}
+            onRefresh={handleRefreshEvents}
+          />
+        );
       default:
         return null;
     }
@@ -242,13 +376,17 @@ const PublicUserProfile = () => {
         />
         {/* Community Chip in header top-right */}
         {communityName ? (
-          <Chip
-            icon={({ size, color }) => <Ionicons name="leaf-outline" size={size} color={color} />}
-            mode="outlined"
+          <TouchableOpacity
             style={styles.communityChip}
+            onPress={() =>
+              navigation.navigate('Search', {
+                initialQuery: communityName,
+                initialQueryTs: Date.now(),
+              })
+            }
           >
-            {communityName}
-          </Chip>
+            <Text style={styles.communityChipText}>{communityName}</Text>
+          </TouchableOpacity>
         ) : null}
       </View>
       {bio ? <Text style={styles.bio}>{bio}</Text> : null}
@@ -267,7 +405,7 @@ const PublicUserProfile = () => {
           )}
           {social.x && (
             <TouchableOpacity onPress={() => Linking.openURL(social.x)} style={styles.socialButton}>
-              <Ionicons name="logo-twitter" size={28} color="#fff" />
+              <FontAwesome6 name="x-twitter" size={28} color="#fff" />
             </TouchableOpacity>
           )}
           {social.linkedin && (
@@ -300,6 +438,7 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 0 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   errorText: { color: 'red' },
+  tabMessageContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
   header: { position: 'relative', alignItems: 'center', marginBottom: 16, marginTop: 16 },
   avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 12 },
   name: { fontSize: 24, fontWeight: '600' },
@@ -312,7 +451,20 @@ const styles = StyleSheet.create({
   // Certifications badges container and badge styles are now extracted into CertificationsList component
   chipContainer: { marginTop: 12, flexDirection: 'row', borderRadius: 20 },
   chip: { alignSelf: 'flex-start' },
-  communityChip: { position: 'absolute', top: 0, right: 10, borderRadius: 20 },
+  communityChip: {
+    position: 'absolute',
+    top: 0,
+    right: 10,
+    backgroundColor: '#312783',
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+  },
+  communityChipText: {
+    color: '#fff',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   statsContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16 },
   statItem: { alignItems: 'center' },
   statValue: { fontSize: 18, fontWeight: '600', color: '#312783' },

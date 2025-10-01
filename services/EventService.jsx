@@ -29,6 +29,42 @@ export const fetchEvents = async (token) => {
   }
 };
 
+export const fetchEventsForAttendee = async (userId, token) => {
+  try {
+    const response = await fetch(`${API_URL}/api/events/user/${userId}/attending`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    let data = null;
+    try { data = await response.json(); } catch (_) { data = null; }
+
+    if (!response.ok) {
+      const message = data?.message || 'Failed to load attendee events.';
+      const error = new Error(message);
+      error.status = response.status;
+      throw error;
+    }
+
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data.events)) return data.events;
+    if (Array.isArray(data.data?.events)) return data.data.events;
+    if (Array.isArray(data.data)) return data.data;
+    if (Array.isArray(data.results)) return data.results;
+
+    return data;
+  } catch (error) {
+    if (!error.status) {
+      console.error('Error fetching attendee events:', error);
+    }
+    throw error;
+  }
+};
+
 export const joinEvent = async (eventId, token, eventName, user, communityId) => {
   const userName = user.firstName + ' ' + user.lastName;
   const userId = user?._id || user?.id;

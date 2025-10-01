@@ -37,6 +37,8 @@ const makeRequest = async (url, method, token, body = null, config = {}) => {
 export const fetchActivities = (token) => makeRequest('/api/activities', 'GET', token);
 export const fetchActivityDetails = (activityId, token) => makeRequest(`/api/activities/${activityId}`, 'GET', token);
 export const fetchActivityDetailsWithCertifications = (activityId, token) => makeRequest(`/api/activities/${activityId}/certifications`, 'GET', token);
+export const fetchUserActivities = (userId, token) =>
+  makeRequest(`/api/activities/user/${userId}`, 'GET', token);
 
 export const uploadActivityDetailsImage = async (file, activityId, token) => {
   try {
