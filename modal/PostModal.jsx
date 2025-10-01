@@ -7,7 +7,6 @@ import {
   Text,
   ScrollView,
   TextInput,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Alert,
@@ -20,6 +19,8 @@ import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
+import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 
 const PostModal = ({ visible = true, onPostCreated, onClose }) => {
   const [content, setContent] = useState('');
@@ -205,10 +206,11 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
               )}
 
               {mediaUri && mediaType.includes('image') && (
-                <Image
+                <FastImage
                   testID="imagePreview"
-                  source={{ uri: mediaUri }}
+                  source={resolveImageSource(mediaUri, { priority: 'high' })}
                   style={styles.mediaPreview}
+                  resizeMode={FastImage.resizeMode.cover}
                 />
               )}
 

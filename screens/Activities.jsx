@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import SlideBanner from '../components/SlideBanner';
 import {
   View,
@@ -15,6 +15,8 @@ import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { getNextSessionDate } from '../utils/activityDate';
+import resolveImageSource from '../utils/imageSource';
+import usePrefetchImages from '../hooks/usePrefetchImages';
 
 const Activities = ({ navigation, route }) => {
   const { userActivities } = useContext(UserContext);
@@ -95,6 +97,13 @@ const Activities = ({ navigation, route }) => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  const prefetchTargets = useMemo(
+    () => filteredActivities.map(act => act?.imageUrl).filter(Boolean),
+    [filteredActivities]
+  );
+
+  usePrefetchImages(prefetchTargets, { priority: 'high' });
+
   const renderActivity = ({ item }) => {
     const nextSession = getNextSessionDate(item);
     let sessionLabel = 'TBA';
@@ -120,7 +129,7 @@ const Activities = ({ navigation, route }) => {
       >
         <View style={styles.imageContainer}>
           <FastImage
-            source={{ uri: item.imageUrl || 'https://via.placeholder.com/400' }}
+            source={resolveImageSource(item.imageUrl || 'https://via.placeholder.com/400', { priority: 'high' })}
             style={styles.activityImage}
             resizeMode={FastImage.resizeMode.cover}
           />

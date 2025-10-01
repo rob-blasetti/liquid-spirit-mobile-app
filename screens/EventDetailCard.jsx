@@ -11,7 +11,6 @@ import {
   Linking,
   Dimensions,
   Modal,
-  Image,
   StatusBar,
   Platform,
   Alert,
@@ -42,7 +41,7 @@ const allowedMaterialTypes = [
   DocumentPicker.types.csv,
   DocumentPicker.types.plainText,
 ];
-import localImages from '../utils/localImages';
+import resolveImageSource from '../utils/imageSource';
 import UserBadge from '../components/UserBadge';
 import UserCell from '../components/UserCell';
 import MaterialsItemTile from '../components/MaterialsItemTile';
@@ -568,11 +567,14 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
     <>
     <Card style={styles.card}>
       {imageUrl && (
-        localImages[imageUrl] ? (
-          <Image source={localImages[imageUrl]} style={styles.banner} resizeMode="cover" />
-        ) : (
-          <FastImage source={{ uri: imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover} />
-        )
+        <FastImage
+          source={resolveImageSource(imageUrl, {
+            priority: 'high',
+            fallback: '/img/events/Event_Placeholder.png',
+          })}
+          style={styles.banner}
+          resizeMode={FastImage.resizeMode.cover}
+        />
       )}
       <View style={styles.overlayCard}>
         {hasJoined && (
@@ -947,7 +949,7 @@ const OverlappingAvatars = ({ list }) => {
             onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
           >
             {avatarUri ? (
-              <FastImage source={{ uri: avatarUri }} style={imageStyle} />
+              <FastImage source={resolveImageSource(avatarUri, { priority: 'normal' })} style={imageStyle} />
             ) : (
               <Avatar
                 size={styles.avatar.width}

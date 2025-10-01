@@ -4,6 +4,7 @@ import FastImage from 'react-native-fast-image';
 import { Tooltip } from 'react-native-elements';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
+import resolveImageSource from '../utils/imageSource';
 
 const BadgeIcon = ({ iconName, label, style }) => (
   <Tooltip popover={<Text style={styles.tooltipText}>{label}</Text>}>
@@ -44,7 +45,7 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
       <View style={styles.avatarWrapper}>
         <View style={[styles.avatarContainer, !avatarUri && styles.defaultAvatar]}>
           {avatarUri ? (
-            <FastImage source={{ uri: avatarUri }} style={styles.avatar} />
+            <FastImage source={resolveImageSource(avatarUri, { priority: 'normal' })} style={styles.avatar} />
           ) : (
             <Avatar
               size={55}

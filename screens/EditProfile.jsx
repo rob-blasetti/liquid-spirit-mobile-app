@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
@@ -9,6 +9,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
+import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 
 const EditProfile = ({ navigation }) => {
   const { user, userDetails, setUserDetails, token, setUser } = useContext(UserContext);
@@ -122,7 +124,14 @@ const EditProfile = ({ navigation }) => {
       <View style={styles.avatarWrapper}>
         <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
           {/* display the selected or detailed profile picture */}
-          <Image source={{ uri: imageUri }} style={styles.avatar} />
+          <FastImage
+            source={resolveImageSource(imageUri, {
+              priority: 'high',
+              fallback: require('../assets/img/placeholder.png'),
+            })}
+            style={styles.avatar}
+            resizeMode={FastImage.resizeMode.cover}
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.changeAvatarButton} onPress={handleProfilePicturePress}>
         <Ionicons name="camera-outline" color={themeVariables.primaryColor} size={16} />

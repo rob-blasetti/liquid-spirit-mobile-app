@@ -6,6 +6,7 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
+import resolveImageSource from '../utils/imageSource';
 
 const ChangeableProfileImage = ({
   imageStyle,
@@ -120,7 +121,7 @@ const ChangeableProfileImage = ({
     <TouchableOpacity onPress={handlePress}>
       {profilePictureUri ? (
         <FastImage
-          source={{ uri: profilePictureUri }}
+          source={resolveImageSource(profilePictureUri, { priority: 'normal' })}
           style={imageStyle}
           resizeMode={FastImage.resizeMode.cover}
         />

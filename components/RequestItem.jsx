@@ -3,9 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-import { API_URL } from '../config';
-import localImages from '../utils/localImages';
 import { useNavigation } from '@react-navigation/native';
+import resolveImageSource from '../utils/imageSource';
 
 /**
  * RequestItem displays an activity request with action buttons.
@@ -18,18 +17,10 @@ import { useNavigation } from '@react-navigation/native';
 const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
   const navigation = useNavigation();
   const { activity, type, request: pendingUser } = reqItem;
-  // Determine image source from activity
-  let imageSource;
-  const uri = activity?.imageUrl || activity?.media?.[0];
-  if (uri) {
-    if (localImages[uri]) {
-      imageSource = localImages[uri];
-    } else if (!uri.startsWith('http')) {
-      imageSource = { uri: `${API_URL}/${uri}` };
-    } else {
-      imageSource = { uri };
-    }
-  }
+  const imageSource = resolveImageSource(activity?.imageUrl || activity?.media?.[0], {
+    priority: 'high',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
   // Pending user data
   const user = pendingUser || {};
   const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
@@ -50,7 +41,10 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
         </Text>
         <View style={styles.requestRow}>
           {user.profilePicture && (
-            <FastImage source={{ uri: user.profilePicture }} style={styles.userAvatar} />
+            <FastImage
+              source={resolveImageSource(user.profilePicture, { priority: 'normal' })}
+              style={styles.userAvatar}
+            />
           )}
           <View style={styles.requestTextContainer}>
             <Text style={styles.requestTitle} numberOfLines={1}>

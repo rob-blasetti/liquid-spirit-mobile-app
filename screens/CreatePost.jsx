@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Alert,
   ScrollView,
@@ -25,6 +24,8 @@ import { CommunityContext } from '../contexts/CommunityContext';
 import { TouchableWithoutFeedback } from 'react-native';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
 import themeVariables from '../styles/theme';
+import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 
 export default function CreatePost({ onPostCreated, onClose }) {
   const [content, setContent] = useState('');
@@ -241,10 +242,11 @@ export default function CreatePost({ onPostCreated, onClose }) {
               )}
 
               {mediaUri && mediaType.includes('image') && (
-                <Image
+                <FastImage
                   testID="imagePreview"
-                  source={{ uri: mediaUri }}
+                  source={resolveImageSource(mediaUri, { priority: 'high' })}
                   style={styles.mediaPreview}
+                  resizeMode={FastImage.resizeMode.cover}
                 />
               )}
               {mediaUri && mediaType.includes('video') && (

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
+import resolveImageSource from '../utils/imageSource';
 
 const truncateText = (text, maxLength) => {
   return text?.length > maxLength ? `${text?.substring(0, maxLength - 3)}...` : text;
@@ -19,7 +20,7 @@ const UserCell = ({ user, type }) => {
   return (
     <TouchableOpacity style={styles.userItem} onPress={navigateToProfile} activeOpacity={0.7}>
       {user.profilePicture ? (
-        <FastImage source={{ uri: user.profilePicture }} style={styles.smallAvatar} />
+        <FastImage source={resolveImageSource(user.profilePicture, { priority: 'normal' })} style={styles.smallAvatar} />
       ) : (
         <Avatar
           size={styles.smallAvatar.width}

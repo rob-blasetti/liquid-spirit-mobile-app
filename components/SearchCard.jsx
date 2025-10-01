@@ -1,11 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import themeVariables from '../styles/theme';
-import localImages from '../utils/localImages';
-import { API_URL } from '../config';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import resolveImageSource from '../utils/imageSource';
 
 /**
  * Card component to display a search result of type activity, event, or member.
@@ -27,14 +26,6 @@ function isVideoUrl(url = '') {
   return /\.(mp4|mov|m4v|3gp|avi)$/i.test(url) || url.includes('/video');
 }
 
-function resolveMediaSource(url) {
-  if (!url) return null;
-  if (localImages[url]) return localImages[url];
-  if (/^https?:/i.test(url) || /^data:/i.test(url)) return { uri: url };
-  const normalized = url.startsWith('/') ? url.slice(1) : url;
-  return { uri: `${API_URL}/${normalized}` };
-}
-
 function truncateText(text, limit) {
   if (!text) return '';
   const str = String(text);
@@ -46,14 +37,14 @@ function truncateText(text, limit) {
  * Returns an image source for activities, events, or member avatars.
  */
 const SearchCard = ({ item, onPress }) => {
+  const placeholder = require('../assets/img/placeholder.png');
   // Top section: image (event/activity) or avatar (member/user)
   const renderImageSection = () => {
     if (item.type === 'event') {
-      const source = item.imageUrl && localImages[item.imageUrl]
-        ? localImages[item.imageUrl]
-        : item.imageUrl
-          ? { uri: item.imageUrl }
-          : require('../assets/img/placeholder.png');
+      const source = resolveImageSource(item.imageUrl, {
+        priority: 'high',
+        fallback: placeholder,
+      });
       return (
         <View style={styles.imageContainer}>
           <FastImage source={source} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
@@ -62,9 +53,10 @@ const SearchCard = ({ item, onPress }) => {
       );
     }
     if (item.type === 'activity' || item.type === 'session') {
-      const source = item.imageUrl
-        ? { uri: item.imageUrl }
-        : require('../assets/img/placeholder.png');
+      const source = resolveImageSource(item.imageUrl, {
+        priority: 'high',
+        fallback: placeholder,
+      });
       return (
         <View style={styles.imageContainer}>
           <FastImage source={source} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
@@ -77,7 +69,11 @@ const SearchCard = ({ item, onPress }) => {
       return (
         <View style={styles.imageContainer}>
           {hasPic ? (
-            <FastImage source={{ uri: item.profilePicture }} style={StyleSheet.absoluteFill} resizeMode={FastImage.resizeMode.cover} />
+            <FastImage
+              source={resolveImageSource(item.profilePicture, { priority: 'normal', fallback: placeholder })}
+              style={StyleSheet.absoluteFill}
+              resizeMode={FastImage.resizeMode.cover}
+            />
           ) : (
             <Avatar
               size={120}
@@ -97,7 +93,10 @@ const SearchCard = ({ item, onPress }) => {
         : null;
       const media = Array.isArray(item.media) && item.media.length > 0 ? item.media[0] : null;
       const previewUri = thumbnail || media;
-      const source = resolveMediaSource(previewUri) || require('../assets/img/placeholder.png');
+      const source = resolveImageSource(previewUri, {
+        priority: 'normal',
+        fallback: placeholder,
+      });
       const videoBadgeVisible = isVideoUrl(media);
       return (
         <View style={styles.imageContainer}>

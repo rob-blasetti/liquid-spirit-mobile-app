@@ -22,6 +22,7 @@ import { navigateToPostDetail, cachePostImageAspect, getPostImageAspect } from '
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
 import { shareContent } from '../utils/shareContent';
+import resolveImageSource, { prefetchImageSources } from '../utils/imageSource';
 
 const solidHeart = 'heart';
 const heartOutline = 'heart-outline';
@@ -278,7 +279,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
           >
             <FastImage
-              source={{ uri: profilePic, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable }}
+              source={resolveImageSource(profilePic, { priority: 'normal' })}
               style={styles.profilePic}
               resizeMode={FastImage.resizeMode.cover}
               onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}
@@ -316,7 +317,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
                       <TouchableOpacity
                         key={idx}
                         style={styles.tagChip}
-                        onPress={() => navigation.navigate('Search', { initialQuery: tag })}
+                        onPress={() => navigation.navigate('Search', { initialQuery: tag, initialQueryTs: Date.now() })}
                       >
                         <Text style={styles.tagText}>{tag}</Text>
                       </TouchableOpacity>
@@ -351,16 +352,12 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => {
-                try { FastImage.preload([{ uri: mediaUrl }]); } catch (_) {}
+                prefetchImageSources([mediaUrl], { priority: 'high' });
                 setImageModalVisible(true);
               }}
             >
               <FastImage
-                source={{
-                  uri: mediaUrl,
-                  priority: FastImage.priority.normal,
-                  cache: FastImage.cacheControl.immutable,
-                }}
+                source={resolveImageSource(mediaUrl, { priority: 'high' })}
                 style={styles.postImage}
                 resizeMode={FastImage.resizeMode.cover}
                 onLoadStart={() => __DEV__ && console.log('[Post] image onLoadStart')}

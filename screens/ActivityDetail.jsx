@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
@@ -69,7 +70,13 @@ const ActivityDetail = ({ route }) => {
   if (loading && activityPreload) {
     return <>
         <ScrollView contentContainerStyle={styles.container}>
-          {activityPreload.imageUrl && <FastImage source={{ uri: activityPreload.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
+          {activityPreload.imageUrl && (
+            <FastImage
+              source={resolveImageSource(activityPreload.imageUrl, { priority: 'high' })}
+              style={styles.banner}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          )}
 
           <View style={styles.detailsContainer}>
             <Text style={styles.title}>{activityPreload.title}</Text>
@@ -135,7 +142,13 @@ const ActivityDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {activity.imageUrl && <FastImage source={{ uri: activity.imageUrl }} style={styles.banner} resizeMode={FastImage.resizeMode.cover}/>}
+      {activity.imageUrl && (
+        <FastImage
+          source={resolveImageSource(activity.imageUrl, { priority: 'high' })}
+          style={styles.banner}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      )}
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{activity.title}</Text>
         <Text style={styles.type}>{activity.activityType?.name || 'Unknown'}</Text>

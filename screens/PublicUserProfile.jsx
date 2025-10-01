@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Dimensions } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
@@ -11,6 +11,25 @@ import { Tooltip } from 'react-native-elements';
 import { Chip } from 'react-native-paper';
 import PostGallery from '../components/PostGallery';
 import CertificationsList from '../components/CertificationsList';
+import resolveImageSource from '../utils/imageSource';
+
+const extractId = (source) => {
+  if (!source) return null;
+  if (typeof source === 'string' || typeof source === 'number') return source.toString();
+  if (typeof source === 'object') {
+    if (source._id) return source._id.toString();
+    if (source.id) return source.id.toString();
+    if (source.userId) return source.userId.toString();
+    if (source.details) return extractId(source.details);
+    if (source.refId) return extractId(source.refId);
+  }
+  return null;
+};
+
+const listHasUser = (list, userId) => {
+  if (!userId || !Array.isArray(list)) return false;
+  return list.some(item => extractId(item) === userId);
+};
 
 const PublicUserProfile = () => {
   const route = useRoute();
@@ -102,14 +121,45 @@ const PublicUserProfile = () => {
     { key: 'activities', title: 'Activities' },
     { key: 'events', title: 'Events' },
   ]);
+  const normalizedUserId = useMemo(() => extractId(userData?.user), [userData?.user]);
+  const sortedPosts = useMemo(() => {
+    if (!Array.isArray(userData?.posts)) return [];
+    const items = userData.posts.filter(Boolean).slice();
+    const getTimestamp = (item) => {
+      const fallback = item?.updatedAt || item?.date || item?.createdDate;
+      const raw = item?.createdAt || fallback;
+      const time = raw ? new Date(raw).getTime() : NaN;
+      return Number.isFinite(time) ? time : 0;
+    };
+    return items.sort((a, b) => getTimestamp(b) - getTimestamp(a));
+  }, [userData?.posts]);
+  const filteredActivities = useMemo(() => {
+    if (!Array.isArray(userData?.activities)) return [];
+    if (!normalizedUserId) return [];
+    return userData.activities.filter(activity => {
+      if (!activity) return false;
+      if (listHasUser(activity.facilitators, normalizedUserId)) return true;
+      if (listHasUser(activity.participants, normalizedUserId)) return true;
+      const sessions = Array.isArray(activity.sessions) ? activity.sessions : [];
+      return sessions.some(session =>
+        listHasUser(session?.facilitators, normalizedUserId) ||
+        listHasUser(session?.participants, normalizedUserId)
+      );
+    });
+  }, [userData?.activities, normalizedUserId]);
+  const filteredEvents = useMemo(() => {
+    if (!Array.isArray(userData?.events)) return [];
+    if (!normalizedUserId) return [];
+    return userData.events.filter(event => listHasUser(event?.attendees, normalizedUserId));
+  }, [userData?.events, normalizedUserId]);
   const renderScene = ({ route }) => {
     switch (route.key) {
       case 'posts':
-        return <PostGallery posts={userData.posts || []} refreshing={false} onRefresh={() => {}} />;
+        return <PostGallery posts={sortedPosts} refreshing={false} onRefresh={() => {}} />;
       case 'activities':
-        return <PostGallery posts={userData.activities || []} refreshing={false} onRefresh={() => {}} />;
+        return <PostGallery posts={filteredActivities} refreshing={false} onRefresh={() => {}} />;
       case 'events':
-        return <PostGallery posts={userData.events || []} refreshing={false} onRefresh={() => {}} />;
+        return <PostGallery posts={filteredEvents} refreshing={false} onRefresh={() => {}} />;
       default:
         return null;
     }
@@ -148,7 +198,7 @@ const PublicUserProfile = () => {
   const preferredLang = userData.user.preferredLanguage || userData.user.language;
   const social = userData.user.socialMedia || userData.user.social || {};
   const certData = userData.certifications || {};
-  const eventsCount = Array.isArray(userData.events) ? userData.events.length : 0;
+  const eventsCount = filteredEvents.length;
   // Build certifications list
   const certs = [];
   if (certData.isVerified) certs.push('Verified User');
@@ -161,8 +211,8 @@ const PublicUserProfile = () => {
     { flag: certData.hasChildProtection, icon: 'shield-checkmark', color: '#d81b60', label: 'Child Protection' },
     { flag: certData.isLocalAssemblyMember, icon: 'star', color: '#b71c1c', label: 'LSA Member' },
   ];
-  const postsCount = Array.isArray(userData.posts) ? userData.posts.length : 0;
-  const activitiesCount = Array.isArray(userData.activities) ? userData.activities.length : 0;
+  const postsCount = sortedPosts.length;
+  const activitiesCount = filteredActivities.length;
   return (
     <View style={styles.flexContainer}>
       <View contentContainerStyle={styles.container} scrollEnabled={false}>
@@ -170,7 +220,7 @@ const PublicUserProfile = () => {
         {profilePicture ? (
           <FastImage
             style={styles.avatar}
-            source={{ uri: profilePicture }}
+            source={resolveImageSource(profilePicture, { priority: 'high' })}
             resizeMode={FastImage.resizeMode.cover}
           />
         ) : (

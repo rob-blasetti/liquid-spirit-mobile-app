@@ -25,6 +25,7 @@ import {
 } from 'react-native-material-cards';
 import SwipeToCloseScrollView from '../components/SwipeToCloseScrollView';
 import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Tooltip } from 'react-native-elements';
@@ -800,7 +801,7 @@ const ActivityCardBody = ({
     <Card style={styles.card}>
       {imageUrl && (
         <FastImage
-          source={{ uri: imageUrl }}
+          source={resolveImageSource(imageUrl, { priority: 'high', fallback: '/img/events/Event_Placeholder.png' })}
           style={styles.banner}
           resizeMode={FastImage.resizeMode.cover}
         />

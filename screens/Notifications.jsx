@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -8,6 +8,11 @@ import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../
 import { Chip } from 'react-native-paper';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { fetchPostDetails } from '../services/PostService';
+import { fetchEventDetails } from '../services/EventService';
+import { fetchActivityDetails } from '../services/ActivityService';
+import { resolveMediaUrl } from '../utils/resolveMediaUrl';
+import { prefetchImageSources } from '../utils/imageSource';
 // Removed preloading imports for notifications
 // import { fetchPostDetails } from '../services/PostService';
 // import { fetchActivityDetails } from '../services/ActivityService';
@@ -99,17 +104,193 @@ const extractActivityAndSessionIds = (notification) => {
 
 export default function Notifications() {
   const navigation = useNavigation();
-  const { token, isTokenExpired, setUnreadCount, userNotifications, setUserNotifications, user } = useContext(UserContext);
+  const {
+    token,
+    isTokenExpired,
+    setUnreadCount,
+    userNotifications,
+    setUserNotifications,
+    user,
+    refreshSession,
+  } = useContext(UserContext);
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [activeTab, setActiveTab] = useState('community');
+  const [flatNotifications, setFlatNotifications] = useState([]);
+  const [prefetchedPosts, setPrefetchedPosts] = useState({});
+  const [prefetchedEvents, setPrefetchedEvents] = useState({});
+  const [prefetchedActivities, setPrefetchedActivities] = useState({});
+  const prefetchPromisesRef = useRef({ posts: {}, events: {}, activities: {} });
+  const didAttemptTokenRefreshRef = useRef(false);
+  const failedPrefetchesRef = useRef({ posts: new Set(), events: new Set(), activities: new Set() });
   const LIMIT = 10;
+  const PREFETCH_LIMIT = 6;
+
+  const canUseToken = useCallback(() => {
+    if (!token) return false;
+    if (typeof isTokenExpired === 'function' && isTokenExpired(token)) {
+      return false;
+    }
+    return true;
+  }, [token, isTokenExpired]);
+
+  useEffect(() => {
+    if (!token) return;
+    if (typeof isTokenExpired === 'function' && isTokenExpired(token)) return;
+    didAttemptTokenRefreshRef.current = false;
+  }, [token, isTokenExpired]);
+
+  const ensurePostPrefetched = useCallback(async (id, priority = 'low') => {
+    if (!id) return null;
+    if (prefetchedPosts[id]) return prefetchedPosts[id];
+    if (failedPrefetchesRef.current.posts.has(id)) return null;
+    if (!canUseToken()) {
+      if (
+        typeof isTokenExpired === 'function' &&
+        token &&
+        isTokenExpired(token) &&
+        typeof refreshSession === 'function' &&
+        !didAttemptTokenRefreshRef.current
+      ) {
+        didAttemptTokenRefreshRef.current = true;
+        try { await refreshSession(); } catch (_) {}
+      }
+      return null;
+    }
+
+    if (prefetchPromisesRef.current.posts[id]) {
+      return prefetchPromisesRef.current.posts[id];
+    }
+
+    const promise = (async () => {
+      try {
+        const detailed = await fetchPostDetails(id, token);
+        if (detailed) {
+          setPrefetchedPosts(prev => (prev[id] ? prev : { ...prev, [id]: detailed }));
+          const mediaUrl = resolveMediaUrl(detailed);
+          if (mediaUrl) {
+            prefetchImageSources([mediaUrl], { priority });
+          }
+        }
+        if (!detailed) {
+          failedPrefetchesRef.current.posts.add(id);
+        }
+        return detailed;
+      } catch (err) {
+        if (__DEV__) console.warn('Prefetch post failed', err);
+        failedPrefetchesRef.current.posts.add(id);
+        return null;
+      } finally {
+        delete prefetchPromisesRef.current.posts[id];
+      }
+    })();
+
+    prefetchPromisesRef.current.posts[id] = promise;
+    return promise;
+  }, [prefetchedPosts, canUseToken, refreshSession, token, isTokenExpired]);
+
+  const ensureEventPrefetched = useCallback(async (id, priority = 'low') => {
+    if (!id) return null;
+    if (prefetchedEvents[id]) return prefetchedEvents[id];
+    if (failedPrefetchesRef.current.events.has(id)) return null;
+    if (!canUseToken()) {
+      if (
+        typeof isTokenExpired === 'function' &&
+        token &&
+        isTokenExpired(token) &&
+        typeof refreshSession === 'function' &&
+        !didAttemptTokenRefreshRef.current
+      ) {
+        didAttemptTokenRefreshRef.current = true;
+        try { await refreshSession(); } catch (_) {}
+      }
+      return null;
+    }
+
+    if (prefetchPromisesRef.current.events[id]) {
+      return prefetchPromisesRef.current.events[id];
+    }
+
+    const promise = (async () => {
+      try {
+        const detailed = await fetchEventDetails(id, token);
+        if (detailed) {
+          setPrefetchedEvents(prev => (prev[id] ? prev : { ...prev, [id]: detailed }));
+          if (detailed.imageUrl) {
+            prefetchImageSources([detailed.imageUrl], { priority });
+          }
+        }
+        if (!detailed) {
+          failedPrefetchesRef.current.events.add(id);
+        }
+        return detailed;
+      } catch (err) {
+        if (__DEV__) console.warn('Prefetch event failed', err);
+        failedPrefetchesRef.current.events.add(id);
+        return null;
+      } finally {
+        delete prefetchPromisesRef.current.events[id];
+      }
+    })();
+
+    prefetchPromisesRef.current.events[id] = promise;
+    return promise;
+  }, [prefetchedEvents, canUseToken, refreshSession, token, isTokenExpired]);
+
+  const ensureActivityPrefetched = useCallback(async (id, priority = 'low') => {
+    if (!id) return null;
+    if (prefetchedActivities[id]) return prefetchedActivities[id];
+    if (failedPrefetchesRef.current.activities.has(id)) return null;
+    if (!canUseToken()) {
+      if (
+        typeof isTokenExpired === 'function' &&
+        token &&
+        isTokenExpired(token) &&
+        typeof refreshSession === 'function' &&
+        !didAttemptTokenRefreshRef.current
+      ) {
+        didAttemptTokenRefreshRef.current = true;
+        try { await refreshSession(); } catch (_) {}
+      }
+      return null;
+    }
+
+    if (prefetchPromisesRef.current.activities[id]) {
+      return prefetchPromisesRef.current.activities[id];
+    }
+
+    const promise = (async () => {
+      try {
+        const detailed = await fetchActivityDetails(id, token);
+        if (detailed) {
+          setPrefetchedActivities(prev => (prev[id] ? prev : { ...prev, [id]: detailed }));
+          if (detailed.imageUrl) {
+            prefetchImageSources([detailed.imageUrl], { priority });
+          }
+        }
+        if (!detailed) {
+          failedPrefetchesRef.current.activities.add(id);
+        }
+        return detailed;
+      } catch (err) {
+        if (__DEV__) console.warn('Prefetch activity failed', err);
+        failedPrefetchesRef.current.activities.add(id);
+        return null;
+      } finally {
+        delete prefetchPromisesRef.current.activities[id];
+      }
+    })();
+
+    prefetchPromisesRef.current.activities[id] = promise;
+    return promise;
+  }, [prefetchedActivities, canUseToken, refreshSession, token, isTokenExpired]);
 
   // Group notifications when context provides them
   useEffect(() => {
     if (userNotifications == null) {
+      setFlatNotifications([]);
       setLoading(true);
       return;
     }
@@ -147,11 +328,46 @@ export default function Notifications() {
       grouped[group].push(n);
     });
     setGroupedNotifList(grouped);
+    setFlatNotifications(formatted);
     setHasMore(userNotifications.length >= LIMIT);
     // Update unread count badge
     const unread = formatted.filter((n) => !n.read).length;
     setUnreadCount(unread);
   }, [userNotifications]);
+
+  useEffect(() => {
+    if (!flatNotifications.length) return;
+    if (!canUseToken()) return;
+
+    const postsToPrefetch = [];
+    const eventsToPrefetch = [];
+    for (const notif of flatNotifications) {
+      if (!notif?.targetId) continue;
+      if (notif.type === 'post' && !prefetchedPosts[notif.targetId]) {
+        postsToPrefetch.push(notif.targetId);
+      } else if (notif.type === 'event' && !prefetchedEvents[notif.targetId]) {
+        eventsToPrefetch.push(notif.targetId);
+      }
+    }
+
+    const limitedPosts = postsToPrefetch.slice(0, PREFETCH_LIMIT);
+    const limitedEvents = eventsToPrefetch.slice(0, PREFETCH_LIMIT);
+
+    if (!limitedPosts.length && !limitedEvents.length) return;
+
+    let cancelled = false;
+    (async () => {
+      await Promise.all([
+        ...limitedPosts.map(id => ensurePostPrefetched(id)),
+        ...limitedEvents.map(id => ensureEventPrefetched(id)),
+      ]);
+      if (cancelled) return;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [flatNotifications, canUseToken, ensurePostPrefetched, ensureEventPrefetched, prefetchedPosts, prefetchedEvents]);
 
   const getDateGroup = (timestamp) => {
     const now = new Date();
@@ -184,29 +400,71 @@ export default function Notifications() {
     try {
       markAsRead(item.id);
       switch (item.type) {
-        case 'post':
-          navigateToPostDetail({ navigation, postId: item.targetId, token, isTokenExpired });
-          break;
-        case 'activity':
-          // Navigate to activity detail
-          {
-            const activityId = item.activityId || item.targetId;
-            if (!activityId) {
-              console.warn('Activity notification missing activityId', item);
-              break;
-            }
-            const params = { activityId };
-            if (item.sessionId) {
-              params.initialSessionId = item.sessionId;
-            }
-            navigation.navigate('ActivityDetailCard', params);
+        case 'post': {
+          const postId = item.targetId;
+          if (!postId) break;
+          let preload = prefetchedPosts[postId];
+          if (!preload) {
+            preload = await raceWithTimeout(ensurePostPrefetched(postId, 'high'));
+          }
+          const fallbackPost = preload || buildPostPlaceholder(item);
+          navigateToPostDetail({
+            navigation,
+            post: fallbackPost,
+            postId,
+            token,
+            isTokenExpired,
+          });
+          if (!preload && !failedPrefetchesRef.current.posts.has(postId)) {
+            ensurePostPrefetched(postId, 'high');
           }
           break;
-        case 'event':
-          navigateToEventDetail({ navigation, eventId: item.targetId, token, isTokenExpired });
+        }
+        case 'activity': {
+          const activityId = item.activityId || item.targetId;
+          if (!activityId) {
+            console.warn('Activity notification missing activityId', item);
+            break;
+          }
+          let preload = prefetchedActivities[activityId];
+          if (!preload) {
+            preload = await raceWithTimeout(ensureActivityPrefetched(activityId, 'high'));
+          }
+          const fallbackActivity = preload || buildActivityPlaceholder(item);
+          const params = {
+            activityId,
+            activityPreload: fallbackActivity,
+          };
+          if (item.sessionId) {
+            params.initialSessionId = item.sessionId;
+          }
+          navigation.navigate('ActivityDetailCard', params);
+          if (!preload && !failedPrefetchesRef.current.activities.has(activityId)) {
+            ensureActivityPrefetched(activityId, 'high');
+          }
           break;
+        }
+        case 'event': {
+          const eventId = item.targetId;
+          if (!eventId) break;
+          let preload = prefetchedEvents[eventId];
+          if (!preload) {
+            preload = await raceWithTimeout(ensureEventPrefetched(eventId, 'high'));
+          }
+          const fallbackEvent = preload || buildEventPlaceholder(item);
+          navigateToEventDetail({
+            navigation,
+            event: fallbackEvent,
+            eventId,
+            token,
+            isTokenExpired,
+          });
+          if (!preload && !failedPrefetchesRef.current.events.has(eventId)) {
+            ensureEventPrefetched(eventId, 'high');
+          }
+          break;
+        }
         case 'announcement':
-          // Navigate to Profile tab
           navigation.navigate('Main', { screen: 'Profile' });
           break;
         default:
@@ -283,6 +541,61 @@ export default function Notifications() {
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
+
+  const buildPostPlaceholder = (item) => ({
+    _id: item?.targetId,
+    title: item?.title || 'Post',
+    content: item?.message || '',
+    createdAt: item?.timeStamp,
+    author: {},
+    likes: [],
+    comments: [],
+    media: [],
+    tags: [],
+  });
+
+  const buildEventPlaceholder = (item) => ({
+    _id: item?.targetId,
+    title: item?.title || 'Event',
+    description: item?.message || '',
+    date: item?.timeStamp,
+    imageUrl: null,
+    eventType: undefined,
+  });
+
+  const buildActivityPlaceholder = (item) => ({
+    _id: item?.activityId || item?.targetId,
+    title: item?.title || 'Activity',
+    description: item?.message || '',
+    activityType: {},
+    imageUrl: null,
+    sessions: [],
+  });
+
+  const raceWithTimeout = useCallback((promise, ms = 150) => {
+    let timeoutId;
+    return new Promise((resolve) => {
+      let settled = false;
+      Promise.resolve(promise)
+        .then((value) => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve(value);
+        })
+        .catch(() => {
+          if (settled) return;
+          settled = true;
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve(null);
+        });
+      timeoutId = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        resolve(null);
+      }, ms);
+    });
+  }, []);
 
   // Always render header and toggles, show spinner inline while loading
 

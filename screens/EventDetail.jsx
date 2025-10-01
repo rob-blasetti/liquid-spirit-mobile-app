@@ -3,18 +3,19 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
   Linking,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import { joinEvent, fetchEventDetails } from '../services/EventService';
 import localImages from '../utils/localImages';
+import resolveImageSource from '../utils/imageSource';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const EventDetail = ({ route }) => {
@@ -105,9 +106,15 @@ const EventDetail = ({ route }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Image
-        source={localImages[event.imageUrl] || require('../assets/img/placeholder.png')}
+      <FastImage
+        source={
+          resolveImageSource(event.imageUrl, {
+            fallback: require('../assets/img/placeholder.png'),
+            priority: 'high',
+          })
+        }
         style={styles.banner}
+        resizeMode={FastImage.resizeMode.cover}
       />
       <View style={styles.detailsContainer}>
         <Text style={styles.title}>{event.title}</Text>

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Button } from 'liquid-spirit-styleguide/native';
 import FastImage from 'react-native-fast-image';
+import resolveImageSource from '../utils/imageSource';
 
 const CommentModal = ({
   visible,
@@ -55,7 +56,7 @@ const CommentModal = ({
                   <View key={comment._id} style={styles.commentItem}>
                     <View style={styles.commentHeader}>
                       <FastImage
-                        source={{ uri: comment.user.profilePicture }}
+                        source={resolveImageSource(comment.user.profilePicture, { priority: 'normal' })}
                         style={styles.profilePic}
                       />
                       <View style={styles.commentTextContainer}>

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useContext, useRef, useEffect, useCallback, useMemo } from 'react';
 import SlideBanner from '../components/SlideBanner';
 import {
   View,
@@ -15,8 +15,9 @@ import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
-import localImages from '../utils/localImages';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import resolveImageSource from '../utils/imageSource';
+import usePrefetchImages from '../hooks/usePrefetchImages';
 
 const Events = ({ navigation, route }) => {
   const { userEvents, token, isTokenExpired } = useContext(UserContext);
@@ -97,14 +98,18 @@ const Events = ({ navigation, route }) => {
     [navigation, token, isTokenExpired],
   );
 
+  const prefetchTargets = useMemo(
+    () => filteredEvents.map(event => event?.imageUrl).filter(Boolean),
+    [filteredEvents]
+  );
+
+  usePrefetchImages(prefetchTargets, { priority: 'high' });
+
   const RenderEvent = ({ item }) => {
-    let imageSource;
-    // Support both remote S3 URLs and local images
-    if (item.imageUrl && (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://'))) {
-      imageSource = { uri: item.imageUrl };
-    } else {
-      imageSource = localImages[item.imageUrl] || localImages['/img/events/Event_Placeholder.png'];
-    }
+    const imageSource = resolveImageSource(item.imageUrl, {
+      priority: 'high',
+      fallback: '/img/events/Event_Placeholder.png',
+    });
 
     return (
       <TouchableOpacity

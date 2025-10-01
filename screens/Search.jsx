@@ -11,6 +11,8 @@ import SearchItem from '../components/SearchItem';
 import { CommunityContext } from '../contexts/CommunityContext';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 
 const placeholderImage = require('../assets/img/placeholder.png');
 
@@ -109,7 +111,7 @@ const Search = () => {
   const [hasPrefilled, setHasPrefilled] = useState(false);
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
-  const { token } = useContext(UserContext);
+  const { token, isTokenExpired } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -117,6 +119,7 @@ const Search = () => {
   const autocompleteDebounceRef = useRef(null);
   const inputRef = useRef(null);
   const latestSearchIdRef = useRef(0);
+  const initialQueryKeyRef = useRef(null);
 
   const cancelAutocomplete = useCallback(() => {
     if (autocompleteDebounceRef.current) {
@@ -127,16 +130,57 @@ const Search = () => {
   }, []);
   // Handler for card press navigation
   const handleCardPress = useCallback((selected) => {
+    if (!selected) return;
+    const primaryId = selected._id || selected.id;
+
     if (selected.type === 'member' || selected.type === 'user') {
-      navigation.navigate('PublicUserProfile', { userId: selected._id || selected.id });
-    } else if (selected.type === 'session') {
-      navigation.navigate('ActivityDetailCard', { activityId: selected.activityId });
-    } else if (selected.type === 'activity') {
-      navigation.navigate('ActivityDetailCard', { activityId: selected._id || selected.id });
-    } else if (selected.type === 'event') {
-      navigation.navigate('EventDetailCard', { eventId: selected._id || selected.id });
+      navigation.navigate('PublicUserProfile', { userId: primaryId });
+      return;
     }
-  }, [navigation]);
+
+    if (selected.type === 'post') {
+      navigateToPostDetail({
+        navigation,
+        post: selected,
+        postId: primaryId,
+        token,
+        isTokenExpired,
+      });
+      return;
+    }
+
+    if (selected.type === 'event') {
+      navigateToEventDetail({
+        navigation,
+        event: selected,
+        eventId: primaryId,
+        token,
+        isTokenExpired,
+      });
+      return;
+    }
+
+    if (selected.type === 'activity') {
+      navigation.navigate('ActivityDetailCard', {
+        activityId: primaryId,
+        activityPreload: selected,
+      });
+      return;
+    }
+
+    if (selected.type === 'session') {
+      const activityId = selected.activityId || primaryId;
+      navigation.navigate('ActivityDetailCard', {
+        activityId,
+        initialSessionId: primaryId,
+      });
+      return;
+    }
+
+    if (primaryId) {
+      navigation.navigate('ActivityDetailCard', { activityId: primaryId });
+    }
+  }, [navigation, token, isTokenExpired]);
   // Partition results by type for grouped sections
   const getSuggestionLabel = useCallback((suggestion) => {
     if (!suggestion) return '';
@@ -241,16 +285,23 @@ const Search = () => {
     }
 
     const initialQuery = route.params?.initialQuery;
-    if (initialQuery) {
-      setQuery(initialQuery);
-      executeSearch(initialQuery);
-      navigation.setParams({ initialQuery: undefined });
+    const initialQueryTs = route.params?.initialQueryTs;
+    const normalizedInitialQuery = typeof initialQuery === 'string' ? initialQuery.trim() : '';
+    if (normalizedInitialQuery) {
+      const key = `${normalizedInitialQuery}::${initialQueryTs ?? 'na'}`;
+      if (initialQueryKeyRef.current !== key) {
+        initialQueryKeyRef.current = key;
+        setQuery(normalizedInitialQuery);
+        updateRecentSearches(normalizedInitialQuery);
+        executeSearch(normalizedInitialQuery);
+      }
+      navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
       firstMountRef.current = false;
     } else if (firstMountRef.current) {
       executeSearch('');
       firstMountRef.current = false;
     }
-  }, [route.params?.initialQuery, navigation, executeSearch, hasPrefilled]);
+  }, [route.params?.initialQuery, route.params?.initialQueryTs, navigation, executeSearch, hasPrefilled, updateRecentSearches]);
 
   useEffect(() => {
     return () => {
@@ -372,6 +423,22 @@ const Search = () => {
   const trimmedQuery = query.trim();
   const hasAnyResults = results.length > 0;
 
+  const handleTagPress = useCallback((value) => {
+    const trimmed = safeText(value)?.trim();
+    if (!trimmed) return;
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+    cancelAutocomplete();
+    setAutocompleteSuggestions([]);
+    setQuery(trimmed);
+    updateRecentSearches(trimmed);
+    inputRef.current?.blur?.();
+    setIsSearchFocused(false);
+    executeSearch(trimmed);
+  }, [executeSearch, updateRecentSearches, cancelAutocomplete]);
+
   const getListItemProps = useCallback((item) => {
     if (!item) return null;
     const communityText = safeText(item.community);
@@ -416,6 +483,7 @@ const Search = () => {
           sessionStatusTagText: sessionStatus || undefined,
           communityTagText: communityText || undefined,
           onPress,
+          onTagPress: handleTagPress,
         };
       }
       case 'event': {
@@ -438,6 +506,7 @@ const Search = () => {
           communityTagText: communityText || undefined,
           isEvent: true,
           onPress,
+          onTagPress: handleTagPress,
         };
       }
       case 'post': {
@@ -462,6 +531,7 @@ const Search = () => {
           communityTagText: communityText || undefined,
           secondaryFooterText: truncatedAuthorName ? `By ${truncatedAuthorName}` : undefined,
           onPress,
+          onTagPress: handleTagPress,
         };
       }
       case 'member':
@@ -499,7 +569,7 @@ const Search = () => {
         };
       }
     }
-  }, [handleCardPress]);
+  }, [handleCardPress, handleTagPress]);
 
   const handleCancel = useCallback(() => {
     inputRef.current?.clear?.();

@@ -34,6 +34,7 @@ import { Button } from 'liquid-spirit-styleguide/native';
 import { shareContent } from '../utils/shareContent';
 import FooterBrand from '../components/FooterBrand';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import resolveImageSource from '../utils/imageSource';
 
 const HEADER_OFFSET = 0;
 
@@ -447,7 +448,7 @@ const PostDetailCard = ({ route }) => {
                     <TouchableOpacity activeOpacity={1} onPress={() => setModalVisible(true)}>
                       <Animated.View style={{ opacity: mediaOpacity }}>
                         <FastImage
-                          source={{ uri: mediaUrl }}
+                          source={resolveImageSource(mediaUrl, { priority: 'high' })}
                           style={[styles.media, { height: mediaHeight }]}
                           resizeMode={FastImage.resizeMode.cover}
                           onLoadStart={() => __DEV__ && console.log('[PostDetail] image onLoadStart')}
@@ -483,7 +484,7 @@ const PostDetailCard = ({ route }) => {
                 {/* Removed separate community chip here; will display in authorRow */}
                 <View style={styles.authorRow}>
                   {profilePic ? (
-                    <FastImage source={{ uri: profilePic }} style={styles.avatar} />
+                    <FastImage source={resolveImageSource(profilePic, { priority: 'normal' })} style={styles.avatar} />
                   ) : (
                     <Avatar
                       size={40}
@@ -543,7 +544,7 @@ const PostDetailCard = ({ route }) => {
                     >
                       {comment.user?.profilePicture ? (
                         <FastImage
-                          source={{ uri: comment.user.profilePicture }}
+                          source={resolveImageSource(comment.user.profilePicture, { priority: 'normal' })}
                           style={styles.commentAvatar}
                         />
                       ) : (
@@ -606,7 +607,7 @@ const PostDetailCard = ({ route }) => {
                   onPress={() =>
                     navigation.navigate('Main', {
                       screen: 'Search',
-                      params: { initialQuery: tag },
+                      params: { initialQuery: tag, initialQueryTs: Date.now() },
                     })
                   }
                 >
@@ -640,7 +641,7 @@ const PostDetailCard = ({ route }) => {
                   }
                 >
                   <FastImage
-                    source={{ uri: item.media?.[0] }}
+                    source={resolveImageSource(item.media?.[0], { priority: 'normal', fallback: '/img/events/Event_Placeholder.png' })}
                     style={styles.relatedImage}
                     resizeMode={FastImage.resizeMode.cover}
                   />
@@ -815,9 +816,27 @@ const styles = StyleSheet.create({
   // Tag chips scrollable container (horizontal scroll)
   tagScrollContainer: { maxWidth: '100%', marginTop: 8, marginBottom: 8, overflow: 'hidden' },
   // Container for tag chips: align first tag with section heading
-  tagChipsContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 0, paddingRight: 16 },
-  tagChipDetail: { backgroundColor: '#eee', paddingVertical: 4, paddingHorizontal: 12, borderRadius: 12, marginRight: 8, flexShrink: 0, borderColor: themeVariables.darkGreyColor, borderWidth: 1 },
-  tagTextDetail: { color: '#555', fontSize: 14 },
+  tagChipsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+    paddingRight: 16,
+  },
+  tagChipDetail: {
+    backgroundColor: themeVariables.secondaryColor,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    marginRight: 8,
+    marginBottom: 6,
+    flexShrink: 0,
+  },
+  tagTextDetail: {
+    fontSize: 14,
+    color: themeVariables.blackColor,
+    textAlign: 'center',
+    flexShrink: 0,
+  },
   // Divider before sections
   divider: {
     height: 1,

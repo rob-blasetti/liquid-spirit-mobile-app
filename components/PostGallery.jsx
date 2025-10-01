@@ -1,13 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
-import { API_URL } from '../config';
-import localImages from '../utils/localImages';
 import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import resolveImageSource from '../utils/imageSource';
+import usePrefetchImages from '../hooks/usePrefetchImages';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 2 - 15;
@@ -37,6 +37,16 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
     }
   };
 
+  const prefetchTargets = useMemo(
+    () =>
+      posts
+        .map(item => item?.media?.[0] || item?.imageUrl)
+        .filter(uri => uri && !/\.(mp4|mov|m4v|avi)(\?.*)?$/i.test(uri)),
+    [posts]
+  );
+
+  usePrefetchImages(prefetchTargets, { priority: 'normal' });
+
   return (
     <FlatList
       data={posts}
@@ -53,16 +63,10 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
       renderItem={({ item }) => {
         let mediaUrl = item.media?.[0] || item.imageUrl;
         const isVideo = mediaUrl?.endsWith('.mp4') || mediaUrl?.includes('video');
-        let imageSource;
-        if (mediaUrl) {
-          if (localImages[mediaUrl]) {
-            imageSource = localImages[mediaUrl];
-          } else if (!mediaUrl.startsWith('http')) {
-            imageSource = { uri: `${API_URL}/${mediaUrl}` };
-          } else {
-            imageSource = { uri: mediaUrl };
-          }
-        }
+        const imageSource = resolveImageSource(mediaUrl, {
+          priority: 'normal',
+          fallback: '/img/events/Event_Placeholder.png',
+        });
 
         return (
           <TouchableOpacity style={styles.postContainer} onPress={() => handlePress(item)}>

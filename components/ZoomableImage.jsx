@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, Animated, Image as RNImage, Dimensions } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { PanGestureHandler, PinchGestureHandler, State } from 'react-native-gesture-handler';
+import resolveImageSource from '../utils/imageSource';
 
 const ZoomableImage = ({ uri, style, onRequestClose }) => {
   if (__DEV__) {
@@ -144,7 +145,7 @@ const ZoomableImage = ({ uri, style, onRequestClose }) => {
               }}
             >
               <FastImage
-                source={{ uri, priority: FastImage.priority.normal, cache: FastImage.cacheControl.immutable }}
+                source={resolveImageSource(uri, { priority: 'normal' })}
                 style={[styles.image, { width: winW, height: winH }]}
                 resizeMode={FastImage.resizeMode.contain}
                 onLoadStart={() => __DEV__ && console.log('[ZoomableImage] onLoadStart')}

@@ -15,6 +15,7 @@ import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { Button } from 'liquid-spirit-styleguide/native';
 import { CommunityContext } from '../contexts';
+import resolveImageSource from '../utils/imageSource';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 32;
@@ -58,7 +59,7 @@ const LocalAssemblyModal = ({ visible, onClose }) => {
                     >
                     {member.profilePicture ? (
                       <FastImage
-                        source={{ uri: member.profilePicture }}
+                        source={resolveImageSource(member.profilePicture, { priority: 'normal' })}
                         style={styles.avatar}
                       />
                     ) : (

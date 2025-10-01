@@ -21,8 +21,15 @@ const SearchItem = ({
   secondaryFooterText,
   isEvent = false,
   onPress,
+  onTagPress,
 }) => {
   const hasLeading = Boolean(imageSource) || Boolean(leadingComponent);
+  const handleTagPress = (value) => {
+    if (!value) return;
+    if (typeof onTagPress === 'function') {
+      onTagPress(value);
+    }
+  };
 
   return (
     <TouchableOpacity
@@ -117,11 +124,15 @@ const SearchItem = ({
               </View>
             ) : null}
             {tagText ? (
-              <View style={[styles.tag, styles.typeTag]}>
+              <TouchableOpacity
+                style={[styles.tag, styles.typeTag]}
+                activeOpacity={0.7}
+                onPress={() => handleTagPress(tagText)}
+              >
                 <Text style={styles.tagText} numberOfLines={1}>
                   {tagText}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ) : null}
             {sessionStatusTagText ? (
               <View style={[styles.tag, styles.sessionStatusTag]}>

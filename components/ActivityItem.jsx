@@ -1,20 +1,12 @@
 import React from 'react';
-import { API_URL } from '../config';
-import localImages from '../utils/localImages';
+import resolveImageSource from '../utils/imageSource';
 import ListItem from './ListItem';
 
 const ActivityItem = ({ item, onPress, nextUp }) => {
-  let imageSource;
-  const uri = item.imageUrl;
-  if (uri) {
-    if (localImages[uri]) {
-      imageSource = localImages[uri];
-    } else if (!uri.startsWith('http')) {
-      imageSource = { uri: `${API_URL}/${uri}` };
-    } else {
-      imageSource = { uri };
-    }
-  }
+  const imageSource = resolveImageSource(item.imageUrl, {
+    priority: 'high',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
   // Determine next upcoming session from sessions array
   const now = new Date();
   let sessionDisplay = 'Not yet set';

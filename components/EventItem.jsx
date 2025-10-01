@@ -1,20 +1,12 @@
 import React from 'react';
-import { API_URL } from '../config';
-import localImages from '../utils/localImages';
+import resolveImageSource from '../utils/imageSource';
 import ListItem from './ListItem';
 
 const EventItem = ({ item, onPress, nextUp }) => {
-  let imageSource;
-  const uri = item.imageUrl;
-  if (uri) {
-    if (localImages[uri]) {
-      imageSource = localImages[uri];
-    } else if (!uri.startsWith('http')) {
-      imageSource = { uri: `${API_URL}/${uri}` };
-    } else {
-      imageSource = { uri };
-    }
-  }
+  const imageSource = resolveImageSource(item.imageUrl, {
+    priority: 'high',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
   // Use the event's startTime first to display correct time, fall back to date if missing
   const rawDate = item.startTime || item.date;
   const dateObj = rawDate ? new Date(rawDate) : null;
