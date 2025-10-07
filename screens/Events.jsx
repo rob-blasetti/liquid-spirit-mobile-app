@@ -98,6 +98,10 @@ const Events = ({ navigation, route }) => {
     [navigation, token, isTokenExpired],
   );
 
+  const filteredEvents = selectedEventType
+    ? events.filter((e) => e.eventType === selectedEventType)
+    : events;
+
   const prefetchTargets = useMemo(
     () => filteredEvents.map(event => event?.imageUrl).filter(Boolean),
     [filteredEvents]
@@ -144,10 +148,6 @@ const Events = ({ navigation, route }) => {
   };
 
   // Filter events if an event type is selected; otherwise show all.
-  const filteredEvents = selectedEventType
-    ? events.filter((e) => e.eventType === selectedEventType)
-    : events;
-
   return (
     <>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}

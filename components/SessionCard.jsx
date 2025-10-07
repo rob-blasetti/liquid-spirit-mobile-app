@@ -9,6 +9,11 @@ const clockIcon = 'time-outline';
 const checkCircle = 'checkmark-circle-outline';
 const timesCircle = 'close-circle-outline';
 
+const sanitizeUserList = (users) => {
+  if (!Array.isArray(users)) return [];
+  return users.filter(Boolean);
+};
+
 const SessionCard = ({
   session,
   detailsLoaded,
@@ -41,9 +46,15 @@ const SessionCard = ({
   const [modalVisible, setModalVisible] = useState(false);
   const overlayOpacity = useState(new Animated.Value(0))[0];
 
-  const renderUserList = (users, type) => users.slice(0, 3).map((item, i) => (
-    <UserCell key={item.refId?._id || i} user={item.refId || item.details || item} type={item.type} />
-  ));
+  const renderUserList = (users = []) => sanitizeUserList(users)
+    .slice(0, 3)
+    .map((item, i) => (
+      <UserCell
+        key={item?.refId?._id || i}
+        user={item?.refId || item?.details || item}
+        type={item?.type}
+      />
+    ));
 
   const openModal = () => {
   setModalVisible(true);
@@ -126,8 +137,12 @@ const closeModal = () => {
                 </TouchableOpacity>
               )}
             </View>
-            {session.facilitators.map((item, i) => (
-              <UserCell key={item.refId?._id || i} user={item.refId || item.details || item} type={item.type} />
+            {sanitizeUserList(session.facilitators).map((item, i) => (
+              <UserCell
+                key={item?.refId?._id || i}
+                user={item?.refId || item?.details || item}
+                type={item?.type}
+              />
             ))}
 
             {/* Participants Section */}
@@ -140,8 +155,12 @@ const closeModal = () => {
                 </TouchableOpacity>
               )}
             </View>
-            {session.participants.map((item, i) => (
-              <UserCell key={item.refId?._id || i} user={item.refId || item.details || item} type={item.type} />
+            {sanitizeUserList(session.participants).map((item, i) => (
+              <UserCell
+                key={item?.refId?._id || i}
+                user={item?.refId || item?.details || item}
+                type={item?.type}
+              />
             ))}
 
           </ScrollView>

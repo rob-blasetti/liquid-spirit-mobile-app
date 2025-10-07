@@ -387,6 +387,7 @@ const ActivityDetailCard = ({ route }) => {
             openGoogleMaps={openGoogleMaps}
             userId={user?.id}
             detailsLoaded={detailsLoaded}
+            initialSessionId={initialSessionId}
           />
         </SwipeToCloseScrollView>
       </SafeAreaView>
@@ -401,19 +402,12 @@ const ActivityDetailCard = ({ route }) => {
     );
   }
 
-  if (loading) {
+  if (loading || !activity) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      </View>
-    );
-  }
-
-  if (!activity) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.noActivityText}>
-          Activity details not available.
+        <Text style={styles.loadingText}>
+          {loading ? 'Loading activity...' : 'Activity details not available.'}
         </Text>
       </View>
     );
@@ -1107,6 +1101,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: themeVariables.whiteColor,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: themeVariables.textColor || '#555',
   },
   errorText: { color: 'red', fontSize: 16 },
   noActivityText: { color: '#666', fontSize: 18 },
