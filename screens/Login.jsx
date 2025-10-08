@@ -5,11 +5,13 @@ import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
 import { isValidEmail, isValidPassword } from '../utils/validation';
+import SlideBanner from '../components/SlideBanner';
 
-const Login = ({ navigation }) => {
+const Login = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState('');
 
   const { login } = useContext(UserContext);
 
@@ -38,6 +40,14 @@ const Login = ({ navigation }) => {
 
     loadCredentials();
   }, []);
+
+  useEffect(() => {
+    const msg = route?.params?.bannerMessage;
+    if (msg) {
+      setBannerMessage(msg);
+      navigation.setParams({ bannerMessage: undefined });
+    }
+  }, [route?.params?.bannerMessage, navigation]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -87,50 +97,60 @@ const Login = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      {/* Email Label and Input */}
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      {/* Password Label and Input */}
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      {loading ? (
-        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      ) : (
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
+    <View style={styles.screen}>
+      {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
+      <View style={[styles.container, bannerMessage ? styles.containerWithBanner : null]}>
+        <Text style={styles.title}>Login</Text>
+        {/* Email Label and Input */}
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {/* Password Label and Input */}
+        <Text style={styles.label}>Password</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        {loading ? (
+          <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+        ) : (
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Login</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Register')}
+          style={styles.link}
+        >
+          <Text style={styles.linkText}>Don't have an account?</Text>
         </TouchableOpacity>
-      )}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Register')}
-        style={styles.link}
-      >
-        <Text style={styles.linkText}>Don't have an account?</Text>
-      </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: themeVariables.darkGreyColor,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
     backgroundColor: themeVariables.darkGreyColor,
+  },
+  containerWithBanner: {
+    paddingTop: 70,
   },
   title: {
     fontSize: 32,

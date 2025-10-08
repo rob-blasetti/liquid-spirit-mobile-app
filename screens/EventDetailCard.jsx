@@ -213,14 +213,14 @@ const EventDetailCard = ({ route }) => {
     run();
     return () => { isMounted = false; };
   }, [eventId, token, eventPreload, storageLoaded, didRefresh]);
-  // Redirect to Events for specific errors
+  // Redirect unauthenticated or missing events to appropriate screens
   useEffect(() => {
     if (redirected || loading) return;
     if (errorStatus === 404) {
       navigation.replace('Events', { bannerMessage: 'Sorry, that event no longer exists.' });
       setRedirected(true);
     } else if (errorStatus === 401) {
-      navigation.replace('Events', { bannerMessage: 'Please log in to view this event.' });
+      navigation.replace('Login', { bannerMessage: 'Please log in to view this event.' });
       setRedirected(true);
     } else if (errorStatus === 'invalid_id') {
       navigation.replace('Events', { bannerMessage: 'Invalid event link.' });
