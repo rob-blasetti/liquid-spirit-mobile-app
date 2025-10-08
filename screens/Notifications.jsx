@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
@@ -122,9 +122,11 @@ export default function Notifications() {
   const [prefetchedPosts, setPrefetchedPosts] = useState({});
   const [prefetchedEvents, setPrefetchedEvents] = useState({});
   const [prefetchedActivities, setPrefetchedActivities] = useState({});
+  const [openingNotificationId, setOpeningNotificationId] = useState(null);
   const prefetchPromisesRef = useRef({ posts: {}, events: {}, activities: {} });
   const didAttemptTokenRefreshRef = useRef(false);
   const failedPrefetchesRef = useRef({ posts: new Set(), events: new Set(), activities: new Set() });
+  const openingNotificationRef = useRef(null);
   const LIMIT = 10;
   const PREFETCH_LIMIT = 6;
 
@@ -304,6 +306,12 @@ export default function Notifications() {
       const targetId = normalizeIdValue(n.target?._id) || normalizeIdValue(n.target?.id) || normalizeIdValue(n.targetId);
       const resolvedActivityId = type === 'activity' ? (activityId || targetId) : null;
       const resolvedSessionId = sessionId || (type === 'activity' && typeKey.includes('session') ? targetId : null);
+      const actorId =
+        normalizeIdValue(n.actor) ||
+        normalizeIdValue(n.actorId) ||
+        normalizeIdValue(n.additionalData?.actor) ||
+        normalizeIdValue(n.additionalData?.actorId);
+      const caption = n.additionalData?.caption || '';
 
       return {
         id: n._id,
@@ -313,8 +321,9 @@ export default function Notifications() {
         targetId,
         activityId: resolvedActivityId,
         sessionId: resolvedSessionId,
-        title: n.additionalData?.caption || 'Notification',
-        message: n.additionalData?.caption || '',
+        actorId,
+        title: caption || 'Notification',
+        message: caption || '',
         time: formatTime(n.createdAt),
         timeStamp: n.createdAt,
         read: n.isRead,
@@ -396,83 +405,130 @@ export default function Notifications() {
     }
   };
 
+  const showContentUnavailableAlert = useCallback(() => {
+    Alert.alert('Content unavailable', 'We could not open this notification. It may have been removed.');
+  }, []);
+
   const handleNotificationPress = async (item) => {
+    if (openingNotificationRef.current) return;
+    openingNotificationRef.current = item.id;
+    setOpeningNotificationId(item.id);
     try {
       markAsRead(item.id);
+      const rawType = typeof item.rawType === 'string' ? item.rawType.toLowerCase() : '';
+      const normalizedRawType = rawType.replace(/[^a-z]/g, '');
+      const messageLower = (item.message || '').toLowerCase();
+      const isCommunityJoinNotification =
+        rawType === 'signup' ||
+        normalizedRawType.includes('signup') ||
+        normalizedRawType.includes('joincommunity') ||
+        normalizedRawType.includes('communityjoin') ||
+        normalizedRawType.includes('newmember') ||
+        messageLower.includes('joined your community') ||
+        messageLower.includes('joined the community');
+
+      if (isCommunityJoinNotification) {
+        const profileId = item.actorId || item.targetId;
+        if (profileId) {
+          navigation.navigate('PublicUserProfile', { userId: profileId });
+        } else {
+          console.warn('Community join notification missing actorId', item);
+          showContentUnavailableAlert();
+        }
+        return;
+      }
+
       switch (item.type) {
         case 'post': {
           const postId = item.targetId;
-          if (!postId) break;
+          if (!postId) {
+            console.warn('Post notification missing targetId', item);
+            showContentUnavailableAlert();
+            return;
+          }
           let preload = prefetchedPosts[postId];
           if (!preload) {
-            preload = await raceWithTimeout(ensurePostPrefetched(postId, 'high'));
+            const ensurePromise = ensurePostPrefetched(postId, 'high');
+            preload = await ensurePromise;
           }
-          const fallbackPost = preload || buildPostPlaceholder(item);
+          if (!preload) {
+            showContentUnavailableAlert();
+            return;
+          }
           navigateToPostDetail({
             navigation,
-            post: fallbackPost,
+            post: preload,
             postId,
             token,
             isTokenExpired,
           });
-          if (!preload && !failedPrefetchesRef.current.posts.has(postId)) {
-            ensurePostPrefetched(postId, 'high');
-          }
           break;
         }
         case 'activity': {
           const activityId = item.activityId || item.targetId;
           if (!activityId) {
             console.warn('Activity notification missing activityId', item);
-            break;
+            showContentUnavailableAlert();
+            return;
           }
           let preload = prefetchedActivities[activityId];
           if (!preload) {
-            preload = await raceWithTimeout(ensureActivityPrefetched(activityId, 'high'));
+            const ensurePromise = ensureActivityPrefetched(activityId, 'high');
+            preload = await ensurePromise;
           }
-          const fallbackActivity = preload || buildActivityPlaceholder(item);
+          if (!preload) {
+            showContentUnavailableAlert();
+            return;
+          }
           const params = {
             activityId,
-            activityPreload: fallbackActivity,
+            activityPreload: preload,
           };
           if (item.sessionId) {
             params.initialSessionId = item.sessionId;
           }
           navigation.navigate('ActivityDetailCard', params);
-          if (!preload && !failedPrefetchesRef.current.activities.has(activityId)) {
-            ensureActivityPrefetched(activityId, 'high');
-          }
           break;
         }
         case 'event': {
           const eventId = item.targetId;
-          if (!eventId) break;
+          if (!eventId) {
+            console.warn('Event notification missing targetId', item);
+            showContentUnavailableAlert();
+            return;
+          }
           let preload = prefetchedEvents[eventId];
           if (!preload) {
-            preload = await raceWithTimeout(ensureEventPrefetched(eventId, 'high'));
+            const ensurePromise = ensureEventPrefetched(eventId, 'high');
+            preload = await ensurePromise;
           }
-          const fallbackEvent = preload || buildEventPlaceholder(item);
+          if (!preload) {
+            showContentUnavailableAlert();
+            return;
+          }
           navigateToEventDetail({
             navigation,
-            event: fallbackEvent,
+            event: preload,
             eventId,
             token,
             isTokenExpired,
           });
-          if (!preload && !failedPrefetchesRef.current.events.has(eventId)) {
-            ensureEventPrefetched(eventId, 'high');
-          }
           break;
         }
         case 'announcement':
           navigation.navigate('Main', { screen: 'Profile' });
           break;
         default:
-          console.warn('Unknown notification type');
+          console.warn('Unknown notification type', item);
+          showContentUnavailableAlert();
           break;
       }
     } catch (err) {
       console.error('Notification press error:', err);
+      showContentUnavailableAlert();
+    } finally {
+      openingNotificationRef.current = null;
+      setOpeningNotificationId(null);
     }
   };
 
@@ -542,61 +598,6 @@ export default function Notifications() {
     return `${days}d ago`;
   };
 
-  const buildPostPlaceholder = (item) => ({
-    _id: item?.targetId,
-    title: item?.title || 'Post',
-    content: item?.message || '',
-    createdAt: item?.timeStamp,
-    author: {},
-    likes: [],
-    comments: [],
-    media: [],
-    tags: [],
-  });
-
-  const buildEventPlaceholder = (item) => ({
-    _id: item?.targetId,
-    title: item?.title || 'Event',
-    description: item?.message || '',
-    date: item?.timeStamp,
-    imageUrl: null,
-    eventType: undefined,
-  });
-
-  const buildActivityPlaceholder = (item) => ({
-    _id: item?.activityId || item?.targetId,
-    title: item?.title || 'Activity',
-    description: item?.message || '',
-    activityType: {},
-    imageUrl: null,
-    sessions: [],
-  });
-
-  const raceWithTimeout = useCallback((promise, ms = 150) => {
-    let timeoutId;
-    return new Promise((resolve) => {
-      let settled = false;
-      Promise.resolve(promise)
-        .then((value) => {
-          if (settled) return;
-          settled = true;
-          if (timeoutId) clearTimeout(timeoutId);
-          resolve(value);
-        })
-        .catch(() => {
-          if (settled) return;
-          settled = true;
-          if (timeoutId) clearTimeout(timeoutId);
-          resolve(null);
-        });
-      timeoutId = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        resolve(null);
-      }, ms);
-    });
-  }, []);
-
   // Always render header and toggles, show spinner inline while loading
 
   return (
@@ -658,6 +659,7 @@ export default function Notifications() {
           ) : (
             <Pressable
               onPress={() => handleNotificationPress(item)}
+              disabled={Boolean(openingNotificationId)}
               style={[styles.notification, { backgroundColor: item.read ? '#f5f5f5' : '#dbeafe' }]}
             >
               <NotificationIcon type={item.type} />
@@ -666,6 +668,9 @@ export default function Notifications() {
                 <Text style={styles.message}>{item.message}</Text>
                 <Text style={styles.time}>{item.time}</Text>
               </View>
+              {openingNotificationId === item.id && (
+                <ActivityIndicator size="small" color="#312783" style={styles.inlineSpinner} />
+              )}
             </Pressable>
           )
         }
@@ -718,7 +723,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 3,                  // Android shadow
   },
-  textContainer: { marginLeft: 10 },
+  textContainer: {
+    flex: 1,
+    marginLeft: 10,
+  },
   title: {
     fontSize: 14,
     marginRight: 30,
@@ -759,6 +767,9 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     fontStyle: 'italic',
+  },
+  inlineSpinner: {
+    marginLeft: 'auto',
   },
   toggleContainer: {
     flexDirection: 'row',
