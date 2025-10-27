@@ -1,4 +1,4 @@
-Liquid Spirit Mobile for iOS/Android
+Liquid Spirit Mobile app for iOS/Android
 
 # Getting Started
 
