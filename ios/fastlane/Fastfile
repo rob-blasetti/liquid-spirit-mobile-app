@@ -1,13 +1,14 @@
 default_platform(:ios)
 
 require 'dotenv' # ✅ Require the dotenv gem
-Dotenv.load(File.join(File.dirname(__FILE__), "fastlane/.env.beta")) # ✅ Load environment variables
+Dotenv.load(File.expand_path('.env.beta', __dir__))
 
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     # Print environment variables to verify they load correctly
     UI.message "🚀 Using API_URL: #{ENV['API_URL']}"
+    UI.message "🔑 ASC_KEY_FILE: #{ENV['ASC_KEY_FILE']}"
 
     sh "mkdir -p ios"
     sh "touch ios/Config.xcconfig"
