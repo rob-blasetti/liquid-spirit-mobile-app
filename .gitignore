@@ -93,3 +93,5 @@ ios/Pods/
 # Google Play credentials
 android/fastlane/playstore_credentials.json
 upload_certificate.pem
+
+ios/fastlane/AuthKey_*.p8
