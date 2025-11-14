@@ -414,6 +414,12 @@ const ChatDetail = () => {
     }),
     [],
   );
+  const composerInsetsStyle = useMemo(
+    () => ({
+      paddingBottom: 20 + Math.max(insets.bottom, 0),
+    }),
+    [insets.bottom],
+  );
 
   const resolveSenderId = useCallback((message) => {
     const sender =
@@ -854,7 +860,7 @@ const participantsSection = chatParticipants.length ? (
             </View>
           }
         />
-        <View style={styles.composerContainer}>
+        <View style={[styles.composerContainer, composerInsetsStyle]}>
           <TextInput
             style={styles.composerInput}
             value={messageText}
@@ -970,6 +976,8 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
     paddingHorizontal: 16,
     paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   fallbackBackButton: {
     width: 40,
@@ -980,12 +988,13 @@ const styles = StyleSheet.create({
     borderColor: themeVariables.borderColor,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginRight: 12,
   },
   fallbackTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: themeVariables.blackColor,
+    flex: 1,
   },
   contentWrapper: {
     paddingHorizontal: 0,
@@ -1155,8 +1164,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: themeVariables.borderColor,
+    paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 12,
   },
   composerInput: {
     flex: 1,
