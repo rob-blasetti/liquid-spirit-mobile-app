@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { View } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -10,6 +10,7 @@ import SocialMediaScreen from '../screens/SocialMedia';
 import Home from '../screens/Home';
 // Removed NotificationScreen import; Notifications handled via Home screen banner
 import SearchScreen from '../screens/Search';
+import ChatScreen from '../screens/Chat';
 import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
@@ -24,10 +25,11 @@ const tabIcons = {
   Feed: 'compass-outline',
   Camera: 'add-circle',
   Search: 'search-outline',
+  Chat: 'chatbubble-ellipses-outline',
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
-  const { isLoggedIn } = useContext(UserContext);
+  const { isLoggedIn, hasNewChatMessages, chatNotificationCount } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
 
@@ -86,6 +88,13 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
                   color={iconColor}
                   style={{ marginTop: iconMarginTop }}
                 />
+                {route.name === 'Chat' && chatNotificationCount > 0 && (
+                    <View style={styles.chatBadge}>
+                      <Text style={styles.chatBadgeText}>
+                        {Math.min(chatNotificationCount, 99)}
+                      </Text>
+                    </View>
+                  )}
               </View>
             );
           },
@@ -148,6 +157,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         </Tab.Screen>
         <Tab.Screen name="Camera" component={CreatePostScreen} />
         <Tab.Screen name="Search" component={SearchScreen} />
+        <Tab.Screen name="Chat" component={ChatScreen} />
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
 
@@ -157,3 +167,23 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
 };
 
 export default BottomBar;
+
+const styles = StyleSheet.create({
+  chatBadge: {
+    position: 'absolute',
+    top: 28,
+    right: 4,
+    backgroundColor: themeVariables.alertErrorBg,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatBadgeText: {
+    color: themeVariables.whiteColor,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+});

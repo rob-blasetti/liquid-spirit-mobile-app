@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   title: {
     fontSize: 28,

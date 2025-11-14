@@ -29,3 +29,4 @@ export { default as Splash } from './Splash';
 export { default as Verification } from './Verification';
 export { default as Welcome } from './Welcome';
 export { default as PostDetailCard } from './PostDetailCard';
+export { default as ChatDetail } from './ChatDetail';

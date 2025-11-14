@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,24 +14,28 @@ import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import resolveImageSource from '../utils/imageSource';
 import { fetchActivityDetails } from '../services/ActivityService';
+import { startActivityConversation, getActivityChatParticipantProfiles } from '../services/ChatService';
+import { shareContent } from '../utils/shareContent';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 const { height: windowHeight } = Dimensions.get('window');
 
-const ActivityDetail = ({ route }) => {
-  const { user } = useContext(UserContext);
+const ActivityDetail = ({ route, navigation }) => {
+  const { user, token } = useContext(UserContext);
   const { activityId, activityPreload } = route.params;
 
   const [activity, setActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [startingChat, setStartingChat] = useState(false);
+  const storedUserToken = user?.token;
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const token = user?.token || '';
-        const activityData = await fetchActivityDetails(activityId, token);
+        const authToken = token || storedUserToken || '';
+        const activityData = await fetchActivityDetails(activityId, authToken);
         setActivity(activityData);
       } catch (err) {
         setError(err.message || 'Failed to load activity details');
@@ -41,7 +45,7 @@ const ActivityDetail = ({ route }) => {
     };
 
     fetchDetails();
-  }, [activityId]);
+  }, [activityId, token, storedUserToken]);
 
   const openGoogleMaps = () => {
     if (!activity.address) return;
@@ -134,11 +138,100 @@ const ActivityDetail = ({ route }) => {
     );
   }
 
-  const userId = user?.id;
+  const userId = user?._id || user?.id;
   const isUserAFacilitator = activity.facilitators?.some(facilitator => facilitator.details._id === userId);
   const isUserAParticipant = activity.participants?.some(participant => participant.details._id === userId);
   const hasFacilitatorSpace = activity.facilitators?.length < activity.facilitatorLimit;
   const hasParticipantSpace = activity.participants?.length < activity.participantLimit;
+  const canMessageGroup = isUserAFacilitator || isUserAParticipant;
+  const chatParticipantProfiles = useMemo(
+    () => getActivityChatParticipantProfiles(activity || activityPreload || {}),
+    [activity, activityPreload],
+  );
+
+  const handleShare = useCallback(() => {
+    const sourceActivity = activity || activityPreload;
+    const id = sourceActivity?._id || sourceActivity?.id || activityId;
+    if (!id) return;
+    const url = `https://www.liquidspirit.org/activities/${id}`;
+    const title = sourceActivity?.title || 'Liquid Spirit Activity';
+    const message = `Check out this activity on Liquid Spirit 👇\n${url}`;
+    shareContent({
+      url,
+      message,
+      title,
+      alertMessage: 'Something went wrong while trying to share the activity.',
+    });
+  }, [activity, activityPreload, activityId]);
+
+  const handleStartConversation = useCallback(async () => {
+    if (!activity) return;
+    const authToken = token || storedUserToken;
+    if (!authToken) {
+      Alert.alert('Login Required', 'You must be logged in to start a conversation.');
+      return;
+    }
+
+    setStartingChat(true);
+    try {
+      const result = await startActivityConversation(activity, {
+        token: authToken,
+        currentUserId: userId,
+        activityId,
+      });
+
+      if (!result?.chatId) {
+        throw new Error('Unable to open the chat conversation for this activity.');
+      }
+
+      navigation.navigate('ChatDetail', {
+        chatId: result.chatId,
+        chatTitle: result.chatTitle || `${activity.title || 'Activity'} Chat`,
+        chatParticipants: result.chatParticipants?.length
+          ? result.chatParticipants
+          : chatParticipantProfiles,
+        chatImage: result.chatImage || activity.imageUrl || activity.imageURL || activity.bannerUrl,
+      });
+    } catch (err) {
+      console.error('Failed to start activity chat:', err);
+      const message = err?.message || 'Unable to start a chat for this activity right now.';
+      Alert.alert('Chat Unavailable', message);
+    } finally {
+      setStartingChat(false);
+    }
+  }, [activity, token, storedUserToken, userId, activityId, navigation, chatParticipantProfiles]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[
+              styles.headerActionButton,
+              startingChat && styles.headerActionButtonDisabled,
+            ]}
+            onPress={handleStartConversation}
+            disabled={startingChat}
+          >
+            {startingChat ? (
+              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+            ) : (
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color={themeVariables.blackColor} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.headerActionButton,
+              styles.headerActionButtonSpacer,
+            ]}
+            onPress={handleShare}
+          >
+            <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation, handleShare, handleStartConversation, startingChat]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -220,6 +313,20 @@ const ActivityDetail = ({ route }) => {
             onPress={() => Alert.alert('Request to Join as Participant Sent!')}
           >
             <Text style={styles.joinButtonText}>Request Join</Text>
+          </TouchableOpacity>
+        )}
+
+        {canMessageGroup && (
+          <TouchableOpacity
+            style={[styles.chatButton, startingChat && styles.chatButtonDisabled]}
+            onPress={handleStartConversation}
+            disabled={startingChat}
+          >
+            {startingChat ? (
+              <ActivityIndicator size="small" color={themeVariables.whiteColor} />
+            ) : (
+              <Text style={styles.chatButtonText}>Message Group</Text>
+            )}
           </TouchableOpacity>
         )}
       </View>
@@ -323,6 +430,41 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   joinButtonText: {
+    color: themeVariables.whiteColor,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActionButton: {
+    backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  headerActionButtonSpacer: {
+    marginLeft: 8,
+  },
+  headerActionButtonDisabled: {
+    opacity: 0.7,
+  },
+  chatButton: {
+    backgroundColor: themeVariables.secondaryColor,
+    padding: 15,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  chatButtonDisabled: {
+    opacity: 0.7,
+  },
+  chatButtonText: {
     color: themeVariables.whiteColor,
     fontSize: 18,
     fontWeight: 'bold',

@@ -40,6 +40,7 @@ import {
   CurriculumDetailScreen,
   Notifications as NotificationScreen,
   PushDiagnostics,
+  ChatDetail,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -166,6 +167,11 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         name="CurriculumDetailScreen"
         component={CurriculumDetailScreen}
         options={{ title: 'Curriculum Details' }}
+      />
+      <Stack.Screen
+        name="ChatDetail"
+        component={ChatDetail}
+        options={{ title: 'Chat' }}
       />
       <Stack.Screen name="Main" options={{ headerShown: false }}>
         {() => <BottomBar initialPosts={initialPosts} homeOverview={homeOverview} />}

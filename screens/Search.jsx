@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 0,
     marginBottom: 80,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   searchInput: {
     height: 48,

@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     flexGrow: 1,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   title: {
     marginBottom: 20,

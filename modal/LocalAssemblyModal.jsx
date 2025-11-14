@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   container: {
     backgroundColor: '#fff',

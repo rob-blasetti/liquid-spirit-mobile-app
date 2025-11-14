@@ -425,7 +425,7 @@ const renderScene = ({ route }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
     const tabWidth = totalWidth / navigationState.routes.length;
     return (
-      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.darkGreyColor, marginLeft: 10 }}>
+      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.screenBackgroundColor, marginLeft: 10 }}>
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
           return (
@@ -501,7 +501,7 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: themeVariables.darkGreyColor, flex: 1 }}
+        style={{ backgroundColor: themeVariables.screenBackgroundColor, flex: 1 }}
         sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
       />
     </SafeAreaView>
@@ -509,7 +509,7 @@ const renderScene = ({ route }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeVariables.darkGreyColor },
+  container: { flex: 1, backgroundColor: themeVariables.screenBackgroundColor },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },

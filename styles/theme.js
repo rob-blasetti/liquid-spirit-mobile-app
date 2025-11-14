@@ -36,6 +36,8 @@ const themeVariables = {
     borderColor: '#e0e0e0',  // Dark grey for borders
     borderLightColor: '#f3f3f3',  // Light grey for light borders
 
+    screenBackgroundColor: '#e0e0e0',
+
     menuBgColor: '#0a488c',
     menuTextColor: '#ffffff', // Assuming text inverse color is white
     menuHoverBg: '#58db33',

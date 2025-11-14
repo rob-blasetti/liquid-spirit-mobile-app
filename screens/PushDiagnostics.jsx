@@ -117,7 +117,7 @@ const PushDiagnostics = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeVariables.darkGreyColor },
+  container: { flex: 1, backgroundColor: themeVariables.screenBackgroundColor },
   content: { padding: 16 },
   title: { fontSize: 22, fontWeight: '700', color: themeVariables.blackColor, marginBottom: 8 },
   section: { backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 14 },

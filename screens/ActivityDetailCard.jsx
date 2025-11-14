@@ -37,6 +37,7 @@ import {
   requestParticipation,
   requestFacilitator,
 } from '../services/ActivityService';
+import { startActivityConversation, getActivityChatParticipantProfiles } from '../services/ChatService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import FooterBrand from '../components/FooterBrand';
@@ -216,8 +217,13 @@ const ActivityDetailCard = ({ route }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
+  const [startingChat, setStartingChat] = useState(false);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
+  const chatParticipantProfiles = useMemo(
+    () => getActivityChatParticipantProfiles(activity || activityPreload || {}),
+    [activity, activityPreload],
+  );
 
   const handleShare = useCallback(() => {
     const id = activity?._id || activityId;
@@ -233,27 +239,80 @@ const ActivityDetailCard = ({ route }) => {
     });
   }, [activity, activityId]);
   // Add share button in header, styled like back arrow
+  const handleStartConversation = useCallback(async () => {
+    const sourceActivity = activity || activityPreload;
+    if (!sourceActivity) return;
+    const authToken = token || user?.token;
+    if (!authToken) {
+      Alert.alert('Login Required', 'You must be logged in to start a conversation.');
+      return;
+    }
+
+    setStartingChat(true);
+    try {
+      const result = await startActivityConversation(sourceActivity, {
+        token: authToken,
+        currentUserId: user?._id || user?.id || user?.userId,
+        activityId,
+      });
+
+      if (!result?.chatId) {
+        throw new Error('Unable to open the chat conversation for this activity.');
+      }
+
+      navigation.navigate('ChatDetail', {
+        chatId: result.chatId,
+        chatTitle: result.chatTitle || `${sourceActivity.title || 'Activity'} Chat`,
+        chatParticipants: result.chatParticipants?.length
+          ? result.chatParticipants
+          : chatParticipantProfiles,
+        chatImage:
+          result.chatImage ||
+          sourceActivity.imageUrl ||
+          sourceActivity.imageURL ||
+          sourceActivity.bannerUrl,
+      });
+    } catch (err) {
+      console.error('Failed to start activity chat:', err);
+      const message = err?.message || 'Unable to start a chat for this activity right now.';
+      Alert.alert('Chat Unavailable', message);
+    } finally {
+      setStartingChat(false);
+    }
+  }, [activity, activityPreload, token, user, activityId, navigation, chatParticipantProfiles]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          style={{
-            backgroundColor: themeVariables.greyColor,
-            borderRadius: themeVariables.borderRadiusPill,
-            padding: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-          }}
-          onPress={handleShare}
-        >
-          <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={[
+              styles.headerActionButton,
+              startingChat && styles.headerActionButtonDisabled,
+            ]}
+            onPress={handleStartConversation}
+            disabled={startingChat}
+          >
+            {startingChat ? (
+              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+            ) : (
+              <Ionicons
+                name="chatbubble-ellipses-outline"
+                size={20}
+                color={themeVariables.blackColor}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.headerActionButton, styles.headerActionButtonSpacer]}
+            onPress={handleShare}
+          >
+            <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation, handleShare]);
+  }, [navigation, handleShare, handleStartConversation, startingChat]);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
 
@@ -1064,6 +1123,26 @@ const BadgeModal = ({ visible, onClose, list, title }) => {
 
 /* ───────────── Styles ───────────────────────────────────────────── */
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerActionButton: {
+    backgroundColor: themeVariables.greyColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  headerActionButtonSpacer: {
+    marginLeft: 8,
+  },
+  headerActionButtonDisabled: {
+    opacity: 0.7,
+  },
   // Primary scroll container style for full-screen background
   container: {
     flex: 1,

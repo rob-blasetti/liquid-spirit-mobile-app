@@ -13,6 +13,7 @@ import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import PostGallery from '../components/PostGallery';
 import CertificationsList from '../components/CertificationsList';
 import resolveImageSource from '../utils/imageSource';
+import themeVariables from '../styles/theme';
 
 const normalizeId = (raw) => {
   const str = String(raw || '').trim();
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 18, fontWeight: '600', color: '#312783' },
   statLabel: { fontSize: 14, color: '#444' },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: '#312783', marginTop: 24, marginBottom: 8 },
-  flexContainer: { flex: 1, backgroundColor: '#fff' },
+  flexContainer: { flex: 1, backgroundColor: themeVariables.screenBackgroundColor },
   tabView: { flex: 1 },
 });
 

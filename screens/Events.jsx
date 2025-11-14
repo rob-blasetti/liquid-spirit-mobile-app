@@ -275,14 +275,14 @@ const Events = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
     padding: 16,
   },
   controlContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12, // Rounded edges to make them feel unified

@@ -6,12 +6,14 @@ import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import SlideBanner from '../components/SlideBanner';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const Login = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const { login } = useContext(UserContext);
 
@@ -113,12 +115,27 @@ const Login = ({ navigation, route }) => {
         />
         {/* Password Label and Input */}
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
+        <View style={styles.passwordInputWrapper}>
+          <TextInput
+            style={[styles.input, styles.passwordInput]}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!passwordVisible}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity
+            onPress={() => setPasswordVisible((prev) => !prev)}
+            style={styles.passwordToggle}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color="#777"
+            />
+          </TouchableOpacity>
+        </View>
         {loading ? (
           <ActivityIndicator size="large" color={themeVariables.primaryColor} />
         ) : (
@@ -140,14 +157,14 @@ const Login = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   containerWithBanner: {
     paddingTop: 70,
@@ -177,6 +194,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#f9f9f9',
   },
+  passwordInputWrapper: {
+    width: '100%',
+    marginBottom: 16,
+    position: 'relative',
+  },
+  passwordInput: {
+    paddingRight: 44,
+    marginBottom: 0,
+  },
+  passwordToggle: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    marginTop: -11,
+  },
   button: {
     backgroundColor: '#312783',
     padding: 16,
@@ -194,7 +226,7 @@ const styles = StyleSheet.create({
   },
   link: {
     marginTop: 16,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   linkText: {
     color: '#0485e2',

@@ -153,7 +153,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
     <>
       {/* Status bar matching screen background */}
       <StatusBar
-        backgroundColor={themeVariables.darkGreyColor}
+        backgroundColor={themeVariables.screenBackgroundColor}
         barStyle="dark-content"
         translucent={false}
       />
@@ -293,7 +293,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   content: {
     padding: 20,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingVertical: 10,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   submitButton: {
     backgroundColor: themeVariables.whiteColor,

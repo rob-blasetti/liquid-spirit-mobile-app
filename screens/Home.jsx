@@ -55,7 +55,16 @@ const Home = ({ navigation, homeOverview, route }) => {
   // Extra padding to further push content down and enlarge banner
   const EXTRA_TOP = 50;
   const bannerHeight = 200 + statusBarHeight + EXTRA_TOP;
-  const { user, userActivities, userEvents, userPosts, token, isTokenExpired, refreshSession, unreadCount } = useContext(UserContext);
+  const {
+    user,
+    userActivities,
+    userEvents,
+    userPosts,
+    token,
+    isTokenExpired,
+    refreshSession,
+    unreadCount,
+  } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const isFocused = useIsFocused();
   const bannerData = useMemo(() => {
@@ -577,15 +586,21 @@ const Home = ({ navigation, homeOverview, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: themeVariables.darkGreyColor,
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
-  // Styles for notification button on banner, matching Profile banner icon style
+  bannerTopActions: {
+    position: 'absolute',
+    top: 0,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 12,
+    zIndex: 2,
+  },
   notificationButton: {
     position: 'absolute',
     top: 0,
     right: 20,
-    zIndex: 2,
-    // translucent background for notification bell (increased contrast)
     backgroundColor: 'rgba(243,243,243,0.6)',
     borderRadius: themeVariables.borderRadiusPill,
     padding: 6,

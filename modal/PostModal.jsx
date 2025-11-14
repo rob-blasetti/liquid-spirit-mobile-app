@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: themeVariables.screenBackgroundColor,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
