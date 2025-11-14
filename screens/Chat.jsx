@@ -304,6 +304,7 @@ const ChatRow = ({ chat, onPress }) => {
         <Text style={styles.chatPreview} numberOfLines={2}>
           {preview}
         </Text>
+        <View style={styles.chatDivider} />
       </View>
     </TouchableOpacity>
   );
@@ -464,6 +465,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     color: themeVariables.blackColor,
+    marginLeft: 4,
   },
   centerContent: {
     flex: 1,
@@ -496,8 +498,6 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     paddingRight: 8,
     paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: themeVariables.borderColor,
   },
   chatAvatarWrapper: {
     width: 52,
@@ -538,6 +538,11 @@ const styles = StyleSheet.create({
   chatPreview: {
     fontSize: 13,
     color: '#555',
+  },
+  chatDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: themeVariables.borderColor,
+    marginTop: 12,
   },
   emptyListContainer: {
     flexGrow: 1,
