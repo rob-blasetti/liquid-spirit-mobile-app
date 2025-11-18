@@ -1,16 +1,172 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext, useMemo, useCallback } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Animated, Text, TouchableOpacity } from 'react-native';
-import { TextInput, Title, HelperText, RadioButton, Snackbar, Avatar } from 'react-native-paper';
+import { TextInput, Title, HelperText, Snackbar, Avatar } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Button } from 'liquid-spirit-styleguide/native';
 import themeVariables from '../styles/theme';
+import DropdownInput from '../components/forms/inputs/DropdownInput';
+import MultiSelectMemberInput from '../components/forms/inputs/MultiSelectMemberInput';
 
 import { UserContext } from '../contexts/UserContext';
 import { createActivity } from '../services/ActivityService';
+import { getMemberList } from '../services/UserService';
 
 const TOTAL_STEPS = 5;
+const ACTIVITY_TYPES = [
+  "Children's Class",
+  'Junior Youth Group',
+  'Study Circle',
+  'Devotional',
+  'Independent Initiative',
+  'Fireside',
+];
+const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const FREQUENCY_OPTIONS = ['Weekly', 'Bi-Weekly', 'Monthly', 'One-Off'];
+const AU_STATES = ['VIC', 'QLD', 'NSW', 'ACT', 'NT', 'TAS', 'WA', 'SA'];
+
+const normalizeMemberEntries = payload => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.memberDetails)) return payload.memberDetails;
+  if (Array.isArray(payload?.data?.memberDetails)) return payload.data.memberDetails;
+  if (Array.isArray(payload?.results)) return payload.results;
+  return [];
+};
+
+const isUserMemberEntry = entry => {
+  if (!entry || typeof entry !== 'object') return false;
+  const candidate =
+    entry.details ||
+    entry.user ||
+    entry.profile ||
+    entry.account ||
+    entry.member ||
+    entry.refId ||
+    entry.ref ||
+    entry.reference ||
+    entry;
+
+  const typeCandidates = [
+    entry.type,
+    entry.entityType,
+    entry.memberType,
+    entry.referenceType,
+    entry.refType,
+    entry.targetType,
+    candidate?.type,
+    candidate?.entityType,
+    candidate?.memberType,
+  ];
+
+  return typeCandidates.some(value => {
+    if (!value || typeof value !== 'string') return false;
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'user';
+  });
+};
+
+const normalizeMemberRecord = entry => {
+  if (!entry) return null;
+  const candidate =
+    entry.details ||
+    entry.profile ||
+    entry.user ||
+    entry.account ||
+    entry.member ||
+    entry.refId ||
+    entry.ref ||
+    entry.reference ||
+    entry;
+
+  const id =
+    candidate?._id ||
+    candidate?.id ||
+    candidate?.userId ||
+    candidate?.user_id ||
+    entry?._id ||
+    entry?.id ||
+    null;
+
+  if (!id) return null;
+
+  const firstName =
+    entry.fullName ||
+    candidate?.fullName ||
+    candidate?.firstName ||
+    candidate?.first_name ||
+    entry.firstName ||
+    entry.first_name ||
+    '';
+
+  const lastName =
+    candidate?.lastName ||
+    candidate?.last_name ||
+    entry.lastName ||
+    entry.last_name ||
+    '';
+
+  const email = candidate?.email || entry.email || '';
+
+  const profilePicture =
+    candidate?.profilePicture ||
+    candidate?.avatar ||
+    candidate?.photo ||
+    entry?.profilePicture ||
+    entry?.avatar ||
+    entry?.photo ||
+    '';
+
+  return {
+    _id: String(id),
+    firstName,
+    lastName,
+    fullName: [firstName, lastName].filter(Boolean).join(' ').trim() || firstName || lastName || email,
+    email,
+    profilePicture,
+  };
+};
+
+const filterMembers = (members, query, selected) => {
+  const normalizedQuery = query.trim().toLowerCase();
+  const exclude = new Set(selected.map(entry => String(entry._id || entry.id)));
+  return members
+    .filter(member => !exclude.has(String(member._id || member.id)))
+    .filter(member => {
+      if (!normalizedQuery) return true;
+      const haystack = [
+        member.fullName,
+        member.firstName,
+        member.lastName,
+        member.email,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(normalizedQuery);
+    })
+    .slice(0, 6);
+};
+
+const formatTimeValue = dateObj => {
+  if (!(dateObj instanceof Date)) return '';
+  const hours = String(dateObj.getHours()).padStart(2, '0');
+  const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+};
+
+const combineDateTime = (dateObj, timeObj) => {
+  if (!(dateObj instanceof Date)) return null;
+  const combined = new Date(dateObj);
+  if (timeObj instanceof Date) {
+    combined.setHours(timeObj.getHours());
+    combined.setMinutes(timeObj.getMinutes());
+    combined.setSeconds(0, 0);
+  }
+  return combined;
+};
 
 export default function CreateActivity({ navigation, route }) {
   // communityId + userId come via route params
@@ -24,18 +180,33 @@ export default function CreateActivity({ navigation, route }) {
     description: '',
     date: null,
     time: null,
-    frequency: 'One-time',
+    groupDay: '',
+    frequency: 'Weekly',
+    facilitatorLimit: '',
+    participantLimit: '',
     facilitators: [],
     participants: [],
     onlineLink: '',
-    address: { street: '', city: '', state: '', postalCode: '' },
-    imageUri: '',
+    address: {
+      streetAddress: '',
+      suburb: '',
+      city: '',
+      state: '',
+      postalCode: '',
+    },
+    imageUrl: '',
+    activityType: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [errors, setErrors] = useState({});
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
+  const [members, setMembers] = useState([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberError, setMemberError] = useState('');
+  const [facilitatorQuery, setFacilitatorQuery] = useState('');
+  const [participantQuery, setParticipantQuery] = useState('');
 
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -45,11 +216,124 @@ export default function CreateActivity({ navigation, route }) {
     }).start();
   }, [step, progressAnim]);
 
+  useEffect(() => {
+    if (!communityId) return;
+    let cancelled = false;
+    const loadMembers = async () => {
+      setMemberLoading(true);
+      setMemberError('');
+      try {
+        const response = await getMemberList(communityId);
+        if (cancelled) return;
+        const normalized = normalizeMemberEntries(response)
+          .filter(isUserMemberEntry)
+          .map(normalizeMemberRecord)
+          .filter(Boolean);
+        setMembers(normalized);
+      } catch (error) {
+        if (!cancelled) {
+          setMemberError(error?.message || 'Unable to load community members.');
+        }
+      } finally {
+        if (!cancelled) {
+          setMemberLoading(false);
+        }
+      }
+    };
+    loadMembers();
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId]);
+
+  const facilitatorOptions = useMemo(
+    () => filterMembers(members, facilitatorQuery, form.facilitators),
+    [members, facilitatorQuery, form.facilitators],
+  );
+
+  const participantOptions = useMemo(
+    () => filterMembers(members, participantQuery, form.participants),
+    [members, participantQuery, form.participants],
+  );
+
+  const handleAddFacilitator = useCallback(
+    member => {
+      if (!member) return;
+      setForm(prev => ({
+        ...prev,
+        facilitators: [...prev.facilitators, member],
+      }));
+      setFacilitatorQuery('');
+    },
+    [],
+  );
+
+  const handleRemoveFacilitator = useCallback(memberId => {
+    setForm(prev => ({
+      ...prev,
+      facilitators: prev.facilitators.filter(entry => (entry?._id || entry?.id) !== memberId),
+    }));
+  }, []);
+
+  const handleAddParticipant = useCallback(
+    member => {
+      if (!member) return;
+      setForm(prev => ({
+        ...prev,
+        participants: [...prev.participants, member],
+      }));
+      setParticipantQuery('');
+    },
+    [],
+  );
+
+  const handleRemoveParticipant = useCallback(memberId => {
+    setForm(prev => ({
+      ...prev,
+      participants: prev.participants.filter(entry => (entry?._id || entry?.id) !== memberId),
+    }));
+  }, []);
+
+  const handleSelectActivityType = useCallback(value => {
+    setForm(prev => ({
+      ...prev,
+      activityType: value,
+    }));
+  }, []);
+
+  const handleSelectDay = useCallback(value => {
+    setForm(prev => ({
+      ...prev,
+      groupDay: value,
+    }));
+  }, []);
+
+  const handleSelectFrequency = useCallback(value => {
+    setForm(prev => ({
+      ...prev,
+      frequency: value,
+    }));
+  }, []);
+
+  const handleSelectState = useCallback(value => {
+    setForm(prev => ({
+      ...prev,
+      address: { ...prev.address, state: value },
+    }));
+  }, []);
+
   // Validation stub
   const validateStep = () => {
     const e = {};
-    if (step === 1 && !form.title) e.title = 'Required';
-    if (step === 2 && !form.date) e.date = 'Select a date';
+    if (step === 1) {
+      if (!form.title) e.title = 'Required';
+      if (!form.activityType) e.activityType = 'Please select an activity type';
+    }
+    if (step === 2) {
+      if (!form.groupDay) e.groupDay = 'Choose a day of the week';
+      if (!form.date) e.date = 'Select a date';
+      if (!form.time) e.time = 'Select a time';
+    }
     if (step === 3 && form.onlineLink && !form.onlineLink.startsWith('http')) e.onlineLink = 'Must start with http:// or https://';
     // ...other step-specific checks
     setErrors(e);
@@ -75,24 +359,48 @@ export default function CreateActivity({ navigation, route }) {
         setSnackbar({ visible: true, message: response.errorMessage || 'Image picker error' });
       } else if (response.assets && response.assets.length > 0) {
         const asset = response.assets[0];
-        setForm({ ...form, imageUri: asset.uri });
+        setForm({ ...form, imageUrl: asset.uri });
       }
     });
   };
 
   const onSubmit = async () => {
     // Assemble payload
+    const facilitatorEntries = form.facilitators
+      .map(member => {
+        const id = member?._id || member?.id;
+        return id ? { _id: id } : null;
+      })
+      .filter(Boolean);
+    const participantEntries = form.participants
+      .map(member => {
+        const id = member?._id || member?.id;
+        return id ? { _id: id } : null;
+      })
+      .filter(Boolean);
+    const sessionDateValue = combineDateTime(form.date, form.time);
+    const groupTimeValue = formatTimeValue(form.time);
+    const facilitatorLimitValue = form.facilitatorLimit ? Number(form.facilitatorLimit) : undefined;
+    const participantLimitValue = form.participantLimit ? Number(form.participantLimit) : undefined;
     const payload = {
       title: form.title,
       description: form.description,
-      date: form.date ? form.date.toISOString() : null,
-      time: form.time ? form.time.toISOString() : null,
-      frequency: form.frequency,
+      sessionDate: sessionDateValue ? sessionDateValue.toISOString() : null,
+      groupDetails: {
+        day: form.groupDay || null,
+        frequency: form.frequency,
+        time: groupTimeValue || null,
+      },
       onlineLink: form.onlineLink,
       address: form.address,
-      imageUri: form.imageUri,
-      communityId,
-      userId,
+      imageUrl: form.imageUrl,
+      activityType: form.activityType,
+      facilitators: facilitatorEntries,
+      participants: participantEntries,
+      community: communityId,
+      createdBy: userId,
+      facilitatorLimit: Number.isFinite(facilitatorLimitValue) ? facilitatorLimitValue : undefined,
+      participantLimit: Number.isFinite(participantLimitValue) ? participantLimitValue : undefined,
     };
     try {
       await createActivity(payload, token);
@@ -143,6 +451,15 @@ export default function CreateActivity({ navigation, route }) {
                 {errors.title}
               </HelperText>
 
+              <DropdownInput
+                label="Activity Type *"
+                value={form.activityType}
+                options={ACTIVITY_TYPES}
+                placeholder="Select activity type"
+                onSelect={handleSelectActivityType}
+                error={errors.activityType}
+              />
+
               <TextInput
                 label="Description"
                 mode="outlined"
@@ -156,6 +473,15 @@ export default function CreateActivity({ navigation, route }) {
 
           {step === 2 && (
             <>
+              <DropdownInput
+                label="Day of Week *"
+                value={form.groupDay}
+                options={WEEK_DAYS}
+                placeholder="Select a day"
+                onSelect={handleSelectDay}
+                error={errors.groupDay}
+              />
+
               <Button
                 secondary
                 size="medium"
@@ -196,16 +522,18 @@ export default function CreateActivity({ navigation, route }) {
                   }}
                 />
               )}
+              <HelperText type="error" visible={!!errors.time}>
+                {errors.time}
+              </HelperText>
 
               <Title style={styles.sectionLabel}>Frequency</Title>
-              <RadioButton.Group
-                onValueChange={(value) => setForm({ ...form, frequency: value })}
+              <DropdownInput
+                label="Meeting Frequency *"
                 value={form.frequency}
-              >
-                {['One-time', 'Daily', 'Weekly', 'Monthly'].map((opt) => (
-                  <RadioButton.Item key={opt} label={opt} value={opt} color={themeVariables.primaryColor} />
-                ))}
-              </RadioButton.Group>
+                options={FREQUENCY_OPTIONS}
+                placeholder="Select frequency"
+                onSelect={handleSelectFrequency}
+              />
             </>
           )}
 
@@ -225,8 +553,14 @@ export default function CreateActivity({ navigation, route }) {
               <TextInput
                 label="Street Address"
                 mode="outlined"
-                value={form.address.street}
-                onChangeText={(t) => setForm({ ...form, address: { ...form.address, street: t } })}
+                value={form.address.streetAddress}
+                onChangeText={(t) => setForm({ ...form, address: { ...form.address, streetAddress: t } })}
+              />
+              <TextInput
+                label="Suburb"
+                mode="outlined"
+                value={form.address.suburb}
+                onChangeText={(t) => setForm({ ...form, address: { ...form.address, suburb: t } })}
               />
               <TextInput
                 label="City"
@@ -234,13 +568,74 @@ export default function CreateActivity({ navigation, route }) {
                 value={form.address.city}
                 onChangeText={(t) => setForm({ ...form, address: { ...form.address, city: t } })}
               />
+              <DropdownInput
+                label="State"
+                value={form.address.state}
+                options={AU_STATES}
+                placeholder="Select state"
+                onSelect={handleSelectState}
+              />
+              <TextInput
+                label="Postal Code"
+                mode="outlined"
+                value={form.address.postalCode}
+                onChangeText={(t) => setForm({ ...form, address: { ...form.address, postalCode: t } })}
+                keyboardType="number-pad"
+              />
             </>
           )}
 
           {step === 4 && (
             <>
-              <Title>Facilitators & Participants</Title>
-              <HelperText>— implement a MultiSelect / ChipInput for community members —</HelperText>
+              <View style={styles.limitRow}>
+                <TextInput
+                  label="Facilitator Limit"
+                  mode="outlined"
+                  keyboardType="number-pad"
+                  style={[styles.input, styles.limitInput]}
+                  value={form.facilitatorLimit}
+                  onChangeText={text => {
+                    const sanitized = text.replace(/[^0-9]/g, '');
+                    setForm(prev => ({ ...prev, facilitatorLimit: sanitized }));
+                  }}
+                />
+                <TextInput
+                  label="Participant Limit"
+                  mode="outlined"
+                  keyboardType="number-pad"
+                  style={[styles.input, styles.limitInput, { marginRight: 0 }]}
+                  value={form.participantLimit}
+                  onChangeText={text => {
+                    const sanitized = text.replace(/[^0-9]/g, '');
+                    setForm(prev => ({ ...prev, participantLimit: sanitized }));
+                  }}
+                />
+              </View>
+
+              <MultiSelectMemberInput
+                label="Facilitators"
+                selected={form.facilitators}
+                onRemove={handleRemoveFacilitator}
+                searchValue={facilitatorQuery}
+                onChangeSearch={setFacilitatorQuery}
+                options={facilitatorOptions}
+                onSelectOption={handleAddFacilitator}
+                loading={memberLoading}
+                error={memberError}
+              />
+
+              <MultiSelectMemberInput
+                label="Participants"
+                selected={form.participants}
+                onRemove={handleRemoveParticipant}
+                searchValue={participantQuery}
+                onChangeSearch={setParticipantQuery}
+                options={participantOptions}
+                onSelectOption={handleAddParticipant}
+                loading={memberLoading}
+                error={memberError}
+                style={styles.sectionDivider}
+              />
             </>
           )}
 
@@ -248,14 +643,14 @@ export default function CreateActivity({ navigation, route }) {
             <>
               <Title>Cover Image</Title>
               <TouchableOpacity
-                style={form.imageUri ? styles.imagePreview : styles.imagePicker}
+                style={form.imageUrl ? styles.imagePreview : styles.imagePicker}
                 onPress={pickImage}
                 activeOpacity={0.8}
               >
-                {form.imageUri ? (
+                {form.imageUrl ? (
                   <>
                     <View style={styles.imagePreviewWrapper}>
-                      <Avatar.Image size={140} source={{ uri: form.imageUri }} />
+                      <Avatar.Image size={140} source={{ uri: form.imageUrl }} />
                       <View style={styles.imageEditBadge}>
                         <Ionicons name="create-outline" size={14} color="#fff" />
                       </View>
@@ -391,6 +786,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: themeVariables.blackColor,
   },
+  sectionDivider: {
+    marginTop: 24,
+  },
   imagePicker: {
     marginTop: 12,
     borderStyle: 'dashed',
@@ -419,5 +817,14 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.primaryColor,
     padding: 6,
     borderRadius: 20,
+  },
+  limitRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  limitInput: {
+    flex: 1,
+    marginRight: 8,
   },
 });

@@ -107,5 +107,7 @@ export const leaveParticipation = (activityId, userId, token) => makeRequest(`/a
 export const leaveFacilitator = (activityId, userId, token) => makeRequest(`/api/activities/${activityId}/leave-facilitator/${userId}`, 'POST', token);
 
 // Create a new activity
-export const createActivity = (activityData, token) =>
-  makeRequest('/api/activities', 'POST', token, activityData);
+export const createActivity = (activityData, token) => {
+  console.log('[ActivityService] createActivity payload:', activityData);
+  return makeRequest('/api/activities/create', 'POST', token, activityData);
+};

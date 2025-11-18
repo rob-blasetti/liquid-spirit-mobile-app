@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,6 +30,7 @@ const tabIcons = {
 };
 const TAB_BAR_HEIGHT = 80;
 const FAB_OFFSET = 4;
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn, chatNotificationCount, user } = useContext(UserContext);
@@ -41,6 +42,9 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
   const [fabExpanded, setFabExpanded] = useState(false);
+  const [optionsVisible, setOptionsVisible] = useState(false);
+  const fabExpandedRef = useRef(fabExpanded);
+  fabExpandedRef.current = fabExpanded;
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -93,7 +97,50 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     ],
     [handleCreateActivity, handleCreatePost, handleNewMessage],
   );
+  const optionAnimationsRef = useRef([]);
+  if (optionAnimationsRef.current.length !== fabOptions.length) {
+    optionAnimationsRef.current = fabOptions.map(() => new Animated.Value(0));
+  }
+  const optionAnimations = optionAnimationsRef.current;
   const fabBottom = TAB_BAR_HEIGHT + FAB_OFFSET + insets.bottom;
+
+  useEffect(() => {
+    if (fabExpanded) {
+      optionAnimations.forEach(animation => animation.stopAnimation());
+      if (!optionsVisible) {
+        setOptionsVisible(true);
+      }
+      const openAnimations = optionAnimations
+        .map(animation =>
+          Animated.spring(animation, {
+            toValue: 1,
+            useNativeDriver: true,
+            friction: 7,
+            tension: 70,
+          }),
+        )
+        .reverse();
+
+      Animated.stagger(60, openAnimations).start();
+    } else if (optionsVisible) {
+      optionAnimations.forEach(animation => animation.stopAnimation());
+      const closeAnimations = optionAnimations.map(animation =>
+        Animated.timing(animation, {
+          toValue: 0,
+          duration: 140,
+          useNativeDriver: true,
+        }),
+      );
+
+      Animated.stagger(40, closeAnimations).start(({ finished }) => {
+        if (finished && !fabExpandedRef.current) {
+          setOptionsVisible(false);
+        }
+      });
+    } else {
+      optionAnimations.forEach(animation => animation.setValue(0));
+    }
+  }, [fabExpanded, optionAnimations, optionsVisible]);
 
   return (
     <>
@@ -213,7 +260,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
       </Tab.Navigator>
 
       <View pointerEvents="box-none" style={styles.fabPortal}>
-        {fabExpanded && (
+        {(fabExpanded || optionsVisible) && (
           <TouchableOpacity
             style={styles.fabBackdrop}
             activeOpacity={1}
@@ -221,19 +268,40 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           />
         )}
         <View style={[styles.fabColumn, { bottom: fabBottom }]}>
-          {fabExpanded &&
-            fabOptions.map(action => (
-              <TouchableOpacity
-                key={action.key}
-                style={styles.fabOption}
-                onPress={action.onPress}
-                accessibilityRole="button"
-                accessibilityLabel={action.label}
-              >
-                <Ionicons name={action.icon} size={18} color={themeVariables.primaryColor} />
-                <Text style={styles.fabOptionText}>{action.label}</Text>
-              </TouchableOpacity>
-            ))}
+          {optionsVisible &&
+            fabOptions.map((action, index) => {
+              const animation = optionAnimations[index];
+              const translateY = animation.interpolate({
+                inputRange: [0, 1],
+                outputRange: [12 * (fabOptions.length - index), 0],
+              });
+              const animatedStyle = {
+                opacity: animation,
+                transform: [
+                  { translateY },
+                  {
+                    scale: animation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.95, 1],
+                    }),
+                  },
+                ],
+              };
+
+              return (
+                <AnimatedTouchableOpacity
+                  key={action.key}
+                  style={[styles.fabOption, animatedStyle]}
+                  onPress={action.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={action.label}
+                  activeOpacity={0.9}
+                >
+                  <Ionicons name={action.icon} size={18} color={themeVariables.primaryColor} />
+                  <Text style={styles.fabOptionText}>{action.label}</Text>
+                </AnimatedTouchableOpacity>
+              );
+            })}
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={fabExpanded ? 'Close quick actions' : 'Open quick actions'}
