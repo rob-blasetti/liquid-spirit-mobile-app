@@ -1,6 +1,6 @@
 // Amount to offset content so top corners are hidden initially
 const HEADER_OFFSET = 0;
-import React, { useContext, useEffect, useState, useLayoutEffect, useMemo, useCallback } from 'react';
+import React, { useContext, useEffect, useState, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -37,7 +37,15 @@ import {
   requestParticipation,
   requestFacilitator,
 } from '../services/ActivityService';
-import { startActivityConversation, getActivityChatParticipantProfiles } from '../services/ChatService';
+import { fetchUserById } from '../services/UserService';
+import {
+  createChat,
+  getActivityChatParticipantProfiles,
+  findExistingActivityChat,
+  buildChatParticipantProfiles,
+  resolveChatImageFromChat,
+  deriveChatTitleFromChat,
+} from '../services/ChatService';
 import { UserContext } from '../contexts/UserContext';
 import UserBadge from '../components/UserBadge';
 import FooterBrand from '../components/FooterBrand';
@@ -78,6 +86,236 @@ const selectPrimaryVenue = (venues) => {
   }
   const fallback = venues.find(venue => MAP_VENUE_TYPES.has(venue?.type) || Boolean(venue?.address));
   return fallback || venues[0] || null;
+};
+
+const resolveEntryDetails = (entry) => {
+  if (!entry || typeof entry === 'string' || typeof entry === 'number') return null;
+  if (entry.details && typeof entry.details === 'object') return entry.details;
+  if (entry.refId && typeof entry.refId === 'object') return entry.refId;
+  if (entry.user && typeof entry.user === 'object') return entry.user;
+  if (entry.profile && typeof entry.profile === 'object') return entry.profile;
+  return typeof entry === 'object' ? entry : null;
+};
+
+const resolveEntryId = (entry) => {
+  if (!entry) return '';
+  if (typeof entry === 'string' || typeof entry === 'number') {
+    const value = String(entry).trim();
+    return value.length ? value : '';
+  }
+  const details = resolveEntryDetails(entry);
+  if (details?._id || details?.id) {
+    return String(details._id || details.id);
+  }
+  if (entry.refId) {
+    if (typeof entry.refId === 'string' || typeof entry.refId === 'number') {
+      const value = String(entry.refId).trim();
+      if (value.length) return value;
+    }
+    if (entry.refId && typeof entry.refId === 'object' && (entry.refId._id || entry.refId.id)) {
+      return String(entry.refId._id || entry.refId.id);
+    }
+  }
+  if (entry.userId) return String(entry.userId);
+  if (entry.user && (entry.user._id || entry.user.id)) return String(entry.user._id || entry.user.id);
+  if (entry.profile && (entry.profile._id || entry.profile.id)) return String(entry.profile._id || entry.profile.id);
+  if (entry._id || entry.id) return String(entry._id || entry.id);
+  return '';
+};
+
+const entryHasCompleteProfile = (entry) => {
+  const details = resolveEntryDetails(entry);
+  if (!details) return false;
+  const name = coalesceString(
+    details.firstName,
+    details.first_name,
+    details.givenName,
+    details.given_name,
+    details.lastName,
+    details.last_name,
+    details.name,
+    details.displayName,
+    details.username,
+    details.email,
+  );
+  const avatar =
+    details.profilePicture ||
+    details.avatar ||
+    details.avatarUrl ||
+    details.photo ||
+    details.image;
+  return Boolean(name || avatar);
+};
+
+const collectAllMemberEntries = (activity = {}) => {
+  const entries = [];
+  const appendFromList = (list = []) => {
+    if (!Array.isArray(list)) return;
+    list.forEach(entry => {
+      if (entry) {
+        entries.push(entry);
+      }
+    });
+  };
+
+  appendFromList(activity.facilitators);
+  appendFromList(activity.participants);
+  appendFromList(activity.members);
+  appendFromList(activity.attendees);
+  appendFromList(activity.guests);
+
+  if (Array.isArray(activity.sessions)) {
+    activity.sessions.forEach((session = {}) => {
+      appendFromList(session.facilitators);
+      appendFromList(session.participants);
+      appendFromList(session.attendees);
+      appendFromList(session.members);
+    });
+  }
+
+  return entries;
+};
+
+const entryNeedsHydration = (entry) => {
+  if (!entry) return false;
+  if (entryHasCompleteProfile(entry)) return false;
+  return Boolean(resolveEntryId(entry));
+};
+
+const resolveFetchedUser = (payload) => {
+  if (!payload || typeof payload !== 'object') return null;
+  const candidates = [payload, payload.data, payload.user];
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'object' && (candidate._id || candidate.id)) {
+      return candidate;
+    }
+  }
+  return null;
+};
+
+const applyHydratedMembers = (activity, profileMap = {}) => {
+  if (!activity || !profileMap || !Object.keys(profileMap).length) return activity;
+
+  const hydrateEntry = (entry) => {
+    const id = resolveEntryId(entry);
+    if (!id) return entry;
+    const profile = profileMap[id];
+    if (!profile) return entry;
+    const normalizedProfile = resolveFetchedUser(profile) || profile;
+    const details = resolveEntryDetails(entry);
+    const detailsId = details?._id || details?.id;
+    if (details && detailsId === normalizedProfile?._id) {
+      const hasName =
+        coalesceString(
+          details.firstName,
+          details.first_name,
+          details.givenName,
+          details.given_name,
+          details.lastName,
+          details.last_name,
+          details.name,
+          details.displayName,
+          details.username,
+          details.email,
+        ).length > 0;
+      const hasAvatar =
+        details.profilePicture ||
+        details.avatar ||
+        details.avatarUrl ||
+        details.photo ||
+        details.image;
+      if (hasName && hasAvatar) {
+        return entry;
+      }
+    }
+    if (typeof entry === 'object') {
+      return {
+        ...entry,
+        details: { ...(normalizedProfile || {}) },
+      };
+    }
+    return {
+      type: entry?.type || '',
+      details: { ...(normalizedProfile || {}) },
+    };
+  };
+
+  const hydrateList = (list) => {
+    if (!Array.isArray(list) || list.length === 0) return list;
+    let listChanged = false;
+    const next = list.map(entry => {
+      const hydrated = hydrateEntry(entry);
+      if (hydrated !== entry) {
+        listChanged = true;
+      }
+      return hydrated;
+    });
+    return listChanged ? next : list;
+  };
+
+  const hydrateSessions = (sessions) => {
+    if (!Array.isArray(sessions) || sessions.length === 0) return sessions;
+    let sessionsChanged = false;
+    const next = sessions.map((session) => {
+      if (!session || typeof session !== 'object') return session;
+      const hydratedSession = {
+        ...session,
+        facilitators: hydrateList(session.facilitators),
+        participants: hydrateList(session.participants),
+        attendees: hydrateList(session.attendees),
+        members: hydrateList(session.members),
+      };
+      const hasChanged =
+        hydratedSession.facilitators !== session.facilitators ||
+        hydratedSession.participants !== session.participants ||
+        hydratedSession.attendees !== session.attendees ||
+        hydratedSession.members !== session.members;
+      if (hasChanged) sessionsChanged = true;
+      return hasChanged ? hydratedSession : session;
+    });
+    return sessionsChanged ? next : sessions;
+  };
+
+  const nextActivity = {
+    ...activity,
+    facilitators: hydrateList(activity.facilitators),
+    participants: hydrateList(activity.participants),
+    members: hydrateList(activity.members),
+    attendees: hydrateList(activity.attendees),
+    guests: hydrateList(activity.guests),
+    sessions: hydrateSessions(activity.sessions),
+  };
+
+  if (
+    nextActivity.facilitators === activity.facilitators &&
+    nextActivity.participants === activity.participants &&
+    nextActivity.members === activity.members &&
+    nextActivity.attendees === activity.attendees &&
+    nextActivity.guests === activity.guests &&
+    nextActivity.sessions === activity.sessions
+  ) {
+    return activity;
+  }
+
+  return nextActivity;
+};
+
+const extractChatIdentifier = (chat) => {
+  if (!chat || typeof chat !== 'object') return '';
+  const candidates = [
+    chat._id,
+    chat.id,
+    chat.chatId,
+    chat.chat_id,
+    chat.roomId,
+    chat.room_id,
+  ];
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null) continue;
+    const value = String(candidate).trim();
+    if (value.length) return value;
+  }
+  return '';
 };
 
 const formatAddress = (address) => {
@@ -214,15 +452,85 @@ const ActivityDetailCard = ({ route }) => {
   const { activityId, activityPreload, initialSessionId = null } = route.params;
 
   const [activity, setActivity] = useState(activityPreload || null);
+  const [prefillActivity, setPrefillActivity] = useState(activityPreload || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
   const [startingChat, setStartingChat] = useState(false);
   // Flag to indicate full activity details have been loaded
   const detailsLoaded = !loading;
+  const [hydratedProfiles, setHydratedProfiles] = useState({});
+  const hydratedIdsRef = useRef(new Set());
+
+  useEffect(() => {
+    setPrefillActivity(activityPreload || null);
+  }, [activityPreload]);
+
+  useEffect(() => {
+    if (!token) return;
+    const sourceActivity = activity || prefillActivity;
+    if (!sourceActivity) return;
+    const members = collectAllMemberEntries(sourceActivity);
+    const missingIds = [];
+    members.forEach((entry) => {
+      if (!entryNeedsHydration(entry)) return;
+      const id = resolveEntryId(entry);
+      if (!id) return;
+      const normalized = String(id);
+      if (hydratedIdsRef.current.has(normalized)) return;
+      missingIds.push(normalized);
+    });
+    if (!missingIds.length) return;
+    const uniqueIds = Array.from(new Set(missingIds));
+    const batchSize = 6;
+    const batch = uniqueIds.slice(0, batchSize);
+    let cancelled = false;
+    const hydrate = async () => {
+      try {
+        const results = await Promise.all(
+          batch.map((userId) =>
+            fetchUserById(userId, token).catch((err) => {
+              console.warn('Failed to hydrate user profile', userId, err?.message || err);
+              hydratedIdsRef.current.add(userId);
+              return null;
+            }),
+          ),
+        );
+        if (cancelled) return;
+        const userMap = {};
+        results.forEach((payload) => {
+          const user = resolveFetchedUser(payload);
+          if (user?._id) {
+            const key = String(user._id);
+            userMap[key] = user;
+            hydratedIdsRef.current.add(key);
+          }
+        });
+        if (Object.keys(userMap).length) {
+          setHydratedProfiles((prev) => ({ ...prev, ...userMap }));
+        }
+      } catch (err) {
+        console.warn('Failed to batch hydrate activity members', err);
+      }
+    };
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, activity, prefillActivity, hydratedProfiles]);
+
+  const hydratedPrefillActivity = useMemo(
+    () => applyHydratedMembers(prefillActivity, hydratedProfiles),
+    [prefillActivity, hydratedProfiles],
+  );
+  const hydratedActivity = useMemo(
+    () => applyHydratedMembers(activity, hydratedProfiles),
+    [activity, hydratedProfiles],
+  );
+  const latestActivityForChat = hydratedActivity || hydratedPrefillActivity || activityPreload || {};
   const chatParticipantProfiles = useMemo(
-    () => getActivityChatParticipantProfiles(activity || activityPreload || {}),
-    [activity, activityPreload],
+    () => getActivityChatParticipantProfiles(latestActivityForChat),
+    [latestActivityForChat],
   );
 
   const handleShare = useCallback(() => {
@@ -240,7 +548,7 @@ const ActivityDetailCard = ({ route }) => {
   }, [activity, activityId]);
   // Add share button in header, styled like back arrow
   const handleStartConversation = useCallback(async () => {
-    const sourceActivity = activity || activityPreload;
+    const sourceActivity = hydratedActivity || hydratedPrefillActivity || activityPreload;
     if (!sourceActivity) return;
     const authToken = token || user?.token;
     if (!authToken) {
@@ -250,27 +558,77 @@ const ActivityDetailCard = ({ route }) => {
 
     setStartingChat(true);
     try {
-      const result = await startActivityConversation(sourceActivity, {
-        token: authToken,
-        currentUserId: user?._id || user?.id || user?.userId,
-        activityId,
-      });
+      const rawActivityId =
+        sourceActivity._id ||
+        sourceActivity.id ||
+        sourceActivity.activityId ||
+        sourceActivity.activity_id ||
+        activityId;
+      const normalizedActivityId = rawActivityId ? String(rawActivityId).trim() : '';
 
-      if (!result?.chatId) {
+      if (normalizedActivityId) {
+        const existingChat = await findExistingActivityChat(normalizedActivityId, { token: authToken });
+        const existingChatId = extractChatIdentifier(existingChat);
+        if (existingChat && existingChatId) {
+          const existingParticipants = buildChatParticipantProfiles(existingChat);
+          navigation.navigate('ChatDetail', {
+            chatId: existingChatId,
+            chatTitle: deriveChatTitleFromChat(
+              existingChat,
+              `${sourceActivity.title || 'Activity'} Chat`,
+            ),
+            chatParticipants:
+              existingParticipants && existingParticipants.length
+                ? existingParticipants
+                : chatParticipantProfiles,
+            chatImage:
+              resolveChatImageFromChat(existingChat) ||
+              sourceActivity.imageUrl ||
+              sourceActivity.imageURL ||
+              sourceActivity.bannerUrl,
+          });
+          return;
+        }
+      }
+
+      if (!normalizedActivityId) {
+        throw new Error('Unable to determine the activity identifier for this chat.');
+      }
+
+      const fallbackImage =
+        sourceActivity.imageUrl ||
+        sourceActivity.imageURL ||
+        sourceActivity.bannerUrl ||
+        sourceActivity.bannerURL ||
+        sourceActivity.heroImage ||
+        '';
+
+      const payload = {
+        activityId: normalizedActivityId,
+        name: `${sourceActivity.title || 'Activity'} Chat`,
+        imageUrl: fallbackImage,
+      };
+
+      const response = await createChat(payload, { token: authToken });
+      const chatData = response?.data || response?.chat || response || null;
+      const newChatId = extractChatIdentifier(chatData);
+
+      if (!newChatId) {
         throw new Error('Unable to open the chat conversation for this activity.');
       }
 
+      const createdParticipants = buildChatParticipantProfiles(chatData);
+
       navigation.navigate('ChatDetail', {
-        chatId: result.chatId,
-        chatTitle: result.chatTitle || `${sourceActivity.title || 'Activity'} Chat`,
-        chatParticipants: result.chatParticipants?.length
-          ? result.chatParticipants
+        chatId: newChatId,
+        chatTitle:
+          deriveChatTitleFromChat(chatData, `${sourceActivity.title || 'Activity'} Chat`),
+        chatParticipants: createdParticipants.length
+          ? createdParticipants
           : chatParticipantProfiles,
         chatImage:
-          result.chatImage ||
-          sourceActivity.imageUrl ||
-          sourceActivity.imageURL ||
-          sourceActivity.bannerUrl,
+          resolveChatImageFromChat(chatData) ||
+          fallbackImage,
       });
     } catch (err) {
       console.error('Failed to start activity chat:', err);
@@ -279,7 +637,16 @@ const ActivityDetailCard = ({ route }) => {
     } finally {
       setStartingChat(false);
     }
-  }, [activity, activityPreload, token, user, activityId, navigation, chatParticipantProfiles]);
+  }, [
+    hydratedActivity,
+    hydratedPrefillActivity,
+    activityPreload,
+    token,
+    user,
+    activityId,
+    navigation,
+    chatParticipantProfiles,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -422,7 +789,9 @@ const ActivityDetailCard = ({ route }) => {
     );
   }
 
-  if (loading && activityPreload) {
+  const canRenderPreloadWhileLoading = Boolean(hydratedPrefillActivity);
+
+  if (loading && canRenderPreloadWhileLoading) {
     return (
       <SafeAreaView style={styles.safeArea} edges={[ 'left', 'right', 'bottom' ]}>
         <StatusBar
@@ -440,7 +809,7 @@ const ActivityDetailCard = ({ route }) => {
           threshold={HEADER_OFFSET / 2}
         >
           <ActivityCardBody
-            activity={activityPreload}
+            activity={hydratedPrefillActivity}
             setActivity={setActivity}
             formatTime={formatTime}
             openGoogleMaps={openGoogleMaps}
@@ -461,7 +830,7 @@ const ActivityDetailCard = ({ route }) => {
     );
   }
 
-  if (loading || !activity) {
+  if (loading || !hydratedActivity) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
@@ -490,7 +859,7 @@ const ActivityDetailCard = ({ route }) => {
         threshold={HEADER_OFFSET / 2}
       >
         <ActivityCardBody
-          activity={activity}
+          activity={hydratedActivity}
           setActivity={setActivity}
           formatTime={formatTime}
           openGoogleMaps={openGoogleMaps}

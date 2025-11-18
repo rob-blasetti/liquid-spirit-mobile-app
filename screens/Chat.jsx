@@ -8,9 +8,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Image,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import FastImage from 'react-native-fast-image';
 
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
@@ -283,7 +284,11 @@ const ChatRow = ({ chat, onPress }) => {
     <TouchableOpacity style={styles.chatRow} activeOpacity={0.85} onPress={onPress}>
       <View style={styles.chatAvatarWrapper}>
         {avatarSource ? (
-          <Image source={avatarSource} style={styles.chatAvatarImage} />
+          <FastImage
+            source={avatarSource}
+            style={styles.chatAvatarImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
         ) : (
           <View style={styles.chatAvatar}>
             <Text style={styles.chatAvatarText}>
@@ -324,6 +329,10 @@ const ChatScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const handleStartNewChat = useCallback(() => {
+    if (!isLoggedIn) return;
+    navigation.navigate('NewMessage');
+  }, [isLoggedIn, navigation]);
 
   const loadChats = useCallback(
     async ({ silent = false } = {}) => {
@@ -399,6 +408,14 @@ const ChatScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
+        <TouchableOpacity
+          style={[styles.newChatButton, !isLoggedIn && styles.newChatButtonDisabled]}
+          activeOpacity={0.85}
+          onPress={handleStartNewChat}
+          disabled={!isLoggedIn}
+        >
+          <Ionicons name="create-outline" size={18} color={themeVariables.whiteColor} />
+        </TouchableOpacity>
       </View>
 
       {!isLoggedIn ? (
@@ -460,12 +477,22 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingLeft: 8,
     paddingRight: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '600',
     color: themeVariables.blackColor,
-    marginLeft: 4,
+  },
+  newChatButton: {
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: themeVariables.borderRadiusPill,
+    padding: 10,
+  },
+  newChatButtonDisabled: {
+    opacity: 0.5,
   },
   centerContent: {
     flex: 1,

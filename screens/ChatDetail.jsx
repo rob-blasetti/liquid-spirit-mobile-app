@@ -6,7 +6,6 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Image,
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -396,7 +395,7 @@ const ChatDetail = () => {
   );
   const bannerTopBarStyle = useMemo(
     () => ({
-      paddingTop: heroTopInset + 12,
+      paddingTop: heroTopInset + 28,
     }),
     [heroTopInset],
   );
@@ -637,7 +636,11 @@ const ChatDetail = () => {
     return (
       <View style={styles.messageRow}>
         {avatarSource ? (
-          <Image source={avatarSource} style={styles.avatar} />
+          <FastImage
+            source={avatarSource}
+            style={styles.avatar}
+            resizeMode={FastImage.resizeMode.cover}
+          />
         ) : (
           <View style={styles.avatarPlaceholder}>
             <Text style={styles.avatarPlaceholderText}>{initials || '?'}</Text>
@@ -1083,13 +1086,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     color: '#777',
-  },
-  listContent: {
-    paddingBottom: 96,
-  },
-  emptyListContainer: {
-    flexGrow: 1,
-    paddingBottom: 96,
   },
   emptyText: {
     color: '#777',

@@ -1,6 +1,5 @@
 // Consolidated exports for screens
 export { default as Activities } from './Activities';
-export { default as ActivityDetail } from './ActivityDetail';
 export { default as ActivityDetailCard } from './ActivityDetailCard';
 export { default as ChangePassword } from './ChangePassword';
 export { default as CreateActivity } from './CreateActivity';
@@ -8,7 +7,6 @@ export { default as CreatePost } from './CreatePost';
 export { default as CurriculumDetailScreen } from './CurriculumDetailScreen';
 export { default as EditProfile } from './EditProfile';
 export { default as Eula } from './Eula';
-export { default as EventDetail } from './EventDetail';
 export { default as EventDetailCard } from './EventDetailCard';
 export { default as Events } from './Events';
 export { default as ForgotBahaiId } from './ForgotBahaiId';
@@ -18,6 +16,7 @@ export { default as Login } from './Login';
 export { default as Notifications } from './Notifications';
 export { default as NotificationSettings } from './NotificationSettings';
 export { default as PushDiagnostics } from './PushDiagnostics';
+export { default as NewMessage } from './NewMessage';
 export { default as Profile } from './Profile';
 export { default as PublicUserProfile } from './PublicUserProfile';
 export { default as Register } from './Register';

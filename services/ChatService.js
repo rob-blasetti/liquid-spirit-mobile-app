@@ -18,6 +18,196 @@ const ensureAbsoluteUrl = (path = '') => {
   return path.startsWith('/') ? `${API_URL}${path}` : `${API_URL}/${path}`;
 };
 
+const normalizeIdValue = (value) => {
+  if (value === undefined || value === null) return '';
+  if (typeof value === 'string' || typeof value === 'number') {
+    const trimmed = String(value).trim();
+    return trimmed.length ? trimmed : '';
+  }
+  if (typeof value === 'object') {
+    if (value._id || value.id) {
+      const candidate = value._id || value.id;
+      if (candidate) return normalizeIdValue(candidate);
+    }
+    if (typeof value.toString === 'function') {
+      const candidate = String(value.toString()).trim();
+      if (candidate && candidate !== '[object Object]') {
+        return candidate;
+      }
+    }
+  }
+  return '';
+};
+
+const normalizeChatList = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.results)) return payload.results;
+  if (Array.isArray(payload.chats)) return payload.chats;
+  if (Array.isArray(payload.items)) return payload.items;
+
+  if (Array.isArray(payload?.data?.chats)) return payload.data.chats;
+  if (Array.isArray(payload?.result?.chats)) return payload.result.chats;
+  if (Array.isArray(payload?.payload?.chats)) return payload.payload.chats;
+
+  return [];
+};
+
+const normalizeChatActivitiesList = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (Array.isArray(payload.results)) return payload.results;
+  if (Array.isArray(payload.activities)) return payload.activities;
+  if (Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload?.data?.activities)) return payload.data.activities;
+  return [];
+};
+
+const extractParticipantSource = (participant) => {
+  if (!participant) return null;
+  if (typeof participant === 'object') {
+    return (
+      participant.details ||
+      participant.user ||
+      participant.profile ||
+      participant.account ||
+      participant.refId ||
+      participant.ref ||
+      participant.reference ||
+      participant
+    );
+  }
+  return participant;
+};
+
+const buildChatParticipantProfilesFromEntries = (entries) => {
+  if (!entries || (Array.isArray(entries) && entries.length === 0)) return [];
+  const list = Array.isArray(entries) ? entries : Object.values(entries || {});
+  const map = new Map();
+  list.forEach((entry, index) => {
+    const source =
+      typeof entry === 'object' ? extractParticipantSource(entry) : null;
+    const normalizedSource = source || entry;
+    const name =
+      extractUserName(normalizedSource) ||
+      (typeof normalizedSource === 'string' ? normalizedSource : '') ||
+      `Participant ${index + 1}`;
+    const avatar = extractUserAvatar(normalizedSource);
+    const id =
+      normalizeIdValue(
+        normalizedSource?._id ||
+          normalizedSource?.id ||
+          normalizedSource?.userId ||
+          normalizedSource?.user_id ||
+          normalizedSource?.uid ||
+          normalizedSource?.email,
+      ) ||
+      normalizeIdValue(entry) ||
+      name ||
+      `participant-${index}`;
+
+    const profile = {
+      id,
+      name,
+      avatar: avatar || '',
+    };
+    const key = profile.id || profile.name;
+    if (!map.has(key)) {
+      map.set(key, profile);
+    }
+  });
+  return Array.from(map.values());
+};
+
+export const buildChatParticipantProfiles = (chat) => {
+  if (!chat) return [];
+  const rawList =
+    chat.participants ||
+    chat.members ||
+    chat.users ||
+    chat.recipients ||
+    chat.people ||
+    chat.attendees ||
+    chat.userIds ||
+    [];
+  return buildChatParticipantProfilesFromEntries(rawList);
+};
+
+const extractActivityIdFromChat = (chat) => {
+  if (!chat || typeof chat !== 'object') return '';
+  const sources = [
+    chat,
+    chat.metadata,
+    chat.meta,
+    chat.details,
+    chat.reference,
+    chat.context,
+    chat.payload,
+    chat.data,
+  ];
+
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue;
+  const candidates = [
+    source.activity,
+    source.activityId,
+    source.activity_id,
+    source.activity?.id,
+    source.activity?._id,
+      source.activity?.activityId,
+      source.activity?.activity_id,
+      source.activityId || source.activity_id,
+      source.activitySlug,
+      source.activity?.slug,
+    ];
+    for (const candidate of candidates) {
+      const normalized = normalizeIdValue(candidate);
+      if (normalized) return normalized;
+    }
+  }
+
+  return '';
+};
+
+export const resolveChatImageFromChat = (chat) => {
+  if (!chat || typeof chat !== 'object') return '';
+  const candidates = [
+    chat.imageUrl,
+    chat.image_url,
+    chat.image,
+    chat.photo,
+    chat.avatar,
+    chat.banner,
+    chat.bannerUrl,
+    chat.metadata?.imageUrl,
+    chat.metadata?.image,
+    chat.metadata?.avatar,
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed.length) return trimmed;
+    }
+  }
+  return '';
+};
+
+export const deriveChatTitleFromChat = (chat, fallback = 'Chat') => {
+  if (!chat || typeof chat !== 'object') return fallback;
+  return (
+    chat.title ||
+    chat.name ||
+    chat.chatName ||
+    chat.roomName ||
+    chat.topic ||
+    chat.subject ||
+    fallback
+  );
+};
+
 const getAuthToken = async (providedToken) => {
   if (providedToken) return providedToken;
   const storedToken = await AsyncStorage.getItem('authToken');
@@ -88,6 +278,13 @@ export const fetchChats = (options = {}) =>
   request(CHATS_BASE, {
     ...options,
   });
+
+export const fetchChatActivities = async (options = {}) => {
+  const response = await request(`${CHATS_BASE}/activities`, {
+    ...options,
+  });
+  return normalizeChatActivitiesList(response);
+};
 
 export const createChat = (payload, options = {}) =>
   request(`${CHATS_BASE}/create`, {
@@ -227,6 +424,36 @@ const extractUserProfile = (candidate) => {
   };
 };
 
+const USER_REFERENCE_TYPES = ['user', 'use'];
+
+const isUserReferenceEntry = (entry) => {
+  if (!entry || typeof entry !== 'object') return true;
+
+  const typeCandidates = [
+    entry.type,
+    entry.memberType,
+    entry.refType,
+    entry.referenceType,
+    entry.entityType,
+    entry.targetType,
+    entry.details?.type,
+    entry.user?.type,
+    entry.profile?.type,
+    entry.account?.type,
+    entry.ref?.type,
+    entry.reference?.type,
+  ];
+
+  for (const candidate of typeCandidates) {
+    if (!candidate || typeof candidate !== 'string') continue;
+    const normalized = candidate.trim().toLowerCase();
+    if (!normalized) continue;
+    return USER_REFERENCE_TYPES.includes(normalized);
+  }
+
+  return true;
+};
+
 const collectActivityChatMembers = (activity = {}) => {
   const ids = new Set();
   const names = new Set();
@@ -234,6 +461,7 @@ const collectActivityChatMembers = (activity = {}) => {
   const appendFromList = (list = []) => {
     if (!Array.isArray(list)) return;
     list.forEach((entry) => {
+      if (!isUserReferenceEntry(entry)) return;
       const id = extractUserId(entry);
       if (id) ids.add(id);
       const name = extractUserName(entry);
@@ -268,6 +496,7 @@ const collectActivityChatMembers = (activity = {}) => {
       session.lead,
     ];
     singleEntries.forEach((candidate) => {
+      if (!isUserReferenceEntry(candidate)) return;
       const id = extractUserId(candidate);
       if (id) ids.add(id);
     });
@@ -287,6 +516,7 @@ const collectActivityChatMembers = (activity = {}) => {
   ];
 
   ownerCandidates.forEach((candidate) => {
+    if (!isUserReferenceEntry(candidate)) return;
     const id = extractUserId(candidate);
     if (id) ids.add(id);
     const name = extractUserName(candidate);
@@ -317,10 +547,12 @@ export const getActivityChatParticipantProfiles = (activity = {}) => {
   return profiles;
 };
 
-const deriveActivityChatTitle = (activity = {}) => {
-  if (!activity) return 'Activity Chat';
-  const baseTitle = activity.title || activity.name || 'Activity';
-  return `${baseTitle} Chat`;
+export const isUserEligibleForActivityChat = (activity = {}, userId) => {
+  if (!userId) return false;
+  const normalizedUserId = normalizeIdValue(userId);
+  if (!normalizedUserId) return false;
+  const { ids } = collectActivityChatMembers(activity);
+  return ids.some((id) => String(id) === normalizedUserId);
 };
 
 const extractChatIdFromPayload = (payload, visited = new Set()) => {
@@ -453,91 +685,20 @@ const extractChatTitleFromPayload = (payload, visited = new Set()) => {
   return '';
 };
 
-export const startActivityConversation = async (activity, options = {}) => {
-  if (!activity) {
-    throw new Error('Activity details are required to start a conversation.');
-  }
-  const { token, currentUserId, extraUserIds = [], activityId: activityIdOverride } = options;
+export const findExistingActivityChat = async (activityId, options = {}) => {
+  const normalizedActivityId = normalizeIdValue(activityId);
+  if (!normalizedActivityId) return null;
 
-  if (!token) {
-    throw new Error('You must be logged in to start a chat conversation.');
-  }
+  const { token } = options;
+  const response = await fetchChats({ token });
+  const chats = normalizeChatList(response);
+  if (!chats.length) return null;
 
-  const {
-    ids: collectedIds,
-    names: collectedNames,
-    profiles: collectedProfiles,
-  } = collectActivityChatMembers(activity);
-  const memberIds = new Set(collectedIds);
-
-  if (currentUserId) {
-    memberIds.add(String(currentUserId));
-  }
-
-  extraUserIds.forEach((id) => {
-    if (id) {
-      memberIds.add(String(id));
-    }
+  const found = chats.find((chat) => {
+    const chatActivityId = extractActivityIdFromChat(chat);
+    if (!chatActivityId) return false;
+    return chatActivityId === normalizedActivityId;
   });
 
-  const participants = Array.from(memberIds).filter(Boolean);
-
-  if (participants.length < 2) {
-    throw new Error('Not enough participants to start a group chat yet.');
-  }
-
-  const activityId =
-    activityIdOverride ||
-    activity._id ||
-    activity.id ||
-    activity.activityId ||
-    activity.activity_id ||
-    activity.slug ||
-    '';
-
-  const chatTitle = deriveActivityChatTitle(activity);
-  const chatAvatar =
-    activity.imageUrl ||
-    activity.imageURL ||
-    activity.bannerUrl ||
-    activity.bannerURL ||
-    activity.heroImage ||
-    activity.photo ||
-    activity.image ||
-    '';
-  const requestPayload = {
-    name: chatTitle,
-    title: chatTitle,
-    avatar: chatAvatar,
-    image: chatAvatar,
-    photo: chatAvatar,
-    imageUrl: chatAvatar,
-    image_url: chatAvatar,
-    participantIds: participants,
-    participants,
-    userIds: participants,
-    memberIds: participants,
-    activityId,
-    activity_id: activityId,
-    metadata: {
-      type: 'activity',
-      activityId,
-      activityTitle: activity.title || activity.name || '',
-    },
-  };
-
-  const response = await createChat(requestPayload, { token });
-  const chatId = extractChatIdFromPayload(response) || extractChatIdFromPayload(response?.chat || {});
-  const responseTitle =
-    extractChatTitleFromPayload(response) ||
-    extractChatTitleFromPayload(response?.chat || {}) ||
-    chatTitle;
-
-  return {
-    chatId,
-    chatTitle: responseTitle,
-    chatParticipants: collectedProfiles,
-    chatImage: chatAvatar,
-    response,
-  };
+  return found || null;
 };

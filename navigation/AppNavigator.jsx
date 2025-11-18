@@ -30,10 +30,8 @@ import {
   Events as EventsScreen,
   Activities as ActivitiesScreen,
   CreateActivity,
-  EventDetail,
   EventDetailCard,
   PublicUserProfile,
-  ActivityDetail,
   ActivityDetailCard,
   PostDetailCard,
   RequestAgendaItem,
@@ -41,6 +39,7 @@ import {
   Notifications as NotificationScreen,
   PushDiagnostics,
   ChatDetail,
+  NewMessage,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -65,7 +64,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         screenOptions={({ navigation }) => ({
           headerStyle: { backgroundColor: themeVariables.whiteColor },
           headerTintColor: themeVariables.primaryColor,
-          headerTitleStyle: { fontWeight: 'bold' },
+          headerTitleStyle: { fontWeight: 'bold', color: themeVariables.blackColor },
           headerBackTitleVisible: false,
           headerBackTitle: '',
           headerLeftContainerStyle: { paddingLeft: 16 },
@@ -98,7 +97,6 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen name="Events" component={EventsScreen} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} />
       <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
-      <Stack.Screen name="EventDetail" component={EventDetail} options={{ title: 'Event Details' }} />
       <Stack.Screen
         name="EventDetailCard"
         component={EventDetailCard}
@@ -112,7 +110,6 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         }}
       />
       <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }} />
-      <Stack.Screen name="ActivityDetail" component={ActivityDetail} options={{ title: 'Activity Details' }} />
       <Stack.Screen
         name="ActivityDetailCard"
         component={ActivityDetailCard}
@@ -172,6 +169,11 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         name="ChatDetail"
         component={ChatDetail}
         options={{ title: 'Chat' }}
+      />
+      <Stack.Screen
+        name="NewMessage"
+        component={NewMessage}
+        options={{ title: 'New Message' }}
       />
       <Stack.Screen name="Main" options={{ headerShown: false }}>
         {() => <BottomBar initialPosts={initialPosts} homeOverview={homeOverview} />}

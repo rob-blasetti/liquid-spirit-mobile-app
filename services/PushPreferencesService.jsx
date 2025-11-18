@@ -20,6 +20,8 @@ export const PUSH_PREF_KEYS = [
   'session_created',
   'session_reminder',
   'session_cancelled',
+  'chat_direct_message',
+  'chat_group_message',
 ];
 
 // Normalize preferences, defaulting missing keys to true per spec

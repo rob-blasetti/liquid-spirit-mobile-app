@@ -22,43 +22,51 @@ const NotificationSettings = () => {
       title: 'Posts',
       hint: 'Tell me about:',
       items: [
-        { key: 'post_created', label: 'New posts' },
-        { key: 'post_media', label: 'Comments or likes on my posts' },
+        { key: 'post_created', label: 'New posts', icon: 'document-text-outline' },
+        { key: 'post_media', label: 'Comments or likes on my posts', icon: 'chatbubble-ellipses-outline' },
       ],
     },
     {
       title: 'Activities',
       hint: 'Tell me when:',
       items: [
-        { key: 'new_activity', label: 'A new activity is created' },
-        { key: 'join_activity', label: 'Someone joins an activity' },
-        { key: 'activity_updated', label: 'An activity is updated' },
-        { key: 'activity_deleted', label: 'An activity is deleted' },
-        { key: 'activity_completed', label: 'An activity is completed' },
+        { key: 'new_activity', label: 'A new activity is created', icon: 'sparkles-outline' },
+        { key: 'join_activity', label: 'Someone joins an activity', icon: 'person-add-outline' },
+        { key: 'activity_updated', label: 'An activity is updated', icon: 'sync-outline' },
+        { key: 'activity_deleted', label: 'An activity is deleted', icon: 'trash-outline' },
+        { key: 'activity_completed', label: 'An activity is completed', icon: 'checkmark-circle-outline' },
       ],
     },
     {
       title: 'Sessions',
       hint: 'Tell me when:',
       items: [
-        { key: 'session_created', label: 'A new session is created' },
-        { key: 'session_reminder', label: 'A session is coming soon' },
-        { key: 'session_cancelled', label: 'An session is cancelled' },
+        { key: 'session_created', label: 'A new session is created', icon: 'time-outline' },
+        { key: 'session_reminder', label: 'A session is coming soon', icon: 'alarm-outline' },
+        { key: 'session_cancelled', label: 'An session is cancelled', icon: 'close-circle-outline' },
       ],
     },
     {
       title: 'Events',
       hint: 'Tell me when:',
       items: [
-        { key: 'join_event', label: 'Someone joins an event' },
-        { key: 'event_reminder', label: 'Remind me about upcoming events' },
+        { key: 'join_event', label: 'Someone joins an event', icon: 'people-circle-outline' },
+        { key: 'event_reminder', label: 'Remind me about upcoming events', icon: 'calendar-outline' },
       ],
     },
     {
       title: 'Announcements',
       hint: 'Tell me about:',
       items: [
-        { key: 'signup', label: 'Someone new signs up' },
+        { key: 'signup', label: 'Someone new signs up', icon: 'megaphone-outline' },
+      ],
+    },
+    {
+      title: 'Chat',
+      hint: 'Notify me when:',
+      items: [
+        { key: 'chat_direct_message', label: 'I receive a direct chat message', icon: 'chatbubble-ellipses-outline' },
+        { key: 'chat_group_message', label: 'A group chat has a new message', icon: 'chatbubbles-outline' },
       ],
     },
   ];
@@ -123,7 +131,7 @@ const NotificationSettings = () => {
               {group.items.map((item, idx) => (
                 <View key={item.key}>
                   <View style={styles.groupRow}>
-                    <Ionicons name="notifications-outline" size={20} color="#312783" />
+                    <Ionicons name={item.icon || 'notifications-outline'} size={20} color="#312783" />
                     <Text style={styles.itemText}>{item.label}</Text>
                     <Switch
                       value={pushPrefs ? !!pushPrefs[item.key] : true}
