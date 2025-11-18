@@ -1,17 +1,19 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
+import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
 import SocialMediaScreen from '../screens/SocialMedia';
 import Home from '../screens/Home';
+import DiscoverScreen from '../screens/Discover';
 // Removed NotificationScreen import; Notifications handled via Home screen banner
-import SearchScreen from '../screens/Search';
 import ChatScreen from '../screens/Chat';
-import CreatePostScreen from '../screens/CreatePost';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
 // 1. Import the WelcomeModal
@@ -21,17 +23,77 @@ const Tab = createBottomTabNavigator();
 
 const tabIcons = {
   Home: 'home-outline',
-  Profile: 'person-outline',
+  Discover: 'calendar-outline',
   Feed: 'compass-outline',
-  Camera: 'add-circle',
-  Search: 'search-outline',
   Chat: 'chatbubble-ellipses-outline',
+  Profile: 'person-outline',
 };
+const TAB_BAR_HEIGHT = 80;
+const FAB_OFFSET = 4;
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
-  const { isLoggedIn, hasNewChatMessages, chatNotificationCount } = useContext(UserContext);
+  const { isLoggedIn, chatNotificationCount, user } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
+  const userId = user?._id || user?.id;
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const parentNavigation = navigation.getParent?.() || navigation;
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
+  const [fabExpanded, setFabExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setFabExpanded(false);
+    }
+  }, [isLoggedIn]);
+
+  const closeFab = () => setFabExpanded(false);
+  const toggleFab = () => {
+    if (!isLoggedIn) {
+      setModalVisible(true);
+      return;
+    }
+    setFabExpanded(prev => !prev);
+  };
+
+  const handleCreateActivity = () => {
+    if (!isLoggedIn) {
+      setModalVisible(true);
+      return;
+    }
+    if (!userId) return;
+    closeFab();
+    parentNavigation.navigate('CreateActivity', { communityId, userId });
+  };
+
+  const handleCreatePost = () => {
+    if (!isLoggedIn) {
+      setModalVisible(true);
+      return;
+    }
+    closeFab();
+    parentNavigation.navigate('CreatePostModal');
+  };
+
+  const handleNewMessage = () => {
+    if (!isLoggedIn) {
+      setModalVisible(true);
+      return;
+    }
+    closeFab();
+    parentNavigation.navigate('NewMessage');
+  };
+
+  const fabOptions = useMemo(
+    () => [
+      { key: 'activity', label: 'Create Activity', icon: 'calendar-outline', onPress: handleCreateActivity },
+      { key: 'post', label: 'Create Post', icon: 'create-outline', onPress: handleCreatePost },
+      { key: 'message', label: 'New Message', icon: 'chatbubble-ellipses-outline', onPress: handleNewMessage },
+    ],
+    [handleCreateActivity, handleCreatePost, handleNewMessage],
+  );
+  const fabBottom = TAB_BAR_HEIGHT + FAB_OFFSET + insets.bottom;
 
   return (
     <>
@@ -44,11 +106,9 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           tabBarIcon: ({ focused, color, size }) => {
             // bump every icon +6px for bigger taps & visuals
             const iconSize = size + 4;
-            // camera keeps tint, others always black
-            const iconColor =
-              route.name === 'Camera' ? color : themeVariables.blackColor;
+            const baseName = tabIcons[route.name] || 'ellipse-outline';
+            const iconColor = focused ? themeVariables.primaryColor : themeVariables.blackColor;
             // choose filled when focused, outline otherwise
-            const baseName = tabIcons[route.name] || '';
             const iconName = focused
               ? baseName.replace(/-outline$/, '')
               : baseName;
@@ -116,16 +176,8 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           tabPress: (e) => {
             const state = navigation.getState();
             const currentRoute = state.routes[state.index]?.name;
-
-            // Intercept Camera tab to open as modal
-            if (route.name === 'Camera') {
-              e.preventDefault();
-              if (!isLoggedIn) {
-                setModalVisible(true);
-              } else {
-                navigation.getParent()?.navigate('CreatePostModal');
-              }
-              return;
+            if (fabExpanded) {
+              closeFab();
             }
 
             // Require login for other tabs (except Feed)
@@ -146,6 +198,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         <Tab.Screen name="Home">
           {(props) => <Home {...props} homeOverview={homeOverview} />}
         </Tab.Screen>
+        <Tab.Screen name="Discover" component={DiscoverScreen} />
         <Tab.Screen name="Feed">
           {(props) => (
             <SocialMediaScreen
@@ -155,11 +208,47 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Camera" component={CreatePostScreen} />
-        <Tab.Screen name="Search" component={SearchScreen} />
         <Tab.Screen name="Chat" component={ChatScreen} />
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
+
+      <View pointerEvents="box-none" style={styles.fabPortal}>
+        {fabExpanded && (
+          <TouchableOpacity
+            style={styles.fabBackdrop}
+            activeOpacity={1}
+            onPress={closeFab}
+          />
+        )}
+        <View style={[styles.fabColumn, { bottom: fabBottom }]}>
+          {fabExpanded &&
+            fabOptions.map(action => (
+              <TouchableOpacity
+                key={action.key}
+                style={styles.fabOption}
+                onPress={action.onPress}
+                accessibilityRole="button"
+                accessibilityLabel={action.label}
+              >
+                <Ionicons name={action.icon} size={18} color={themeVariables.primaryColor} />
+                <Text style={styles.fabOptionText}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={fabExpanded ? 'Close quick actions' : 'Open quick actions'}
+            style={styles.fab}
+            onPress={toggleFab}
+            activeOpacity={0.85}
+          >
+            <Ionicons
+              name={fabExpanded ? 'close' : 'add'}
+              size={24}
+              color={themeVariables.whiteColor}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <WelcomeModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </>
@@ -185,5 +274,49 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  fabPortal: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  fabBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'transparent',
+  },
+  fabColumn: {
+    position: 'absolute',
+    right: 24,
+    alignItems: 'flex-end',
+  },
+  fab: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: themeVariables.primaryColor,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  fabOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: themeVariables.whiteColor,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  fabOptionText: {
+    marginLeft: 8,
+    color: themeVariables.blackColor,
+    fontWeight: '600',
   },
 });

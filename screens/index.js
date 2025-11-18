@@ -5,6 +5,7 @@ export { default as ChangePassword } from './ChangePassword';
 export { default as CreateActivity } from './CreateActivity';
 export { default as CreatePost } from './CreatePost';
 export { default as CurriculumDetailScreen } from './CurriculumDetailScreen';
+export { default as Discover } from './Discover';
 export { default as EditProfile } from './EditProfile';
 export { default as Eula } from './Eula';
 export { default as EventDetailCard } from './EventDetailCard';

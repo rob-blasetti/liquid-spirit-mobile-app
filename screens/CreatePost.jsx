@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 18,
     fontWeight: '700',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'center',
   },
   headerRow: {

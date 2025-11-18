@@ -113,8 +113,6 @@ const Home = ({ navigation, homeOverview, route }) => {
     },
     [navigation, token, isTokenExpired],
   );
-
-
   // handle tab switch: slide old panel left, then slide in new panel
   const handleTabPress = (tab) => {
     if (tab === activeTab) return;
@@ -199,17 +197,27 @@ const Home = ({ navigation, homeOverview, route }) => {
             ]}
             pointerEvents="box-none"
           >
-            <TouchableOpacity
-              style={styles.notificationButton}
-              onPress={() => navigation.navigate('Notifications')}
-            >
-              <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
-              {unreadCount > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={styles.bannerTopActions}>
+              <TouchableOpacity
+                style={styles.topActionButton}
+                onPress={() => navigation.navigate('Search')}
+                accessibilityLabel="Search"
+              >
+                <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.topActionButton}
+                onPress={() => navigation.navigate('Notifications')}
+                accessibilityLabel="Notifications"
+              >
+                <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
             {/* Community info at banner bottom-left */}
             <View style={styles.bannerBottomLeft}>
               <Text style={styles.communityBannerName}>{user?.community?.name}</Text>
@@ -590,21 +598,17 @@ const styles = StyleSheet.create({
   },
   bannerTopActions: {
     position: 'absolute',
-    top: 0,
+    top: 8,
     right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 12,
     zIndex: 2,
   },
-  notificationButton: {
-    position: 'absolute',
-    top: 0,
-    right: 20,
+  topActionButton: {
     backgroundColor: 'rgba(243,243,243,0.6)',
     borderRadius: themeVariables.borderRadiusPill,
     padding: 6,
-    // subtle shadow for raised effect
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,

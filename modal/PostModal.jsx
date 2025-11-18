@@ -146,7 +146,7 @@ const PostModal = ({ visible = true, onPostCreated, onClose }) => {
                 <Ionicons
                   name="close"
                   size={24}
-                  color={themeVariables.primaryColor}
+                  color={themeVariables.blackColor}
                 />
               </TouchableOpacity>
             </View>
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 18,
     fontWeight: '700',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'center',
   },
   headerRow: {
@@ -294,8 +294,8 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: -8,
+    right: -10,
     padding: 8,
   },
   textArea: {

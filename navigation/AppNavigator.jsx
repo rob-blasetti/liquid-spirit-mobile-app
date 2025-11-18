@@ -29,6 +29,7 @@ import {
   Eula,
   Events as EventsScreen,
   Activities as ActivitiesScreen,
+  Search as SearchScreen,
   CreateActivity,
   EventDetailCard,
   PublicUserProfile,
@@ -96,6 +97,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen name="EULA" component={Eula} />
       <Stack.Screen name="Events" component={EventsScreen} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
       <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
       <Stack.Screen
         name="EventDetailCard"
