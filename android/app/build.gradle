@@ -97,8 +97,8 @@ android {
         applicationId "com.liquid_spirit_mobile_app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "1.8.0"
+        versionCode 12
+        versionName "2.0.0"
         
         buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
         buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
