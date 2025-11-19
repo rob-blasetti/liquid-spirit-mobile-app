@@ -122,13 +122,22 @@ export function initPushNotifications(authToken) {
       if (!p) return;
       switch (p.type) {
         case 'event':
-          navigateWhenReady('EventDetailCard', { eventId: p.id });
+          navigateWhenReady('Main', {
+            screen: 'Home',
+            params: { screen: 'EventDetailCard', params: { eventId: p.id } },
+          });
           break;
         case 'activity':
-          navigateWhenReady('ActivityDetailCard', { activityId: p.id });
+          navigateWhenReady('Main', {
+            screen: 'Home',
+            params: { screen: 'ActivityDetailCard', params: { activityId: p.id } },
+          });
           break;
         case 'post':
-          navigateWhenReady('PostDetailCard', { postId: p.id });
+          navigateWhenReady('Main', {
+            screen: 'Feed',
+            params: { screen: 'PostDetailCard', params: { postId: p.id } },
+          });
           break;
         default:
           // no-op

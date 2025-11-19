@@ -2,6 +2,7 @@ import FastImage from 'react-native-fast-image';
 import { Image } from 'react-native';
 import { resolveMediaUrl } from './resolveMediaUrl';
 import { fetchPostDetails } from '../services/PostService';
+import { navigateWithinMainTabs } from './navigateWithTabs';
 
 const aspectCache = new Map();
 
@@ -58,17 +59,22 @@ export const navigateToPostDetail = async ({
     }
   }
 
-  navigation.navigate('PostDetailCard', baseParams);
+  const { usedFallback, targetNavigation } = navigateWithinMainTabs({
+    navigation,
+    tab: 'Feed',
+    screen: 'PostDetailCard',
+    params: baseParams,
+  });
 
   const resolveAspectAsync = () => {
-    if (aspect || !mediaUrl) return;
+    if (aspect || !mediaUrl || !targetNavigation) return;
     Image.getSize(
       mediaUrl,
       (width, height) => {
         if (!width || !height) return;
         const ratio = width / height;
         cachePostImageAspect(id, mediaUrl, ratio);
-        navigation.navigate({
+        targetNavigation.navigate({
           name: 'PostDetailCard',
           params: {
             imageAspect: ratio,
@@ -87,13 +93,17 @@ export const navigateToPostDetail = async ({
     return;
   }
 
+  if (usedFallback || !targetNavigation) {
+    return;
+  }
+
   try {
     const detailed = await fetchPostDetails(id, token);
     if (detailed) {
       if ((aspectCache.has(id) || aspectCache.has(mediaUrl)) && !detailed.imageAspect) {
         detailed.imageAspect = getPostImageAspect(id, mediaUrl);
       }
-      navigation.navigate({
+      targetNavigation.navigate({
         name: 'PostDetailCard',
         params: { postPreload: detailed },
         merge: true,

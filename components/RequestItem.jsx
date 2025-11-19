@@ -5,6 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { useNavigation } from '@react-navigation/native';
 import resolveImageSource from '../utils/imageSource';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
 /**
  * RequestItem displays an activity request with action buttons.
@@ -26,9 +27,9 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
   const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
 
   const handlePress = () => {
-    navigation.navigate('ActivityDetailCard', {
-      activityId: activity?._id,
-      activityPreload: activity,
+    navigateToActivityDetail({
+      navigation,
+      activity,
     });
   };
 

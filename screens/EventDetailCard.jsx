@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { Marker } from 'react-native-maps';
 import { Card, CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
@@ -52,6 +52,7 @@ import { shareContent } from '../utils/shareContent';
 import FooterBrand from '../components/FooterBrand';
 import { Button } from 'liquid-spirit-styleguide/native';
 const HEADER_OFFSET = 0;
+const TAB_BAR_HEIGHT = 80;
 
 const { height: windowHeight } = Dimensions.get('window');
 
@@ -75,6 +76,7 @@ const parseTime = timeStr => {
 const EventDetailCard = ({ route }) => {
   // Enable swipe-down to dismiss
   const navigation = useNavigation();
+  const { bottom: safeAreaBottom } = useSafeAreaInsets();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
   const [loading, setLoading] = useState(!eventPreload);
@@ -227,6 +229,14 @@ const EventDetailCard = ({ route }) => {
       setRedirected(true);
     }
   }, [redirected, loading, errorStatus, navigation]);
+  const scrollContentStyle = useMemo(
+    () => ({
+      paddingTop: HEADER_OFFSET,
+      paddingBottom: Math.max(30, safeAreaBottom + TAB_BAR_HEIGHT),
+    }),
+    [safeAreaBottom],
+  );
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -249,7 +259,7 @@ const EventDetailCard = ({ route }) => {
       )}
       <SwipeToCloseScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+        contentContainerStyle={scrollContentStyle}
         overScrollMode="always"
         scrollEventThrottle={16}
         // swipe down past half the header offset to go back

@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // navigation prop is provided by the navigator, no need for useNavigation()
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
@@ -19,7 +20,10 @@ import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import resolveImageSource from '../utils/imageSource';
 import usePrefetchImages from '../hooks/usePrefetchImages';
 
+const TAB_BAR_HEIGHT = 80;
+
 const Events = ({ navigation, route }) => {
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const { userEvents, token, isTokenExpired } = useContext(UserContext);
   // Banner for missing event redirect
   const [bannerMessage, setBannerMessage] = useState('');
@@ -109,6 +113,8 @@ const Events = ({ navigation, route }) => {
 
   usePrefetchImages(prefetchTargets, { priority: 'high' });
 
+  const bottomContentInset = bottomInset + TAB_BAR_HEIGHT;
+
   const RenderEvent = ({ item }) => {
     const imageSource = resolveImageSource(item.imageUrl, {
       priority: 'high',
@@ -151,7 +157,7 @@ const Events = ({ navigation, route }) => {
   return (
     <>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: bottomContentInset }]}>
       {/* Control Bar with Filter & Sort */}
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
@@ -263,6 +269,7 @@ const Events = ({ navigation, route }) => {
           data={filteredEvents}
           keyExtractor={(item) => item._id.toString()}
           renderItem={RenderEvent}
+          contentContainerStyle={{ paddingBottom: bottomContentInset }}
         />
       ) : (
         <Text style={styles.noEvents}>No upcoming events.</Text>

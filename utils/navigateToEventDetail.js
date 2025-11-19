@@ -1,4 +1,5 @@
 import { fetchEventDetails } from '../services/EventService';
+import { navigateWithinMainTabs } from './navigateWithTabs';
 
 /**
  * Navigate to the EventDetailCard screen while prefetching the latest details.
@@ -25,16 +26,25 @@ export const navigateToEventDetail = async ({
     baseParams.eventId = id;
   }
 
-  navigation.navigate('EventDetailCard', baseParams);
+  const { usedFallback, targetNavigation } = navigateWithinMainTabs({
+    navigation,
+    screen: 'EventDetailCard',
+    tab: 'Home',
+    params: baseParams,
+  });
 
   if (!id || !token || (typeof isTokenExpired === 'function' && isTokenExpired(token))) {
+    return;
+  }
+
+  if (usedFallback || !targetNavigation) {
     return;
   }
 
   try {
     const detailed = await fetchEventDetails(id, token);
     if (detailed) {
-      navigation.navigate({
+      targetNavigation.navigate({
         name: 'EventDetailCard',
         params: { eventPreload: detailed },
         merge: true,

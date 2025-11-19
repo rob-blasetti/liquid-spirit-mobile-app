@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect, useMemo, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
 // import { Modal } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -9,11 +9,11 @@ import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
-import SocialMediaScreen from '../screens/SocialMedia';
-import Home from '../screens/Home';
-import DiscoverScreen from '../screens/Discover';
+import HomeStackNavigator from './HomeStackNavigator';
+import DiscoverStackNavigator from './DiscoverStackNavigator';
+import ChatStackNavigator from './ChatStackNavigator';
+import SocialStackNavigator from './SocialStackNavigator';
 // Removed NotificationScreen import; Notifications handled via Home screen banner
-import ChatScreen from '../screens/Chat';
 import ProfileStackNavigator from '../navigation/ProfileStackNavigator';
 
 // 1. Import the WelcomeModal
@@ -25,12 +25,44 @@ const tabIcons = {
   Home: 'home-outline',
   Discover: 'calendar-outline',
   Feed: 'compass-outline',
-  Chat: 'chatbubble-ellipses-outline',
+  Chat: 'chatbubbles-outline',
   Profile: 'person-outline',
 };
 const TAB_BAR_HEIGHT = 80;
-const FAB_OFFSET = 4;
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+const FAB_VERTICAL_OFFSET = 54;
+const FAB_HORIZONTAL_OFFSET = 8;
+
+const getLeafRoute = (input) => {
+  if (!input) return null;
+  if (Array.isArray(input.routes)) {
+    const index = input.index ?? 0;
+    return getLeafRoute(input.routes[index]);
+  }
+  if (input.state) {
+    return getLeafRoute(input.state);
+  }
+  return input;
+};
+
+const extractActivityContext = (params = {}) => {
+  if (!params) return { activityId: '', activityTitle: '' };
+  const candidates = [
+    params.activityId,
+    params.activity?.id,
+    params.activity?._id,
+    params.activityPreload?.id,
+    params.activityPreload?._id,
+  ];
+  const match = candidates.find(Boolean);
+  const activityId = match ? String(match) : '';
+  const activityTitle =
+    params.activityTitle ||
+    params.activity?.title ||
+    params.activityPreload?.title ||
+    params.title ||
+    '';
+  return { activityId, activityTitle };
+};
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn, chatNotificationCount, user } = useContext(UserContext);
@@ -41,106 +73,188 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const parentNavigation = navigation.getParent?.() || navigation;
   const [modalVisible, setModalVisible] = useState(false);
   const [scrollToTop, setScrollToTop] = useState(false);
-  const [fabExpanded, setFabExpanded] = useState(false);
-  const [optionsVisible, setOptionsVisible] = useState(false);
-  const fabExpandedRef = useRef(fabExpanded);
-  fabExpandedRef.current = fabExpanded;
+  const [focusedRoute, setFocusedRoute] = useState(null);
+  const iconScale = useRef(new Animated.Value(1)).current;
+  const [visibleAction, setVisibleAction] = useState(null);
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setFabExpanded(false);
-    }
-  }, [isLoggedIn]);
-
-  const closeFab = () => setFabExpanded(false);
-  const toggleFab = () => {
-    if (!isLoggedIn) {
-      setModalVisible(true);
-      return;
-    }
-    setFabExpanded(prev => !prev);
-  };
-
-  const handleCreateActivity = () => {
+  const handleCreateActivity = useCallback(() => {
     if (!isLoggedIn) {
       setModalVisible(true);
       return;
     }
     if (!userId) return;
-    closeFab();
     parentNavigation.navigate('CreateActivity', { communityId, userId });
-  };
+  }, [isLoggedIn, parentNavigation, communityId, userId]);
 
-  const handleCreatePost = () => {
+  const handleCreatePost = useCallback(() => {
     if (!isLoggedIn) {
       setModalVisible(true);
       return;
     }
-    closeFab();
     parentNavigation.navigate('CreatePostModal');
-  };
+  }, [isLoggedIn, parentNavigation]);
 
-  const handleNewMessage = () => {
+  const handleNewMessage = useCallback(() => {
     if (!isLoggedIn) {
       setModalVisible(true);
       return;
     }
-    closeFab();
-    parentNavigation.navigate('NewMessage');
-  };
+    parentNavigation.navigate('Main', {
+      screen: 'Chat',
+      params: { screen: 'NewMessage' },
+    });
+  }, [isLoggedIn, parentNavigation]);
 
-  const fabOptions = useMemo(
-    () => [
-      { key: 'activity', label: 'Create Activity', icon: 'calendar-outline', onPress: handleCreateActivity },
-      { key: 'post', label: 'Create Post', icon: 'create-outline', onPress: handleCreatePost },
-      { key: 'message', label: 'New Message', icon: 'chatbubble-ellipses-outline', onPress: handleNewMessage },
-    ],
-    [handleCreateActivity, handleCreatePost, handleNewMessage],
+  const handleCreateSession = useCallback(
+    (activityContext) => {
+      if (!isLoggedIn) {
+        setModalVisible(true);
+        return;
+      }
+      const { activityId, activityTitle } = activityContext || {};
+      if (!activityId) {
+        Alert.alert(
+          'Activity unavailable',
+          'Unable to create a session because the activity information is missing.',
+        );
+        return;
+      }
+      parentNavigation.navigate('CreateSession', {
+        activityId,
+        activityTitle,
+      });
+    },
+    [isLoggedIn, parentNavigation],
   );
-  const optionAnimationsRef = useRef([]);
-  if (optionAnimationsRef.current.length !== fabOptions.length) {
-    optionAnimationsRef.current = fabOptions.map(() => new Animated.Value(0));
-  }
-  const optionAnimations = optionAnimationsRef.current;
-  const fabBottom = TAB_BAR_HEIGHT + FAB_OFFSET + insets.bottom;
+
+  const fabBottom = insets.bottom + FAB_VERTICAL_OFFSET;
+
+  const syncFocusedRoute = useCallback(() => {
+    const tabState = navigation.getState?.();
+    if (!tabState?.routes || !tabState.routes.length) {
+      setFocusedRoute(null);
+      return;
+    }
+    const activeRoute = tabState.routes[tabState.index ?? 0];
+    const leafRoute = getLeafRoute(activeRoute);
+    setFocusedRoute({
+      name: leafRoute?.name,
+      params: leafRoute?.params,
+      tab: activeRoute?.name,
+    });
+  }, [navigation]);
 
   useEffect(() => {
-    if (fabExpanded) {
-      optionAnimations.forEach(animation => animation.stopAnimation());
-      if (!optionsVisible) {
-        setOptionsVisible(true);
+    syncFocusedRoute();
+    const unsubscribe = navigation.addListener?.('state', syncFocusedRoute);
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
       }
-      const openAnimations = optionAnimations
-        .map(animation =>
-          Animated.spring(animation, {
-            toValue: 1,
-            useNativeDriver: true,
-            friction: 7,
-            tension: 70,
-          }),
-        )
-        .reverse();
+    };
+  }, [navigation, syncFocusedRoute]);
 
-      Animated.stagger(60, openAnimations).start();
-    } else if (optionsVisible) {
-      optionAnimations.forEach(animation => animation.stopAnimation());
-      const closeAnimations = optionAnimations.map(animation =>
-        Animated.timing(animation, {
-          toValue: 0,
-          duration: 140,
-          useNativeDriver: true,
-        }),
-      );
+  const defaultAction = useMemo(
+    () => ({
+      key: 'create-post',
+      icon: 'create-outline',
+      label: 'Create Post',
+      onPress: handleCreatePost,
+    }),
+    [handleCreatePost],
+  );
 
-      Animated.stagger(40, closeAnimations).start(({ finished }) => {
-        if (finished && !fabExpandedRef.current) {
-          setOptionsVisible(false);
-        }
-      });
-    } else {
-      optionAnimations.forEach(animation => animation.setValue(0));
+  const currentAction = useMemo(() => {
+    const routeName = focusedRoute?.name;
+    if (!routeName) {
+      return defaultAction;
     }
-  }, [fabExpanded, optionAnimations, optionsVisible]);
+    if (routeName === 'ActivityDetailCard') {
+      const activityContext = extractActivityContext(focusedRoute?.params || {});
+      return {
+        key: 'create-session',
+        icon: 'time-outline',
+        label: 'New Session',
+        onPress: () => handleCreateSession(activityContext),
+        disabled: !activityContext.activityId,
+      };
+    }
+    if (routeName === 'Activities') {
+      return {
+        key: 'create-activity',
+        icon: 'calendar-outline',
+        label: 'Create Activity',
+        onPress: handleCreateActivity,
+      };
+    }
+    if (routeName === 'ChatScreen' || routeName === 'ChatDetail' || routeName === 'Chat') {
+      return {
+        key: 'new-conversation',
+        icon: 'add',
+        label: 'New Conversation',
+        onPress: handleNewMessage,
+      };
+    }
+    if (routeName === 'DiscoverScreen' || (focusedRoute?.tab === 'Discover' && !routeName)) {
+      return {
+        key: 'discover-create-activity',
+        icon: 'calendar-outline',
+        label: 'Create Activity',
+        onPress: handleCreateActivity,
+      };
+    }
+    if (routeName === 'Discover') {
+      return {
+        key: 'discover-create-activity',
+        icon: 'calendar-outline',
+        label: 'Create Activity',
+        onPress: handleCreateActivity,
+      };
+    }
+    if (routeName === 'HomeScreen' || routeName === 'SocialFeed') {
+      return defaultAction;
+    }
+    return defaultAction;
+  }, [defaultAction, focusedRoute, handleCreateActivity, handleCreateSession, handleNewMessage]);
+
+  useEffect(() => {
+    if (!currentAction) return;
+    if (!visibleAction) {
+      setVisibleAction(currentAction);
+      return;
+    }
+    if (visibleAction.key === currentAction.key) {
+      setVisibleAction(currentAction);
+      return;
+    }
+    Animated.timing(iconScale, {
+      toValue: 0.2,
+      duration: 120,
+      useNativeDriver: true,
+    }).start(() => {
+      setVisibleAction(currentAction);
+      Animated.spring(iconScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 140,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [currentAction, iconScale, visibleAction]);
+
+  const handleFabPress = () => {
+    if (!currentAction || currentAction.disabled) {
+      if (!isLoggedIn) {
+        setModalVisible(true);
+      }
+      return;
+    }
+    if (!isLoggedIn) {
+      setModalVisible(true);
+      return;
+    }
+    currentAction.onPress?.();
+  };
 
   return (
     <>
@@ -223,9 +337,6 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           tabPress: (e) => {
             const state = navigation.getState();
             const currentRoute = state.routes[state.index]?.name;
-            if (fabExpanded) {
-              closeFab();
-            }
 
             // Require login for other tabs (except Feed)
             if (!isLoggedIn && route.name !== 'Feed') {
@@ -243,77 +354,44 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         })}
       >
         <Tab.Screen name="Home">
-          {(props) => <Home {...props} homeOverview={homeOverview} />}
+          {(props) => <HomeStackNavigator {...props} homeOverview={homeOverview} />}
         </Tab.Screen>
-        <Tab.Screen name="Discover" component={DiscoverScreen} />
+        <Tab.Screen name="Discover" component={DiscoverStackNavigator} />
         <Tab.Screen name="Feed">
           {(props) => (
-            <SocialMediaScreen
+            <SocialStackNavigator
               {...props}
               initialPosts={initialPosts}
               scrollToTop={scrollToTop}
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Chat" component={ChatScreen} />
+        <Tab.Screen name="Chat" component={ChatStackNavigator} />
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
 
       <View pointerEvents="box-none" style={styles.fabPortal}>
-        {(fabExpanded || optionsVisible) && (
-          <TouchableOpacity
-            style={styles.fabBackdrop}
-            activeOpacity={1}
-            onPress={closeFab}
-          />
-        )}
         <View style={[styles.fabColumn, { bottom: fabBottom }]}>
-          {optionsVisible &&
-            fabOptions.map((action, index) => {
-              const animation = optionAnimations[index];
-              const translateY = animation.interpolate({
-                inputRange: [0, 1],
-                outputRange: [12 * (fabOptions.length - index), 0],
-              });
-              const animatedStyle = {
-                opacity: animation,
-                transform: [
-                  { translateY },
-                  {
-                    scale: animation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.95, 1],
-                    }),
-                  },
-                ],
-              };
-
-              return (
-                <AnimatedTouchableOpacity
-                  key={action.key}
-                  style={[styles.fabOption, animatedStyle]}
-                  onPress={action.onPress}
-                  accessibilityRole="button"
-                  accessibilityLabel={action.label}
-                  activeOpacity={0.9}
-                >
-                  <Ionicons name={action.icon} size={18} color={themeVariables.primaryColor} />
-                  <Text style={styles.fabOptionText}>{action.label}</Text>
-                </AnimatedTouchableOpacity>
-              );
-            })}
           <TouchableOpacity
             accessibilityRole="button"
-            accessibilityLabel={fabExpanded ? 'Close quick actions' : 'Open quick actions'}
-            style={styles.fab}
-            onPress={toggleFab}
+            accessibilityLabel={
+              visibleAction?.label || currentAction?.label || 'Create Post'
+            }
+            style={[
+              styles.fab,
+              currentAction?.disabled && styles.fabDisabled,
+            ]}
+            onPress={handleFabPress}
             activeOpacity={0.85}
+            disabled={currentAction?.disabled}
           >
-            <Ionicons
-              name={fabExpanded ? 'close' : 'add'}
-              size={24}
-              color={themeVariables.whiteColor}
-            />
+            <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+              <Ionicons
+                name={visibleAction?.icon || currentAction?.icon || 'add'}
+                size={24}
+                color={themeVariables.whiteColor}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
       </View>
@@ -346,13 +424,9 @@ const styles = StyleSheet.create({
   fabPortal: {
     ...StyleSheet.absoluteFillObject,
   },
-  fabBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-  },
   fabColumn: {
     position: 'absolute',
-    right: 24,
+    right: FAB_HORIZONTAL_OFFSET,
     alignItems: 'flex-end',
   },
   fab: {
@@ -368,23 +442,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  fabOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: themeVariables.whiteColor,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 999,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  fabOptionText: {
-    marginLeft: 8,
-    color: themeVariables.blackColor,
-    fontWeight: '600',
+  fabDisabled: {
+    opacity: 0.6,
   },
 });

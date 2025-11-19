@@ -6,6 +6,7 @@ import FastImage from 'react-native-fast-image';
 import { UserContext } from '../contexts/UserContext';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import resolveImageSource from '../utils/imageSource';
 import usePrefetchImages from '../hooks/usePrefetchImages';
 
@@ -32,7 +33,10 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
         navigateToEventDetail({ navigation, event: item, token, isTokenExpired });
       } else {
         // ✅ Navigate to the activity detail page if it's an activity
-        navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item });
+        navigateToActivityDetail({
+          navigation,
+          activity: item,
+        });
       }
     }
   };

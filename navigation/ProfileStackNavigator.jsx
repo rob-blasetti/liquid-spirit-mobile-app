@@ -10,9 +10,20 @@ import NotificationSettings from '../screens/NotificationSettings';
 import EventsScreen from '../screens/Events';
 import ActivitiesScreen from '../screens/Activities';
 import EditProfileScreen from '../screens/EditProfile';
+import EventDetailCard from '../screens/EventDetailCard';
+import ActivityDetailCard from '../screens/ActivityDetailCard';
 // import ChangePasswordScreen from '../screens/ChangePassword';
 
 const Stack = createStackNavigator();
+
+const detailScreenOptions = {
+  headerTransparent: true,
+  headerStyle: { backgroundColor: 'transparent', elevation: 0 },
+  headerTitle: '',
+  headerShadowVisible: false,
+  headerTintColor: themeVariables.blackColor,
+  safeAreaInsets: { top: 0 },
+};
 
 const ProfileStackNavigator = () => {
   return (
@@ -69,6 +80,16 @@ const ProfileStackNavigator = () => {
       />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="EventDetailCard"
+        component={EventDetailCard}
+        options={detailScreenOptions}
+      />
+      <Stack.Screen
+        name="ActivityDetailCard"
+        component={ActivityDetailCard}
+        options={detailScreenOptions}
+      />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}

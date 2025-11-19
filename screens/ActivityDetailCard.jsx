@@ -1,7 +1,5 @@
-// Amount to offset content so top corners are hidden initially
-const HEADER_OFFSET = 0;
 import React, { useContext, useEffect, useState, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   View,
   Text,
@@ -52,6 +50,10 @@ import FooterBrand from '../components/FooterBrand';
 import SessionCard from '../components/SessionCard';
 import { resolveSessionDate } from '../utils/activityDate';
 import { shareContent } from '../utils/shareContent';
+
+// Amount to offset content so top corners are hidden initially
+const HEADER_OFFSET = 0;
+const TAB_BAR_HEIGHT = 80;
 
 if (
   Platform.OS === 'android' &&
@@ -448,6 +450,7 @@ const SectionTitle = ({ title, note, showTooltip = true }) => {
    ──────────────────────────────────────────────────────────────────────────── */
 const ActivityDetailCard = ({ route }) => {
   const navigation = useNavigation();
+  const { bottom: safeAreaBottom } = useSafeAreaInsets();
   const { user, token, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
   const { activityId, activityPreload, initialSessionId = null } = route.params;
 
@@ -527,10 +530,27 @@ const ActivityDetailCard = ({ route }) => {
     () => applyHydratedMembers(activity, hydratedProfiles),
     [activity, hydratedProfiles],
   );
+  const scrollContentStyle = useMemo(
+    () => ({
+      paddingTop: HEADER_OFFSET,
+      paddingBottom: Math.max(30, safeAreaBottom + TAB_BAR_HEIGHT),
+    }),
+    [safeAreaBottom],
+  );
   const latestActivityForChat = hydratedActivity || hydratedPrefillActivity || activityPreload || {};
   const chatParticipantProfiles = useMemo(
     () => getActivityChatParticipantProfiles(latestActivityForChat),
     [latestActivityForChat],
+  );
+
+  const openChatDetail = useCallback(
+    (params) => {
+      navigation.navigate('Main', {
+        screen: 'Chat',
+        params: { screen: 'ChatDetail', params },
+      });
+    },
+    [navigation],
   );
 
   const handleShare = useCallback(() => {
@@ -571,7 +591,7 @@ const ActivityDetailCard = ({ route }) => {
         const existingChatId = extractChatIdentifier(existingChat);
         if (existingChat && existingChatId) {
           const existingParticipants = buildChatParticipantProfiles(existingChat);
-          navigation.navigate('ChatDetail', {
+          openChatDetail({
             chatId: existingChatId,
             chatTitle: deriveChatTitleFromChat(
               existingChat,
@@ -619,7 +639,7 @@ const ActivityDetailCard = ({ route }) => {
 
       const createdParticipants = buildChatParticipantProfiles(chatData);
 
-      navigation.navigate('ChatDetail', {
+      openChatDetail({
         chatId: newChatId,
         chatTitle:
           deriveChatTitleFromChat(chatData, `${sourceActivity.title || 'Activity'} Chat`),
@@ -644,8 +664,8 @@ const ActivityDetailCard = ({ route }) => {
     token,
     user,
     activityId,
-    navigation,
     chatParticipantProfiles,
+    openChatDetail,
   ]);
 
   useLayoutEffect(() => {
@@ -802,7 +822,7 @@ const ActivityDetailCard = ({ route }) => {
         />
         <SwipeToCloseScrollView
           style={styles.scrollView}
-          contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+          contentContainerStyle={scrollContentStyle}
           overScrollMode="always"
           scrollEventThrottle={16}
           // swipe down past half the header offset to go back
@@ -852,7 +872,7 @@ const ActivityDetailCard = ({ route }) => {
       />
       <SwipeToCloseScrollView
         style={styles.scrollView}
-        contentContainerStyle={{ paddingTop: HEADER_OFFSET, paddingBottom: 30 }}
+        contentContainerStyle={scrollContentStyle}
         overScrollMode="always"
         scrollEventThrottle={16}
         // swipe down past half the header offset to go back

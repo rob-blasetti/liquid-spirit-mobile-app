@@ -28,6 +28,7 @@ import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyP
 import { shareContent } from '../utils/shareContent';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
 const TAB_BAR_HEIGHT = 80;
 
@@ -229,10 +230,7 @@ const filterUserActivities = (allActivities, userId) => {
     });
     } else if (type === 'activities') {
       // Open the activity detail view
-      navigation.navigate('ActivityDetailCard', {
-        activityId: item._id,
-        activityPreload: item,
-      });
+      navigateToActivityDetail({ navigation, activity: item });
     } else if (type === 'events') {
       // Open the event detail view
       navigateToEventDetail({ navigation, event: item, token, isTokenExpired });

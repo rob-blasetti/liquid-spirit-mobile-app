@@ -8,6 +8,7 @@ import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../
 import { Chip } from 'react-native-paper';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import { fetchPostDetails } from '../services/PostService';
 import { fetchEventDetails } from '../services/EventService';
 import { fetchActivityDetails } from '../services/ActivityService';
@@ -480,14 +481,16 @@ export default function Notifications() {
             showContentUnavailableAlert();
             return;
           }
-          const params = {
-            activityId,
-            activityPreload: preload,
-          };
+          const params = {};
           if (item.sessionId) {
             params.initialSessionId = item.sessionId;
           }
-          navigation.navigate('ActivityDetailCard', params);
+          navigateToActivityDetail({
+            navigation,
+            activityPreload: preload,
+            activityId,
+            params,
+          });
           break;
         }
         case 'event': {

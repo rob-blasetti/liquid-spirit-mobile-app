@@ -222,17 +222,6 @@ export const UserProvider = ({ children }) => {
     [],
   );
 
-  const refreshChatBadgeFromServer = useCallback(async () => {
-    if (!token) return;
-    try {
-      const response = await fetchChats({ token });
-      console.log('[ChatBadge] fetchChats response:', JSON.stringify(response)?.slice(0, 500));
-      syncChatBadgeFromPayload(response);
-    } catch (error) {
-      console.error('Error refreshing chat badge:', error?.message || error);
-    }
-  }, [token, syncChatBadgeFromPayload]);
-
   const clearChatUnread = useCallback(
     (chatId) => {
       if (!chatId) return;
@@ -492,6 +481,39 @@ export const UserProvider = ({ children }) => {
       return null;
     }
   }, [token, refreshSession]);
+
+  const refreshChatBadgeFromServer = useCallback(async () => {
+    if (!token) return;
+    try {
+      const response = await fetchChats({ token });
+      console.log('[ChatBadge] fetchChats response:', JSON.stringify(response)?.slice(0, 500));
+      syncChatBadgeFromPayload(response);
+    } catch (error) {
+      const message = error?.message || '';
+      const tokenExpired =
+        error?.status === 401 || /token has expired/i.test(message);
+
+      if (tokenExpired) {
+        console.warn('[ChatBadge] Token expired while refreshing badge; refreshing session.');
+        const refreshed = await ensureValidSession();
+        if (refreshed) {
+          try {
+            const retryResponse = await fetchChats({ token: refreshed });
+            syncChatBadgeFromPayload(retryResponse);
+            return;
+          } catch (retryError) {
+            console.error(
+              'Error refreshing chat badge after refreshing session:',
+              retryError?.message || retryError,
+            );
+          }
+        }
+        return;
+      }
+
+      console.error('Error refreshing chat badge:', message || error);
+    }
+  }, [token, syncChatBadgeFromPayload, ensureValidSession]);
 
   const appStateRef = useRef(AppState.currentState);
 

@@ -7,6 +7,7 @@ import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
 import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import resolveImageSource from '../utils/imageSource';
 
 const formatGroupTime = (timeStr) => {
@@ -56,10 +57,7 @@ const Discover = ({ navigation }) => {
 
   const handleActivityPress = useCallback(
     (activity) => {
-      navigation.navigate('ActivityDetailCard', {
-        activityId: activity._id,
-        activityPreload: activity,
-      });
+      navigateToActivityDetail({ navigation, activity });
     },
     [navigation],
   );

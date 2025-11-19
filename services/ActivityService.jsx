@@ -111,3 +111,10 @@ export const createActivity = (activityData, token) => {
   console.log('[ActivityService] createActivity payload:', activityData);
   return makeRequest('/api/activities/create', 'POST', token, activityData);
 };
+
+export const createSession = (activityId, sessionData, token) => {
+  if (!activityId) {
+    return Promise.reject(new Error('Activity ID is required to create a session.'));
+  }
+  return makeRequest(`/api/activities/${activityId}/sessions`, 'POST', token, sessionData);
+};

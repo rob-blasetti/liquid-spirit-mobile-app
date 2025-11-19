@@ -28,6 +28,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SlideBanner from '../components/SlideBanner';
 import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -433,7 +434,12 @@ const Home = ({ navigation, homeOverview, route }) => {
                 dateTime={actDateTime}
                 subheading={`${nextAct.activityType?.name || ''}`}
                 imageSource={{ uri: nextAct.imageUrl }}
-                onPress={() => navigation.navigate('ActivityDetailCard', { activityId: nextAct._id, activityPreload: nextAct })}
+                onPress={() =>
+                  navigateToActivityDetail({
+                    navigation,
+                    activity: nextAct,
+                  })
+                }
                 style={styles.largeTile}
               />
               <View style={styles.smallTilesColumn}>
@@ -442,7 +448,10 @@ const Home = ({ navigation, homeOverview, route }) => {
                   bgImgColour="blue"
                   onPress={() => {
                     if (activityToFacilitate) {
-                      navigation.navigate('ActivityDetailCard', { activityId: activityToFacilitate._id, activityPreload: activityToFacilitate });
+                      navigateToActivityDetail({
+                        navigation,
+                        activity: activityToFacilitate,
+                      });
                     } else {
                       navigation.navigate('Activities');
                     }

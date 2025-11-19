@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UserContext } from '../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -17,8 +18,12 @@ import themeVariables from '../styles/theme';
 import { getNextSessionDate } from '../utils/activityDate';
 import resolveImageSource from '../utils/imageSource';
 import usePrefetchImages from '../hooks/usePrefetchImages';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+
+const TAB_BAR_HEIGHT = 80;
 
 const Activities = ({ navigation, route }) => {
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const { userActivities } = useContext(UserContext);
   // Banner for missing activity redirect
   const [bannerMessage, setBannerMessage] = useState('');
@@ -104,6 +109,8 @@ const Activities = ({ navigation, route }) => {
 
   usePrefetchImages(prefetchTargets, { priority: 'high' });
 
+  const bottomContentInset = bottomInset + TAB_BAR_HEIGHT;
+
   const renderActivity = ({ item }) => {
     const nextSession = getNextSessionDate(item);
     let sessionLabel = 'TBA';
@@ -125,7 +132,12 @@ const Activities = ({ navigation, route }) => {
     return (
       <TouchableOpacity
         style={styles.activityCard}
-        onPress={() => navigation.navigate('ActivityDetailCard', { activityId: item._id, activityPreload: item })}
+        onPress={() =>
+          navigateToActivityDetail({
+            navigation,
+            activity: item,
+          })
+        }
       >
         <View style={styles.imageContainer}>
           <FastImage
@@ -169,7 +181,7 @@ const Activities = ({ navigation, route }) => {
   return (
     <>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: bottomContentInset }]}>
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
           <Ionicons name="filter" size={16} color="#fff" />
@@ -214,7 +226,13 @@ const Activities = ({ navigation, route }) => {
       {loading ? (
         <ActivityIndicator size="large" color={themeVariables.primaryColor} />
       ) : filteredActivities.length > 0 ? (
-        <FlatList style={styles.flatListContainer} data={filteredActivities} keyExtractor={(item) => item._id.toString()} renderItem={renderActivity} />
+        <FlatList
+          style={styles.flatListContainer}
+          data={filteredActivities}
+          keyExtractor={(item) => item._id.toString()}
+          renderItem={renderActivity}
+          contentContainerStyle={{ paddingBottom: bottomContentInset }}
+        />
       ) : (
         !drawerOpen && <Text style={styles.noActivities}>No matching activities.</Text>
       )}

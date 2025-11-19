@@ -8,6 +8,7 @@ import { Button } from 'liquid-spirit-styleguide/native';
 import themeVariables from '../styles/theme';
 import DropdownInput from '../components/forms/inputs/DropdownInput';
 import MultiSelectMemberInput from '../components/forms/inputs/MultiSelectMemberInput';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { UserContext } from '../contexts/UserContext';
 import { createActivity } from '../services/ActivityService';
@@ -168,6 +169,8 @@ const combineDateTime = (dateObj, timeObj) => {
   return combined;
 };
 
+const TAB_BAR_HEIGHT = 80;
+
 export default function CreateActivity({ navigation, route }) {
   // communityId + userId come via route params
   const communityId = route.params.communityId;
@@ -207,6 +210,14 @@ export default function CreateActivity({ navigation, route }) {
   const [memberError, setMemberError] = useState('');
   const [facilitatorQuery, setFacilitatorQuery] = useState('');
   const [participantQuery, setParticipantQuery] = useState('');
+  const { bottom: bottomInset } = useSafeAreaInsets();
+  const scrollContentStyle = useMemo(
+    () => [
+      styles.container,
+      { paddingBottom: Math.max(bottomInset + TAB_BAR_HEIGHT, 160) },
+    ],
+    [bottomInset],
+  );
 
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -417,7 +428,7 @@ export default function CreateActivity({ navigation, route }) {
       style={{ flex: 1 }}
       behavior={Platform.select({ ios: 'padding', android: null })}
     >
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView contentContainerStyle={scrollContentStyle}>
         <View style={styles.progressHeader}>
           <Title style={styles.title}>Create Activity</Title>
           <Text style={styles.stepIndicator}>Step {step} of {TOTAL_STEPS}</Text>

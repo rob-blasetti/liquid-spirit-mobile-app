@@ -10,9 +10,21 @@ const linking = {
   prefixes: ['liquidspirit://', 'https://www.liquidspirit.org', 'https://liquidspirit.org'],
   config: {
     screens: {
-      ActivityDetailCard: 'activities/:activityId',
-      EventDetailCard: 'events/:eventId',
-      PostDetailCard: 'posts/:postId',
+      Main: {
+        screens: {
+          Home: {
+            screens: {
+              ActivityDetailCard: 'activities/:activityId',
+              EventDetailCard: 'events/:eventId',
+            },
+          },
+          Feed: {
+            screens: {
+              PostDetailCard: 'posts/:postId',
+            },
+          },
+        },
+      },
       PublicUserProfile: 'users/:userId',
     },
   },
@@ -27,20 +39,14 @@ import {
   ForgotPassword,
   ForgotBahaiId,
   Eula,
-  Events as EventsScreen,
-  Activities as ActivitiesScreen,
   Search as SearchScreen,
   CreateActivity,
-  EventDetailCard,
+  CreateSession,
   PublicUserProfile,
-  ActivityDetailCard,
-  PostDetailCard,
   RequestAgendaItem,
   CurriculumDetailScreen,
   Notifications as NotificationScreen,
   PushDiagnostics,
-  ChatDetail,
-  NewMessage,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -95,47 +101,18 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ title: 'Forgot Password' }} />
       <Stack.Screen name="ForgotBahaiId" component={ForgotBahaiId} options={{ title: "Forgot Bahá'í ID" }} />
       <Stack.Screen name="EULA" component={Eula} />
-      <Stack.Screen name="Events" component={EventsScreen} />
-      <Stack.Screen name="Activities" component={ActivitiesScreen} />
       <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
-      <Stack.Screen name="CreateActivity" component={CreateActivity} options={{ title: 'Create Activity' }} />
       <Stack.Screen
-        name="EventDetailCard"
-        component={EventDetailCard}
-        options={{
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent', elevation: 0 },
-          headerTitle: '',
-          headerShadowVisible: false,
-          headerTintColor: themeVariables.blackColor,
-          safeAreaInsets: { top: 0 },
-        }}
+        name="CreateActivity"
+        component={CreateActivity}
+        options={{ title: 'Create Activity', animation: 'slide_from_bottom' }}
+      />
+      <Stack.Screen
+        name="CreateSession"
+        component={CreateSession}
+        options={{ title: 'Create Session', animation: 'slide_from_bottom' }}
       />
       <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }} />
-      <Stack.Screen
-        name="ActivityDetailCard"
-        component={ActivityDetailCard}
-        options={{
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent', elevation: 0 },
-          headerTitle: '',
-          headerShadowVisible: false,
-          headerTintColor: themeVariables.blackColor,
-          safeAreaInsets: { top: 0 },
-        }}
-      />
-      <Stack.Screen
-        name="PostDetailCard"
-        component={PostDetailCard}
-        options={{
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent', elevation: 0 },
-          headerTitle: '',
-          headerShadowVisible: false,
-          headerTintColor: themeVariables.blackColor,
-          safeAreaInsets: { top: 0 },
-        }}
-      />
       <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
       <Stack.Screen
         name="Notifications"
@@ -155,6 +132,7 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         options={{
           presentation: 'fullScreenModal',
           headerShown: false,
+          animation: 'slide_from_bottom',
         }}
       />
       <Stack.Screen
@@ -166,16 +144,6 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         name="CurriculumDetailScreen"
         component={CurriculumDetailScreen}
         options={{ title: 'Curriculum Details' }}
-      />
-      <Stack.Screen
-        name="ChatDetail"
-        component={ChatDetail}
-        options={{ title: 'Chat' }}
-      />
-      <Stack.Screen
-        name="NewMessage"
-        component={NewMessage}
-        options={{ title: 'New Message' }}
       />
       <Stack.Screen name="Main" options={{ headerShown: false }}>
         {() => <BottomBar initialPosts={initialPosts} homeOverview={homeOverview} />}

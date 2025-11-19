@@ -24,6 +24,8 @@ import { initializeSocket, joinChatRoom } from '../services/SocketService';
 import { API_URL } from '../config';
 import FastImage from 'react-native-fast-image';
 
+const TAB_BAR_HEIGHT = 80;
+
 const getMessageText = (message) => {
   if (!message) return '';
   if (typeof message === 'string') return message;
@@ -498,11 +500,30 @@ const ChatDetail = () => {
     }),
     [],
   );
+  const composerSpacing = useMemo(
+    () => Math.max(insets.bottom, 12) + TAB_BAR_HEIGHT,
+    [insets.bottom],
+  );
   const composerInsetsStyle = useMemo(
     () => ({
-      paddingBottom: 20 + Math.max(insets.bottom, 0),
+      paddingBottom: Math.max(insets.bottom, 12),
+      paddingTop: 12,
+      marginBottom: TAB_BAR_HEIGHT,
     }),
     [insets.bottom],
+  );
+  const listInsetStyle = useMemo(
+    () => ({
+      paddingBottom: composerSpacing + 24,
+    }),
+    [composerSpacing],
+  );
+  const emptyListInsetStyle = useMemo(
+    () => ({
+      flexGrow: 1,
+      paddingBottom: composerSpacing + 24,
+    }),
+    [composerSpacing],
   );
 
   const resolveSenderId = useCallback((message) => {
@@ -922,7 +943,9 @@ const participantsSection = chatParticipants.length ? (
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? insets.bottom : 0}
+        keyboardVerticalOffset={
+          Platform.OS === 'ios' ? insets.bottom + TAB_BAR_HEIGHT : 0
+        }
       >
         <FlatList
           style={styles.list}
@@ -932,7 +955,9 @@ const participantsSection = chatParticipants.length ? (
           keyboardShouldPersistTaps="handled"
           ListHeaderComponentStyle={styles.listHeaderComponent}
           contentContainerStyle={
-            messages.length === 0 ? styles.emptyListContainer : styles.listContent
+            messages.length === 0
+              ? [styles.emptyListContainer, emptyListInsetStyle]
+              : [styles.listContent, listInsetStyle]
           }
           refreshControl={
             <RefreshControl
@@ -1053,12 +1078,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     marginHorizontal: 0,
   },
-  listContent: {
-    paddingBottom: 140,
-  },
+  listContent: {},
   emptyListContainer: {
     flexGrow: 1,
-    paddingBottom: 140,
   },
   emptyStateWrapper: {
     paddingVertical: 40,

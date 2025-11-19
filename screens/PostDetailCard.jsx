@@ -37,6 +37,7 @@ import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import resolveImageSource from '../utils/imageSource';
 
 const HEADER_OFFSET = 0;
+const TAB_BAR_HEIGHT = 80;
 
 const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -73,17 +74,18 @@ const PostDetailCard = ({ route }) => {
   // Fade in overall content and media for smoother entry
   const contentOpacity = useRef(new Animated.Value(0.6)).current;
   const mediaOpacity = useRef(new Animated.Value(0.6)).current;
+  const bottomOffset = safeAreaBottom + TAB_BAR_HEIGHT;
   const scrollContentStyle = useMemo(
-    () => [styles.scrollContent, { paddingBottom: Math.max(48, safeAreaBottom + 36) }],
-    [safeAreaBottom]
+    () => [styles.scrollContent, { paddingBottom: Math.max(48, bottomOffset) }],
+    [bottomOffset],
   );
   const footerContainerStyle = useMemo(
-    () => [styles.footerContainer, { paddingBottom: Math.max(36, safeAreaBottom + 20) }],
-    [safeAreaBottom]
+    () => [styles.footerContainer, { paddingBottom: Math.max(36, bottomOffset) }],
+    [bottomOffset],
   );
   const commentBoxContainerStyle = useMemo(
-    () => [styles.commentBoxContainer, { marginBottom: Math.max(24, safeAreaBottom + 16) }],
-    [safeAreaBottom]
+    () => [styles.commentBoxContainer, { marginBottom: Math.max(24, bottomOffset / 2) }],
+    [bottomOffset],
   );
 
   const handleShare = useCallback(() => {

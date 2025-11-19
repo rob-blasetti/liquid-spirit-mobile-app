@@ -13,6 +13,7 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
+import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
 const placeholderImage = require('../assets/img/placeholder.png');
 
@@ -161,24 +162,29 @@ const Search = () => {
     }
 
     if (selected.type === 'activity') {
-      navigation.navigate('ActivityDetailCard', {
+      navigateToActivityDetail({
+        navigation,
+        activity: selected,
         activityId: primaryId,
-        activityPreload: selected,
       });
       return;
     }
 
     if (selected.type === 'session') {
       const activityId = selected.activityId || primaryId;
-      navigation.navigate('ActivityDetailCard', {
+      navigateToActivityDetail({
+        navigation,
         activityId,
-        initialSessionId: primaryId,
+        params: { initialSessionId: primaryId },
       });
       return;
     }
 
     if (primaryId) {
-      navigation.navigate('ActivityDetailCard', { activityId: primaryId });
+      navigateToActivityDetail({
+        navigation,
+        activityId: primaryId,
+      });
     }
   }, [navigation, token, isTokenExpired]);
   // Partition results by type for grouped sections
