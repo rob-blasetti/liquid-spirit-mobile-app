@@ -5,7 +5,7 @@ import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-c
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import themeVariables from './styles/theme';
 
-import { UserProvider, CommunityProvider } from './contexts';
+import { UserProvider, CommunityProvider, ChatProvider } from './contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
 
 import { Splash } from './screens';
@@ -67,7 +67,9 @@ const App = () => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <CommunityProvider>
       <UserProvider>
-        <MainApp />
+        <ChatProvider>
+          <MainApp />
+        </ChatProvider>
       </UserProvider>
     </CommunityProvider>
   </GestureHandlerRootView>

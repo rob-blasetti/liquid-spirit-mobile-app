@@ -14,25 +14,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import FastImage from 'react-native-fast-image';
 
 import themeVariables from '../styles/theme';
-import { UserContext } from '../contexts/UserContext';
-import { fetchChats } from '../services/ChatService';
+import { UserContext, ChatContext } from '../contexts';
 import { API_URL } from '../config';
-
-const normalizeChats = (payload) => {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-
-  if (Array.isArray(payload.data)) return payload.data;
-  if (Array.isArray(payload.results)) return payload.results;
-  if (Array.isArray(payload.chats)) return payload.chats;
-  if (Array.isArray(payload.items)) return payload.items;
-
-  if (payload.data?.chats && Array.isArray(payload.data.chats)) {
-    return payload.data.chats;
-  }
-
-  return [];
-};
 
 const getLastMessagePreview = (chat) => {
   const message =
@@ -317,50 +300,32 @@ const ChatRow = ({ chat, onPress }) => {
 
 const ChatScreen = () => {
   const {
-    token,
     isLoggedIn,
     setHasNewChatMessages,
     setIsChatTabActive,
-    syncChatBadgeFromChats,
     clearChatUnread,
   } = useContext(UserContext);
+  const {
+    chats,
+    loading: chatsLoading,
+    error,
+    refreshChats,
+    hydrated,
+    getChatMessages,
+    prefetchChatMessages,
+  } = useContext(ChatContext);
   const navigation = useNavigation();
-  const [chats, setChats] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const handleStartNewChat = useCallback(() => {
     if (!isLoggedIn) return;
     navigation.navigate('NewMessage');
   }, [isLoggedIn, navigation]);
 
-  const loadChats = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!token) return;
-      if (!silent) setLoading(true);
-      setError('');
-      try {
-        const response = await fetchChats({ token });
-        const normalized = normalizeChats(response);
-        setChats(normalized);
-        syncChatBadgeFromChats?.(normalized);
-      } catch (err) {
-        const message = err?.message || 'Unable to load chats.';
-        setError(message);
-      } finally {
-        if (!silent) {
-          setLoading(false);
-        }
-      }
-    },
-    [token, syncChatBadgeFromChats],
-  );
-
   useFocusEffect(
     useCallback(() => {
       if (!isLoggedIn) return;
-      loadChats();
-    }, [isLoggedIn, loadChats]),
+      refreshChats({ silent: true }).catch(() => {});
+    }, [isLoggedIn, refreshChats]),
   );
 
   useFocusEffect(
@@ -376,23 +341,29 @@ const ChatScreen = () => {
   const onRefresh = useCallback(() => {
     if (!isLoggedIn) return;
     setRefreshing(true);
-    loadChats({ silent: true }).finally(() => setRefreshing(false));
-  }, [isLoggedIn, loadChats]);
+    refreshChats({ silent: true })
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
+  }, [isLoggedIn, refreshChats]);
 
   const handleOpenChat = useCallback(
     (chat) => {
       if (!chat) return;
       const chatId = chat._id || chat.id;
       if (!chatId) return;
+      prefetchChatMessages?.(chatId, { silent: true }).catch(() => {});
       clearChatUnread?.(chatId);
+      const cachedMessages = getChatMessages?.(chatId)?.messages;
       navigation.navigate('ChatDetail', {
         chatId,
         chatTitle: chat.title || chat.name || chat.chatName || chat.roomName || 'Conversation',
         chatParticipants: buildParticipantProfiles(chat),
         chatImage: resolveChatImageUrl(chat),
+        chatRecord: chat,
+        chatMessages: cachedMessages,
       });
     },
-    [navigation, clearChatUnread],
+    [navigation, clearChatUnread, getChatMessages, prefetchChatMessages],
   );
 
   const renderChat = useCallback(
@@ -425,7 +396,7 @@ const ChatScreen = () => {
             Chats will appear here once you are logged in.
           </Text>
         </View>
-      ) : loading && chats.length === 0 ? (
+      ) : (chatsLoading && chats.length === 0) || (!hydrated && chats.length === 0) ? (
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={themeVariables.primaryColor} />
           <Text style={styles.loadingText}>Loading conversations…</Text>

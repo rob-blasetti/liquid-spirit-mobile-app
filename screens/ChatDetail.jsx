@@ -18,20 +18,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
-import { fetchChatMessages, sendChatMessage, markMessagesRead } from '../services/ChatService';
+import { ChatContext } from '../contexts';
+import { sendChatMessage, markMessagesRead } from '../services/ChatService';
 import { initializeSocket, joinChatRoom } from '../services/SocketService';
 import { API_URL } from '../config';
 import FastImage from 'react-native-fast-image';
-
-const normalizeMessages = (payload) => {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (Array.isArray(payload.results)) return payload.results;
-  if (Array.isArray(payload.messages)) return payload.messages;
-  if (Array.isArray(payload.items)) return payload.items;
-  return [];
-};
 
 const getMessageText = (message) => {
   if (!message) return '';
@@ -345,6 +336,76 @@ const extractParticipantsFromParams = (params) => {
   return [];
 };
 
+const deriveChatTitleFromRecord = (chat, fallback = 'Chat') => {
+  if (!chat || typeof chat !== 'object') return fallback;
+  return (
+    chat.title ||
+    chat.name ||
+    chat.chatName ||
+    chat.roomName ||
+    chat.topic ||
+    chat.subject ||
+    fallback
+  );
+};
+
+const extractParticipantsFromChatRecord = (chat) => {
+  if (!chat || typeof chat !== 'object') return [];
+  const candidates = [
+    chat.participants,
+    chat.members,
+    chat.users,
+    chat.recipients,
+    chat.people,
+    chat.attendees,
+    chat.userIds,
+  ];
+  for (const entry of candidates) {
+    const profiles = buildParticipantProfilesFromEntries(entry);
+    if (profiles.length) return profiles;
+  }
+  return [];
+};
+
+const extractChatImageFromRecord = (chat) => {
+  if (!chat || typeof chat !== 'object') return '';
+  const keys = [
+    'avatar',
+    'imageUrl',
+    'image_url',
+    'image',
+    'photo',
+    'picture',
+    'banner',
+    'bannerUrl',
+    'banner_url',
+  ];
+  for (const key of keys) {
+    const value = chat[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value.trim();
+    }
+  }
+  return '';
+};
+
+const extractMessagesFromChatRecord = (chat) => {
+  if (!chat || typeof chat !== 'object') return [];
+  const candidates = [
+    chat.messages,
+    chat.lastMessages,
+    chat.last_messages,
+    chat.recentMessages,
+    chat.recent_messages,
+  ];
+  for (const entry of candidates) {
+    if (Array.isArray(entry) && entry.length) {
+      return entry;
+    }
+  }
+  return [];
+};
+
 const HERO_BASE_HEIGHT = 260;
 
 const ChatDetail = () => {
@@ -358,24 +419,48 @@ const ChatDetail = () => {
     refreshChatBadgeFromServer,
     clearChatUnread,
   } = useContext(UserContext);
+  const { getChatById, getChatMessages, prefetchChatMessages } = useContext(ChatContext);
 
-  const chatId = route?.params?.chatId;
-  const chatTitle = route?.params?.chatTitle || 'Chat';
-  const routeChatImage = route?.params?.chatImage;
-  const initialParticipantProfiles = useMemo(
-    () => extractParticipantsFromParams(route?.params),
-    [route?.params],
+  const routeParams = route?.params;
+  const chatId = routeParams?.chatId;
+  const chatFromParams = routeParams?.chatRecord;
+  const routeChatTitle = routeParams?.chatTitle;
+  const routeChatImage = routeParams?.chatImage;
+  const routeChatMessages = Array.isArray(routeParams?.chatMessages) ? routeParams.chatMessages : [];
+  const contextChat = useMemo(
+    () => (chatId ? getChatById?.(chatId) : null),
+    [chatId, getChatById],
   );
-  const initialChatImage = useMemo(
-    () => normalizeImageUrl(routeChatImage),
-    [routeChatImage],
+  const hydratedChat = chatFromParams || contextChat || null;
+  const chatTitle = useMemo(
+    () => routeChatTitle || deriveChatTitleFromRecord(hydratedChat) || 'Chat',
+    [routeChatTitle, hydratedChat],
   );
+  const initialParticipantProfiles = useMemo(() => {
+    const fromParams = extractParticipantsFromParams(routeParams);
+    if (fromParams.length) return fromParams;
+    const fromChat = extractParticipantsFromChatRecord(hydratedChat);
+    if (fromChat.length) return fromChat;
+    return [];
+  }, [routeParams, hydratedChat]);
+  const initialChatImage = useMemo(() => {
+    if (routeChatImage) return normalizeImageUrl(routeChatImage);
+    const fromChat = normalizeImageUrl(extractChatImageFromRecord(hydratedChat));
+    return fromChat;
+  }, [routeChatImage, hydratedChat]);
+  const conversationEntry = chatId ? getChatMessages?.(chatId) : null;
+  const prefetchedMessages = conversationEntry?.messages || [];
   const currentUserId = useMemo(
     () => user?._id || user?.id || user?.userId || null,
     [user],
   );
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    if (routeChatMessages.length) return routeChatMessages;
+    if (prefetchedMessages.length) return prefetchedMessages;
+    const fromChat = extractMessagesFromChatRecord(hydratedChat);
+    return Array.isArray(fromChat) ? fromChat : [];
+  });
   const [chatParticipants, setChatParticipants] = useState(initialParticipantProfiles);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -526,6 +611,39 @@ const ChatDetail = () => {
   }, [routeChatImage]);
 
   useEffect(() => {
+    if (!prefetchedMessages.length) return;
+    setMessages((prev) => {
+      const prevLatestId = prev?.[prev.length - 1]?._id;
+      const nextLatestId = prefetchedMessages[prefetchedMessages.length - 1]?._id;
+      if (prevLatestId === nextLatestId && prev.length === prefetchedMessages.length) {
+        return prev;
+      }
+      return prefetchedMessages;
+    });
+  }, [prefetchedMessages]);
+
+  useEffect(() => {
+    if (!routeChatMessages.length) return;
+    setMessages((prev) => (prev.length ? prev : routeChatMessages));
+  }, [routeChatMessages]);
+
+  useEffect(() => {
+    if (!initialParticipantProfiles.length) return;
+    setChatParticipants((prev) => (prev.length ? prev : initialParticipantProfiles));
+  }, [initialParticipantProfiles]);
+
+  useEffect(() => {
+    if (!initialChatImage) return;
+    setChatImageUrl((prev) => prev || initialChatImage);
+  }, [initialChatImage]);
+
+  useEffect(() => {
+    const fromChat = extractMessagesFromChatRecord(hydratedChat);
+    if (!fromChat.length) return;
+    setMessages((prev) => (prev.length ? prev : fromChat));
+  }, [hydratedChat]);
+
+  useEffect(() => {
     if (!chatParticipants.length && participantsExpanded) {
       setParticipantsExpanded(false);
     }
@@ -537,26 +655,36 @@ const ChatDetail = () => {
       setError('');
       if (!silent) setLoading(true);
       try {
-        const response = await fetchChatMessages(chatId, { limit: 200 }, { token });
-        const normalized = normalizeMessages(response);
-        setMessages(normalized);
-        const payloadParticipants = extractParticipantProfilesFromPayload(response);
-        if (payloadParticipants.length) {
-          setChatParticipants(payloadParticipants);
-        } else {
+        const result = await prefetchChatMessages?.(chatId, { silent, force: true });
+        const normalized = Array.isArray(result)
+          ? result
+          : Array.isArray(result?.messages)
+            ? result.messages
+            : [];
+        const payload = result?.payload;
+        if (Array.isArray(normalized) && normalized.length) {
+          setMessages(normalized);
           setChatParticipants((prev) => {
             if (prev.length) return prev;
             const derived = extractParticipantsFromMessages(normalized);
             return derived.length ? derived : prev;
           });
         }
-        const payloadImage = normalizeImageUrl(extractChatImageFromPayload(response));
-        if (payloadImage) {
-          setChatImageUrl(payloadImage);
+        if (payload) {
+          const payloadParticipants = extractParticipantProfilesFromPayload(payload);
+          if (payloadParticipants.length) {
+            setChatParticipants(payloadParticipants);
+          }
+          const payloadImage = normalizeImageUrl(extractChatImageFromPayload(payload));
+          if (payloadImage) {
+            setChatImageUrl(payloadImage);
+          }
         }
         refreshChatBadgeFromServer?.();
         clearChatUnread?.(chatId);
-        markMessagesAsRead(normalized);
+        if (Array.isArray(normalized) && normalized.length) {
+          markMessagesAsRead(normalized);
+        }
       } catch (err) {
         const message = err?.message || 'Unable to load messages.';
         setError(message);
@@ -564,7 +692,14 @@ const ChatDetail = () => {
         if (!silent) setLoading(false);
       }
     },
-    [chatId, token, refreshChatBadgeFromServer, clearChatUnread, markMessagesAsRead],
+    [
+      chatId,
+      token,
+      refreshChatBadgeFromServer,
+      clearChatUnread,
+      markMessagesAsRead,
+      prefetchChatMessages,
+    ],
   );
 
   useEffect(() => {
