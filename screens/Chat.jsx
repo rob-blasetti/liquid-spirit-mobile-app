@@ -10,7 +10,6 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import FastImage from 'react-native-fast-image';
 
 import themeVariables from '../styles/theme';
@@ -316,10 +315,6 @@ const ChatScreen = () => {
   } = useContext(ChatContext);
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
-  const handleStartNewChat = useCallback(() => {
-    if (!isLoggedIn) return;
-    navigation.navigate('NewMessage');
-  }, [isLoggedIn, navigation]);
 
   useFocusEffect(
     useCallback(() => {
@@ -379,14 +374,6 @@ const ChatScreen = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
-        <TouchableOpacity
-          style={[styles.newChatButton, !isLoggedIn && styles.newChatButtonDisabled]}
-          activeOpacity={0.85}
-          onPress={handleStartNewChat}
-          disabled={!isLoggedIn}
-        >
-          <Ionicons name="create-outline" size={18} color={themeVariables.whiteColor} />
-        </TouchableOpacity>
       </View>
 
       {!isLoggedIn ? (
@@ -450,20 +437,12 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '600',
     color: themeVariables.blackColor,
-  },
-  newChatButton: {
-    backgroundColor: themeVariables.primaryColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 10,
-  },
-  newChatButtonDisabled: {
-    opacity: 0.5,
   },
   centerContent: {
     flex: 1,
