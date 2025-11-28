@@ -1,52 +1,80 @@
-/**
- * CurriculumService
- * Fetches and normalizes curriculum metadata+structure by activityType and title,
- * and picks out the current lesson.
- */
-// Strategy map: activityType => fetcher
-const fetchers = {
-  // e.g. "Grade" activities load a local JSON under ../data/grades/${title}.json
-  grade: async ({ title }) => {
-    // expects a default-exported JSON with { metadata, sets: [ { id, title, lessons: [...] } ] }
-    const mod = await import(`../data/grades/${title}.json`);
-    return mod.default || mod;
-  },
-  // TODO: add other activityType handlers here
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL as CONFIG_API_URL } from '../config';
+
+// Support import.meta env (web) with RN config fallback
+const API_URL =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
+  CONFIG_API_URL;
+
+const getToken = async () => {
+  try {
+    return await AsyncStorage.getItem('authToken');
+  } catch {
+    return null;
+  }
 };
 
 /**
- * Retrieve the curriculum for a given activityType and title.
- * Returns null if no fetcher found or on error.
+ * Fetch Children's Class curriculum by identifier or grade via `/api/curriculum/:id`.
+ * The backend accepts either a Mongo ObjectId or a grade key: 'Preschool', '1', '2', '2b'.
  */
-export async function getCurriculum(activityType, title) {
-  if (!activityType || !title) return null;
-  const key = activityType.toLowerCase();
-  const fetcher = fetchers[key];
-  if (!fetcher) return null;
-  try {
-    return await fetcher({ title });
-  } catch (err) {
-    console.warn('CurriculumService.getCurriculum error:', err);
-    return null;
+export const fetchChildrensCurriculum = async (gradeOrId) => {
+  if (!gradeOrId) throw new Error('gradeOrId is required');
+  const token = await getToken();
+  const id = encodeURIComponent(String(gradeOrId).trim());
+  const url = `${API_URL}/api/curriculum/${id}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    let message = res.statusText;
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch (_) {
+      // ignore body parse error
+    }
+    throw new Error(message || "Failed to fetch children's class curriculum");
   }
-}
+
+  return res.json();
+};
 
 /**
- * Given a curriculum object and an optional currentLessonId,
- * return the matching lesson or the first lesson.
+ * Fetch a specific curriculum by its id.
  */
-export function getCurrentLesson(curriculum, currentLessonId) {
-  if (!curriculum || !Array.isArray(curriculum.sets)) return null;
-  // try to find by id
-  if (currentLessonId) {
-    for (const set of curriculum.sets) {
-      const found = set.lessons.find(l => l.id === currentLessonId);
-      if (found) return found;
-    }
+export const fetchCurriculumById = async (curriculumId) => {
+  if (!curriculumId) throw new Error('curriculumId is required');
+  const token = await getToken();
+  const url = `${API_URL}/api/curriculum/${encodeURIComponent(curriculumId)}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    let message = res.statusText;
+    try {
+      const data = await res.json();
+      message = data?.message || message;
+    } catch (_) {}
+    throw new Error(message || 'Failed to fetch curriculum');
   }
-  // fallback: first set > first lesson
-  const first = curriculum.sets[0];
-  return first && Array.isArray(first.lessons) && first.lessons[0]
-    ? first.lessons[0]
-    : null;
-}
+
+  return res.json();
+};
+
+export default {
+  fetchChildrensCurriculum,
+  fetchCurriculumById,
+};

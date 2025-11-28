@@ -122,9 +122,10 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
       parentNavigation.navigate('CreateSession', {
         activityId,
         activityTitle,
+        communityId,
       });
     },
-    [isLoggedIn, parentNavigation],
+    [communityId, isLoggedIn, parentNavigation],
   );
 
   const fabBottom = insets.bottom + FAB_VERTICAL_OFFSET;

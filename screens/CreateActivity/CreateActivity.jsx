@@ -269,8 +269,9 @@ export default function CreateActivity({ navigation, route }) {
         </TouchableOpacity>
       ),
       headerBackVisible: false,
+      title: form.title || 'Create Activity',
     });
-  }, [navigation, handleNavBack]);
+  }, [form.title, navigation, handleNavBack]);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', handleNavBack);
