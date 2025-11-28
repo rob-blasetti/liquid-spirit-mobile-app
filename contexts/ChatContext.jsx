@@ -7,8 +7,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { fetchChats, fetchChatMessages } from '../services/ChatService';
+import { fetchChats, fetchChatMessages, fetchChatActivities } from '../services/ChatService';
+import { getMemberList } from '../services/UserService';
 import { UserContext } from './UserContext';
+import { CommunityContext } from './CommunityContext';
+import { buildNormalizedMemberList, prepareSuggestedActivities } from '../utils/chatSuggestions';
 
 const MAX_PREFETCHED_CONVERSATIONS = 5;
 
@@ -51,10 +54,17 @@ export const ChatContext = createContext({
   getChatById: () => null,
   getChatMessages: () => null,
   prefetchChatMessages: () => Promise.resolve([]),
+  newMessagePrefetch: {
+    members: [],
+    suggestedActivities: [],
+    fetchedAt: null,
+  },
+  prefetchNewMessageData: () => Promise.resolve({ members: [], suggestedActivities: [] }),
 });
 
 export const ChatProvider = ({ children }) => {
-  const { token, isLoggedIn, syncChatBadgeFromChats } = useContext(UserContext);
+  const { token, isLoggedIn, user, syncChatBadgeFromChats } = useContext(UserContext);
+  const { communityId } = useContext(CommunityContext);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -63,6 +73,13 @@ export const ChatProvider = ({ children }) => {
   const [conversationStore, setConversationStore] = useState({});
   const conversationStoreRef = useRef(conversationStore);
   const conversationInflightRef = useRef(new Map());
+  const [newMessagePrefetch, setNewMessagePrefetch] = useState({
+    members: [],
+    suggestedActivities: [],
+    fetchedAt: null,
+  });
+  const newMessagePrefetchInflightRef = useRef(null);
+  const userId = user?._id || user?.id || user?.userId || null;
 
   const loadChats = useCallback(
     async ({ silent = false } = {}) => {
@@ -114,6 +131,15 @@ export const ChatProvider = ({ children }) => {
 
     loadChats().catch(() => {});
   }, [token, isLoggedIn, loadChats]);
+
+  useEffect(() => {
+    setNewMessagePrefetch({
+      members: [],
+      suggestedActivities: [],
+      fetchedAt: null,
+    });
+    newMessagePrefetchInflightRef.current = null;
+  }, [communityId, token, isLoggedIn]);
 
   const setConversationEntry = useCallback((chatId, partial) => {
     if (!chatId) return;
@@ -190,6 +216,56 @@ export const ChatProvider = ({ children }) => {
     [token, isLoggedIn, setConversationEntry],
   );
 
+  const prefetchNewMessageData = useCallback(
+    async ({ force = false } = {}) => {
+      if (!token || !isLoggedIn || !communityId) {
+        return { members: [], suggestedActivities: [] };
+      }
+
+      if (!force && newMessagePrefetch.fetchedAt) {
+        const ageMs = Date.now() - newMessagePrefetch.fetchedAt;
+        if (ageMs < 5 * 60 * 1000) {
+          return newMessagePrefetch;
+        }
+      }
+
+      if (newMessagePrefetchInflightRef.current) {
+        return newMessagePrefetchInflightRef.current;
+      }
+
+      const promise = (async () => {
+        try {
+          const [memberPayload, activitiesPayload] = await Promise.all([
+            getMemberList(communityId).catch((err) => {
+              console.warn('Unable to prefetch community members:', err?.message || err);
+              return null;
+            }),
+            fetchChatActivities({ token }).catch((err) => {
+              console.warn('Unable to prefetch chat activities:', err?.message || err);
+              return [];
+            }),
+          ]);
+
+          const members = buildNormalizedMemberList(memberPayload, userId);
+          const suggestedActivities = prepareSuggestedActivities(activitiesPayload || []);
+          const snapshot = {
+            members,
+            suggestedActivities,
+            fetchedAt: Date.now(),
+          };
+          setNewMessagePrefetch(snapshot);
+          return snapshot;
+        } finally {
+          newMessagePrefetchInflightRef.current = null;
+        }
+      })();
+
+      newMessagePrefetchInflightRef.current = promise;
+      return promise;
+    },
+    [token, isLoggedIn, communityId, newMessagePrefetch, userId],
+  );
+
   useEffect(() => {
     if (!token || !isLoggedIn || !chats.length) return;
     const chatIds = chats
@@ -245,6 +321,8 @@ export const ChatProvider = ({ children }) => {
       getChatById,
       getChatMessages: getConversationEntry,
       prefetchChatMessages,
+      newMessagePrefetch,
+      prefetchNewMessageData,
     }),
     [
       chats,
@@ -256,6 +334,8 @@ export const ChatProvider = ({ children }) => {
       getChatById,
       getConversationEntry,
       prefetchChatMessages,
+      newMessagePrefetch,
+      prefetchNewMessageData,
     ],
   );
 

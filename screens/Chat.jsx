@@ -312,6 +312,7 @@ const ChatScreen = () => {
     hydrated,
     getChatMessages,
     prefetchChatMessages,
+    prefetchNewMessageData,
   } = useContext(ChatContext);
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -331,6 +332,13 @@ const ChatScreen = () => {
         setIsChatTabActive(false);
       };
     }, [setIsChatTabActive, setHasNewChatMessages]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isLoggedIn) return;
+      prefetchNewMessageData?.({ silent: true }).catch(() => {});
+    }, [isLoggedIn, prefetchNewMessageData]),
   );
 
   const onRefresh = useCallback(() => {
@@ -369,6 +377,7 @@ const ChatScreen = () => {
     (item, index) => item?._id || item?.id || `chat-${index}`,
     [],
   );
+  const listData = chats;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -390,11 +399,11 @@ const ChatScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={chats}
+          data={listData}
           keyExtractor={keyExtractor}
           renderItem={renderChat}
           contentContainerStyle={
-            chats.length === 0 ? styles.emptyListContainer : styles.listContent
+            listData.length === 0 ? styles.emptyListContainer : styles.listContent
           }
           refreshControl={
             <RefreshControl

@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   miniMeta: {
     fontSize: 12,
-    color: themeVariables.darkGreyColor,
+    color: themeVariables.blackColor,
     marginTop: 4,
   },
   miniTag: {

@@ -508,7 +508,7 @@ const ChatDetail = () => {
     () => ({
       paddingBottom: Math.max(insets.bottom, 12),
       paddingTop: 12,
-      marginBottom: TAB_BAR_HEIGHT,
+      marginBottom: Math.max(insets.bottom, 10) + 22,
     }),
     [insets.bottom],
   );
@@ -1318,7 +1318,7 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: themeVariables.borderColor,
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 12,
   },
   composerInput: {
     flex: 1,

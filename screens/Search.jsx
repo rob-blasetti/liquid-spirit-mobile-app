@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
-import { SafeAreaView, View, TextInput, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
 import localImages from '../utils/localImages';
 import SearchItem from '../components/SearchItem';
+import SearchBar from '../components/SearchBar';
 import { CommunityContext } from '../contexts/CommunityContext';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -606,50 +607,37 @@ const Search = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.searchBarRow}>
-        <View style={[styles.searchInputContainer, !isSearchFocused && styles.searchInputContainerCollapsed]}>
-          <TextInput
-            ref={inputRef}
-            style={styles.searchInput}
-            placeholder="Search..."
-            value={query}
-            onChangeText={handleSearch}
-            onFocus={() => {
-              setIsSearchFocused(true);
-              handleAutocomplete(query);
-            }}
-            onBlur={() => {
-              setIsSearchFocused(false);
-              if (query.trim().length > 0) {
-                updateRecentSearches(query);
-              }
-            }}
-            returnKeyType="search"
-            onSubmitEditing={() => {
-              cancelAutocomplete();
-              setAutocompleteSuggestions([]);
-              inputRef.current?.blur?.();
-              setIsSearchFocused(false);
-              if (query.trim().length > 0) {
-                updateRecentSearches(query);
-              }
-              executeSearch(query);
-            }}
-          />
-          {showSearchSpinner ? (
-            <ActivityIndicator
-              size="small"
-              color={themeVariables.primaryColor}
-              style={styles.searchSpinner}
-            />
-          ) : null}
-        </View>
-        {isSearchFocused ? (
-          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel} activeOpacity={0.7}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <SearchBar
+        ref={inputRef}
+        placeholder="Search..."
+        value={query}
+        onChangeText={handleSearch}
+        onFocus={() => {
+          setIsSearchFocused(true);
+          handleAutocomplete(query);
+        }}
+        onBlur={() => {
+          setIsSearchFocused(false);
+          if (query.trim().length > 0) {
+            updateRecentSearches(query);
+          }
+        }}
+        onSubmitEditing={() => {
+          cancelAutocomplete();
+          setAutocompleteSuggestions([]);
+          inputRef.current?.blur?.();
+          setIsSearchFocused(false);
+          if (query.trim().length > 0) {
+            updateRecentSearches(query);
+          }
+          executeSearch(query);
+        }}
+        showSpinner={showSearchSpinner}
+        showCancel={isSearchFocused}
+        onCancel={handleCancel}
+        isFocused={isSearchFocused}
+        returnKeyType="search"
+      />
       {showSuggestionPanel ? (
         <View style={styles.autocompleteContainer}>
           <ScrollView
@@ -744,45 +732,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     marginBottom: 80,
     backgroundColor: themeVariables.screenBackgroundColor,
-  },
-  searchInput: {
-    height: 48,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderColor: themeVariables.blackColor,
-    borderWidth: 1,
-    borderRadius: 20,
-    backgroundColor: themeVariables.whiteColor,
-    paddingRight: 40,
-    width: '100%',
-  },
-  searchBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginHorizontal: 12,
-  },
-  searchInputContainer: {
-    flex: 1,
-    marginRight: 12,
-    position: 'relative',
-  },
-  searchInputContainerCollapsed: {
-    marginRight: 0,
-  },
-  searchSpinner: {
-    position: 'absolute',
-    right: 24,
-    top: 24,
-    marginTop: -10,
-  },
-  cancelButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  cancelButtonText: {
-    color: themeVariables.primaryColor,
-    fontSize: 16,
   },
   autocompleteContainer: {
     marginHorizontal: 8,

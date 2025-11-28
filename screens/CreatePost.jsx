@@ -2,7 +2,6 @@ import React, { useState, useContext, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -26,6 +25,7 @@ import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 import resolveImageSource from '../utils/imageSource';
+import ContentSection from '../components/forms/ContentSection';
 
 export default function CreatePost({ onPostCreated, onClose }) {
   const [content, setContent] = useState('');
@@ -41,6 +41,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const navigation = useNavigation();
   const handleClose = onClose ? onClose : () => navigation.goBack();
   const insets = useSafeAreaInsets();
+  const [contentError, setContentError] = useState('');
   // Static tag options: one for each activity type (6) and event type (3)
   const tagOptions = [
     "Children's Class",
@@ -96,8 +97,10 @@ export default function CreatePost({ onPostCreated, onClose }) {
   };
 
   const handlePost = async () => {
-    if (!content || !communityId) {
-      Alert.alert('Missing Fields', 'Please write something.');
+    if (!content || !content.trim() || !communityId) {
+      const message = !communityId ? 'Please join a community before posting.' : 'Please add some content.';
+      setContentError(!content || !content.trim() ? 'Content is required.' : '');
+      Alert.alert('Missing Fields', message);
       return;
     }
 
@@ -195,14 +198,18 @@ export default function CreatePost({ onPostCreated, onClose }) {
                 <Text style={styles.uploadButtonText}>Upload image or video</Text>
               </TouchableOpacity>
 
-              <Text style={styles.label}>Content</Text>
-              <TextInput
-                style={styles.textArea}
-                placeholder="What's on your mind?"
-                placeholderTextColor="#999"
+              <ContentSection
+                title="Content"
+                placeholder="Share an update with your community..."
                 value={content}
-                onChangeText={setContent}
-                multiline
+                onChangeText={(text) => {
+                  setContent(text);
+                  if (contentError && text.trim()) {
+                    setContentError('');
+                  }
+                }}
+                error={contentError}
+                required
               />
 
               <Text style={styles.label}>Tags</Text>
@@ -318,19 +325,6 @@ const styles = StyleSheet.create({
     top: -6,
     right: 15,
     padding: 8,
-  },
-  textArea: {
-    width: '100%',
-    backgroundColor: themeVariables.whiteColor,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    fontSize: 16,
-    color: '#333',
-    minHeight: 100,
-    textAlignVertical: 'top',
-    marginBottom: 20,
   },
   label: {
     alignSelf: 'flex-start',

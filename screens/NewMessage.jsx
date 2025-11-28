@@ -18,229 +18,18 @@ import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
+import { ChatContext } from '../contexts';
 import { getMemberList } from '../services/UserService';
-import { createChat, isUserEligibleForActivityChat, fetchChatActivities } from '../services/ChatService';
-import { API_URL } from '../config';
-
-const normalizeMemberEntries = (payload) => {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload.data)) return payload.data;
-  if (Array.isArray(payload.memberDetails)) return payload.memberDetails;
-  if (Array.isArray(payload?.data?.memberDetails)) return payload.data.memberDetails;
-  if (Array.isArray(payload?.results)) return payload.results;
-  return [];
-};
-
-const isUserMemberEntry = (entry) => {
-  if (!entry || typeof entry !== 'object') return false;
-  const candidate =
-    entry.details ||
-    entry.user ||
-    entry.profile ||
-    entry.account ||
-    entry.member ||
-    entry.refId ||
-    entry.ref ||
-    entry.reference ||
-    entry;
-
-  const typeCandidates = [
-    entry.type,
-    entry.entityType,
-    entry.memberType,
-    entry.referenceType,
-    entry.refType,
-    entry.targetType,
-    candidate?.type,
-    candidate?.entityType,
-    candidate?.memberType,
-  ];
-
-  return typeCandidates.some((value) => {
-    if (!value || typeof value !== 'string') return false;
-    const normalized = value.trim().toLowerCase();
-    return normalized === 'user';
-  });
-};
-
-const resolveAvatarSource = (avatar) => {
-  if (!avatar) return '';
-  if (typeof avatar === 'object') {
-    if (typeof avatar.uri === 'string') {
-      return resolveAvatarSource(avatar.uri);
-    }
-    const nested =
-      avatar.url ||
-      avatar.path ||
-      avatar.href ||
-      avatar.value;
-    if (nested) {
-      return resolveAvatarSource(nested);
-    }
-    return '';
-  }
-  if (typeof avatar !== 'string') return '';
-  const trimmed = avatar.trim();
-  if (!trimmed) return '';
-  if (/^https?:\/\//i.test(trimmed) || /^data:/i.test(trimmed)) {
-    return trimmed;
-  }
-  const normalized = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `${API_URL}${normalized}`;
-};
-
-const normalizeMemberRecord = (entry) => {
-  if (!entry) return null;
-  const candidate =
-    entry.details ||
-    entry.profile ||
-    entry.user ||
-    entry.account ||
-    entry.member ||
-    entry.refId ||
-    entry.ref ||
-    entry.reference ||
-    entry;
-
-  const id =
-    candidate?._id ||
-    candidate?.id ||
-    candidate?.userId ||
-    candidate?.user_id ||
-    entry?._id ||
-    entry?.id ||
-    null;
-
-  const firstName =
-    entry.fullName ||
-    candidate?.fullName ||
-    candidate?.firstName ||
-    candidate?.first_name ||
-    entry.firstName ||
-    entry.first_name ||
-    '';
-
-  const lastName =
-    candidate?.lastName ||
-    candidate?.last_name ||
-    entry.lastName ||
-    entry.last_name ||
-    '';
-
-  const composedName =
-    typeof firstName === 'string' && firstName.includes(' ')
-      ? firstName
-      : [firstName, lastName].map((part) => (typeof part === 'string' ? part.trim() : '')).filter(Boolean).join(' ');
-
-  const email = candidate?.email || entry.email || '';
-  const role = entry.communityRole || entry.role || candidate?.role || '';
-  const phone = candidate?.phoneNumber || candidate?.phone_number || entry.phoneNumber || '';
-  const avatar = resolveAvatarSource(
-    candidate?.profilePicture ||
-      candidate?.profilePictureUrl ||
-      candidate?.profile?.profilePicture ||
-      candidate?.profile?.avatar ||
-      candidate?.avatar ||
-      candidate?.avatarUrl ||
-      candidate?.photo ||
-      candidate?.image ||
-      candidate?.media?.avatar ||
-      entry.profilePicture ||
-      entry.profile_picture ||
-      entry.profile?.profilePicture ||
-      entry.avatar ||
-      entry.avatarUrl ||
-      entry.photo ||
-      entry.image ||
-      entry.media?.avatar,
-  );
-
-  const displayName = entry.fullName || composedName || email || phone || 'Member';
-  const subtitle = email || role || phone || '';
-
-  const searchHaystack = [displayName, email, role, phone]
-    .filter(Boolean)
-    .join(' ')
-    .toLowerCase();
-
-  return {
-    _id: id ? String(id) : null,
-    displayName,
-    subtitle,
-    avatar,
-    searchHaystack,
-    source: candidate || entry,
-    raw: entry,
-  };
-};
-
-const extractActivityId = (activity) => {
-  if (!activity) return '';
-  const candidates = [
-    activity._id,
-    activity.id,
-    activity.activityId,
-    activity.activity_id,
-    activity.slug,
-    activity.activity?.id,
-    activity.activity?._id,
-    activity.activity?.activityId,
-    activity.details?.activityId,
-  ];
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    const value = String(candidate).trim();
-    if (value) return value;
-  }
-  return '';
-};
-
-const resolveActivityImage = (activity = {}) => {
-  const candidates = [
-    activity.bannerImage,
-    activity.imageUrl,
-    activity.imageURL,
-    activity.bannerUrl,
-    activity.bannerURL,
-    activity.heroImage,
-    activity.photo,
-    activity.image,
-    activity.coverImage,
-    activity.media?.banner,
-  ];
-  for (const candidate of candidates) {
-    const normalized = resolveAvatarSource(candidate);
-    if (normalized) return normalized;
-  }
-  return '';
-};
-
-const getActivityTitle = (activity = {}) => {
-  return (
-    activity.title ||
-    activity.name ||
-    activity.activityTitle ||
-    activity.groupName ||
-    'Activity Chat'
-  );
-};
-
-const hasMinimumParticipants = (activity = {}) => {
-  const participants = Array.isArray(activity.participantIds)
-    ? activity.participantIds
-    : [];
-  const facilitators = Array.isArray(activity.facilitatorIds)
-    ? activity.facilitatorIds
-    : [];
-  const uniqueIds = new Set();
-  [...participants, ...facilitators].forEach((id) => {
-    if (!id) return;
-    const value = String(id).trim();
-    if (value) uniqueIds.add(value);
-  });
-  return uniqueIds.size >= 2;
-};
+import { createChat, fetchChatActivities } from '../services/ChatService';
+import {
+  buildNormalizedMemberList,
+  extractActivityId,
+  getActivityTitle,
+  prepareSuggestedActivities,
+  resolveActivityImage,
+  resolveAvatarSource,
+} from '../utils/chatSuggestions';
+import SearchBar from '../components/SearchBar';
 
 const MemberRow = ({ member, disabled, onPress, isBusy }) => {
   const initials = useMemo(() => {
@@ -347,32 +136,33 @@ const NewMessage = () => {
   const navigation = useNavigation();
   const { token, user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const { newMessagePrefetch, prefetchNewMessageData } = useContext(ChatContext);
+  const prefetchedMembers = newMessagePrefetch?.members || [];
+  const prefetchedSuggestions = newMessagePrefetch?.suggestedActivities || [];
+  const [members, setMembers] = useState(prefetchedMembers);
+  const [loading, setLoading] = useState(prefetchedMembers.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [creatingFor, setCreatingFor] = useState(null);
   const [activityChatBusyId, setActivityChatBusyId] = useState(null);
-  const [suggestedActivities, setSuggestedActivities] = useState([]);
+  const [suggestedActivities, setSuggestedActivities] = useState(prefetchedSuggestions);
+
+  useEffect(() => {
+    if (!token) return;
+    prefetchNewMessageData?.({ silent: true }).catch(() => {});
+  }, [token, prefetchNewMessageData]);
 
   useEffect(() => {
     let cancelled = false;
     const loadSuggestions = async () => {
-      if (!token) return;
+      if (!token || suggestedActivities.length > 0) return;
       try {
         const activities = await fetchChatActivities({ token });
         console.log('Fetched chat activities payload:', activities);
         if (cancelled) return;
-        const map = new Map();
-        activities.forEach((activity) => {
-          const id = extractActivityId(activity);
-          if (!id || map.has(id)) return;
-          if (activity.hasChat) return;
-          if (!hasMinimumParticipants(activity)) return;
-          map.set(id, activity);
-        });
-        setSuggestedActivities(Array.from(map.values()));
+        const prepared = prepareSuggestedActivities(activities);
+        setSuggestedActivities(prepared);
       } catch (err) {
         if (!cancelled) {
           console.warn('Unable to load suggested chats:', err?.message || err);
@@ -383,7 +173,7 @@ const NewMessage = () => {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, suggestedActivities.length]);
 
   const currentUserId = useMemo(
     () => user?._id || user?.id || user?.userId || null,
@@ -395,6 +185,8 @@ const NewMessage = () => {
       if (!communityId) {
         setError('Join a community to start new conversations.');
         setMembers([]);
+        setLoading(false);
+        setRefreshing(false);
         return;
       }
       if (silent) {
@@ -406,15 +198,7 @@ const NewMessage = () => {
       try {
         const response = await getMemberList(communityId);
         console.log('Fetched community members payload:', response);
-        const normalizedList = normalizeMemberEntries(response)
-          .filter((entry) => isUserMemberEntry(entry))
-          .map(normalizeMemberRecord)
-          .filter(
-            (member) =>
-              member &&
-              member._id &&
-              (!currentUserId || member._id !== String(currentUserId)),
-          );
+        const normalizedList = buildNormalizedMemberList(response, currentUserId);
         setMembers(normalizedList);
       } catch (err) {
         const message = err?.message || 'Unable to load community members.';
@@ -438,8 +222,22 @@ const NewMessage = () => {
   }, []);
 
   useEffect(() => {
-    fetchMembers(false);
-  }, [fetchMembers]);
+    if (!members.length) {
+      fetchMembers(false);
+    }
+  }, [fetchMembers, members.length]);
+
+  useEffect(() => {
+    if (!newMessagePrefetch) return;
+    if (newMessagePrefetch.members) {
+      setMembers(newMessagePrefetch.members);
+      setLoading(false);
+      setRefreshing(false);
+    }
+    if (newMessagePrefetch.suggestedActivities) {
+      setSuggestedActivities(newMessagePrefetch.suggestedActivities);
+    }
+  }, [newMessagePrefetch]);
 
   const filteredMembers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -663,23 +461,17 @@ const NewMessage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={18} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search community members"
-          placeholderTextColor="#AAA"
-          autoCapitalize="none"
-          autoCorrect={false}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {Boolean(searchQuery) && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <Ionicons name="close-circle" size={18} color="#AAA" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <SearchBar
+        placeholder="Search community members"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onCancel={() => setSearchQuery('')}
+        showCancel={Boolean(searchQuery)}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        testID="newMessageSearch"
+      />
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -693,16 +485,16 @@ const NewMessage = () => {
           data={filteredMembers}
           keyExtractor={keyExtractor}
           renderItem={renderMember}
-          contentContainerStyle={
-            filteredMembers.length === 0 ? styles.emptyContainer : undefined
-          }
+          contentContainerStyle={styles.listContent}
           ListHeaderComponent={renderSuggestedHeader}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              {searchQuery
-                ? 'No members match your search.'
-                : 'No community members available yet.'}
-            </Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {searchQuery
+                  ? 'No members match your search.'
+                  : 'No community members available yet.'}
+              </Text>
+            </View>
           }
           refreshControl={
             <RefreshControl
@@ -725,32 +517,6 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
     paddingTop: 16,
     paddingHorizontal: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: themeVariables.borderColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 12,
-    marginHorizontal: 12,
-    marginTop: 8,
-    backgroundColor: themeVariables.formInputBg,
-    shadowColor: 'rgba(0,0,0,0.05)',
-    shadowOpacity: 1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: themeVariables.blackColor,
-    fontSize: 15,
   },
   errorText: {
     color: themeVariables.redColor,
@@ -813,14 +579,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 36,
+    paddingHorizontal: 24,
   },
   emptyText: {
     color: '#777',
     textAlign: 'center',
+  },
+  listContent: {
+    paddingBottom: 32,
   },
   sectionTitle: {
     fontSize: 13,
@@ -849,6 +617,8 @@ const styles = StyleSheet.create({
     borderRadius: themeVariables.borderRadiusPill,
     backgroundColor: themeVariables.screenBackgroundColor,
     marginRight: 12,
+    maxWidth: 260,
+    flexShrink: 1,
   },
   suggestedChipAvatar: {
     width: 36,
@@ -869,6 +639,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: themeVariables.blackColor,
     fontWeight: '600',
-    flex: 1,
+    flexShrink: 1,
+    maxWidth: 180,
   },
 });

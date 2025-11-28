@@ -243,6 +243,10 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     });
   }, [currentAction, iconScale, visibleAction]);
 
+  const hideFab =
+    focusedRoute?.name === 'NewMessage' ||
+    focusedRoute?.name === 'ChatDetail';
+
   const handleFabPress = () => {
     if (!currentAction || currentAction.disabled) {
       if (!isLoggedIn) {
@@ -371,31 +375,33 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       </Tab.Navigator>
 
-      <View pointerEvents="box-none" style={styles.fabPortal}>
-        <View style={[styles.fabColumn, { bottom: fabBottom }]}>
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityLabel={
-              visibleAction?.label || currentAction?.label || 'Create Post'
-            }
-            style={[
-              styles.fab,
-              currentAction?.disabled && styles.fabDisabled,
-            ]}
-            onPress={handleFabPress}
-            activeOpacity={0.85}
-            disabled={currentAction?.disabled}
-          >
-            <Animated.View style={{ transform: [{ scale: iconScale }] }}>
-              <Ionicons
-                name={visibleAction?.icon || currentAction?.icon || 'add'}
-                size={24}
-                color={themeVariables.whiteColor}
-              />
-            </Animated.View>
-          </TouchableOpacity>
+      {!hideFab && (
+        <View pointerEvents="box-none" style={styles.fabPortal}>
+          <View style={[styles.fabColumn, { bottom: fabBottom }]}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={
+                visibleAction?.label || currentAction?.label || 'Create Post'
+              }
+              style={[
+                styles.fab,
+                currentAction?.disabled && styles.fabDisabled,
+              ]}
+              onPress={handleFabPress}
+              activeOpacity={0.85}
+              disabled={currentAction?.disabled}
+            >
+              <Animated.View style={{ transform: [{ scale: iconScale }] }}>
+                <Ionicons
+                  name={visibleAction?.icon || currentAction?.icon || 'add'}
+                  size={24}
+                  color={themeVariables.whiteColor}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       <WelcomeModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </>
