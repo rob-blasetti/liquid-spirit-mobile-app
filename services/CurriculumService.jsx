@@ -1,10 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL as CONFIG_API_URL } from '../config';
 
-// Support import.meta env (web) with RN config fallback
-const API_URL =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
-  CONFIG_API_URL;
+// Metro/Hermes doesn't support import.meta; rely on RN config for the API URL
+const API_URL = CONFIG_API_URL;
 
 const getToken = async () => {
   try {
