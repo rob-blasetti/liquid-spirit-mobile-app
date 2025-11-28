@@ -5,7 +5,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
-import { Chip } from 'react-native-paper';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
@@ -605,16 +604,6 @@ export default function Notifications() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.headingRow}>
-        <Text style={styles.heading}>Notifications</Text>
-        <Chip
-          mode="outlined"
-          style={styles.betaChip}
-          textStyle={styles.betaChipText}
-        >
-          Beta
-        </Chip>
-      </View>
       <View style={styles.toggleContainer}>
         <Pressable
           style={[
@@ -700,17 +689,10 @@ export default function Notifications() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Space content below transparent header (status bar + header height)
-    paddingTop: Platform.select({ ios: 120, android: 120 }),
+    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 16,
     backgroundColor: themeVariables.whiteColor,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: themeVariables.blackColor,
   },
   notification: {
     flexDirection: 'row',
@@ -801,15 +783,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 3,
     elevation: 3,
-  },
-  headingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  betaChip: {
-    marginLeft: 8,
-    marginBottom: 16,
-    borderRadius: 20,
   },
 });

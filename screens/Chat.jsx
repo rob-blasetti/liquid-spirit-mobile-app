@@ -436,21 +436,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: themeVariables.screenBackgroundColor,
-    paddingHorizontal: 20,
-    paddingTop: 16,
     paddingBottom: 12,
   },
   header: {
-    marginBottom: 16,
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 26,
+    fontWeight: '700',
     color: themeVariables.blackColor,
   },
   centerContent: {
@@ -476,18 +474,17 @@ const styles = StyleSheet.create({
     color: '#777',
   },
   listContent: {
+    paddingHorizontal: 20,
     paddingBottom: 48,
   },
   chatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 8,
-    paddingRight: 8,
     paddingVertical: 16,
   },
   chatAvatarWrapper: {
     width: 52,
-    marginRight: 12,
+    marginRight: 16,
     alignItems: 'center',
   },
   chatAvatar: {
@@ -544,8 +541,8 @@ const styles = StyleSheet.create({
   errorBanner: {
     position: 'absolute',
     bottom: 12,
-    left: 16,
-    right: 16,
+    left: 20,
+    right: 20,
     backgroundColor: themeVariables.alertErrorBg,
     padding: 12,
     borderRadius: 12,

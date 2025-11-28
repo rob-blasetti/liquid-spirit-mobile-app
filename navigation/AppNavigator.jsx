@@ -118,12 +118,11 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         name="Notifications"
         component={NotificationScreen}
         options={{
-          headerTransparent: true,
-          headerStyle: { backgroundColor: 'transparent', elevation: 0 },
-          headerTitle: '',
+          title: 'Notifications',
+          headerStyle: { backgroundColor: themeVariables.screenBackgroundColor, elevation: 0 },
           headerShadowVisible: false,
           headerTintColor: themeVariables.blackColor,
-          headerLeftContainerStyle: { paddingLeft: 16, paddingTop: 8 },
+          headerLeftContainerStyle: { paddingLeft: 16 },
         }}
       />
       <Stack.Screen

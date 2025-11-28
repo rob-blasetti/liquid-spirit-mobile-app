@@ -464,7 +464,10 @@ const renderScene = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.pageTitle}>My Dashboard</Text>
+      </View>
       {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.headerProfileInfo}>
@@ -490,8 +493,6 @@ const renderScene = ({ route }) => {
       </View>
 
 
-
-      <Text style={styles.dashboardHeading}>My Dashboard</Text>
 
       <TabView
         navigationState={{ index, routes }}
@@ -605,12 +606,23 @@ const styles = StyleSheet.create({
     color: '#555',
     marginTop: 4,
   },
+  pageHeader: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    backgroundColor: themeVariables.screenBackgroundColor,
+  },
+  pageTitle: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+  },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    margin: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
     borderRadius: themeVariables.borderRadiusPill,
     backgroundColor: themeVariables.whiteColor,
     // Raised shadow effect similar to ListItem & SearchCard
@@ -619,13 +631,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-  },
-  dashboardHeading: {
-    color: themeVariables.blackColor,
-    marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 4,
-    fontWeight: 'bold',
   },
   headerProfileInfo: {
     flexDirection: 'row',
