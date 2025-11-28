@@ -696,6 +696,10 @@ const styles = StyleSheet.create({
   sectionLabel: {
     marginTop: 20,
     color: themeVariables.blackColor,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 4,
+    marginBottom: 6,
   },
   locationSubLabel: {
     marginTop: 12,
@@ -709,6 +713,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: themeVariables.blackColor,
     fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 4,
   },
   subheading: {
     marginTop: 12,

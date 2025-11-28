@@ -84,11 +84,11 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 12,
+    marginTop: 0,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   flexItem: {
     flex: 1,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 8,
     overflow: 'hidden',
-    height: 52,
+    height: 56,
     width: 92,
     marginLeft: 4,
   },

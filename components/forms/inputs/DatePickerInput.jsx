@@ -62,14 +62,14 @@ const DatePickerInput = ({
           }
         />
       </TouchableOpacity>
-      <HelperText type="error" visible={!!error}>
-        {error}
-      </HelperText>
       {helperText ? (
         <HelperText type="info" visible>
           {helperText}
         </HelperText>
       ) : null}
+      <HelperText type="error" visible={!!error}>
+        {error}
+      </HelperText>
 
       {open && (
         <View style={styles.dropdown}>
@@ -126,7 +126,9 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 6,
     color: themeVariables.blackColor,
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 4,
   },
   dropdown: {
     marginTop: 8,

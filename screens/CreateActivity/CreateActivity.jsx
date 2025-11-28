@@ -592,7 +592,8 @@ const styles = StyleSheet.create({
   },
   inputLabelText: {
     color: themeVariables.blackColor,
-    fontSize: 12,
+    fontSize: 16,
+    fontWeight: '600',
   },
   tooltipText: {
     color: themeVariables.whiteColor,
@@ -608,13 +609,14 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   timeSelect: {
-    marginTop: 8,
+    marginTop: 0,
   },
   labelWithTooltip: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 8,
     marginBottom: 4,
+    paddingLeft: 4,
   },
   tooltipIconTarget: {
     marginLeft: 6,
@@ -636,9 +638,13 @@ const styles = StyleSheet.create({
   sectionLabel: {
     marginTop: 20,
     color: themeVariables.blackColor,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 4,
+    marginBottom: 6,
   },
   scheduleLabel: {
-    marginTop: 16,
+    marginTop: 8,
   },
   addressSectionLabel: {
     marginTop: 12,

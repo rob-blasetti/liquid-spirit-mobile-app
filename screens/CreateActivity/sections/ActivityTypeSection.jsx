@@ -40,7 +40,7 @@ const ActivityTypeSection = ({
       </Tooltip>
     </View>
     <DropdownInput
-      label="Activity Type *"
+      label=""
       value={value}
       options={options}
       placeholder="Select activity type"

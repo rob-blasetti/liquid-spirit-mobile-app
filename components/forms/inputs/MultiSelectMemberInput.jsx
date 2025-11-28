@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { TextInput, HelperText } from 'react-native-paper';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput } from 'react-native';
+import { HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
@@ -26,49 +26,43 @@ const MultiSelectMemberInput = ({
   return (
     <View style={[styles.wrapper, style]}>
       <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={styles.selectionRow}>
-        {selected.length === 0 ? (
-          <Text style={styles.selectionPlaceholder}>No selections yet</Text>
-        ) : (
-          selected.map(member => {
-            const key = member._id || member.id;
-            const displayName =
-              member.fullName ||
-              `${member.firstName || ''} ${member.lastName || ''}`.trim() ||
-              member.email ||
-              'Member';
-            return (
-              <View key={key} style={styles.selectionChip}>
-                <Text style={styles.selectionChipText}>
-                  {displayName}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => onRemove?.(key)}
-                  style={styles.selectionChipRemove}
-                  accessibilityLabel={`Remove ${displayName}`}
-                >
-                  <Ionicons name="close" size={12} color={themeVariables.whiteColor} />
-                </TouchableOpacity>
-              </View>
-            );
-          })
-        )}
+      <View style={[styles.selectionInput, inputStyle]}>
+        {selected.map(member => {
+          const key = member._id || member.id;
+          const displayName =
+            member.fullName ||
+            `${member.firstName || ''} ${member.lastName || ''}`.trim() ||
+            member.email ||
+            'Member';
+          return (
+            <View key={key} style={styles.selectionChip}>
+              <Text style={styles.selectionChipText}>
+                {displayName}
+              </Text>
+              <TouchableOpacity
+                onPress={() => onRemove?.(key)}
+                style={styles.selectionChipRemove}
+                accessibilityLabel={`Remove ${displayName}`}
+              >
+                <Ionicons name="close" size={12} color={themeVariables.whiteColor} />
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+        <RNTextInput
+          value={searchValue}
+          onChangeText={onChangeSearch}
+          placeholder={placeholder}
+          style={styles.inlineSearchInput}
+          {...restTextInputProps}
+          onFocus={() => setDropdownVisible(true)}
+          onBlur={() => {
+            if (!searchValue) {
+              setDropdownVisible(false);
+            }
+          }}
+        />
       </View>
-      <TextInput
-        label="Search community members"
-        mode="outlined"
-        value={searchValue}
-        onChangeText={onChangeSearch}
-        placeholder={placeholder}
-        style={[styles.searchInput, inputStyle]}
-        {...restTextInputProps}
-        onFocus={() => setDropdownVisible(true)}
-        onBlur={() => {
-          if (!searchValue) {
-            setDropdownVisible(false);
-          }
-        }}
-      />
       {dropdownVisible && (
         <View style={styles.dropdownList}>
         {loading ? (
@@ -116,22 +110,35 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontWeight: '600',
+    fontSize: 16,
     color: themeVariables.blackColor,
     marginBottom: 8,
+    paddingLeft: 4,
   },
-  selectionRow: {
+  selectionInput: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: themeVariables.borderLightColor || '#dcdcdc',
+    borderRadius: 4,
+    backgroundColor: themeVariables.whiteColor,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
     marginBottom: 8,
-  },
-  selectionPlaceholder: {
-    color: themeVariables.darkGreyColor || '#7b7b7b',
-    fontStyle: 'italic',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   selectionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: (themeVariables.primaryColor || '#007aff') + '20',
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
     borderRadius: 999,
     paddingVertical: 4,
     paddingHorizontal: 12,
@@ -139,7 +146,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   selectionChipText: {
-    color: themeVariables.blackColor,
+    color: themeVariables.primaryColor,
     marginRight: 8,
   },
   selectionChipRemove: {
@@ -150,8 +157,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchInput: {
-    marginBottom: 8,
+  inlineSearchInput: {
+    flex: 1,
+    minWidth: 80,
+    paddingVertical: 6,
   },
   dropdownList: {
     borderWidth: 1,

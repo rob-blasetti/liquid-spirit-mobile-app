@@ -60,11 +60,11 @@ const CurriculumSection = ({
       textInputProps={{ style: styles.input }}
       error={lessonError || fetchError}
     />
-    <HelperText type="error" visible={!!fetchError}>
-      {fetchError}
-    </HelperText>
     <HelperText type="info" visible={!loading && !fetchError}>
       Sets and lessons filter after picking a grade.
+    </HelperText>
+    <HelperText type="error" visible={!!fetchError}>
+      {fetchError}
     </HelperText>
   </View>
 );

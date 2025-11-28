@@ -53,17 +53,17 @@ const LocationSection = ({
         <Title style={[styles.sectionLabel, styles.locationSubLabel]}>Online meeting</Title>
         <FormTextInput
           inputProps={baseInputProps}
-          label="Online Link"
+          label=""
           value={form.onlineLink}
           onChangeText={onChangeOnlineLink}
           error={!!errors.onlineLink}
           style={styles.input}
         />
-        <HelperText type="error" visible={!!errors.onlineLink}>
-          {errors.onlineLink}
-        </HelperText>
         <HelperText type="info" visible>
           Paste a video or meeting link attendees can join.
+        </HelperText>
+        <HelperText type="error" visible={!!errors.onlineLink}>
+          {errors.onlineLink}
         </HelperText>
       </>
     )}
@@ -79,11 +79,11 @@ const LocationSection = ({
           style={[styles.input, styles.addressInput]}
           error={!!errors.streetAddress}
         />
-        <HelperText type="error" visible={!!errors.streetAddress}>
-          {errors.streetAddress}
-        </HelperText>
         <HelperText type="info" visible>
           Enter the venue’s street address.
+        </HelperText>
+        <HelperText type="error" visible={!!errors.streetAddress}>
+          {errors.streetAddress}
         </HelperText>
         <View style={styles.addressRow}>
           <FormTextInput
@@ -102,11 +102,11 @@ const LocationSection = ({
             error={!!errors.city}
           />
         </View>
-        <HelperText type="error" visible={!!errors.city}>
-          {errors.city}
-        </HelperText>
         <HelperText type="info" visible>
           Add suburb and city so people can find it.
+        </HelperText>
+        <HelperText type="error" visible={!!errors.city}>
+          {errors.city}
         </HelperText>
         <View style={styles.addressRow}>
           <DropdownInput
@@ -127,11 +127,11 @@ const LocationSection = ({
             style={[styles.input, styles.addressInput, styles.rowInput, styles.lastInRow]}
           />
         </View>
-        <HelperText type="error" visible={!!errors.state}>
-          {errors.state}
-        </HelperText>
         <HelperText type="info" visible>
           State and postcode help map the location accurately.
+        </HelperText>
+        <HelperText type="error" visible={!!errors.state}>
+          {errors.state}
         </HelperText>
       </>
     )}

@@ -1,12 +1,13 @@
 import React from 'react';
-import { HelperText } from 'react-native-paper';
+import { HelperText, Title } from 'react-native-paper';
 import FormTextInput from '../../../components/forms/inputs/FormTextInput';
 
 const TitleSection = ({ value, onChange, error, baseInputProps, styles }) => (
   <>
+    <Title style={styles.sectionLabel}>Title</Title>
     <FormTextInput
       inputProps={baseInputProps}
-      label="Title *"
+      label=""
       value={value}
       onChangeText={onChange}
       error={!!error}

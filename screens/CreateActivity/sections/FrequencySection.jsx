@@ -10,9 +10,8 @@ const FrequencySection = ({
   styles,
 }) => (
   <>
-    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Frequency</Title>
+    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Session Frequency</Title>
     <DropdownInput
-      label="Meeting Frequency *"
       value={value}
       options={options}
       placeholder="Select frequency"

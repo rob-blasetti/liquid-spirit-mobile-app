@@ -18,11 +18,11 @@ const TimeSection = ({
       inputProps={styledInputProps}
       style={styles.timeSelect}
     />
-    <HelperText type="error" visible={!!error}>
-      {error}
-    </HelperText>
     <HelperText type="info" visible>
       {helperText}
+    </HelperText>
+    <HelperText type="error" visible={!!error}>
+      {error}
     </HelperText>
   </>
 );
