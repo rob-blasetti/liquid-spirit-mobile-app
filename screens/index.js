@@ -2,7 +2,7 @@
 export { default as Activities } from './Activities';
 export { default as ActivityDetailCard } from './ActivityDetailCard';
 export { default as ChangePassword } from './ChangePassword';
-export { default as CreateActivity } from './CreateActivity';
+export { default as CreateActivity } from './CreateActivity/CreateActivity';
 export { default as CreatePost } from './CreatePost';
 export { default as CurriculumDetailScreen } from './CurriculumDetailScreen';
 export { default as Discover } from './Discover';

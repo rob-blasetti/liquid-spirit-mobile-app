@@ -18,8 +18,10 @@ const MultiSelectMemberInput = ({
   error,
   emptyText = 'No matching members.',
   style,
+  textInputProps,
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -37,17 +39,17 @@ const MultiSelectMemberInput = ({
               'Member';
             return (
               <View key={key} style={styles.selectionChip}>
-              <Text style={styles.selectionChipText}>
-                    {displayName}
-              </Text>
-              <TouchableOpacity
-                onPress={() => onRemove?.(key)}
-                style={styles.selectionChipRemove}
-                accessibilityLabel={`Remove ${displayName}`}
-              >
-                <Ionicons name="close" size={12} color={themeVariables.whiteColor} />
-              </TouchableOpacity>
-            </View>
+                <Text style={styles.selectionChipText}>
+                  {displayName}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => onRemove?.(key)}
+                  style={styles.selectionChipRemove}
+                  accessibilityLabel={`Remove ${displayName}`}
+                >
+                  <Ionicons name="close" size={12} color={themeVariables.whiteColor} />
+                </TouchableOpacity>
+              </View>
             );
           })
         )}
@@ -58,7 +60,8 @@ const MultiSelectMemberInput = ({
         value={searchValue}
         onChangeText={onChangeSearch}
         placeholder={placeholder}
-        style={styles.searchInput}
+        style={[styles.searchInput, inputStyle]}
+        {...restTextInputProps}
         onFocus={() => setDropdownVisible(true)}
         onBlur={() => {
           if (!searchValue) {
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
   dropdownList: {
     borderWidth: 1,
     borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 8,
+    borderRadius: 4,
     backgroundColor: themeVariables.whiteColor,
   },
   dropdownLoading: {

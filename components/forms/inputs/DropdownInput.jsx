@@ -25,11 +25,13 @@ const DropdownInput = ({
   error,
   disabled = false,
   style,
+  textInputProps,
 }) => {
   const [open, setOpen] = useState(false);
 
   const normalizedOptions = useMemo(() => options.map(normalizeOption), [options]);
   const displayValue = value || '';
+  const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const toggleOpen = useCallback(() => {
     if (disabled) return;
@@ -52,7 +54,7 @@ const DropdownInput = ({
         activeOpacity={0.9}
         onPress={toggleOpen}
         accessibilityRole="button"
-        accessibilityLabel={label}
+        accessibilityLabel={typeof label === 'string' ? label : undefined}
       >
         <TextInput
           label={label}
@@ -61,7 +63,8 @@ const DropdownInput = ({
           placeholder={placeholder}
           editable={false}
           pointerEvents="none"
-          style={styles.input}
+          style={[styles.input, inputStyle]}
+          {...restTextInputProps}
           right={
             <TextInput.Icon
               icon={() => (
@@ -71,6 +74,7 @@ const DropdownInput = ({
                   color={themeVariables.primaryColor}
                 />
               )}
+              onPress={toggleOpen}
             />
           }
         />
@@ -103,6 +107,7 @@ const DropdownInput = ({
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: 12,
+    position: 'relative',
   },
   touchWrapper: {
     position: 'relative',
@@ -111,12 +116,17 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   dropdownList: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '100%',
     borderWidth: 1,
     borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 8,
-    marginTop: 8,
+    borderRadius: 4,
     backgroundColor: themeVariables.whiteColor,
     overflow: 'hidden',
+    zIndex: 10,
+    elevation: 4,
   },
   dropdownOption: {
     paddingVertical: 12,

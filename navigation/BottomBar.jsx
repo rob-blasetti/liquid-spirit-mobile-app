@@ -182,7 +182,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     if (routeName === 'Activities') {
       return {
         key: 'create-activity',
-        icon: 'calendar-outline',
+        icon: 'add-circle-outline',
         label: 'Create Activity',
         onPress: handleCreateActivity,
       };
@@ -190,7 +190,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     if (routeName === 'ChatScreen' || routeName === 'ChatDetail' || routeName === 'Chat') {
       return {
         key: 'new-conversation',
-        icon: 'add',
+        icon: 'chatbubble-ellipses-outline',
         label: 'New Conversation',
         onPress: handleNewMessage,
       };
@@ -198,7 +198,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     if (routeName === 'DiscoverScreen' || (focusedRoute?.tab === 'Discover' && !routeName)) {
       return {
         key: 'discover-create-activity',
-        icon: 'calendar-outline',
+        icon: 'add-circle-outline',
         label: 'Create Activity',
         onPress: handleCreateActivity,
       };
@@ -206,7 +206,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     if (routeName === 'Discover') {
       return {
         key: 'discover-create-activity',
-        icon: 'calendar-outline',
+        icon: 'add-circle-outline',
         label: 'Create Activity',
         onPress: handleCreateActivity,
       };
