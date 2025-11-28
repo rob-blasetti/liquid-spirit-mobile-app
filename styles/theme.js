@@ -63,6 +63,15 @@ const themeVariables = {
     boxShadowCard: 'rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px',
     boxShadowInfo: '0px 0px 12px -9px',
 
+    spacing: {
+      xs: 4,
+      s: 8,
+      m: 12,
+      l: 16,
+      xl: 24,
+      xxl: 32,
+    },
+
     pad: 10,
     margin: 10,
   };

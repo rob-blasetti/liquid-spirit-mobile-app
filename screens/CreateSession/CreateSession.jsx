@@ -40,8 +40,9 @@ const CHILDREN_GRADES = ['1', '2', '3', '4', '5', '6'];
 const initialForm = {
   notes: '',
   date: null,
-  locationMode: 'online',
+  locationMode: 'inPerson',
   onlineLink: 'https://',
+  venueId: '',
   venueName: '',
   address: {
     streetAddress: '',
@@ -137,6 +138,7 @@ const CreateSession = ({ navigation, route }) => {
   const [curriculumLoading, setCurriculumLoading] = useState(false);
   const [curriculumError, setCurriculumError] = useState('');
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
+  const [venuesLoading, setVenuesLoading] = useState(true);
 
   useEffect(() => {
     const grade = form.curriculumLesson.grade;
@@ -225,10 +227,35 @@ const CreateSession = ({ navigation, route }) => {
     setErrors((prev) => ({ ...prev, state: undefined }));
   }, []);
 
+  const handleSelectVenue = useCallback((venueId, venue = {}) => {
+    const venueAddress = venue?.address || {};
+    setForm((prev) => ({
+      ...prev,
+      venueId: String(venueId),
+      venueName: venue?.name || venue?.title || venue?.label || prev.venueName,
+      address: {
+        ...prev.address,
+        streetAddress: venueAddress.streetAddress || venueAddress.street || '',
+        suburb: venueAddress.suburb || '',
+        city: venueAddress.city || '',
+        state: venueAddress.state || '',
+        postalCode: venueAddress.postalCode || venueAddress.postcode || '',
+      },
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      venueId: undefined,
+      streetAddress: undefined,
+      city: undefined,
+      state: undefined,
+    }));
+  }, []);
+
   const handleSelectLocationMode = useCallback((mode) => {
     setForm((prev) => ({
       ...prev,
       locationMode: mode,
+      venueId: mode === 'online' ? '' : prev.venueId,
     }));
     setErrors((prev) => ({
       ...prev,
@@ -236,6 +263,7 @@ const CreateSession = ({ navigation, route }) => {
       streetAddress: undefined,
       city: undefined,
       state: undefined,
+      venueId: undefined,
     }));
   }, []);
 
@@ -340,19 +368,18 @@ const CreateSession = ({ navigation, route }) => {
     if (includeLocation) {
       const needsOnline = form.locationMode === 'online' || form.locationMode === 'both';
       const needsAddress = form.locationMode === 'inPerson' || form.locationMode === 'both';
+      const requireVenueSelection = !venuesLoading;
       if (needsOnline) {
         if (!form.onlineLink) validationErrors.onlineLink = 'Online link required for online sessions';
         else if (!form.onlineLink.startsWith('http')) validationErrors.onlineLink = 'Must start with http:// or https://';
       }
       if (needsAddress) {
-        if (!form.address.streetAddress) validationErrors.streetAddress = 'Street address required';
-        if (!form.address.city) validationErrors.city = 'City required';
-        if (!form.address.state) validationErrors.state = 'State required';
+        if (requireVenueSelection && !form.venueId) validationErrors.venueId = 'Select a venue for in-person sessions';
       }
     }
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
-  }, [activityType, form.address.city, form.address.state, form.address.streetAddress, form.curriculumLesson.grade, form.curriculumLesson.lessonId, form.curriculumLesson.setId, form.date, form.locationMode, form.onlineLink, resolvedActivityId]);
+  }, [activityType, form.curriculumLesson.grade, form.curriculumLesson.lessonId, form.curriculumLesson.setId, form.date, form.locationMode, form.onlineLink, form.venueId, venuesLoading, resolvedActivityId]);
 
   const validateStep = useCallback(() => {
     if (step === 1) {
@@ -421,14 +448,17 @@ const CreateSession = ({ navigation, route }) => {
     if (!validate({ includeLocation: true, includeCurriculum: true })) return;
     try {
       setSubmitting(true);
+      const includeAddress = form.locationMode === 'inPerson' || form.locationMode === 'both';
+      const address = includeAddress ? cleanObject(form.address) : {};
       const payload = cleanObject({
         notes: form.notes,
         date: formatDateOnly(form.date),
         status: 'Scheduled',
         locationMode: form.locationMode,
         onlineLink: form.onlineLink,
-        venueName: form.venueName,
-        address: cleanObject(form.address),
+        venueId: includeAddress ? form.venueId : '',
+        venueName: includeAddress ? form.venueName : '',
+        address,
         facilitators: (form.facilitators || []).map((m) => m._id || m.id).filter(Boolean),
         participants: (form.participants || []).map((m) => m._id || m.id).filter(Boolean),
         curriculumLesson:
@@ -443,7 +473,7 @@ const CreateSession = ({ navigation, route }) => {
               })
             : undefined,
       });
-      if (payload.address && Object.keys(payload.address).length === 0) {
+      if (!includeAddress || (payload.address && Object.keys(payload.address).length === 0)) {
         delete payload.address;
       }
       await createSession(resolvedActivityId, payload, token);
@@ -540,8 +570,21 @@ const CreateSession = ({ navigation, route }) => {
                 onChangeVenueName={(text) => handleChange('venueName', text)}
                 onChangeAddressField={handleAddressChange}
                 onChangeLocationMode={handleSelectLocationMode}
+                onSelectVenue={handleSelectVenue}
                 onSelectState={handleSelectState}
                 stateOptions={AU_STATES}
+                useVenueSelect
+                venuesLoading={venuesLoading}
+                venueSelectProps={{
+                  activityId: resolvedActivityId,
+                  communityId,
+                  token,
+                  value: form.venueId,
+                  onSelect: handleSelectVenue,
+                  onLoadingChange: setVenuesLoading,
+                  inputProps: styledInputProps,
+                  validationError: errors.venueId,
+                }}
                 baseInputProps={baseInputProps}
                 styledInputProps={styledInputProps}
                 styles={styles}
@@ -636,8 +679,8 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.screenBackgroundColor || '#fff',
   },
   container: {
-    padding: 16,
-    paddingBottom: 40,
+    padding: themeVariables.spacing.l,
+    paddingBottom: themeVariables.spacing.xxl + 8,
     backgroundColor: themeVariables.screenBackgroundColor || '#fff',
   },
   heading: {
@@ -648,7 +691,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: themeVariables.spacing.m,
   },
   stepIndicator: {
     fontSize: 14,
@@ -660,7 +703,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: themeVariables.borderLightColor || '#e5e5e5',
     overflow: 'hidden',
-    marginBottom: 24,
+    marginBottom: themeVariables.spacing.xl,
   },
   progressBar: {
     height: '100%',
@@ -674,32 +717,32 @@ const styles = StyleSheet.create({
   buttons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: themeVariables.spacing.m,
     paddingHorizontal: 4,
   },
   actionButton: {
     flex: 1,
   },
   primaryActionButton: {
-    marginLeft: 12,
+    marginLeft: themeVariables.spacing.m,
   },
   secondaryActionButton: {
-    marginRight: 12,
+    marginRight: themeVariables.spacing.m,
   },
   buttonSpacer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: themeVariables.spacing.m,
   },
   section: {
-    marginTop: 16,
+    marginTop: themeVariables.spacing.xs,
   },
   sectionLabel: {
-    marginTop: 20,
+    marginTop: themeVariables.spacing.s,
     color: themeVariables.blackColor,
     fontSize: 16,
     fontWeight: '600',
     paddingLeft: 4,
-    marginBottom: 6,
+    marginBottom: themeVariables.spacing.xs + 2,
   },
   locationSubLabel: {
     marginTop: 12,
@@ -717,13 +760,13 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   subheading: {
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: themeVariables.spacing.m,
+    marginBottom: themeVariables.spacing.s,
     color: themeVariables.blackColor,
   },
   input: {
     backgroundColor: '#f9f9f9',
-    marginBottom: 8,
+    marginBottom: themeVariables.spacing.s,
   },
   multilineInput: {
     minHeight: 100,
@@ -742,14 +785,13 @@ const styles = StyleSheet.create({
   },
   locationModeRow: {
     flexDirection: 'row',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: themeVariables.spacing.m,
+    marginBottom: themeVariables.spacing.s,
   },
   locationModeButton: {
     flex: 1,
     paddingVertical: 10,
-    marginRight: 8,
-    borderRadius: 8,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#ddd',
     backgroundColor: '#f5f5f5',
@@ -768,7 +810,7 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
   },
   lastInRow: {
     marginRight: 0,
@@ -776,19 +818,19 @@ const styles = StyleSheet.create({
   addressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: themeVariables.spacing.xs,
   },
   rowInput: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
     marginTop: 0,
   },
   addressInput: {
-    marginBottom: 8,
+    marginBottom: themeVariables.spacing.s,
   },
   addressDropdown: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
     marginTop: 0,
   },
   buttonDisabled: {

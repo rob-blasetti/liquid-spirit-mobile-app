@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { HelperText, Title } from 'react-native-paper';
+import { HelperText } from 'react-native-paper';
 
 import DatePickerInput from '../../../components/forms/inputs/DatePickerInput';
 
@@ -12,7 +12,6 @@ const ScheduleSection = ({
   styles,
 }) => (
   <View style={styles.section}>
-    <Title style={styles.sectionTitle}>Schedule</Title>
     <DatePickerInput
       label="Session Date *"
       value={date}

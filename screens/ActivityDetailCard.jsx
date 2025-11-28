@@ -1528,6 +1528,7 @@ const styles = StyleSheet.create({
   },
   headerActionButtonSpacer: {
     marginLeft: 8,
+    marginRight: 8,
   },
   headerActionButtonDisabled: {
     opacity: 0.7,

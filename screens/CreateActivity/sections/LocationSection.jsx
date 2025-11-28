@@ -1,28 +1,31 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
-import { Text, HelperText, Title } from 'react-native-paper';
+import { Text, Title } from 'react-native-paper';
 
-import DropdownInput from '../../../components/forms/inputs/DropdownInput';
 import FormTextInput from '../../../components/forms/inputs/FormTextInput';
+import VenueSelect from '../../../components/forms/inputs/VenueSelect';
+import { Row } from '../../../components/layout/Stack';
+import themeVariables from '../../../styles/theme';
 
 const LocationSection = ({
   form,
   errors,
   baseInputProps,
   styledInputProps,
-  stateOptions,
   onChangeLocationMode,
   onChangeOnlineLink,
-  onChangeAddressField,
-  onSelectState,
+  onSelectVenue,
+  useVenueSelect = false,
+  venueSelectProps = {},
+  venuePlaceholder = 'Where will it be?',
   styles,
 }) => (
   <>
     <Title style={styles.sectionLabel}>Location</Title>
-    <View style={styles.locationModeRow}>
+    <Row gap={themeVariables.spacing.s} style={styles.locationModeRow}>
       {[
-        { key: 'online', label: 'Online' },
         { key: 'inPerson', label: 'In Person' },
+        { key: 'online', label: 'Online' },
         { key: 'both', label: 'Both' },
       ].map(option => {
         const active = form.locationMode === option.key;
@@ -46,7 +49,7 @@ const LocationSection = ({
           </TouchableOpacity>
         );
       })}
-    </View>
+    </Row>
 
     {(form.locationMode === 'online' || form.locationMode === 'both') && (
       <>
@@ -57,82 +60,26 @@ const LocationSection = ({
           value={form.onlineLink}
           onChangeText={onChangeOnlineLink}
           error={!!errors.onlineLink}
+          errorText={errors.onlineLink}
+          helperText="Paste a video or meeting link attendees can join."
           style={styles.input}
         />
-        <HelperText type="info" visible>
-          Paste a video or meeting link attendees can join.
-        </HelperText>
-        <HelperText type="error" visible={!!errors.onlineLink}>
-          {errors.onlineLink}
-        </HelperText>
       </>
     )}
 
     {(form.locationMode === 'inPerson' || form.locationMode === 'both') && (
       <>
         <Title style={[styles.sectionLabel, styles.addressSectionLabel]}>In-person location</Title>
-        <FormTextInput
-          inputProps={baseInputProps}
-          label="Street Address"
-          value={form.address.streetAddress}
-          onChangeText={(t) => onChangeAddressField('streetAddress', t)}
-          style={[styles.input, styles.addressInput]}
-          error={!!errors.streetAddress}
+        <VenueSelect
+          {...venueSelectProps}
+          value={form.venueId}
+          onSelect={onSelectVenue}
+          validationError={errors.venueId}
+          placeholder={venuePlaceholder}
+          inputProps={{ ...styledInputProps, style: [styles.input, styles.addressInput] }}
+          helperSpacing={0}
+          style={styles.addressInput}
         />
-        <HelperText type="info" visible>
-          Enter the venue’s street address.
-        </HelperText>
-        <HelperText type="error" visible={!!errors.streetAddress}>
-          {errors.streetAddress}
-        </HelperText>
-        <View style={styles.addressRow}>
-          <FormTextInput
-            inputProps={baseInputProps}
-            label="Suburb"
-            value={form.address.suburb}
-            onChangeText={(t) => onChangeAddressField('suburb', t)}
-            style={[styles.input, styles.addressInput, styles.rowInput]}
-          />
-          <FormTextInput
-            inputProps={baseInputProps}
-            label="City"
-            value={form.address.city}
-            onChangeText={(t) => onChangeAddressField('city', t)}
-            style={[styles.input, styles.addressInput, styles.rowInput, styles.lastInRow]}
-            error={!!errors.city}
-          />
-        </View>
-        <HelperText type="info" visible>
-          Add suburb and city so people can find it.
-        </HelperText>
-        <HelperText type="error" visible={!!errors.city}>
-          {errors.city}
-        </HelperText>
-        <View style={styles.addressRow}>
-          <DropdownInput
-            label="State"
-            value={form.address.state}
-            options={stateOptions}
-            placeholder="Select state"
-            onSelect={onSelectState}
-            textInputProps={{ ...styledInputProps, style: [styles.input, styles.addressInput] }}
-            style={[styles.rowInput, styles.addressDropdown]}
-          />
-          <FormTextInput
-            inputProps={baseInputProps}
-            label="Postal Code"
-            value={form.address.postalCode}
-            onChangeText={(t) => onChangeAddressField('postalCode', t)}
-            keyboardType="number-pad"
-            style={[styles.input, styles.addressInput, styles.rowInput, styles.lastInRow]}
-          />
-        </View>
-        <HelperText type="info" visible>
-          State and postcode help map the location accurately.
-        </HelperText>
-        <HelperText type="error" visible={!!errors.state}>
-          {errors.state}
-        </HelperText>
       </>
     )}
   </>

@@ -10,10 +10,11 @@ const normalizeOption = option => {
     return {
       label: option.label ?? option.name ?? option.value ?? '',
       value: option.value ?? option.id ?? option.label ?? '',
+      meta: option.meta ?? option,
     };
   }
   const label = String(option ?? '');
-  return { label, value: label };
+  return { label, value: label, meta: option };
 };
 
 const DropdownInput = ({
@@ -30,7 +31,11 @@ const DropdownInput = ({
   const [open, setOpen] = useState(false);
 
   const normalizedOptions = useMemo(() => options.map(normalizeOption), [options]);
-  const displayValue = value || '';
+  const selectedOption = useMemo(
+    () => normalizedOptions.find(option => String(option.value) === String(value)),
+    [normalizedOptions, value],
+  );
+  const displayValue = selectedOption?.label || value || '';
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const toggleOpen = useCallback(() => {
@@ -42,7 +47,7 @@ const DropdownInput = ({
     option => {
       setOpen(false);
       if (disabled) return;
-      onSelect?.(option.value, option);
+      onSelect?.(option.value, option.meta ?? option);
     },
     [disabled, onSelect],
   );

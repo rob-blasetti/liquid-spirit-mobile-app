@@ -1,24 +1,30 @@
 import React from 'react';
-import { HelperText, Title } from 'react-native-paper';
+import { Title } from 'react-native-paper';
 import FormTextInput from '../../../components/forms/inputs/FormTextInput';
 
-const TitleSection = ({ value, onChange, error, baseInputProps, styles }) => (
+const TitleSection = ({
+  value,
+  onChange,
+  error,
+  helperText = 'Give your activity a short, clear name.',
+  placeholder = '',
+  label = '',
+  baseInputProps,
+  styles,
+}) => (
   <>
     <Title style={styles.sectionLabel}>Title</Title>
     <FormTextInput
       inputProps={baseInputProps}
-      label=""
+      label={label}
+      placeholder={placeholder || 'e.g. Grade 2 class'}
       value={value}
       onChangeText={onChange}
       error={!!error}
+      errorText={error}
+      helperText={helperText}
       style={styles.input}
     />
-    <HelperText type="info" visible>
-      Give your activity a short, clear name.
-    </HelperText>
-    <HelperText type="error" visible={!!error}>
-      {error}
-    </HelperText>
   </>
 );
 

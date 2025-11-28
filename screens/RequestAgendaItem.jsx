@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import {
   StyleSheet,
   KeyboardAvoidingView,
@@ -8,12 +8,13 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { TextInput, Title, HelperText } from 'react-native-paper';
 import { sendAgendaItemSuggestion } from '../services/AssemblyService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
 import { Button } from 'liquid-spirit-styleguide/native';
+import TitleSection from './CreateActivity/sections/TitleSection';
+import DescriptionSection from './CreateActivity/sections/DescriptionSection';
 
 export default function RequestAgendaItem({ navigation, route }) {
   const { token } = useContext(UserContext);
@@ -22,6 +23,16 @@ export default function RequestAgendaItem({ navigation, route }) {
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const baseInputProps = useMemo(
+    () => ({
+      mode: 'outlined',
+      outlineColor: themeVariables.borderLightColor || '#ddd',
+      activeOutlineColor: themeVariables.primaryColor,
+      style: styles.input,
+    }),
+    [],
+  );
 
   const validate = () => {
     const e = {};
@@ -51,31 +62,26 @@ export default function RequestAgendaItem({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Title style={styles.title}>Request Agenda Item</Title>
-        <TextInput
-          label="Title"
+        <TitleSection
           value={title}
-          onChangeText={setTitle}
-          error={!!errors.title}
-          mode="outlined"
-          style={styles.input}
+          onChange={setTitle}
+          error={errors.title}
+          helperText="Summarise the agenda item you want to add."
+          label=""
+          placeholder="e.g. Budget discussion"
+          baseInputProps={baseInputProps}
+          styles={styles}
         />
-        <HelperText type="error" visible={!!errors.title}>
-          {errors.title}
-        </HelperText>
-        <TextInput
-          label="Description"
+        <DescriptionSection
           value={description}
-          onChangeText={setDescription}
-          error={!!errors.description}
-          mode="outlined"
-          multiline
-          numberOfLines={4}
-          style={[styles.input, styles.textArea]}
+          onChange={setDescription}
+          error={errors.description}
+          helperText="Describe what should be discussed or decided."
+          label=""
+          placeholder="e.g. Outline points you’d like covered"
+          baseInputProps={baseInputProps}
+          styles={styles}
         />
-        <HelperText type="error" visible={!!errors.description}>
-          {errors.description}
-        </HelperText>
         <Button
           primary
           size="medium"
@@ -97,22 +103,23 @@ export default function RequestAgendaItem({ navigation, route }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
-    padding: 20,
+    padding: themeVariables.spacing.xl,
     flexGrow: 1,
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   title: {
-    marginBottom: 20,
+    marginBottom: themeVariables.spacing.l,
     textAlign: 'center',
   },
   input: {
-    marginBottom: 12,
+    marginBottom: themeVariables.spacing.m,
+    backgroundColor: themeVariables.formInputBg,
   },
-  textArea: {
-    minHeight: 100,
+  multilineInput: {
+    minHeight: 120,
   },
   button: {
-    marginTop: 10,
+    marginTop: themeVariables.spacing.m,
     alignSelf: 'stretch',
   },
   loadingOverlay: {

@@ -94,11 +94,12 @@ export default function CreateActivity({ navigation, route }) {
     title: '',
     description: '',
     date: null,
-  time: null,
+    time: null,
     groupDay: '',
     frequency: 'Weekly',
     locationMode: 'online',
     onlineLink: 'https://',
+    venueId: '',
     address: {
       streetAddress: '',
       suburb: '',
@@ -214,6 +215,11 @@ export default function CreateActivity({ navigation, route }) {
     setErrors(prev => ({ ...prev, time: undefined }));
   }, []);
 
+  const handleSelectVenue = useCallback((venueId) => {
+    setForm(prev => ({ ...prev, venueId: String(venueId) }));
+    setErrors(prev => ({ ...prev, venueId: undefined }));
+  }, []);
+
   // Validation stub
   const validateStep = () => {
     const e = {};
@@ -231,9 +237,7 @@ export default function CreateActivity({ navigation, route }) {
         else if (!form.onlineLink.startsWith('http')) e.onlineLink = 'Must start with http:// or https://';
       }
       if (needsAddress) {
-        if (!form.address.streetAddress) e.streetAddress = 'Street address required';
-        if (!form.address.city) e.city = 'City required';
-        if (!form.address.state) e.state = 'State required';
+        if (!form.venueId) e.venueId = 'Select a venue for in-person sessions';
       }
     }
     // ...other step-specific checks
@@ -311,6 +315,7 @@ export default function CreateActivity({ navigation, route }) {
         time: groupTimeValue || null,
       },
       onlineLink: form.onlineLink,
+      venueId: form.venueId,
       address: form.address,
       imageUrl: form.imageUrl,
       activityType: form.activityType,
@@ -321,6 +326,9 @@ export default function CreateActivity({ navigation, route }) {
       facilitatorLimit: facilitatorLimitValue,
       participantLimit: participantLimitValue,
     };
+    if (payload.address && Object.values(payload.address).every(val => !val)) {
+      delete payload.address;
+    }
     try {
       await createActivity(payload, token);
       setSnackbar({ visible: true, message: 'Activity created!' });
@@ -413,9 +421,13 @@ export default function CreateActivity({ navigation, route }) {
               styledInputProps={styledInputProps}
               onChangeLocationMode={handleSelectLocationMode}
               onChangeOnlineLink={handleChangeOnlineLink}
-              onChangeAddressField={handleChangeAddressField}
-              onSelectState={handleSelectState}
-              stateOptions={AU_STATES}
+              onSelectVenue={handleSelectVenue}
+              venuePlaceholder="Where will it be?"
+              venueSelectProps={{
+                communityId,
+                token,
+                value: form.venueId,
+              }}
               styles={styles}
             />
           )}
@@ -521,11 +533,11 @@ const styles = StyleSheet.create({
   },
   buttonSpacer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: themeVariables.spacing.m,
   },
   input: {
     backgroundColor: '#f9f9f9',
-    marginBottom: 12,
+    marginBottom: themeVariables.spacing.m,
   },
   inputContent: {
     backgroundColor: '#f9f9f9',
@@ -537,14 +549,13 @@ const styles = StyleSheet.create({
   },
   locationModeRow: {
     flexDirection: 'row',
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: themeVariables.spacing.m,
+    marginBottom: themeVariables.spacing.s,
   },
   locationModeButton: {
     flex: 1,
     paddingVertical: 10,
-    marginRight: 8,
-    borderRadius: 8,
+    borderRadius: 999,
     borderWidth: 1,
     borderColor: '#ddd',
     backgroundColor: '#f5f5f5',
@@ -564,31 +575,31 @@ const styles = StyleSheet.create({
   addressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: themeVariables.spacing.xs,
   },
   halfInput: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
   },
   lastInRow: {
     marginRight: 0,
   },
   rowInput: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
     marginTop: 0,
   },
   addressInput: {
-    marginBottom: 8,
+    marginBottom: themeVariables.spacing.s,
   },
   addressDropdown: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 0,
     marginTop: 0,
   },
   locationSubLabel: {
-    marginTop: 12,
-    marginBottom: 6,
+    marginTop: themeVariables.spacing.m,
+    marginBottom: themeVariables.spacing.xs,
   },
   inputLabelText: {
     color: themeVariables.blackColor,
