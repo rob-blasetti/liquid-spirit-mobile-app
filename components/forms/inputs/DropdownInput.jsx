@@ -1,9 +1,19 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { TextInput, HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
+
+// Keep only one dropdown open at a time across the app
+const dropdownListeners = new Set();
+const notifyCloseOthers = (id) => {
+  dropdownListeners.forEach((listener) => {
+    try {
+      listener(id);
+    } catch (_) {}
+  });
+};
 
 const normalizeOption = option => {
   if (option && typeof option === 'object') {
@@ -27,8 +37,11 @@ const DropdownInput = ({
   disabled = false,
   style,
   textInputProps,
+  multilineDisplay = false,
+  closeSiblings = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const selfId = useRef(`dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   const normalizedOptions = useMemo(() => options.map(normalizeOption), [options]);
   const selectedOption = useMemo(
@@ -40,8 +53,14 @@ const DropdownInput = ({
 
   const toggleOpen = useCallback(() => {
     if (disabled) return;
-    setOpen(prev => !prev);
-  }, [disabled]);
+    setOpen(prev => {
+      const next = !prev;
+      if (next && closeSiblings) {
+        notifyCloseOthers(selfId.current);
+      }
+      return next;
+    });
+  }, [disabled, closeSiblings]);
 
   const handleSelect = useCallback(
     option => {
@@ -51,6 +70,17 @@ const DropdownInput = ({
     },
     [disabled, onSelect],
   );
+
+  useEffect(() => {
+    if (!closeSiblings) return;
+    const handler = (id) => {
+      if (id !== selfId.current) setOpen(false);
+    };
+    dropdownListeners.add(handler);
+    return () => {
+      dropdownListeners.delete(handler);
+    };
+  }, [closeSiblings]);
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -68,7 +98,13 @@ const DropdownInput = ({
           placeholder={placeholder}
           editable={false}
           pointerEvents="none"
-          style={[styles.input, inputStyle]}
+          multiline={multilineDisplay}
+          numberOfLines={multilineDisplay ? 2 : 1}
+          style={[
+            styles.input,
+            multilineDisplay && styles.inputMultiline,
+            inputStyle,
+          ]}
           {...restTextInputProps}
           right={
             <TextInput.Icon
@@ -126,6 +162,10 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 0,
+  },
+  inputMultiline: {
+    minHeight: 64,
+    textAlignVertical: 'top',
   },
   dropdownList: {
     position: 'absolute',

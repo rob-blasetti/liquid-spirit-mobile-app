@@ -16,6 +16,7 @@ import TimeSection from './sections/TimeSection';
 import LocationSection from './sections/LocationSection';
 import CoverImageSection from './sections/CoverImageSection';
 import AttendeesSection from '../CreateSession/sections/AttendeesSection';
+import ChildrensCurriculumSection from './sections/ChildrensCurriculumSection';
 
 import { UserContext } from '../../contexts/UserContext';
 import { createActivity } from '../../services/ActivityService';
@@ -131,6 +132,14 @@ export default function CreateActivity({ navigation, route }) {
     participants: [],
     facilitatorSearch: '',
     participantSearch: '',
+    curriculumGrade: '',
+    curriculumLessonValue: '',
+    curriculumSetCode: '',
+    curriculumSetId: '',
+    curriculumSetTitle: '',
+    curriculumLessonId: '',
+    curriculumLessonTitle: '',
+    curriculumLessonNumber: null,
   });
   const [errors, setErrors] = useState({});
   const [allMembers, setAllMembers] = useState([]);
@@ -201,13 +210,44 @@ export default function CreateActivity({ navigation, route }) {
     setMemberOptions(filtered);
   }, [allMembers, form.facilitatorSearch, form.participantSearch]);
 
+  useEffect(() => {
+    if (form.activityType !== "Children's Class" && (form.curriculumGrade || form.curriculumLessonValue)) {
+      setForm(prev => ({
+        ...prev,
+        curriculumGrade: '',
+      curriculumLessonValue: '',
+      curriculumSetCode: '',
+      curriculumSetId: '',
+      curriculumSetTitle: '',
+      curriculumLessonId: '',
+      curriculumLessonTitle: '',
+      curriculumLessonNumber: null,
+      }));
+      setErrors(prev => ({ ...prev, curriculumGrade: undefined, curriculumLesson: undefined }));
+    }
+  }, [form.activityType, form.curriculumGrade, form.curriculumLessonValue]);
+
   const handleSelectActivityType = useCallback(value => {
     setForm(prev => ({
       ...prev,
       activityType: value,
       studyCircleBook: value === 'Study Circle' ? prev.studyCircleBook : '',
+      curriculumGrade: value === "Children's Class" ? prev.curriculumGrade : '',
+      curriculumLessonValue: value === "Children's Class" ? prev.curriculumLessonValue : '',
+      curriculumSetCode: value === "Children's Class" ? prev.curriculumSetCode : '',
+      curriculumSetId: value === "Children's Class" ? prev.curriculumSetId : '',
+      curriculumSetTitle: value === "Children's Class" ? prev.curriculumSetTitle : '',
+      curriculumLessonId: value === "Children's Class" ? prev.curriculumLessonId : '',
+      curriculumLessonTitle: value === "Children's Class" ? prev.curriculumLessonTitle : '',
+      curriculumLessonNumber: value === "Children's Class" ? prev.curriculumLessonNumber : null,
     }));
-    setErrors(prev => ({ ...prev, activityType: undefined, studyCircleBook: undefined }));
+    setErrors(prev => ({
+      ...prev,
+      activityType: undefined,
+      studyCircleBook: undefined,
+      curriculumGrade: undefined,
+      curriculumLesson: undefined,
+    }));
   }, []);
 
   const handleSelectFrequency = useCallback(value => {
@@ -246,6 +286,47 @@ export default function CreateActivity({ navigation, route }) {
       streetAddress: undefined,
       city: undefined,
       state: undefined,
+    }));
+  }, []);
+
+  const handleSelectCurriculumGrade = useCallback((grade) => {
+    setForm(prev => ({
+      ...prev,
+      curriculumGrade: grade,
+      curriculumLessonValue: '',
+      curriculumSetCode: '',
+      curriculumSetId: '',
+      curriculumSetTitle: '',
+      curriculumLessonId: '',
+      curriculumLessonTitle: '',
+      curriculumLessonNumber: null,
+    }));
+    setErrors(prev => ({ ...prev, curriculumGrade: undefined, curriculumLesson: undefined }));
+  }, []);
+
+  const handleSelectCurriculumLesson = useCallback((value) => {
+    setForm(prev => ({ ...prev, curriculumLessonValue: value }));
+    setErrors(prev => ({ ...prev, curriculumLesson: undefined }));
+  }, []);
+
+  const handleCurriculumSetMeta = useCallback((setMeta) => {
+    setForm(prev => ({
+      ...prev,
+      curriculumSetCode: setMeta?.code || '',
+      curriculumSetId: setMeta?.id || '',
+      curriculumSetTitle: setMeta?.title || '',
+    }));
+  }, []);
+
+  const handleCurriculumLessonMeta = useCallback((lessonMeta) => {
+    setForm(prev => ({
+      ...prev,
+      curriculumLessonId: lessonMeta?.id || '',
+      curriculumLessonTitle: lessonMeta?.title || '',
+      curriculumLessonNumber:
+        lessonMeta?.number != null
+          ? lessonMeta.number
+          : prev.curriculumLessonNumber,
     }));
   }, []);
 
@@ -346,6 +427,13 @@ export default function CreateActivity({ navigation, route }) {
       if (form.activityType === 'Study Circle' && !form.studyCircleBook) {
         e.studyCircleBook = 'Please select a book';
       }
+      if (form.activityType === "Children's Class") {
+        const gradeNorm = String(form.curriculumGrade || '').trim().toLowerCase();
+        if (!form.curriculumGrade) e.curriculumGrade = 'Select a grade.';
+        if (gradeNorm !== 'preschool' && !form.curriculumLessonValue) {
+          e.curriculumLesson = 'Select a curriculum lesson.';
+        }
+      }
       if (!form.date) e.date = 'Select a date';
       if (!form.time) e.time = 'Select a time';
     }
@@ -432,6 +520,7 @@ export default function CreateActivity({ navigation, route }) {
       title: form.title,
       description: form.description,
       sessionDate: sessionDateValue ? sessionDateValue.toISOString() : null,
+      ...(form.curriculumGrade ? { grade: form.curriculumGrade } : {}),
       groupDetails: {
         day: form.groupDay || null,
         frequency: form.frequency,
@@ -449,6 +538,10 @@ export default function CreateActivity({ navigation, route }) {
       facilitatorLimit: facilitatorLimitValue,
       participantLimit: participantLimitValue,
     };
+    if (form.activityType === "Children's Class" && form.curriculumGrade && form.curriculumLessonValue) {
+      const lessonStr = String(form.curriculumLessonValue || '').trim();
+      payload.curriculumLesson = lessonStr;
+    }
     if (!venues.length) {
       delete payload.venues;
     }
@@ -504,6 +597,20 @@ export default function CreateActivity({ navigation, route }) {
                 styledInputProps={styledInputProps}
                 styles={styles}
               />
+              {form.activityType === "Children's Class" ? (
+                <ChildrensCurriculumSection
+                  activityType={form.activityType}
+                  grade={form.curriculumGrade}
+                  value={form.curriculumLessonValue}
+                  onChangeGrade={handleSelectCurriculumGrade}
+                  onChangeLessonValue={handleSelectCurriculumLesson}
+                  onChangeSetMeta={handleCurriculumSetMeta}
+                  onChangeLessonMeta={handleCurriculumLessonMeta}
+                  gradeError={errors.curriculumGrade}
+                  lessonError={errors.curriculumLesson}
+                  styles={styles}
+                />
+              ) : null}
               {form.activityType === 'Study Circle' ? (
                 <StudyCircleBookSection
                   value={form.studyCircleBook}

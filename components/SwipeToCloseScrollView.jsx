@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
  * - threshold: number of pixels the user must pull down beyond 0 offset to trigger goBack (default 0).
  * All other ScrollView props are supported.
  */
-const SwipeToCloseScrollView = ({ threshold = 0, onScrollEndDrag, children, ...props }) => {
+const SwipeToCloseScrollView = ({ threshold = 0, onScrollEndDrag, onClose, children, ...props }) => {
   const navigation = useNavigation();
   const timeoutRef = useRef(null);
   // Cleanup pending timeout on unmount
@@ -19,7 +19,11 @@ const SwipeToCloseScrollView = ({ threshold = 0, onScrollEndDrag, children, ...p
   const handleScrollEndDrag = (e) => {
     const y = e.nativeEvent.contentOffset.y;
     if (y < -threshold) {
-      navigation.goBack();
+      if (typeof onClose === 'function') {
+        onClose();
+      } else {
+        navigation.goBack();
+      }
     }
     if (typeof onScrollEndDrag === 'function') {
       onScrollEndDrag(e);
