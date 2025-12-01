@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import SectionTitle from '../../common/SectionTitle';
 import themeVariables from '../../../../styles/theme';
 
-const HostLocationSection = ({ region, fullAddress, styles }) => (
+const HostLocationSection = ({ region, fullAddress, styles, onOpenMaps }) => (
   <>
     <SectionTitle title="Where is it?" showTooltip={false} titleStyle={styles.mapTitle} />
     <View style={styles.mapWrapper}>
@@ -22,9 +22,15 @@ const HostLocationSection = ({ region, fullAddress, styles }) => (
         </View>
       )}
     </View>
-    <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
-      {fullAddress}
-    </Text>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={() => fullAddress && onOpenMaps?.()}
+      style={{ alignSelf: 'flex-start' }}
+    >
+      <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
+        {fullAddress}
+      </Text>
+    </TouchableOpacity>
     <View style={styles.divider} />
   </>
 );

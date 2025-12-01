@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  Linking,
   Dimensions,
   Modal,
   StatusBar,
@@ -57,6 +56,7 @@ import { CommunityContext } from '../../../contexts/CommunityContext';
 import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
 import { Button } from 'liquid-spirit-styleguide/native';
+import useGoogleMaps from '../../../hooks/useGoogleMaps';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
 
@@ -387,6 +387,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const fullAddr = venue || 'No location';
   // Map region state for location map
   const [region, setRegion] = useState(null);
+  const { openGoogleMaps } = useGoogleMaps();
   useEffect(() => {
     if (!fullAddr) return;
     const q = encodeURIComponent(fullAddr);
@@ -412,7 +413,7 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   // Determine join status based on raw attendees (before enrichment)
   const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
 
-  const openMaps = () => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddr)}`);
+  const openMaps = useCallback(() => openGoogleMaps(fullAddr), [openGoogleMaps, fullAddr]);
   const handleJoin = async () => {
     setOptimisticJoin(true);
     try {
@@ -617,7 +618,12 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           </View>
           <View style={styles.divider} />
 
-          <HostLocationSection region={region} fullAddress={fullAddr} styles={styles} />
+          <HostLocationSection
+            region={region}
+            fullAddress={fullAddr}
+            styles={styles}
+            onOpenMaps={openMaps}
+          />
 
           {/* Host Section */}
           <HostsSection
