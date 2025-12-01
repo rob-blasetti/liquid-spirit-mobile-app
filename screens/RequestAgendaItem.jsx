@@ -8,7 +8,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { sendAgendaItemSuggestion } from '../services/AssemblyService';
+import { createAgendaItem } from '../services/AgendaItemService';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
@@ -46,10 +46,23 @@ export default function RequestAgendaItem({ navigation, route }) {
     if (!validate()) return;
     try {
       setLoading(true);
-      await sendAgendaItemSuggestion(token, communityId, title, description);
+      console.log('[RequestAgendaItem] Sending', {
+        communityId,
+        hasToken: Boolean(token),
+        title,
+        descriptionLength: description?.length || 0,
+      });
+      await createAgendaItem({
+        token,
+        communityId,
+        title,
+        description,
+      });
+      console.log('[RequestAgendaItem] Sent successfully');
       Alert.alert('Success', 'Agenda item suggestion sent');
       navigation.goBack();
     } catch (error) {
+      console.log('[RequestAgendaItem] Send failed', error);
       Alert.alert('Error', error.message || 'Failed to send suggestion');
     } finally {
       setLoading(false);
