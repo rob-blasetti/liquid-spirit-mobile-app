@@ -102,7 +102,6 @@ const Login = ({ navigation, route }) => {
     <View style={styles.screen}>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
       <View style={[styles.container, bannerMessage ? styles.containerWithBanner : null]}>
-        <Text style={styles.title}>Login</Text>
         {/* Email Label and Input */}
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -168,14 +167,6 @@ const styles = StyleSheet.create({
   },
   containerWithBanner: {
     paddingTop: 70,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#312783',
-    marginBottom: 32,
-    width: Platform.select({ android: 120 }),
-    textAlign: 'center',
   },
   // Label above inputs for clarity on all devices
   label: {

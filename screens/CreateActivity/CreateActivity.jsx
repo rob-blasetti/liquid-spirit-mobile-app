@@ -8,15 +8,19 @@ import themeVariables from '../../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import TitleSection from './sections/TitleSection';
 import ActivityTypeSection from './sections/ActivityTypeSection';
+import StudyCircleBookSection from './sections/StudyCircleBookSection';
 import DescriptionSection from './sections/DescriptionSection';
 import FrequencySection from './sections/FrequencySection';
 import DateSection from './sections/DateSection';
 import TimeSection from './sections/TimeSection';
 import LocationSection from './sections/LocationSection';
 import CoverImageSection from './sections/CoverImageSection';
+import AttendeesSection from '../CreateSession/sections/AttendeesSection';
 
 import { UserContext } from '../../contexts/UserContext';
 import { createActivity } from '../../services/ActivityService';
+import { getMemberList } from '../../services/UserService';
+import { STUDY_CIRCLE_BOOKS } from './constants';
 
 const TOTAL_STEPS = 3;
 const ACTIVITY_TYPES = [
@@ -30,6 +34,19 @@ const ACTIVITY_TYPES = [
 const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const FREQUENCY_OPTIONS = ['Weekly', 'Bi-Weekly', 'Monthly', 'One-Off'];
 const AU_STATES = ['VIC', 'QLD', 'NSW', 'ACT', 'NT', 'TAS', 'WA', 'SA'];
+const formatMembersForPayload = (list = []) =>
+  list
+    .map(member => {
+      const id =
+        member?._id ||
+        member?.id ||
+        member?.userId ||
+        member?.refId?._id ||
+        member?.refId?.id;
+      if (!id) return null;
+      return { _id: String(id), type: 'Member' };
+    })
+    .filter(Boolean);
 
 const formatTimeValue = dateObj => {
   if (!(dateObj instanceof Date)) return '';
@@ -109,8 +126,17 @@ export default function CreateActivity({ navigation, route }) {
     },
     imageUrl: '',
     activityType: '',
+    studyCircleBook: '',
+    facilitators: [],
+    participants: [],
+    facilitatorSearch: '',
+    participantSearch: '',
   });
   const [errors, setErrors] = useState({});
+  const [allMembers, setAllMembers] = useState([]);
+  const [memberOptions, setMemberOptions] = useState([]);
+  const [memberLoading, setMemberLoading] = useState(false);
+  const [memberError, setMemberError] = useState('');
   const [snackbar, setSnackbar] = useState({ visible: false, message: '' });
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
   const { bottom: bottomInset } = useSafeAreaInsets();
@@ -130,12 +156,58 @@ export default function CreateActivity({ navigation, route }) {
     }).start();
   }, [step, progressAnim]);
 
+  useEffect(() => {
+    if (!communityId || !token) return;
+    let cancelled = false;
+    const loadMembers = async () => {
+      setMemberLoading(true);
+      setMemberError('');
+      try {
+        const members = await getMemberList(communityId);
+        if (!cancelled) {
+          const list = Array.isArray(members) ? members : [];
+          setAllMembers(list);
+          setMemberOptions(list);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setMemberError(err?.message || 'Unable to load members.');
+          setAllMembers([]);
+          setMemberOptions([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setMemberLoading(false);
+        }
+      }
+    };
+    loadMembers();
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId, token]);
+
+  useEffect(() => {
+    const searchValue = (form.facilitatorSearch || form.participantSearch || '').trim().toLowerCase();
+    if (!searchValue) {
+      setMemberOptions(allMembers);
+      return;
+    }
+    const filtered = allMembers.filter(member => {
+      const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
+      const email = (member.email || '').toLowerCase();
+      return fullName.includes(searchValue) || email.includes(searchValue);
+    });
+    setMemberOptions(filtered);
+  }, [allMembers, form.facilitatorSearch, form.participantSearch]);
+
   const handleSelectActivityType = useCallback(value => {
     setForm(prev => ({
       ...prev,
       activityType: value,
+      studyCircleBook: value === 'Study Circle' ? prev.studyCircleBook : '',
     }));
-    setErrors(prev => ({ ...prev, activityType: undefined }));
+    setErrors(prev => ({ ...prev, activityType: undefined, studyCircleBook: undefined }));
   }, []);
 
   const handleSelectFrequency = useCallback(value => {
@@ -215,6 +287,51 @@ export default function CreateActivity({ navigation, route }) {
     setErrors(prev => ({ ...prev, time: undefined }));
   }, []);
 
+  const handleSelectStudyCircleBook = useCallback(value => {
+    setForm(prev => ({ ...prev, studyCircleBook: value }));
+    setErrors(prev => ({ ...prev, studyCircleBook: undefined }));
+  }, []);
+
+  const handleChangeFacilitatorSearch = useCallback(text => {
+    setForm(prev => ({ ...prev, facilitatorSearch: text }));
+  }, []);
+
+  const handleChangeParticipantSearch = useCallback(text => {
+    setForm(prev => ({ ...prev, participantSearch: text }));
+  }, []);
+
+  const handleAddMember = useCallback((member, field, searchField) => {
+    if (!member) return;
+    const memberId = member._id || member.id || member.userId || member.refId?._id || member.refId?.id;
+    setForm(prev => {
+      const existingIds = (prev[field] || []).map(entry => entry._id || entry.id || entry.userId || entry.refId?._id || entry.refId?.id);
+      if (!memberId || existingIds.includes(memberId)) {
+        return { ...prev, [searchField]: '' };
+      }
+      return {
+        ...prev,
+        [field]: [...(prev[field] || []), member],
+        [searchField]: '',
+      };
+    });
+  }, []);
+
+  const handleRemoveMember = useCallback((memberId, field) => {
+    if (!memberId) return;
+    setForm(prev => ({
+      ...prev,
+      [field]: (prev[field] || []).filter(entry => {
+        const id = entry._id || entry.id || entry.userId || entry.refId?._id || entry.refId?.id;
+        return String(id) !== String(memberId);
+      }),
+    }));
+  }, []);
+
+  const handleAddFacilitator = useCallback(member => handleAddMember(member, 'facilitators', 'facilitatorSearch'), [handleAddMember]);
+  const handleAddParticipant = useCallback(member => handleAddMember(member, 'participants', 'participantSearch'), [handleAddMember]);
+  const handleRemoveFacilitator = useCallback(memberId => handleRemoveMember(memberId, 'facilitators'), [handleRemoveMember]);
+  const handleRemoveParticipant = useCallback(memberId => handleRemoveMember(memberId, 'participants'), [handleRemoveMember]);
+
   const handleSelectVenue = useCallback((venueId) => {
     setForm(prev => ({ ...prev, venueId: String(venueId) }));
     setErrors(prev => ({ ...prev, venueId: undefined }));
@@ -226,6 +343,9 @@ export default function CreateActivity({ navigation, route }) {
     if (step === 1) {
       if (!form.title) e.title = 'Required';
       if (!form.activityType) e.activityType = 'Please select an activity type';
+      if (form.activityType === 'Study Circle' && !form.studyCircleBook) {
+        e.studyCircleBook = 'Please select a book';
+      }
       if (!form.date) e.date = 'Select a date';
       if (!form.time) e.time = 'Select a time';
     }
@@ -303,6 +423,9 @@ export default function CreateActivity({ navigation, route }) {
     // Assemble payload
     const sessionDateValue = combineDateTime(form.date, form.time);
     const groupTimeValue = formatTimeValue(form.time);
+    const trimmedOnlineLink = (form.onlineLink || '').trim();
+    const includeOnlineLink = form.locationMode === 'online' || form.locationMode === 'both';
+    const venues = form.venueId ? [form.venueId] : [];
     const facilitatorLimitValue = 2;
     const participantLimitValue = 6;
     const payload = {
@@ -314,20 +437,20 @@ export default function CreateActivity({ navigation, route }) {
         frequency: form.frequency,
         time: groupTimeValue || null,
       },
-      onlineLink: form.onlineLink,
-      venueId: form.venueId,
-      address: form.address,
+      ...(includeOnlineLink && trimmedOnlineLink ? { onlineLink: trimmedOnlineLink } : {}),
+      venues,
       imageUrl: form.imageUrl,
       activityType: form.activityType,
-      facilitators: [],
-      participants: [],
+      studyCircleBook: form.activityType === 'Study Circle' ? form.studyCircleBook : undefined,
+      facilitators: formatMembersForPayload(form.facilitators),
+      participants: formatMembersForPayload(form.participants),
       community: communityId,
       createdBy: userId,
       facilitatorLimit: facilitatorLimitValue,
       participantLimit: participantLimitValue,
     };
-    if (payload.address && Object.values(payload.address).every(val => !val)) {
-      delete payload.address;
+    if (!venues.length) {
+      delete payload.venues;
     }
     try {
       await createActivity(payload, token);
@@ -381,6 +504,16 @@ export default function CreateActivity({ navigation, route }) {
                 styledInputProps={styledInputProps}
                 styles={styles}
               />
+              {form.activityType === 'Study Circle' ? (
+                <StudyCircleBookSection
+                  value={form.studyCircleBook}
+                  options={STUDY_CIRCLE_BOOKS}
+                  onSelect={handleSelectStudyCircleBook}
+                  error={errors.studyCircleBook}
+                  styledInputProps={styledInputProps}
+                  styles={styles}
+                />
+              ) : null}
               <DescriptionSection
                 value={form.description}
                 onChange={handleChangeDescription}
@@ -433,11 +566,29 @@ export default function CreateActivity({ navigation, route }) {
           )}
 
           {step === 3 && (
-            <CoverImageSection
-              form={form}
-              onPickImage={pickImage}
-              styles={styles}
-            />
+            <>
+              <AttendeesSection
+                facilitators={form.facilitators}
+                participants={form.participants}
+                facilitatorSearch={form.facilitatorSearch}
+                participantSearch={form.participantSearch}
+                onChangeFacilitatorSearch={handleChangeFacilitatorSearch}
+                onChangeParticipantSearch={handleChangeParticipantSearch}
+                onAddFacilitator={handleAddFacilitator}
+                onAddParticipant={handleAddParticipant}
+                onRemoveFacilitator={handleRemoveFacilitator}
+                onRemoveParticipant={handleRemoveParticipant}
+                memberOptions={memberOptions}
+                memberLoading={memberLoading}
+                memberError={memberError}
+                styles={styles}
+              />
+              <CoverImageSection
+                form={form}
+                onPickImage={pickImage}
+                styles={styles}
+              />
+            </>
           )}
         </View>
 
@@ -653,6 +804,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     paddingLeft: 4,
     marginBottom: 6,
+  },
+  section: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    marginBottom: 6,
+    color: themeVariables.blackColor,
   },
   scheduleLabel: {
     marginTop: 8,

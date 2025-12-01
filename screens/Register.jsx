@@ -84,8 +84,6 @@ const Register = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-
       {/* Email Label and Input */}
       <Text style={styles.label}>Email</Text>
       <TextInput
@@ -167,14 +165,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     backgroundColor: themeVariables.screenBackgroundColor,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#312783',
-    marginBottom: 32,
-    width: Platform.select({ android: 140 }),
-    textAlign: 'center',
   },
   // Label above inputs for clarity on all devices
   label: {

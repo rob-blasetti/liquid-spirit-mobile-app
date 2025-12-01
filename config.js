@@ -1,7 +1,7 @@
 import Config from 'react-native-config';
 
 //Set the API URL
-export const API_URL = Config.PROD_API;
+export const API_URL = Config.DEV_API;
 
 // Removed debug log to prevent console output during tests
 // console.log(API_URL);
@@ -11,4 +11,4 @@ export const AWS_Secret = Config.AWS_SECRET_ACCESS_KEY;
 export const AWS_Region = Config.AWS_REGION;
 
 // Toggle password validation globally (set true to re-enable client checks)
-export const ENABLE_PASSWORD_VALIDATION = true;
+export const ENABLE_PASSWORD_VALIDATION = false;
