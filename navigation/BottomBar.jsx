@@ -55,13 +55,17 @@ const extractActivityContext = (params = {}) => {
   ];
   const match = candidates.find(Boolean);
   const activityId = match ? String(match) : '';
+  const activity = params.activity || params.activityPreload || {};
   const activityTitle =
     params.activityTitle ||
-    params.activity?.title ||
-    params.activityPreload?.title ||
+    activity.title ||
     params.title ||
     '';
-  return { activityId, activityTitle };
+  const facilitators =
+    Array.isArray(params.prefilledFacilitators) ? params.prefilledFacilitators : activity.facilitators || [];
+  const participants =
+    Array.isArray(params.prefilledParticipants) ? params.prefilledParticipants : activity.participants || [];
+  return { activityId, activityTitle, facilitators, participants };
 };
 
 const BottomBar = ({ initialPosts, homeOverview }) => {
@@ -111,7 +115,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         setModalVisible(true);
         return;
       }
-      const { activityId, activityTitle } = activityContext || {};
+      const { activityId, activityTitle, facilitators, participants } = activityContext || {};
       if (!activityId) {
         Alert.alert(
           'Activity unavailable',
@@ -123,6 +127,8 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         activityId,
         activityTitle,
         communityId,
+        prefilledFacilitators: facilitators,
+        prefilledParticipants: participants,
       });
     },
     [communityId, isLoggedIn, parentNavigation],

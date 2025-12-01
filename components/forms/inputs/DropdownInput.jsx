@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
 import { TextInput, HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -86,18 +86,25 @@ const DropdownInput = ({
       </TouchableOpacity>
       {open && normalizedOptions.length > 0 && (
         <View style={styles.dropdownList}>
-          {normalizedOptions.map(option => (
-            <TouchableOpacity
-              key={option.value}
-              style={[
-                styles.dropdownOption,
-                displayValue === option.value && styles.dropdownOptionActive,
-              ]}
-              onPress={() => handleSelect(option)}
-            >
-              <Text style={styles.dropdownOptionText}>{option.label}</Text>
-            </TouchableOpacity>
-          ))}
+          <ScrollView
+            style={styles.dropdownScroll}
+            contentContainerStyle={styles.dropdownContent}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
+            {normalizedOptions.map(option => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.dropdownOption,
+                  displayValue === option.value && styles.dropdownOptionActive,
+                ]}
+                onPress={() => handleSelect(option)}
+              >
+                <Text style={styles.dropdownOptionText}>{option.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       )}
       {error ? (
@@ -125,6 +132,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: '100%',
+    maxHeight: 280,
     borderWidth: 1,
     borderColor: themeVariables.borderLightColor || '#dcdcdc',
     borderRadius: 4,
@@ -132,6 +140,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     zIndex: 10,
     elevation: 4,
+  },
+  dropdownScroll: {
+    maxHeight: 280,
+  },
+  dropdownContent: {
+    paddingBottom: 4,
   },
   dropdownOption: {
     paddingVertical: 12,

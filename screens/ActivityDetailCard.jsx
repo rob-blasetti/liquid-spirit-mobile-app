@@ -668,6 +668,16 @@ const ActivityDetailCard = ({ route }) => {
     openChatDetail,
   ]);
 
+  const prefillParamsSetRef = useRef(false);
+  useEffect(() => {
+    if (!hydratedActivity || prefillParamsSetRef.current) return;
+    navigation.setParams({
+      prefilledFacilitators: hydratedActivity.facilitators || [],
+      prefilledParticipants: hydratedActivity.participants || [],
+    });
+    prefillParamsSetRef.current = true;
+  }, [hydratedActivity, navigation]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (

@@ -7,7 +7,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../styles/theme';
 import { UserContext } from '../../contexts/UserContext';
-import { createSession } from '../../services/ActivityService';
+import { createSession } from '../../services/SessionService';
 import { getMemberList } from '../../services/UserService';
 import { fetchChildrensCurriculum } from '../../services/CurriculumService';
 import ScheduleSection from './sections/ScheduleSection';
@@ -36,6 +36,92 @@ const cleanObject = (obj = {}) => {
 const TOTAL_STEPS = 2;
 const AU_STATES = ['VIC', 'QLD', 'NSW', 'ACT', 'NT', 'TAS', 'WA', 'SA'];
 const CHILDREN_GRADES = ['1', '2', '3', '4', '5', '6'];
+
+const resolveMemberDetails = (entry) => {
+  if (!entry || typeof entry !== 'object') return null;
+  if (entry.details && typeof entry.details === 'object') return entry.details;
+  if (entry.refId && typeof entry.refId === 'object') return entry.refId;
+  if (entry.user && typeof entry.user === 'object') return entry.user;
+  if (entry.profile && typeof entry.profile === 'object') return entry.profile;
+  return entry;
+};
+
+const normalizeMemberEntry = (entry) => {
+  if (!entry) return null;
+  const details = resolveMemberDetails(entry);
+  const rawId =
+    details?._id ||
+    details?.id ||
+    entry._id ||
+    entry.id ||
+    entry.userId ||
+    entry.refId?._id ||
+    entry.refId?.id ||
+    entry.user?._id ||
+    entry.user?.id ||
+    entry.profile?._id ||
+    entry.profile?.id;
+  if (!rawId) return null;
+  const id = String(rawId);
+  const firstName =
+    details?.firstName ||
+    details?.first_name ||
+    details?.givenName ||
+    details?.given_name ||
+    entry.firstName ||
+    entry.first_name ||
+    entry.givenName ||
+    entry.given_name;
+  const lastName = details?.lastName || details?.last_name || entry.lastName || entry.last_name;
+  const email = details?.email || entry.email;
+  const fullName =
+    details?.fullName ||
+    details?.displayName ||
+    details?.name ||
+    entry.fullName ||
+    entry.displayName ||
+    entry.name ||
+    [firstName, lastName].filter(Boolean).join(' ').trim();
+  return {
+    ...details,
+    _id: id,
+    id,
+    firstName: firstName ?? details?.firstName,
+    lastName: lastName ?? details?.lastName,
+    email,
+    fullName: fullName || email || 'Member',
+  };
+};
+
+const normalizeMemberList = (list) => {
+  if (!Array.isArray(list)) return [];
+  return list.map(normalizeMemberEntry).filter(Boolean);
+};
+
+const extractMemberId = (member) => {
+  if (!member) return '';
+  return (
+    member._id ||
+    member.id ||
+    member.userId ||
+    member.refId?._id ||
+    member.refId?.id ||
+    member.user?._id ||
+    member.user?.id ||
+    member.profile?._id ||
+    member.profile?.id ||
+    resolveMemberDetails(member)?._id ||
+    resolveMemberDetails(member)?.id ||
+    ''
+  );
+};
+
+const formatMembersForPayload = (list = []) =>
+  list
+    .map(extractMemberId)
+    .filter(Boolean)
+    .map(String)
+    .map((id) => ({ _id: id, type: 'Member' }));
 
 const initialForm = {
   notes: '',
@@ -91,6 +177,26 @@ const CreateSession = ({ navigation, route }) => {
     params.activity?.activityType ||
     params.activityPreload?.activityType ||
     '';
+  const prefilledFacilitators = useMemo(
+    () =>
+      normalizeMemberList(
+        params.prefilledFacilitators ||
+          params.activity?.facilitators ||
+          params.activityPreload?.facilitators ||
+          [],
+      ),
+    [params.activity, params.activityPreload, params.prefilledFacilitators],
+  );
+  const prefilledParticipants = useMemo(
+    () =>
+      normalizeMemberList(
+        params.prefilledParticipants ||
+          params.activity?.participants ||
+          params.activityPreload?.participants ||
+          [],
+      ),
+    [params.activity, params.activityPreload, params.prefilledParticipants],
+  );
 
   const inputTheme = useMemo(
     () => ({
@@ -126,7 +232,12 @@ const CreateSession = ({ navigation, route }) => {
   );
 
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({
+    ...initialForm,
+    address: { ...initialForm.address },
+    facilitators: prefilledFacilitators,
+    participants: prefilledParticipants,
+  }));
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
@@ -368,13 +479,16 @@ const CreateSession = ({ navigation, route }) => {
     if (includeLocation) {
       const needsOnline = form.locationMode === 'online' || form.locationMode === 'both';
       const needsAddress = form.locationMode === 'inPerson' || form.locationMode === 'both';
-      const requireVenueSelection = !venuesLoading;
       if (needsOnline) {
         if (!form.onlineLink) validationErrors.onlineLink = 'Online link required for online sessions';
         else if (!form.onlineLink.startsWith('http')) validationErrors.onlineLink = 'Must start with http:// or https://';
       }
       if (needsAddress) {
-        if (requireVenueSelection && !form.venueId) validationErrors.venueId = 'Select a venue for in-person sessions';
+        if (!form.venueId) {
+          validationErrors.venueId = venuesLoading
+            ? 'Loading venues, please try again in a moment.'
+            : 'Select a venue for in-person sessions';
+        }
       }
     }
     setErrors(validationErrors);
@@ -455,12 +569,10 @@ const CreateSession = ({ navigation, route }) => {
         date: formatDateOnly(form.date),
         status: 'Scheduled',
         locationMode: form.locationMode,
-        onlineLink: form.onlineLink,
-        venueId: includeAddress ? form.venueId : '',
         venueName: includeAddress ? form.venueName : '',
         address,
-        facilitators: (form.facilitators || []).map((m) => m._id || m.id).filter(Boolean),
-        participants: (form.participants || []).map((m) => m._id || m.id).filter(Boolean),
+        facilitators: formatMembersForPayload(form.facilitators),
+        participants: formatMembersForPayload(form.participants),
         curriculumLesson:
           activityType === "Children's Class"
             ? cleanObject({
@@ -472,11 +584,20 @@ const CreateSession = ({ navigation, route }) => {
                 lessonNumber: form.curriculumLesson.lessonNumber,
               })
             : undefined,
+        venues: includeAddress && form.venueId ? [form.venueId] : undefined,
       });
       if (!includeAddress || (payload.address && Object.keys(payload.address).length === 0)) {
         delete payload.address;
       }
-      await createSession(resolvedActivityId, payload, token);
+      // Only send online link when not providing a venue, so backend can create an Online venue instead of storing raw link
+      if (form.locationMode !== 'inPerson' && !payload.venues?.length) {
+        payload.onlineLink = form.onlineLink;
+      }
+      console.log('[CreateSession] submitting payload', {
+        activityId: resolvedActivityId,
+        payload,
+      });
+      await createSession(resolvedActivityId, payload, { token });
       Alert.alert('Session Created', 'Your session has been scheduled.', [
         { text: 'OK', onPress: () => navigation.goBack() },
       ]);
@@ -518,7 +639,7 @@ const CreateSession = ({ navigation, route }) => {
   }, [handleNavBack]);
 
   const scrollContentStyle = useMemo(
-    () => [styles.container, { paddingBottom: Math.max(bottomInset + 32, 120) }],
+    () => [styles.container, { paddingBottom: Math.max(bottomInset + 80, 200) }],
     [bottomInset],
   );
 
@@ -652,7 +773,7 @@ const CreateSession = ({ navigation, route }) => {
           {step < TOTAL_STEPS ? (
             <Button
               primary
-              size="large"
+              size="medium"
               label="Next"
               onPress={onNext}
               style={[styles.actionButton, styles.primaryActionButton]}
@@ -660,7 +781,7 @@ const CreateSession = ({ navigation, route }) => {
           ) : (
             <Button
               primary
-              size="large"
+              size="medium"
               label={submitting ? 'Submitting...' : 'Submit'}
               onPress={handleSubmit}
               disabled={submitting}

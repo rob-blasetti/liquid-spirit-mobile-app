@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput, ScrollView } from 'react-native';
 import { HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -65,39 +65,46 @@ const MultiSelectMemberInput = ({
       </View>
       {dropdownVisible && (
         <View style={styles.dropdownList}>
-        {loading ? (
-          <View style={styles.dropdownLoading}>
-            <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-            <Text style={styles.dropdownLoadingText}>Loading members…</Text>
-          </View>
-        ) : error ? (
-          <HelperText type="error" visible>
-            {error}
-          </HelperText>
-        ) : options.length === 0 ? (
-          <Text style={styles.dropdownEmpty}>{emptyText}</Text>
-        ) : (
-          options.map(option => {
-            const key = option._id || option.id;
-            const optionLabel =
-              option.fullName ||
-              `${option.firstName || ''} ${option.lastName || ''}`.trim() ||
-              option.email ||
-              'Member';
-            return (
-              <TouchableOpacity
-                key={key}
-                style={styles.dropdownOption}
-                onPress={() => {
-                  onSelectOption?.(option);
-                  setDropdownVisible(false);
-                }}
-              >
-                <Text style={styles.dropdownOptionText}>{optionLabel}</Text>
-              </TouchableOpacity>
-            );
-          })
-        )}
+          {loading ? (
+            <View style={styles.dropdownLoading}>
+              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+              <Text style={styles.dropdownLoadingText}>Loading members…</Text>
+            </View>
+          ) : error ? (
+            <HelperText type="error" visible>
+              {error}
+            </HelperText>
+          ) : options.length === 0 ? (
+            <Text style={styles.dropdownEmpty}>{emptyText}</Text>
+          ) : (
+            <ScrollView
+              style={styles.dropdownScroll}
+              contentContainerStyle={styles.dropdownContent}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+            >
+              {options.map(option => {
+                const key = option._id || option.id;
+                const optionLabel =
+                  option.fullName ||
+                  `${option.firstName || ''} ${option.lastName || ''}`.trim() ||
+                  option.email ||
+                  'Member';
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={styles.dropdownOption}
+                    onPress={() => {
+                      onSelectOption?.(option);
+                      setDropdownVisible(true);
+                    }}
+                  >
+                    <Text style={styles.dropdownOptionText}>{optionLabel}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
         </View>
       )}
     </View>
@@ -167,6 +174,14 @@ const styles = StyleSheet.create({
     borderColor: themeVariables.borderLightColor || '#dcdcdc',
     borderRadius: 4,
     backgroundColor: themeVariables.whiteColor,
+    maxHeight: 220,
+    overflow: 'hidden',
+  },
+  dropdownScroll: {
+    maxHeight: 220,
+  },
+  dropdownContent: {
+    paddingBottom: 6,
   },
   dropdownLoading: {
     flexDirection: 'row',
