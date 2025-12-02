@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
+import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
 
 import themeVariables from '../../../styles/theme';
 import sectionBaseStyles from '../common/sectionBaseStyles';
@@ -13,7 +14,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
-  banner: { width: '100%', height: 300, borderRadius: 0 },
+  banner: { width: '100%', height: IMAGE_BANNER_HEIGHT, borderRadius: 0 },
   overlayCard: {
     ...detailCardOverlay,
   },

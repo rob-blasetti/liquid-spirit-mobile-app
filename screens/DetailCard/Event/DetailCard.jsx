@@ -27,6 +27,7 @@ import AttendanceSection from './sections/AttendanceSection';
 import MaterialsSection from './sections/MaterialsSection';
 
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
+import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -1021,7 +1022,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'transparent',
   },
-  banner: { width: '100%', height: 220, borderRadius: 0 },
+  banner: { width: '100%', height: IMAGE_BANNER_HEIGHT, borderRadius: 0 },
   overlayCard: {
     ...detailCardOverlay,
   },

@@ -1,8 +1,17 @@
 import React from 'react';
-import FastImage from 'react-native-fast-image';
 import { View } from 'react-native';
+import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
 
-const CardContainer = ({ imageUrl, cardStyle, bannerStyle, resizeMode = FastImage.resizeMode.cover, children }) => {
+const CardContainer = ({
+  imageUrl,
+  cardStyle,
+  bannerStyle,
+  bannerHeight = IMAGE_BANNER_HEIGHT,
+  bannerOverlayColor = null,
+  renderBanner,
+  topInset = 0,
+  children,
+}) => {
   const arrayChildren = React.Children.toArray(children);
 
   const sanitizedChildren = [];
@@ -41,11 +50,14 @@ const CardContainer = ({ imageUrl, cardStyle, bannerStyle, resizeMode = FastImag
 
   return (
     <View style={[{ overflow: 'hidden' }, cardStyle]}>
-      {imageUrl ? (
-        <FastImage
-          source={imageUrl}
-          style={bannerStyle}
-          resizeMode={resizeMode}
+      {(imageUrl || renderBanner) ? (
+        <ImageBanner
+          imageSource={renderBanner ? null : imageUrl}
+          renderContent={renderBanner}
+          height={bannerHeight}
+          topInset={topInset}
+          overlayColor={bannerOverlayColor}
+          containerStyle={bannerStyle}
         />
       ) : null}
       {sanitizedChildren}

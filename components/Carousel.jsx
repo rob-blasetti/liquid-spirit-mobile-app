@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, FlatList, Dimensions, StyleSheet, Text } from 'react-native';
+import { View, FlatList, Dimensions, StyleSheet, Text, Animated } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Lightbox from 'react-native-lightbox-v2';
 
@@ -36,7 +36,7 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
 
   const renderItem = React.useCallback(
     ({ item }) => (
-      <View style={{ width: itemWidth, marginRight: separatorWidth, height: itemHeight }}>
+      <Animated.View style={{ width: itemWidth, marginRight: separatorWidth, height: itemHeight }}>
         <Lightbox
           underlayColor="transparent"
           springConfig={{ tension: 30, friction: 20 }}
@@ -55,7 +55,7 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
             resizeMode={FastImage.resizeMode.cover}
           />
         </Lightbox>
-      </View>
+      </Animated.View>
     ),
     [itemWidth, separatorWidth, itemHeight]
   );
@@ -85,7 +85,7 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
     }
   }, [snapToInterval, originalDataCount, setActiveIndex]);
   return (
-    <View style={{ height: itemHeight, position: 'relative' }}>
+    <Animated.View style={{ height: itemHeight, position: 'relative' }}>
       <FlatList
         style={{ flex: 1 }}
         ref={flatListRef}
@@ -109,7 +109,7 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
       <View style={styles.counterContainer} pointerEvents="none">
         <Text style={styles.counterText}>{`${activeIndex}/${originalDataCount}`}</Text>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   counterContainer: {
     position: 'absolute',
-    bottom: 5,
+    bottom: 8,
     right: 20,
     width: 32,
     height: 24,

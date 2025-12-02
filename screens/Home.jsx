@@ -1,11 +1,9 @@
 import React, { useContext, useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
-  ScrollView,
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Image,
   Animated,
   Dimensions,
   Linking,
@@ -30,6 +28,7 @@ import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
+import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -37,6 +36,8 @@ const GRID_PADDING = 20;
 const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
+const BANNER_CONTENT_OFFSET = 60;
+const MIN_BANNER_HEIGHT = 160;
 
 const formatGroupTime = (timeStr) => {
   if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
@@ -54,9 +55,6 @@ const Home = ({ navigation, homeOverview, route }) => {
   const insets = useSafeAreaInsets();
   // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;
-  // Extra padding to further push content down and enlarge banner
-  const EXTRA_TOP = 50;
-  const bannerHeight = 200 + statusBarHeight + EXTRA_TOP;
   const {
     user,
     userActivities,
@@ -97,8 +95,15 @@ const Home = ({ navigation, homeOverview, route }) => {
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
-  // animated scroll offset for banner stretch
   const scrollY = useRef(new Animated.Value(0)).current;
+  const clampedScroll = useMemo(
+    () => Animated.diffClamp(scrollY, 0, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT),
+    [scrollY],
+  );
+  const bannerHeight = useMemo(
+    () => Animated.subtract(IMAGE_BANNER_HEIGHT, clampedScroll),
+    [clampedScroll],
+  );
   // Banner message for redirects
   const [bannerMessage, setBannerMessage] = useState('');
   useEffect(() => {
@@ -133,6 +138,7 @@ const Home = ({ navigation, homeOverview, route }) => {
     });
   };
 
+
   // Removed refresh-on-focus to avoid redundant session refreshes; centralized elsewhere
   // Fallback redirect to Login if loading takes too long
   useEffect(() => {
@@ -164,15 +170,46 @@ const Home = ({ navigation, homeOverview, route }) => {
         <SlideBanner
           message={bannerMessage}
           onClose={() => setBannerMessage('')}
-          slideTo={statusBarHeight + EXTRA_TOP}
+          slideTo={statusBarHeight + BANNER_CONTENT_OFFSET}
         />
       )}
+      <View
+        pointerEvents="box-none"
+        style={[styles.floatingActions, { top: statusBarHeight + 12 }]}
+      >
+        <LiquidGlassButton
+          onPress={() => navigation.navigate('Search')}
+          intensity={28}
+          style={styles.topActionButton}
+          containerStyle={styles.topGlassContainer}
+          accessibilityLabel="Search"
+        >
+          <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
+        </LiquidGlassButton>
+        <View style={styles.notificationWrapper}>
+          <LiquidGlassButton
+            onPress={() => navigation.navigate('Notifications')}
+            intensity={28}
+            style={styles.topActionButton}
+            containerStyle={styles.topGlassContainer}
+            accessibilityLabel="Notifications"
+          >
+            <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+          </LiquidGlassButton>
+          {unreadCount > 0 && (
+            <View style={styles.notificationBadge} pointerEvents="none">
+              <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </View>
+      </View>
       <View style={styles.container}>
       {/* Only override status bar to white on Home screen */}
       {isFocused && (
         <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       )}
       <Animated.ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={styles.scrollView}
         scrollEventThrottle={16}
         onScroll={Animated.event(
@@ -181,51 +218,29 @@ const Home = ({ navigation, homeOverview, route }) => {
         )}
       >
         {/* Banner Section */}
-        <Animated.View style={[
-          styles.bannerContainer,
-          { marginTop: -statusBarHeight, height: bannerHeight },
-        ]}>
-          <Carousel
-            data={bannerData}
-            itemWidth={SCREEN_WIDTH}
-            separatorWidth={0}
-            itemHeight={bannerHeight}
-          />
-          <View style={styles.bannerOverlay} pointerEvents="none" />
+        <ImageBanner
+          topInset={statusBarHeight}
+          height={bannerHeight}
+          overlayColor="rgba(0,0,0,0.15)"
+          containerStyle={styles.bannerContainer}
+          renderContent={({ totalHeight }) => (
+            <Animated.View style={{ height: totalHeight }}>
+              <Carousel
+                data={bannerData}
+                itemWidth={SCREEN_WIDTH}
+                separatorWidth={0}
+                itemHeight={totalHeight}
+              />
+            </Animated.View>
+          )}
+        >
           <View
             style={[
               styles.bannerContent,
-              { top: statusBarHeight + EXTRA_TOP },
+              { top: statusBarHeight + BANNER_CONTENT_OFFSET },
             ]}
             pointerEvents="box-none"
           >
-            <View style={styles.bannerTopActions}>
-              <LiquidGlassButton
-                onPress={() => navigation.navigate('Search')}
-                intensity={28}
-                style={styles.topActionButton}
-                containerStyle={styles.topGlassContainer}
-                accessibilityLabel="Search"
-              >
-                <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
-              </LiquidGlassButton>
-              <View style={styles.notificationWrapper}>
-                <LiquidGlassButton
-                  onPress={() => navigation.navigate('Notifications')}
-                  intensity={28}
-                  style={styles.topActionButton}
-                  containerStyle={styles.topGlassContainer}
-                  accessibilityLabel="Notifications"
-                >
-                  <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
-                </LiquidGlassButton>
-                {unreadCount > 0 && (
-                  <View style={styles.notificationBadge} pointerEvents="none">
-                    <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
-                  </View>
-                )}
-              </View>
-            </View>
             {/* Community info at banner bottom-left */}
             <View style={styles.bannerBottomLeft}>
               <Text style={styles.communityBannerName}>{user?.community?.name}</Text>
@@ -242,7 +257,7 @@ const Home = ({ navigation, homeOverview, route }) => {
               );
             })()}
           </View>
-          </Animated.View>
+        </ImageBanner>
 
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
@@ -612,14 +627,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: themeVariables.screenBackgroundColor,
   },
-  bannerTopActions: {
+  floatingActions: {
     position: 'absolute',
-    top: 8,
     right: 20,
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 12,
-    zIndex: 2,
+    zIndex: 5,
   },
   topActionButton: {
     backgroundColor: 'transparent',
@@ -672,21 +686,7 @@ const styles = StyleSheet.create({
   },
   bannerContainer: {
     position: 'relative',
-    height: 200,
     marginBottom: 20,
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-  },
-  fullscreenBanner: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'transparent',
-  },
-  bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   bannerContent: {
     ...StyleSheet.absoluteFillObject,

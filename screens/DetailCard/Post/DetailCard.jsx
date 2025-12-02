@@ -47,11 +47,12 @@ import {
   detailCardContent,
   detailCardHorizontalPadding,
 } from '../common/detailCardLayout';
+import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
 
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
 
-const { height: windowHeight, width: screenWidth } = Dimensions.get('window');
+const { height: windowHeight } = Dimensions.get('window');
 
 const PostDetailCard = ({ route }) => {
   const navigation = useNavigation();
@@ -420,13 +421,6 @@ const PostDetailCard = ({ route }) => {
   }, [post, user, mediaUrl, imageAspect, initialImageAspect]);
 
   const isVideo = mediaUrl && (mediaUrl.endsWith('.mp4') || mediaUrl.includes('video'));
-  const displayAspect = imageAspect || initialImageAspect || 1;
-  const mediaHeight = useMemo(() => {
-    if (!displayAspect) return 300;
-    const computed = screenWidth / displayAspect;
-    if (!Number.isFinite(computed) || computed <= 0) return 300;
-    return Math.max(computed, 220);
-  }, [displayAspect]);
 
   if (!postId) {
     return (
@@ -479,13 +473,16 @@ const PostDetailCard = ({ route }) => {
       >
         <View style={styles.contentWrapper}>
           <Animated.View style={{ opacity: contentOpacity }}>
-            <CardContainer cardStyle={styles.card}>
-              <View style={styles.mediaWrapper}>
+            <CardContainer
+              cardStyle={styles.card}
+              bannerHeight={IMAGE_BANNER_HEIGHT}
+              bannerOverlayColor={null}
+              renderBanner={({ height }) => (
                 <MediaSection
                   mediaUrl={mediaUrl}
                   isVideo={isVideo}
                   imageAspect={imageAspect}
-                  mediaHeight={mediaHeight}
+                  mediaHeight={height}
                   mediaOpacity={mediaOpacity}
                   onVideoLoad={() => {
                     __DEV__ && console.log('[PostDetail] video onLoad');
@@ -504,7 +501,8 @@ const PostDetailCard = ({ route }) => {
                   }}
                   isLiked={isLiked}
                 />
-              </View>
+              )}
+            >
               <View style={styles.overlayCard}>
                 {/* Removed separate community chip here; will display in authorRow */}
                 <AuthorSection
@@ -697,11 +695,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
-  },
-  // Wrapper for media to position overlay icons
-  mediaWrapper: {
-    width: '100%',
-    position: 'relative',
   },
   // Overlay heart/comment icons on image, raised above overlay card
   imageOverlayIcons: {
