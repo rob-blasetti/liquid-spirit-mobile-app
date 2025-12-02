@@ -10,11 +10,14 @@ const useDetailCardHeader = ({
   onChat,
   chatLoading = false,
   showChat = true,
+  showShare = true,
 }) => {
   useLayoutEffect(() => {
     if (!navigation) return;
     const headerLeftInset = detailCardHorizontalPadding;
     const headerRightInset = Math.max(detailCardHorizontalPadding - 2, 6);
+
+    const hasRightActions = showChat || showShare;
 
     navigation.setOptions({
       headerLeftContainerStyle: { paddingLeft: headerLeftInset },
@@ -27,20 +30,22 @@ const useDetailCardHeader = ({
         />
       ),
       headerRight: () => (
-        <HeaderActionGroup style={{ marginRight: -4 }}>
-          {showChat && (
-            <HeaderActionButton
-              icon="chatbubble-ellipses-outline"
-              onPress={onChat}
-              loading={chatLoading}
-              style={{ marginRight: 4 }}
-            />
-          )}
-          <HeaderActionButton icon="share-outline" onPress={onShare} />
-        </HeaderActionGroup>
+        hasRightActions ? (
+          <HeaderActionGroup style={{ marginRight: -4 }}>
+            {showChat && (
+              <HeaderActionButton
+                icon="chatbubble-ellipses-outline"
+                onPress={onChat}
+                loading={chatLoading}
+                style={{ marginRight: 4 }}
+              />
+            )}
+            {showShare && <HeaderActionButton icon="share-outline" onPress={onShare} />}
+          </HeaderActionGroup>
+        ) : null
       ),
     });
-  }, [navigation, onBack, onShare, onChat, chatLoading, showChat]);
+  }, [navigation, onBack, onShare, onChat, chatLoading, showChat, showShare]);
 };
 
 export default useDetailCardHeader;

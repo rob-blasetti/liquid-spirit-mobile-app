@@ -19,35 +19,31 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ZoomableImage from '../../../components/ZoomableImage';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
-import { CardTitle, CardContent } from 'react-native-material-cards';
+import { CardContent } from 'react-native-material-cards';
 import CardContainer from '../common/CardContainer';
 import useDetailCardHeader from '../common/useDetailCardHeader';
 import sectionBaseStyles from '../common/sectionBaseStyles';
 import MediaSection from './sections/MediaSection';
 import CommentsSection from './sections/CommentsSection';
 import FastImage from 'react-native-fast-image';
-import BoringAvatar from '@liquidspirit/react-native-boring-avatars';
-import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
 import AuthorSection from './sections/AuthorSection';
 
 import themeVariables from '../../../styles/theme';
 import { UserContext } from '../../../contexts/UserContext';
 import { fetchPostDetails, likePost, commentOnPost, fetchRecentCommunityPosts } from '../../../services/PostService';
-import { Button } from 'liquid-spirit-styleguide/native';
 import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
 import { navigateToPostDetail } from '../../../utils/navigateToPostDetail';
 import resolveImageSource from '../../../utils/imageSource';
-import useChatStarter from '../common/useChatStarter';
 import {
   detailCardOverlay,
   detailCardTitle,
   detailCardSubtitle,
   detailCardContent,
-  detailCardHorizontalPadding,
 } from '../common/detailCardLayout';
 import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
@@ -108,19 +104,6 @@ const PostDetailCard = ({ route }) => {
     () => ({ marginBottom: Math.max(8, bottomOffset / 4) }),
     [bottomOffset],
   );
-  const { startChat: startAuthorChat, startingChat } = useChatStarter({
-    context: 'post',
-    entity: post || postPreload || {},
-    entityId: postId,
-    token,
-    user,
-    navigation,
-    postAuthor: post?.author || postPreload?.author,
-  });
-  const handleChatPress = useCallback(() => {
-    startAuthorChat();
-  }, [startAuthorChat]);
-
   useEffect(() => {
     console.log('[PostDetailCard] route', { name: route?.name, params: route?.params });
   }, [route]);
@@ -220,14 +203,10 @@ const PostDetailCard = ({ route }) => {
       Alert.alert('Error', 'Failed to update like');
     }
   };
-  // Open comment input box
-  const handleAddComment = () => {
+  const handleCommentPress = useCallback(() => {
     setShowCommentBox(true);
-  };
-  // Clear the current comment text
-  const handleCancelComment = () => {
-    setCommentText('');
-  };
+    commentInputRef.current?.focus();
+  }, []);
   // Post comment to server and update local comments list
   const handlePostComment = async () => {
     const trimmed = normalizedCommentText.trim();
@@ -261,9 +240,10 @@ const PostDetailCard = ({ route }) => {
     navigation,
     onBack: handleBack,
     onShare: handleShare,
-    onChat: handleChatPress,
-    chatLoading: startingChat,
-    showChat: true,
+    onChat: null,
+    chatLoading: false,
+    showChat: false,
+    showShare: false,
   });
 
   useEffect(() => {
@@ -494,12 +474,6 @@ const PostDetailCard = ({ route }) => {
                   }}
                   onImageError={(e) => __DEV__ && console.log('[PostDetail] media onError', e?.nativeEvent)}
                   onPressImage={() => setModalVisible(true)}
-                  onLike={handleToggleLike}
-                  onCommentPress={() => {
-                    setShowCommentBox(true);
-                    commentInputRef.current?.focus();
-                  }}
-                  isLiked={isLiked}
                 />
               )}
             >
@@ -509,6 +483,31 @@ const PostDetailCard = ({ route }) => {
                   authorName={authorName}
                   authorCommunity={authorCommunity}
                   profilePic={profilePic}
+                  actions={
+                    <View style={styles.authorActionsRow}>
+                      <TouchableOpacity
+                        onPress={handleToggleLike}
+                        style={styles.authorIconButton}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color={themeVariables.primaryColor} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleCommentPress}
+                        style={styles.authorIconButton}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Ionicons name="chatbubble-outline" size={22} color={themeVariables.primaryColor} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleShare}
+                        style={styles.authorIconButton}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Ionicons name="share-social-outline" size={22} color={themeVariables.primaryColor} />
+                      </TouchableOpacity>
+                    </View>
+                  }
                 />
                 <CardContent style={styles.cardContent}>
                   {post.content ? (
@@ -656,7 +655,7 @@ const styles = StyleSheet.create({
   },
   authorRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginTop: 20,
   },
   authorInfoContainer: {
@@ -670,6 +669,15 @@ const styles = StyleSheet.create({
   authorCommunity: { fontSize: 14, color: '#666' },
   cardContent: { ...detailCardContent, marginTop: 12 },
   postContent: { fontSize: 16, color: '#333', marginLeft: -15, marginTop: 10 },
+  authorActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  authorIconButton: {
+    marginLeft: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tagChip: {
     backgroundColor: themeVariables.primaryColor,
@@ -695,25 +703,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
-  },
-  // Overlay heart/comment icons on image, raised above overlay card
-  imageOverlayIcons: {
-    position: 'absolute',
-    bottom: 56,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 2,
-  },
-  overlayIconBtn: {
-    backgroundColor: themeVariables.greyColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   // Comment box heading
   commentHeading: { fontSize: 16, fontWeight: 'bold', color: themeVariables.blackColor, marginBottom: 8 },

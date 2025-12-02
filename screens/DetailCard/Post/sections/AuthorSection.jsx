@@ -5,7 +5,7 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import resolveImageSource from '../../../../utils/imageSource';
 import themeVariables from '../../../../styles/theme';
 
-const AuthorSection = ({ authorName, authorCommunity, profilePic }) => (
+const AuthorSection = ({ authorName, authorCommunity, profilePic, actions }) => (
   <View style={styles.authorRow}>
     {profilePic ? (
       <FastImage source={resolveImageSource(profilePic, { priority: 'normal' })} style={styles.avatar} />
@@ -26,6 +26,7 @@ const AuthorSection = ({ authorName, authorCommunity, profilePic }) => (
         </View>
       ) : null}
     </View>
+    {actions ? <View style={styles.actionsContainer}>{actions}</View> : null}
   </View>
 );
 
@@ -33,8 +34,8 @@ const styles = StyleSheet.create({
   authorRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 12,
-    marginTop: 12,
+    marginHorizontal: 6,
+    marginTop: 6,
   },
   avatar: {
     width: 40,
@@ -56,6 +57,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   communityChipText: { color: '#fff', fontSize: 12 },
+  actionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    alignSelf: 'flex-start',
+    marginLeft: 'auto',
+    flexShrink: 0,
+  },
 });
 
 export default AuthorSection;

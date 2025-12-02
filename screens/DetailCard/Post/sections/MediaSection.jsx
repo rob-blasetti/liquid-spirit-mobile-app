@@ -2,9 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Video from 'react-native-video';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import resolveImageSource from '../../../../utils/imageSource';
-import themeVariables from '../../../../styles/theme';
 
 const MediaSection = ({
   mediaUrl,
@@ -16,9 +14,6 @@ const MediaSection = ({
   onImageLoad,
   onImageError,
   onPressImage,
-  onLike,
-  onCommentPress,
-  isLiked,
 }) => (
   <View style={styles.mediaWrapper}>
     {mediaUrl && (
@@ -50,17 +45,6 @@ const MediaSection = ({
         <View style={[styles.mediaPlaceholder, { height: mediaHeight }]} />
       )
     )}
-    <View style={styles.imageOverlayIcons}>
-      <TouchableOpacity onPress={onLike} style={styles.overlayIconBtn}>
-        <Ionicons name={isLiked ? 'heart' : 'heart-outline'} size={22} color={themeVariables.primaryColor} />
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={onCommentPress}
-        style={[styles.overlayIconBtn, { marginLeft: 16 }]}
-      >
-        <Ionicons name="chatbubble-outline" size={22} color={themeVariables.primaryColor} />
-      </TouchableOpacity>
-    </View>
   </View>
 );
 
@@ -80,24 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
-  },
-  imageOverlayIcons: {
-    position: 'absolute',
-    bottom: 56,
-    left: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 2,
-  },
-  overlayIconBtn: {
-    backgroundColor: themeVariables.greyColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });
 
