@@ -209,20 +209,22 @@ const Home = ({ navigation, homeOverview, route }) => {
               >
                 <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
               </LiquidGlassButton>
-              <LiquidGlassButton
-                onPress={() => navigation.navigate('Notifications')}
-                intensity={28}
-                style={styles.topActionButton}
-                containerStyle={styles.topGlassContainer}
-                accessibilityLabel="Notifications"
-              >
-                <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+              <View style={styles.notificationWrapper}>
+                <LiquidGlassButton
+                  onPress={() => navigation.navigate('Notifications')}
+                  intensity={28}
+                  style={styles.topActionButton}
+                  containerStyle={styles.topGlassContainer}
+                  accessibilityLabel="Notifications"
+                >
+                  <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+                </LiquidGlassButton>
                 {unreadCount > 0 && (
-                  <View style={styles.notificationBadge}>
+                  <View style={styles.notificationBadge} pointerEvents="none">
                     <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
                   </View>
                 )}
-              </LiquidGlassButton>
+              </View>
             </View>
             {/* Community info at banner bottom-left */}
             <View style={styles.bannerBottomLeft}>
@@ -638,14 +640,19 @@ const styles = StyleSheet.create({
     minWidth: 42,
     borderRadius: 21,
   },
+  notificationWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   notificationBadge: {
     position: 'absolute',
-    top: 2,
-    right: 2,
+    top: -4,
+    right: -4,
     backgroundColor: 'red',
-    borderRadius: 8,
-    width: 16,
-    height: 16,
+    borderRadius: 9,
+    width: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
