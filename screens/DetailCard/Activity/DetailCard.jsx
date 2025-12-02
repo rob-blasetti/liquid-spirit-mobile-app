@@ -25,6 +25,83 @@ import ActivityLoader from './ActivityLoader';
 import useDetailCardHeader from '../common/useDetailCardHeader';
 
 const TAB_BAR_HEIGHT = 80;
+const USER_MEMBER_TYPES = ['user'];
+
+const extractMemberType = (entry = {}) => {
+  const candidates = [
+    entry.type,
+    entry.memberType,
+    entry.refType,
+    entry.referenceType,
+    entry.entityType,
+    entry.targetType,
+    entry.details?.type,
+    entry.user?.type,
+    entry.profile?.type,
+    entry.account?.type,
+    entry.ref?.type,
+    entry.reference?.type,
+  ];
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'string') continue;
+    const normalized = candidate.trim().toLowerCase();
+    if (normalized) return normalized;
+  }
+  return '';
+};
+
+const isUserMemberEntry = (entry) => {
+  if (!entry || typeof entry !== 'object') return false;
+  const memberType = extractMemberType(entry);
+  if (!memberType) return false;
+  return USER_MEMBER_TYPES.includes(memberType);
+};
+
+const resolveMemberId = (entry = {}) => {
+  const candidates = [
+    entry.refId,
+    entry._id,
+    entry.id,
+    entry.userId,
+    entry.user_id,
+    entry.user?.id,
+    entry.user?._id,
+    entry.details?.id,
+    entry.details?._id,
+    entry.profile?.id,
+    entry.profile?._id,
+    entry.account?.id,
+    entry.account?._id,
+  ];
+  for (const candidate of candidates) {
+    if (candidate === undefined || candidate === null) continue;
+    const normalized = String(candidate).trim();
+    if (normalized.length) return normalized;
+  }
+  return '';
+};
+
+const resolveMemberName = (entry = {}) => {
+  const candidates = [
+    entry.name,
+    entry.fullName,
+    entry.firstName && entry.lastName ? `${entry.firstName} ${entry.lastName}` : '',
+    entry.firstName,
+    entry.lastName,
+    entry.username,
+    entry.email,
+    entry.user?.name,
+    entry.user?.fullName,
+    entry.details?.name,
+    entry.details?.fullName,
+  ];
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'string') continue;
+    const normalized = candidate.trim();
+    if (normalized.length) return normalized;
+  }
+  return '';
+};
 
 if (
   Platform.OS === 'android' &&
@@ -121,13 +198,34 @@ const ActivityDetailCard = ({ route }) => {
     prefillParamsSetRef.current = true;
   }, [hydratedActivity, navigation]);
 
+  const chatEligibleMemberCount = useMemo(() => {
+    const memberLists = [latestActivityForChat?.participants, latestActivityForChat?.facilitators];
+    const keys = new Set();
+
+    memberLists.forEach((list, listIndex) => {
+      if (!Array.isArray(list)) return;
+      list.forEach((entry, entryIndex) => {
+        if (!isUserMemberEntry(entry)) return;
+        const key =
+          resolveMemberId(entry) ||
+          resolveMemberName(entry) ||
+          `member-${listIndex}-${entryIndex}`;
+        keys.add(key);
+      });
+    });
+
+    return keys.size;
+  }, [latestActivityForChat]);
+
+  const shouldShowChat = chatEligibleMemberCount >= 2;
+
   useDetailCardHeader({
     navigation,
     onBack: handleBack,
     onShare: handleShare,
     onChat: startChat,
     chatLoading: startingChat,
-    showChat: true,
+    showChat: shouldShowChat,
   });
 
   useEffect(() => {

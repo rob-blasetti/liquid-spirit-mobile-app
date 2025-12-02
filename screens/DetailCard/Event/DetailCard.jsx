@@ -148,7 +148,7 @@ const EventDetailCard = ({ route }) => {
     onShare: handleShare,
     onChat: startChat,
     chatLoading: startingChat,
-    showChat: true,
+    showChat: false,
   });
 
   const normalizeEventId = (raw) => {

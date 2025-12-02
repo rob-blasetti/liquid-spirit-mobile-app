@@ -1,14 +1,15 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import FastImage from 'react-native-fast-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
-import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import resolveImageSource from '../utils/imageSource';
+import useDiscoverData from './Discover/hooks/useDiscoverData';
 
 const formatGroupTime = (timeStr) => {
   if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
@@ -24,29 +25,7 @@ const formatGroupTime = (timeStr) => {
 const Discover = ({ navigation }) => {
   const { userActivities, userEvents, token, isTokenExpired } = useContext(UserContext);
   const insets = useSafeAreaInsets();
-
-  const upcomingEvents = useMemo(() => {
-    if (!Array.isArray(userEvents)) return [];
-    const now = new Date();
-    return userEvents
-      .filter(evt => {
-        const when = new Date(evt.startTime || evt.date);
-        return !Number.isNaN(when) && when >= now;
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.startTime || a.date).getTime() - new Date(b.startTime || b.date).getTime(),
-      );
-  }, [userEvents]);
-
-  const upcomingActivities = useMemo(() => {
-    if (!Array.isArray(userActivities)) return [];
-    const now = new Date();
-    return userActivities
-      .map(activity => ({ activity, nextDate: getEffectiveNextDate(activity) }))
-      .filter(({ nextDate }) => nextDate && nextDate >= now)
-      .sort((a, b) => a.nextDate - b.nextDate);
-  }, [userActivities]);
+  const { activityPreview, eventPreview } = useDiscoverData({ userActivities, userEvents });
 
   const handleEventPress = useCallback(
     (event) => {
@@ -78,9 +57,6 @@ const Discover = ({ navigation }) => {
     );
   }
 
-  const activityPreview = upcomingActivities.slice(0, 4);
-  const eventPreview = upcomingEvents.slice(0, 4);
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -101,12 +77,9 @@ const Discover = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carousel}
           >
-            {activityPreview.map(({ activity, nextDate }) => {
-              const dateLabel = nextDate.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              });
+            {activityPreview.map(({ activity, nextDate, addressLabel }) => {
+              const dayLabel = nextDate.toLocaleDateString('en-US', { weekday: 'short' });
+              const dateLabel = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               const timeLabel =
                 formatGroupTime(activity?.groupDetails?.time) ||
                 nextDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -114,6 +87,7 @@ const Discover = ({ navigation }) => {
                 activity.imageUrl || 'https://via.placeholder.com/300',
                 { priority: 'high' },
               );
+              const typeLabel = activity.activityType?.name;
               return (
                 <TouchableOpacity
                   key={activity._id}
@@ -121,17 +95,33 @@ const Discover = ({ navigation }) => {
                   onPress={() => handleActivityPress(activity)}
                   activeOpacity={0.9}
                 >
-                  <FastImage source={imageSource} style={styles.miniImage} resizeMode={FastImage.resizeMode.cover} />
+                  <View style={styles.miniImageWrapper}>
+                    <FastImage source={imageSource} style={styles.miniImage} resizeMode={FastImage.resizeMode.cover} />
+                    {typeLabel ? (
+                      <View style={styles.typeChip}>
+                        <Text style={styles.typeChipText} numberOfLines={1}>
+                          {typeLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                   <View style={styles.miniContent}>
                     <Text style={styles.miniTitle} numberOfLines={2}>
                       {activity.title}
                     </Text>
-                    <Text style={styles.miniMeta} numberOfLines={1}>
-                      {dateLabel} · {timeLabel}
-                    </Text>
-                    {activity.activityType?.name ? (
-                      <Text style={styles.miniTag}>{activity.activityType.name}</Text>
-                    ) : null}
+                    <View style={styles.miniDivider} />
+                    <View style={[styles.miniMetaRow, styles.miniLocationRow]}>
+                      <Ionicons name="location-outline" size={13} color={themeVariables.blackColor} style={styles.miniMetaIcon} />
+                      <Text style={styles.miniMeta} numberOfLines={1}>
+                        {addressLabel}
+                      </Text>
+                    </View>
+                    <View style={styles.miniMetaRow}>
+                      <Ionicons name="time-outline" size={12} color={themeVariables.blackColor} style={styles.miniMetaIcon} />
+                      <Text style={styles.miniMeta} numberOfLines={1}>
+                        {timeLabel} · {dayLabel} · {dateLabel}
+                      </Text>
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -153,13 +143,9 @@ const Discover = ({ navigation }) => {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carousel}
           >
-            {eventPreview.map(event => {
-              const when = new Date(event.startTime || event.date);
-              const dateLabel = when.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              });
+            {eventPreview.map(({ event, when, addressLabel }) => {
+              const dayLabel = when.toLocaleDateString('en-US', { weekday: 'short' });
+              const dateLabel = when.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               const timeLabel = when.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
@@ -169,6 +155,7 @@ const Discover = ({ navigation }) => {
                 priority: 'high',
                 fallback: '/img/events/Event_Placeholder.png',
               });
+              const typeLabel = event.eventType;
               return (
                 <TouchableOpacity
                   key={event._id || event.id || `${event.title}-${event.startTime || event.date}`}
@@ -176,15 +163,33 @@ const Discover = ({ navigation }) => {
                   onPress={() => handleEventPress(event)}
                   activeOpacity={0.9}
                 >
-                  <FastImage source={imageSource} style={styles.miniImage} resizeMode={FastImage.resizeMode.cover} />
+                  <View style={styles.miniImageWrapper}>
+                    <FastImage source={imageSource} style={styles.miniImage} resizeMode={FastImage.resizeMode.cover} />
+                    {typeLabel ? (
+                      <View style={styles.typeChip}>
+                        <Text style={styles.typeChipText} numberOfLines={1}>
+                          {typeLabel}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
                   <View style={styles.miniContent}>
                     <Text style={styles.miniTitle} numberOfLines={2}>
                       {event.title || 'Untitled Event'}
                     </Text>
-                    <Text style={styles.miniMeta} numberOfLines={1}>
-                      {dateLabel} · {timeLabel}
-                    </Text>
-                    {event.eventType ? <Text style={styles.miniTag}>{event.eventType}</Text> : null}
+                    <View style={styles.miniDivider} />
+                    <View style={[styles.miniMetaRow, styles.miniLocationRow]}>
+                      <Ionicons name="location-outline" size={13} color={themeVariables.blackColor} style={styles.miniMetaIcon} />
+                      <Text style={styles.miniMeta} numberOfLines={1}>
+                        {addressLabel}
+                      </Text>
+                    </View>
+                    <View style={styles.miniMetaRow}>
+                      <Ionicons name="time-outline" size={12} color={themeVariables.blackColor} style={styles.miniMetaIcon} />
+                      <Text style={styles.miniMeta} numberOfLines={1}>
+                        {timeLabel} · {dayLabel} · {dateLabel}
+                      </Text>
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
@@ -262,9 +267,29 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  miniImageWrapper: {
+    padding: 4,
+    backgroundColor: themeVariables.whiteColor,
+    position: 'relative',
+  },
   miniImage: {
     width: '100%',
     height: 110,
+    borderRadius: 12,
+  },
+  typeChip: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: themeVariables.secondaryColor,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  typeChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
   },
   miniContent: {
     padding: 10,
@@ -274,10 +299,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
   },
+  miniDivider: {
+    height: 1,
+    backgroundColor: themeVariables.darkGreyColor,
+    marginVertical: 8,
+  },
+  miniMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  miniLocationRow: {
+    marginBottom: 4,
+    paddingRight: 6,
+  },
+  miniMetaIcon: {
+    marginRight: 6,
+  },
   miniMeta: {
     fontSize: 12,
     color: themeVariables.blackColor,
-    marginTop: 4,
+    marginTop: 0,
+    marginRight: 8,
   },
   miniTag: {
     marginTop: 6,

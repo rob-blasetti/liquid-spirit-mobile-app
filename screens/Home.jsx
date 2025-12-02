@@ -38,6 +38,7 @@ const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 const BANNER_CONTENT_OFFSET = 60;
 const MIN_BANNER_HEIGHT = 160;
+const BANNER_PULL_EXPANSION = 120;
 
 const formatGroupTime = (timeStr) => {
   if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
@@ -97,11 +98,16 @@ const Home = ({ navigation, homeOverview, route }) => {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const clampedScroll = useMemo(
-    () => Animated.diffClamp(scrollY, 0, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT),
+    () => Animated.diffClamp(scrollY, -BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT),
     [scrollY],
   );
   const bannerHeight = useMemo(
-    () => Animated.subtract(IMAGE_BANNER_HEIGHT, clampedScroll),
+    () =>
+      clampedScroll.interpolate({
+        inputRange: [-BANNER_PULL_EXPANSION, 0, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT],
+        outputRange: [IMAGE_BANNER_HEIGHT + BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT, MIN_BANNER_HEIGHT],
+        extrapolate: 'clamp',
+      }),
     [clampedScroll],
   );
   // Banner message for redirects
@@ -212,6 +218,8 @@ const Home = ({ navigation, homeOverview, route }) => {
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollView}
         scrollEventThrottle={16}
+        bounces
+        alwaysBounceVertical
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
