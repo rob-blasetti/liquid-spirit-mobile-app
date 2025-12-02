@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   glassContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    minHeight: 36,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    minHeight: 34,
   },
 });

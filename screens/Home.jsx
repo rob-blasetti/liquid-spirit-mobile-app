@@ -656,11 +656,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   topGlassContainer: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    minHeight: 42,
-    minWidth: 42,
-    borderRadius: 21,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    minHeight: 38,
+    minWidth: 38,
+    borderRadius: 19,
   },
   notificationWrapper: {
     position: 'relative',

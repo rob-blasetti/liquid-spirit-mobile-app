@@ -23,8 +23,8 @@ const Tab = createBottomTabNavigator();
 
 const tabIcons = {
   Home: 'home-outline',
-  Discover: 'calendar-outline',
-  Feed: 'compass-outline',
+  Discover: 'compass-outline',
+  Feed: 'albums-outline',
   Chat: 'chatbubbles-outline',
   Profile: 'person-outline',
 };

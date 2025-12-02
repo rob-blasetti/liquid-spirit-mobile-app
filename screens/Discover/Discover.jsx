@@ -350,6 +350,7 @@ const styles = StyleSheet.create({
   filterWrapper: {
     position: 'relative',
     marginLeft: 8,
+    marginRight: 8,
   },
   filterButton: {
     width: 52,
@@ -477,6 +478,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
+    marginRight: 10,
   },
   sectionTitle: {
     fontSize: 18,
