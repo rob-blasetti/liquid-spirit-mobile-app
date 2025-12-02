@@ -3,7 +3,7 @@ import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-import Discover from '../screens/Discover';
+import Discover from '../screens/Discover/Discover';
 import Events from '../screens/Events';
 import Activities from '../screens/Activities';
 import EventDetailCard from '../screens/EventDetailCard';
