@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
-import { Alert, TouchableOpacity } from 'react-native';
+import { Alert, TouchableOpacity, View, StyleSheet } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
 import s3 from '../awsConfig';
@@ -13,6 +14,7 @@ const ChangeableProfileImage = ({
   avatarSize = 55,
   userDetails: propUserDetails,
   setUserDetails: propSetUserDetails,
+  showEditIndicator = false,
 }) => {
   const { user, setUser } = useContext(UserContext);
   const { updateMe } = useAuthService();
@@ -118,7 +120,7 @@ const ChangeableProfileImage = ({
   };
 
   return (
-    <TouchableOpacity onPress={handlePress}>
+    <TouchableOpacity onPress={handlePress} activeOpacity={0.8} style={styles.wrapper}>
       {profilePictureUri ? (
         <FastImage
           source={resolveImageSource(profilePictureUri, { priority: 'normal' })}
@@ -133,8 +135,38 @@ const ChangeableProfileImage = ({
           colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
         />
       )}
+      {showEditIndicator && (
+        <View style={styles.editBadge}>
+          <Ionicons name="camera" size={14} color="#312783" />
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
+
+const styles = StyleSheet.create({
+  wrapper: {
+    position: 'relative',
+    alignSelf: 'flex-start',
+  },
+  editBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+});
 
 export default ChangeableProfileImage;

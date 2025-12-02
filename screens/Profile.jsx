@@ -421,9 +421,17 @@ const renderScene = ({ route }) => {
   // Custom TabBar to ensure full labels are visible and centered on Android
   const renderTabBarCustom = ({ navigationState, jumpTo, layout }) => {
     const totalWidth = layout?.width ?? Dimensions.get('window').width;
-    const tabWidth = totalWidth / navigationState.routes.length;
+    const horizontalPadding = 16;
+    const availableWidth = Math.max(totalWidth - horizontalPadding * 2, 0);
+    const tabWidth = availableWidth / navigationState.routes.length;
     return (
-      <View style={{ flexDirection: 'row', backgroundColor: themeVariables.screenBackgroundColor, marginLeft: 10 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: themeVariables.screenBackgroundColor,
+          paddingHorizontal: horizontalPadding,
+        }}
+      >
         {navigationState.routes.map((route, idx) => {
           const focused = navigationState.index === idx;
           return (
@@ -463,33 +471,52 @@ const renderScene = ({ route }) => {
     );
   };
 
+  const stats = {
+    activities: activities.length,
+    events: events.length,
+    posts: posts.length,
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.pageTitle}>My Dashboard</Text>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
+          <Ionicons name="settings-outline" size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
       </View>
       {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.headerProfileInfo}>
           <ChangeableProfileImage
             imageStyle={styles.profilePictureSmall}
-            avatarSize={60}
+            avatarSize={44}
             userDetails={userDetails}
             setUserDetails={setUserDetails}
+            showEditIndicator
           />
           <View style={styles.profileDetails}>
             <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
-            <CertificationsList items={certItems} />
+            <View style={styles.statsRow}>
+              <Text style={styles.statsItem}>Activities: {stats.activities}</Text>
+              <Text style={styles.statsItem}>Events: {stats.events}</Text>
+              <Text style={styles.statsItem}>Posts: {stats.posts}</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.headerActionsContainer}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-            <Ionicons name="settings-outline" size={20} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} onPress={() => handleShareProfile(user)}>
-            <Ionicons name="share-social-outline" size={20} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.shareButton} onPress={() => handleShareProfile(user)}>
+          <Ionicons name="share-social-outline" size={20} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.badgesHeadingRow}>
+        <Text style={styles.badgesHeading}>My Badges</Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
+          <Text style={styles.seeAllText}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.badgesContainer}>
+        <CertificationsList items={certItems} />
       </View>
 
 
@@ -607,6 +634,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 12,
     backgroundColor: themeVariables.screenBackgroundColor,
@@ -620,25 +650,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: themeVariables.borderRadiusPill,
-    backgroundColor: themeVariables.whiteColor,
-    // Raised shadow effect similar to ListItem & SearchCard
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 12,
   },
   headerProfileInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-  },
-  headerActionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   iconButton: {
     backgroundColor: themeVariables.greyColor,
@@ -653,15 +671,61 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: 8,
   },
+  shareButton: {
+    padding: 4,
+  },
+  badgesHeading: {
+    color: themeVariables.blackColor,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    fontWeight: 'bold',
+  },
+  badgesHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 20,
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  seeAllButton: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  seeAllText: {
+    color: themeVariables.primaryColor,
+    fontWeight: '600',
+  },
+  badgesContainer: {
+    marginHorizontal: 20,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: themeVariables.blackColor,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+  },
   profilePictureSmall: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     marginRight: 12,
   },
   nameSmall: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: themeVariables.blackColor,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  statsItem: {
+    marginRight: 10,
+    fontSize: 12,
     color: themeVariables.blackColor,
   },
   // Container for the user details next to avatar

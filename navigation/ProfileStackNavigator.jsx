@@ -13,6 +13,7 @@ import EditProfileScreen from '../screens/EditProfile';
 import EventDetailCard from '../screens/EventDetailCard';
 import ActivityDetailCard from '../screens/ActivityDetailCard';
 import PostDetailCard from '../screens/PostDetailCard';
+import Badges from '../screens/Badges';
 // import ChangePasswordScreen from '../screens/ChangePassword';
 
 const Stack = createStackNavigator();
@@ -109,6 +110,16 @@ const ProfileStackNavigator = () => {
         name="PublicUserProfile"
         component={PublicUserProfile}
         options={{ title: 'User Profile', headerShown: true }}
+      />
+      <Stack.Screen
+        name="Badges"
+        component={Badges}
+        options={{
+          title: 'My Badges',
+          headerShown: true,
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+        }}
       />
     </Stack.Navigator>
   );
