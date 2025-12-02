@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity } from 'react-native';
-import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import SocialMediaScreen from '../screens/SocialMedia';
@@ -43,8 +43,6 @@ const detailScreenOptions = {
   headerShadowVisible: false,
   headerTintColor: themeVariables.blackColor,
   safeAreaInsets: { top: 0 },
-  gestureDirection: 'horizontal',
-  cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
 };
 
 const SocialStackNavigator = ({ initialPosts, scrollToTop }) => (

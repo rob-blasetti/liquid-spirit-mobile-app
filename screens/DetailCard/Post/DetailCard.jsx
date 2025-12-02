@@ -129,6 +129,15 @@ const PostDetailCard = ({ route }) => {
   const userId = user?.id || user?._id;
 
   const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    const parentNav = navigation.getParent?.();
+    if (parentNav?.canGoBack?.()) {
+      parentNav.goBack();
+      return;
+    }
     if (originTab) {
       navigation.navigate('Main', { screen: originTab, params: returnParams || {} });
       return;
@@ -141,12 +150,8 @@ const PostDetailCard = ({ route }) => {
       navigation.navigate(returnTo, returnParams || {});
       return;
     }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
-    }
     navigation.navigate('SocialFeed');
-  }, [navigation, returnTo, returnParams]);
+  }, [navigation, originTab, originScreen, returnTo, returnParams]);
 
   const hasUserLiked = useCallback((likes, uid) => {
     if (!Array.isArray(likes) || !uid) return false;

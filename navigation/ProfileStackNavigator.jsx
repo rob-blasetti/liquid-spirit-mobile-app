@@ -12,6 +12,7 @@ import ActivitiesScreen from '../screens/Activities';
 import EditProfileScreen from '../screens/EditProfile';
 import EventDetailCard from '../screens/EventDetailCard';
 import ActivityDetailCard from '../screens/ActivityDetailCard';
+import PostDetailCard from '../screens/PostDetailCard';
 // import ChangePasswordScreen from '../screens/ChangePassword';
 
 const Stack = createStackNavigator();
@@ -88,6 +89,11 @@ const ProfileStackNavigator = () => {
       <Stack.Screen
         name="ActivityDetailCard"
         component={ActivityDetailCard}
+        options={detailScreenOptions}
+      />
+      <Stack.Screen
+        name="PostDetailCard"
+        component={PostDetailCard}
         options={detailScreenOptions}
       />
       <Stack.Screen
