@@ -38,6 +38,9 @@ const ProfileStackNavigator = () => {
         headerBackTitleVisible: false,
         headerBackTitle: '',
         headerLeftContainerStyle: { paddingLeft: 16 },
+        contentStyle: { backgroundColor: 'transparent' },
+        cardStyle: { backgroundColor: 'transparent' },
+        presentation: 'card',
         // Custom back arrow button invokes navigation.goBack()
         headerLeft: () =>
           navigation.canGoBack() ? (

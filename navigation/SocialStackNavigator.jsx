@@ -46,7 +46,14 @@ const detailScreenOptions = {
 };
 
 const SocialStackNavigator = ({ initialPosts, scrollToTop }) => (
-  <Stack.Navigator screenOptions={withDefaultHeader}>
+  <Stack.Navigator
+    screenOptions={(navProps) => ({
+      ...withDefaultHeader(navProps),
+      contentStyle: { backgroundColor: 'transparent' },
+      cardStyle: { backgroundColor: 'transparent' },
+      presentation: 'card',
+    })}
+  >
     <Stack.Screen name="SocialFeed" options={{ headerShown: false }}>
       {(props) => (
         <SocialMediaScreen

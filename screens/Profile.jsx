@@ -238,7 +238,7 @@ const filterUserActivities = (allActivities, userId) => {
   };
 
 const renderList = (data, type) => {
-  const contentPaddingBottom = Math.max(insets.bottom, 16) + TAB_BAR_HEIGHT;
+  const contentPaddingBottom = Math.max(insets.bottom, 0);
   if (isLoading) {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
@@ -329,7 +329,8 @@ const renderList = (data, type) => {
       data={listData}
       refreshing={refreshing}
       onRefresh={onRefresh}
-      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom, backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent' }}
       keyExtractor={(item, index) =>
         item._id ? item._id.toString() : index.toString()
       }
@@ -348,7 +349,7 @@ const renderList = (data, type) => {
 
 // Render pending requests for Requests tab
 const renderRequests = () => {
-  const contentPaddingBottom = Math.max(insets.bottom, 16) + TAB_BAR_HEIGHT;
+  const contentPaddingBottom = Math.max(insets.bottom, 0);
   if (isLoading) {
     return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
   }
@@ -370,7 +371,8 @@ const renderRequests = () => {
       data={pendingRequests}
       refreshing={refreshing}
       onRefresh={onRefresh}
-      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom, backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent' }}
       keyExtractor={(req, index) =>
         `${req.activity._id}_${req.request._id}_${req.type}` || index.toString()
       }
@@ -428,7 +430,7 @@ const renderScene = ({ route }) => {
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: themeVariables.screenBackgroundColor,
+          backgroundColor: 'transparent',
           paddingHorizontal: horizontalPadding,
         }}
       >
@@ -478,7 +480,7 @@ const renderScene = ({ route }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.pageTitle}>My Dashboard</Text>
         <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
@@ -527,15 +529,16 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: themeVariables.screenBackgroundColor, flex: 1 }}
-        sceneContainerStyle={{ backgroundColor: themeVariables.greyColor }}
+        style={{ backgroundColor: 'transparent', flex: 1 }}
+        sceneContainerStyle={{ backgroundColor: 'transparent' }}
+        pagerStyle={{ backgroundColor: 'transparent' }}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: themeVariables.screenBackgroundColor },
+  container: { flex: 1, backgroundColor: 'transparent' },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
@@ -639,7 +642,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 12,
-    backgroundColor: themeVariables.screenBackgroundColor,
+    backgroundColor: 'transparent',
   },
   pageTitle: {
     fontSize: 26,
@@ -653,6 +656,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
     marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  badgesContainer: {
+    backgroundColor: 'transparent',
   },
   headerProfileInfo: {
     flexDirection: 'row',
@@ -687,6 +694,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 10,
     paddingHorizontal: 4,
+    backgroundColor: 'transparent',
   },
   seeAllButton: {
     paddingHorizontal: 6,

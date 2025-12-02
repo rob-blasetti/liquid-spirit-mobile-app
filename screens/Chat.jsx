@@ -380,7 +380,7 @@ const ChatScreen = () => {
   const listData = chats;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Chats</Text>
       </View>
@@ -405,6 +405,10 @@ const ChatScreen = () => {
           contentContainerStyle={
             listData.length === 0 ? styles.emptyListContainer : styles.listContent
           }
+          style={{ backgroundColor: 'transparent', flex: 1 }}
+          contentInsetAdjustmentBehavior="never"
+          contentInset={{ bottom: 0, top: 0 }}
+          scrollIndicatorInsets={{ bottom: 0, top: 0 }}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -435,8 +439,9 @@ export default ChatScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: themeVariables.screenBackgroundColor,
-    paddingBottom: 12,
+    backgroundColor: 'transparent',
+    paddingBottom: 0,
+    marginBottom: -40,
   },
   header: {
     paddingTop: 12,
@@ -456,6 +461,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+    paddingBottom: 0,
   },
   infoTitle: {
     fontSize: 18,
@@ -475,7 +482,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 48,
+    paddingBottom: 0,
+    backgroundColor: 'transparent',
+    flexGrow: 1,
+  },
+  emptyListContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: 'transparent',
   },
   chatRow: {
     flexDirection: 'row',

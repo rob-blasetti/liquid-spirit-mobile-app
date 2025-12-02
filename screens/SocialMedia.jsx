@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: themeVariables.screenBackgroundColor,
-    marginBottom: 80,
+    paddingBottom: 0,
   },
   tabRow: {
     flexDirection: 'row',

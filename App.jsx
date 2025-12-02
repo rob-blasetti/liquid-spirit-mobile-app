@@ -80,7 +80,7 @@ export default App;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: themeVariables.screenBackgroundColor,
+    backgroundColor: 'transparent',
   },
   splashContainer: {
     flex: 1,

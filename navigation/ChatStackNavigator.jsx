@@ -36,7 +36,14 @@ const withDefaultHeader = ({ navigation }) => ({
 });
 
 const ChatStackNavigator = () => (
-  <Stack.Navigator screenOptions={withDefaultHeader}>
+  <Stack.Navigator
+    screenOptions={(navProps) => ({
+      ...withDefaultHeader(navProps),
+      contentStyle: { backgroundColor: 'transparent' },
+      cardStyle: { backgroundColor: 'transparent' },
+      presentation: 'card',
+    })}
+  >
     <Stack.Screen name="ChatScreen" component={Chat} options={{ headerShown: false }} />
     <Stack.Screen name="ChatDetail" component={ChatDetail} options={{ title: 'Chat' }} />
     <Stack.Screen

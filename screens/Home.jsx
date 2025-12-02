@@ -11,6 +11,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { BlurView } from '@react-native-community/blur';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
@@ -29,6 +30,8 @@ import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
+
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -97,6 +100,15 @@ const Home = ({ navigation, homeOverview, route }) => {
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const glassOpacity = useMemo(
+    () =>
+      scrollY.interpolate({
+        inputRange: [0, 80, 220],
+        outputRange: [0, 0.22, 0.48],
+        extrapolate: 'clamp',
+      }),
+    [scrollY],
+  );
   const clampedScroll = useMemo(
     () => Animated.diffClamp(scrollY, -BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT),
     [scrollY],
@@ -210,21 +222,32 @@ const Home = ({ navigation, homeOverview, route }) => {
         </View>
       </View>
       <View style={styles.container}>
-      {/* Only override status bar to white on Home screen */}
-      {isFocused && (
-        <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      )}
-      <Animated.ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollView}
-        scrollEventThrottle={16}
-        bounces
-        alwaysBounceVertical
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
+        <AnimatedBlurView
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, styles.glassOverlay, { opacity: glassOpacity }]}
+          blurType="light"
+          blurAmount={24}
+          reducedTransparencyFallbackColor="rgba(255,255,255,0.72)"
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, styles.glassTint, { opacity: glassOpacity }]}
+        />
+        {/* Only override status bar to white on Home screen */}
+        {isFocused && (
+          <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         )}
-      >
+        <Animated.ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollView}
+          scrollEventThrottle={16}
+          bounces
+          alwaysBounceVertical
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+        >
         {/* Banner Section */}
         <ImageBanner
           topInset={statusBarHeight}
@@ -688,6 +711,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: themeVariables.greyColor,
+  },
+  glassOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  glassTint: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   scrollView: {
     flexGrow: 1,
