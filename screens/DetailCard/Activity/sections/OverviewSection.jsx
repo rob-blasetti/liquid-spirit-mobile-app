@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 
 import SessionCard from '../../../../components/SessionCard';
 
@@ -27,15 +27,15 @@ const OverviewSection = ({
     {orderedUpcomingSessions.length > 0 && (
       <>
         <Text style={styles.mapTitle}>Upcoming Sessions</Text>
-        <ScrollView
+        <FlatList
+          data={orderedUpcomingSessions}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.carouselContent}
-        >
-          {orderedUpcomingSessions.map((sess, idx) => (
+          keyExtractor={(item, idx) => item?._id || item?.id || `session-${idx}`}
+          renderItem={({ item }) => (
             <SessionCard
-              key={sess._id || idx}
-              session={sess}
+              session={item}
               detailsLoaded={detailsLoaded}
               hasFacilitatorSpace={hasFacilitatorSpace}
               hasParticipantSpace={hasParticipantSpace}
@@ -47,8 +47,8 @@ const OverviewSection = ({
               onParticipantRequest={handleParticipantRequest}
               width={screenWidth - 32}
             />
-          ))}
-        </ScrollView>
+          )}
+        />
         <View style={styles.divider} />
       </>
     )}

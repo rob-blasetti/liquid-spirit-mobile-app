@@ -29,6 +29,7 @@ import SlideBanner from '../components/SlideBanner';
 import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -199,16 +200,20 @@ const Home = ({ navigation, homeOverview, route }) => {
             pointerEvents="box-none"
           >
             <View style={styles.bannerTopActions}>
-              <TouchableOpacity
-                style={styles.topActionButton}
+              <LiquidGlassButton
                 onPress={() => navigation.navigate('Search')}
+                intensity={28}
+                style={styles.topActionButton}
+                containerStyle={styles.topGlassContainer}
                 accessibilityLabel="Search"
               >
                 <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.topActionButton}
+              </LiquidGlassButton>
+              <LiquidGlassButton
                 onPress={() => navigation.navigate('Notifications')}
+                intensity={28}
+                style={styles.topActionButton}
+                containerStyle={styles.topGlassContainer}
                 accessibilityLabel="Notifications"
               >
                 <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
@@ -217,7 +222,7 @@ const Home = ({ navigation, homeOverview, route }) => {
                     <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
                   </View>
                 )}
-              </TouchableOpacity>
+              </LiquidGlassButton>
             </View>
             {/* Community info at banner bottom-left */}
             <View style={styles.bannerBottomLeft}>
@@ -615,21 +620,28 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   topActionButton: {
-    backgroundColor: 'rgba(243,243,243,0.6)',
+    backgroundColor: 'transparent',
     borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    padding: 0,
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  topGlassContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minHeight: 42,
+    minWidth: 42,
+    borderRadius: 21,
+  },
   notificationBadge: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: 2,
+    right: 2,
     backgroundColor: 'red',
     borderRadius: 8,
     width: 16,

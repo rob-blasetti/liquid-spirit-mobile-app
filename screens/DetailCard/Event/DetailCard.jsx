@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { CardTitle, CardContent } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
 import CardContainer from '../common/CardContainer';
 import SectionTitle from '../common/SectionTitle';
+import sectionBaseStyles from '../common/sectionBaseStyles';
 import BadgeModal from '../common/BadgeModal';
 import HostLocationSection from './sections/HostLocationSection';
 import HostsSection from './sections/HostsSection';
@@ -57,6 +58,15 @@ import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
 import { Button } from 'liquid-spirit-styleguide/native';
 import useGoogleMaps from '../../../hooks/useGoogleMaps';
+import useDetailCardHeader from '../common/useDetailCardHeader';
+import {
+  detailCardOverlay,
+  detailCardTitle,
+  detailCardSubtitle,
+  detailCardContent,
+  detailCardHorizontalPadding,
+} from '../common/detailCardLayout';
+import useChatStarter from '../common/useChatStarter';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
 
@@ -88,12 +98,20 @@ const EventDetailCard = ({ route }) => {
   const [loading, setLoading] = useState(!eventPreload);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
+  const [chatCommitteeMembers, setChatCommitteeMembers] = useState(oversightMembersPreload || []);
   useEffect(() => {
     console.log('[EventDetailCard] route', { name: route?.name, params: route?.params });
   }, [route]);
   useEffect(() => {
     if (event) console.log('[EventDetailCard] event', event);
   }, [event]);
+  const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+    navigation.navigate('Events');
+  }, [navigation]);
   const handleShare = useCallback(() => {
     const id = event?._id || eventId;
     if (!id) return;
@@ -107,34 +125,30 @@ const EventDetailCard = ({ route }) => {
       alertMessage: 'Something went wrong while trying to share the event.',
     });
   }, [event, eventId]);
-  // Add share button in header, styled like back arrow
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          style={{
-            backgroundColor: themeVariables.greyColor,
-            borderRadius: themeVariables.borderRadiusPill,
-            padding: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-          }}
-          onPress={handleShare}
-        >
-          <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, handleShare]);
   const { user, token, isTokenExpired, refreshSession, storageLoaded } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
+  const { startChat, startingChat } = useChatStarter({
+    context: 'event',
+    entity: event || eventPreload || {},
+    entityId: eventId,
+    token,
+    user,
+    navigation,
+    committeeMembers: chatCommitteeMembers,
+  });
+
+  useDetailCardHeader({
+    navigation,
+    onBack: handleBack,
+    onShare: handleShare,
+    onChat: startChat,
+    chatLoading: startingChat,
+    showChat: true,
+  });
 
   const normalizeEventId = (raw) => {
     const str = String(raw || '').trim();
@@ -243,8 +257,8 @@ const EventDetailCard = ({ route }) => {
   }, [redirected, loading, errorStatus, navigation]);
   const scrollContentStyle = useMemo(
     () => ({
-      paddingTop: HEADER_OFFSET,
-      paddingBottom: Math.max(30, safeAreaBottom + TAB_BAR_HEIGHT),
+      paddingTop: 0,
+      paddingBottom: Math.max(24, safeAreaBottom + TAB_BAR_HEIGHT),
     }),
     [safeAreaBottom],
   );
@@ -285,13 +299,23 @@ const EventDetailCard = ({ route }) => {
           optimisticJoin={optimisticJoin}
           setOptimisticJoin={setOptimisticJoin}
           oversightMembersPreload={oversightMembersPreload}
+          onUpdateCommitteeMembers={setChatCommitteeMembers}
         />
       </SwipeToCloseScrollView>
     </SafeAreaView>
   );
 };
 
-const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOptimisticJoin, oversightMembersPreload }) => {
+const EventCardBody = ({
+  event,
+  setEvent,
+  userId,
+  token,
+  optimisticJoin,
+  setOptimisticJoin,
+  oversightMembersPreload,
+  onUpdateCommitteeMembers,
+}) => {
   // Access current user and community from context for joining
   const { user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
@@ -544,6 +568,12 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
   const [oversightBody, setOversightBody] = useState({ name: defaultOversightName, members: oversightMembersPreload || [] });
   const [oversightLoading, setOversightLoading] = useState(!oversightMembersPreload);
 
+  useEffect(() => {
+    if (typeof onUpdateCommitteeMembers === 'function') {
+      onUpdateCommitteeMembers(oversightBody.members || []);
+    }
+  }, [oversightBody.members, onUpdateCommitteeMembers]);
+
   // Fetch appropriate body members based on eventType
   useEffect(() => {
     let isMounted = true;
@@ -609,77 +639,75 @@ const EventCardBody = ({ event, setEvent, userId, token, optimisticJoin, setOpti
           titleStyle={styles.cardTitleText}
           subtitleStyle={styles.cardSubtitleText}
         />
-        <CardContent style={styles.cardContent}>
-          {/* Date & Time */}
-          <View style={styles.headerInfoContainer}>
-            <Text style={styles.headerInfoText}>
-              {dateMain} ‧ {dateSubName} ‧ {timeMain} {timeSub}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-
-          <HostLocationSection
-            region={region}
-            fullAddress={fullAddr}
-            styles={styles}
-            onOpenMaps={openMaps}
-          />
-
-          {/* Host Section */}
-          <HostsSection
-            hosts={hosts}
-            isAdmin={isAdmin}
-            onAddHost={() => setAddHostModalVisible(true)}
-            onRemoveHost={handleRemoveHost}
-            hostRequestSent={hostRequestSent}
-            onRequestHost={handleRequestHost}
-            styles={styles}
-          />
-          <MaterialsSection
-            materials={materials}
-            isAdmin={isAdmin}
-            onAddMaterial={false ? () => setMaterialModalVisible(true) : undefined}
-            styles={styles}
-          />
-          {/* Oversight Body */}
-          <Text style={styles.mapTitle}>Oversight Body</Text>
-          {/* Show committee name */}
-          <Text style={[styles.headerInfoText, { marginBottom: 8, alignSelf: 'flex-start' }]}>
-            {oversightBody.name}
+        {/* Date & Time */}
+        <View style={styles.headerInfoContainer}>
+          <Text style={styles.headerInfoText}>
+            {dateMain} ‧ {dateSubName} ‧ {timeMain} {timeSub}
           </Text>
-          {oversightLoading ? (
-            <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-          ) : oversightBody.members.length > 0 ? (
-            <>
-              <View style={styles.userListContainer}>
-                {oversightBody.members.slice(0, 4).map((member, idx) => (
-                  <View key={member._id || idx} style={styles.userListItem}>
-                    <UserCell user={member} type={member.type} />
-                  </View>
-                ))}
-              </View>
-              {oversightBody.members.length > 4 && (
-                <Button
-                  secondary
-                  size="small"
-                  label="See More"
-                  onPress={() => setOversightModalVisible(true)}
-                  style={styles.seeMoreButton}
-                  textStyle={styles.seeMoreButtonText}
-                />
-              )}
-            </>
-          ) : (
-            <Text style={styles.headerInfoText}>No oversight available</Text>
-          )}
-          <View style={styles.divider} />
-          <AttendanceSection
-            attendees={attendees}
-            styles={styles}
-            hasJoined={hasJoined}
-            onJoin={handleJoin}
-          />
-        </CardContent>
+        </View>
+        <View style={styles.divider} />
+
+        <HostLocationSection
+          region={region}
+          fullAddress={fullAddr}
+          styles={styles}
+          onOpenMaps={openMaps}
+        />
+
+        {/* Host Section */}
+        <HostsSection
+          hosts={hosts}
+          isAdmin={isAdmin}
+          onAddHost={() => setAddHostModalVisible(true)}
+          onRemoveHost={handleRemoveHost}
+          hostRequestSent={hostRequestSent}
+          onRequestHost={handleRequestHost}
+          styles={styles}
+        />
+        <MaterialsSection
+          materials={materials}
+          isAdmin={isAdmin}
+          onAddMaterial={false ? () => setMaterialModalVisible(true) : undefined}
+          styles={styles}
+        />
+        {/* Oversight Body */}
+        <Text style={styles.mapTitle}>Oversight Body</Text>
+        {/* Show committee name */}
+        <Text style={[styles.headerInfoText, { marginBottom: 8, alignSelf: 'flex-start' }]}>
+          {oversightBody.name}
+        </Text>
+        {oversightLoading ? (
+          <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+        ) : oversightBody.members.length > 0 ? (
+          <>
+            <View style={styles.userListContainer}>
+              {oversightBody.members.slice(0, 4).map((member, idx) => (
+                <View key={member._id || idx} style={styles.userListItem}>
+                  <UserCell user={member} type={member.type} />
+                </View>
+              ))}
+            </View>
+            {oversightBody.members.length > 4 && (
+              <Button
+                secondary
+                size="small"
+                label="See More"
+                onPress={() => setOversightModalVisible(true)}
+                style={styles.seeMoreButton}
+                textStyle={styles.seeMoreButtonText}
+              />
+            )}
+          </>
+        ) : (
+          <Text style={styles.headerInfoText}>No oversight available</Text>
+        )}
+        <View style={styles.divider} />
+        <AttendanceSection
+          attendees={attendees}
+          styles={styles}
+          hasJoined={hasJoined}
+          onJoin={handleJoin}
+        />
       </View>
       <BadgeModal
         visible={attendeesModalVisible}
@@ -955,9 +983,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   divider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 8,
+    ...sectionBaseStyles.sectionDivider,
   },
   mapWrapper: {
     width: '100%',
@@ -979,24 +1005,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cardTitleText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: themeVariables.blackColor,
-    textAlign: 'center',
-  },
-  cardSubtitleText: {
-    fontSize: 20,
-    color: '#444',
-    textAlign: 'center',
-  },
+  cardTitleText: { ...detailCardTitle },
+  cardSubtitleText: { ...detailCardSubtitle },
   mapTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 14,
-    marginBottom: 14,
-    alignSelf: 'flex-start',
-    color: themeVariables.blackColor,
+    ...sectionBaseStyles.sectionTitle,
   },
   centered: {
     flex: 1,
@@ -1008,22 +1020,10 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: 'transparent',
-    margin: 0,
-    padding: 0,
   },
   banner: { width: '100%', height: 220, borderRadius: 0 },
   overlayCard: {
-    width: '100%',
-    marginTop: -40,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    ...detailCardOverlay,
   },
   titleBlock: { paddingTop: 0 },
   factBox: { flex: 1, alignItems: 'center' },
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     color: themeVariables.primaryColor,
     textDecorationLine: 'underline',
   },
-  cardContent: { paddingTop: 8, marginHorizontal: -15 },
+  cardContent: { ...detailCardContent },
   detailCell: { flex: 1, alignItems: 'center', paddingHorizontal: 4 },
   detailIcon: { marginBottom: 6 },
   detailLabel: {
@@ -1052,12 +1052,8 @@ const styles = StyleSheet.create({
     width: Platform.select({ android: 140 }),
   },
   detailSub: { fontSize: 12, color: '#666', textAlign: 'center' },
-  sectionHeaderRow:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 14,
+  sectionHeaderRow: {
+    ...sectionBaseStyles.sectionHeaderRow,
   },
   avatarsContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   userListContainer: { flexDirection: 'row', flexWrap: 'wrap' },

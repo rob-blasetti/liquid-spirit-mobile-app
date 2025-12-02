@@ -1,4 +1,10 @@
 import { coalesceString, normalizeString } from './activityHelpers';
+import {
+  getDisplayAddress as getDisplayAddressFromLocation,
+  getStreetAndSuburb as getStreetAndSuburbFromLocation,
+  normalizeAddress,
+  resolveCoordinates,
+} from './locationUtils';
 
 const MAP_VENUE_TYPES = new Set(['Residence', 'CommunityVenue']);
 
@@ -22,69 +28,22 @@ export const normalizeVenueEntry = (entry) => {
 };
 
 export const formatAddress = (address) => {
-  if (!address || typeof address !== 'object') return '';
-  const parts = [
-    address.streetAddress,
-    address.suburb,
-    address.city,
-    address.state,
-    address.postalCode,
-    address.country,
-  ];
-  return parts
-    .map(part => (typeof part === 'string' ? part.trim() : ''))
-    .filter(part => part.length > 0)
-    .join(', ');
-};
-
-const coerceCoordinates = (value) => {
-  const makePoint = (lat, lng) => {
-    const latitude = Number(lat);
-    const longitude = Number(lng);
-    if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
-      return { latitude, longitude };
-    }
-    return null;
-  };
-
-  if (!value) return null;
-  if (Array.isArray(value) && value.length >= 2) {
-    const [lng, lat] = value;
-    return makePoint(lat, lng);
-  }
-  if (typeof value === 'object') {
-    if ('latitude' in value || 'longitude' in value) {
-      return makePoint(value.latitude ?? value.lat, value.longitude ?? value.lng);
-    }
-    if ('lat' in value || 'lng' in value) {
-      return makePoint(value.lat, value.lng);
-    }
-    if (Array.isArray(value.coordinates) && value.coordinates.length >= 2) {
-      const [lng, lat] = value.coordinates;
-      return makePoint(lat, lng);
-    }
-  }
-  return null;
+  return normalizeAddress(address);
 };
 
 export const getVenueCoordinates = (venue) => {
   if (!venue || typeof venue !== 'object') return null;
   return (
-    coerceCoordinates(venue.coordinates) ||
-    coerceCoordinates(venue.location) ||
-    coerceCoordinates(venue.address?.coordinates) ||
-    coerceCoordinates(venue.address?.location) ||
+    resolveCoordinates(venue.coordinates) ||
+    resolveCoordinates(venue.location) ||
+    resolveCoordinates(venue.address?.coordinates) ||
+    resolveCoordinates(venue.address?.location) ||
     null
   );
 };
 
 export const getStreetAndSuburb = (address) => {
-  if (!address || typeof address !== 'object') return '';
-  const parts = [address.streetAddress, address.suburb]
-    .map(part => (typeof part === 'string' ? part.trim() : ''))
-    .filter(part => part.length > 0);
-  if (parts.length > 0) return parts.join(', ');
-  return formatAddress(address);
+  return getStreetAndSuburbFromLocation(address);
 };
 
 export const isOnlineVenue = (venue) => {
@@ -102,9 +61,7 @@ export const hasPhysicalVenueData = (venue) => {
 };
 
 export const mapDisplayAddress = (activity = {}, session = {}) =>
-  coalesceString(
-    formatAddress(session.address),
-    getStreetAndSuburb(session.address),
-    formatAddress(activity.address),
-    getStreetAndSuburb(activity.address),
-  );
+  getDisplayAddressFromLocation({
+    sessionAddress: session.address,
+    activityAddress: activity.address,
+  });

@@ -1,18 +1,56 @@
 import React from 'react';
-import { Card } from 'react-native-material-cards';
 import FastImage from 'react-native-fast-image';
+import { View } from 'react-native';
 
-const CardContainer = ({ imageUrl, cardStyle, bannerStyle, resizeMode = FastImage.resizeMode.cover, children }) => (
-  <Card style={cardStyle}>
-    {imageUrl ? (
-      <FastImage
-        source={imageUrl}
-        style={bannerStyle}
-        resizeMode={resizeMode}
-      />
-    ) : null}
-    {children}
-  </Card>
-);
+const CardContainer = ({ imageUrl, cardStyle, bannerStyle, resizeMode = FastImage.resizeMode.cover, children }) => {
+  const arrayChildren = React.Children.toArray(children);
+
+  const sanitizedChildren = [];
+  const debugInvalids = [];
+
+  if (__DEV__) {
+    console.log('[CardContainer] received children', arrayChildren.length);
+  }
+
+  arrayChildren.forEach((child, idx) => {
+    const isValid = child && React.isValidElement(child);
+    const type = child?.type;
+    const typeName =
+      typeof type === 'string' ? type : type?.displayName || type?.name;
+    if (isValid && typeName) {
+      sanitizedChildren.push(child);
+    } else if (__DEV__) {
+      debugInvalids.push({
+        idx,
+        isValid,
+        hasType: !!type,
+        typeName: typeName || null,
+        rawType: type,
+        isNullish: child == null,
+      });
+    }
+  });
+
+  if (__DEV__ && debugInvalids.length) {
+    console.log('[CardContainer] filtered invalid children', { debugInvalids, total: arrayChildren.length });
+  }
+
+  if (!children || sanitizedChildren.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={[{ overflow: 'hidden' }, cardStyle]}>
+      {imageUrl ? (
+        <FastImage
+          source={imageUrl}
+          style={bannerStyle}
+          resizeMode={resizeMode}
+        />
+      ) : null}
+      {sanitizedChildren}
+    </View>
+  );
+};
 
 export default CardContainer;

@@ -1,10 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Tooltip } from 'react-native-elements';
+import sectionBaseStyles from './sectionBaseStyles';
 
 const SectionTitle = ({ title, note, showTooltip = true, titleStyle, tooltipTextStyle, tooltipStyle }) => {
+  const mergedTitleStyle = [sectionBaseStyles.sectionTitle, titleStyle];
+
   if (!note || !showTooltip) {
-    return <Text style={titleStyle}>{title}</Text>;
+    return <Text style={mergedTitleStyle}>{title}</Text>;
   }
 
   const tooltipWidth = 260;
@@ -12,7 +15,7 @@ const SectionTitle = ({ title, note, showTooltip = true, titleStyle, tooltipText
 
   return (
     <View style={styles.titleWithTooltip}>
-      <Text style={titleStyle}>{title}</Text>
+      <Text style={mergedTitleStyle}>{title}</Text>
       <Tooltip
         popover={<Text style={[styles.tooltipPopoverText, tooltipTextStyle]}>{note}</Text>}
         skipAndroidStatusBar

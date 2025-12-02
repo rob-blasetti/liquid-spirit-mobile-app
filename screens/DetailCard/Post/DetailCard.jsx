@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,13 +21,14 @@ import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
 import { CardTitle, CardContent } from 'react-native-material-cards';
 import CardContainer from '../common/CardContainer';
+import useDetailCardHeader from '../common/useDetailCardHeader';
+import sectionBaseStyles from '../common/sectionBaseStyles';
 import MediaSection from './sections/MediaSection';
 import CommentsSection from './sections/CommentsSection';
 import FastImage from 'react-native-fast-image';
 import BoringAvatar from '@liquidspirit/react-native-boring-avatars';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import AuthorSection from './sections/AuthorSection';
 
 import themeVariables from '../../../styles/theme';
@@ -38,6 +39,14 @@ import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
 import { navigateToPostDetail } from '../../../utils/navigateToPostDetail';
 import resolveImageSource from '../../../utils/imageSource';
+import useChatStarter from '../common/useChatStarter';
+import {
+  detailCardOverlay,
+  detailCardTitle,
+  detailCardSubtitle,
+  detailCardContent,
+  detailCardHorizontalPadding,
+} from '../common/detailCardLayout';
 
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
@@ -98,6 +107,18 @@ const PostDetailCard = ({ route }) => {
     () => ({ marginBottom: Math.max(8, bottomOffset / 4) }),
     [bottomOffset],
   );
+  const { startChat: startAuthorChat, startingChat } = useChatStarter({
+    context: 'post',
+    entity: post || postPreload || {},
+    entityId: postId,
+    token,
+    user,
+    navigation,
+    postAuthor: post?.author || postPreload?.author,
+  });
+  const handleChatPress = useCallback(() => {
+    startAuthorChat();
+  }, [startAuthorChat]);
 
   useEffect(() => {
     console.log('[PostDetailCard] route', { name: route?.name, params: route?.params });
@@ -235,45 +256,14 @@ const PostDetailCard = ({ route }) => {
     }
   };
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerLeft: () => (
-        <TouchableOpacity
-          onPress={handleBack}
-          style={{
-            backgroundColor: themeVariables.greyColor,
-            borderRadius: themeVariables.borderRadiusPill,
-            padding: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-            marginLeft: 8,
-          }}
-        >
-          <Ionicons name="chevron-back" color={themeVariables.blackColor} size={20} />
-        </TouchableOpacity>
-      ),
-      headerRight: () => (
-        <TouchableOpacity
-          style={{
-            backgroundColor: themeVariables.greyColor,
-            borderRadius: themeVariables.borderRadiusPill,
-            padding: 6,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-          }}
-          onPress={handleShare}
-        >
-          <Ionicons name="share-outline" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, handleShare, handleBack]);
+  useDetailCardHeader({
+    navigation,
+    onBack: handleBack,
+    onShare: handleShare,
+    onChat: handleChatPress,
+    chatLoading: startingChat,
+    showChat: true,
+  });
 
   useEffect(() => {
     Animated.timing(contentOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
@@ -657,29 +647,14 @@ const styles = StyleSheet.create({
   },
   media: { width: '100%', height: undefined, minHeight: 220 },
   overlayCard: {
-    width: '100%',
-    marginTop: -40,
-    backgroundColor: themeVariables.whiteColor,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    ...detailCardOverlay,
   },
   titleBlock: { alignItems: 'center' },
   cardTitleText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: themeVariables.blackColor,
-    textAlign: 'center',
+    ...detailCardTitle,
   },
   cardSubtitleText: {
-    fontSize: 20,
-    color: '#444',
-    textAlign: 'center',
+    ...detailCardSubtitle,
   },
   authorRow: {
     flexDirection: 'row',
@@ -695,7 +670,7 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: themeVariables.greyColor },
   authorName: { fontSize: 14, fontWeight: '600', color: themeVariables.blackColor, marginLeft: 2 },
   authorCommunity: { fontSize: 14, color: '#666' },
-  cardContent: { marginTop: 12 },
+  cardContent: { ...detailCardContent, marginTop: 12 },
   postContent: { fontSize: 16, color: '#333', marginLeft: -15, marginTop: 10 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
   tagChip: {
@@ -790,24 +765,14 @@ const styles = StyleSheet.create({
   },
   // Divider before sections
   divider: {
-    height: 1,
-    backgroundColor: '#ddd',
-    marginVertical: 8,
+    ...sectionBaseStyles.sectionDivider,
   },
   // Section container (bordered)
   sectionContainer: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginBottom: 14,
-    backgroundColor: themeVariables.whiteColor,
+    ...sectionBaseStyles.sectionContainer,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: themeVariables.blackColor,
-    marginBottom: 12,
-    marginTop: 12,
-    textAlign: 'left',
+    ...sectionBaseStyles.sectionTitle,
   },
   // Related posts section
   relatedSection: { marginTop: 16, paddingHorizontal: 16, backgroundColor: themeVariables.whiteColor },

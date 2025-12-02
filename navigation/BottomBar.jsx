@@ -30,7 +30,7 @@ const tabIcons = {
 };
 const TAB_BAR_HEIGHT = 80;
 const FAB_VERTICAL_OFFSET = 54;
-const FAB_HORIZONTAL_OFFSET = 8;
+const FAB_HORIZONTAL_OFFSET = 20;
 
 const getLeafRoute = (input) => {
   if (!input) return null;
