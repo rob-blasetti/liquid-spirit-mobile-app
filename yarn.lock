@@ -1026,6 +1026,11 @@
   dependencies:
     color "^5.0.0"
 
+"@callstack/liquid-glass@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@callstack/liquid-glass/-/liquid-glass-0.6.0.tgz#97086530e1278e4f3421f825c444d5afb4a77d62"
+  integrity sha512-zi4g53K5nfb7IjtUWhwRSg3hQVuwd5bFRyxdaIZefLrsJyjMLG2xzSxU5B3Vju8ZA8SCWgpW9g6kz9akm8h3eQ==
+
 "@callstack/react-theme-provider@^3.0.9":
   version "3.0.9"
   resolved "https://registry.yarnpkg.com/@callstack/react-theme-provider/-/react-theme-provider-3.0.9.tgz#01035fa1231f1fffc1a806be1b55eb82716e80c1"

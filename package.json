@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@bottom-tabs/react-navigation": "^1.0.4",
+    "@callstack/liquid-glass": "^0.6.0",
     "@liquidspirit/react-native-boring-avatars": "^1.0.5",
     "@react-native-async-storage/async-storage": "^2.1.0",
     "@react-native-community/blur": "^4.4.1",
