@@ -1,6 +1,6 @@
-import React, { useContext, useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useContext, useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -31,6 +31,24 @@ const tabIcons = {
 const TAB_BAR_HEIGHT = 80;
 const FAB_VERTICAL_OFFSET = 90;
 const FAB_HORIZONTAL_OFFSET = 30;
+
+const resolveLiquidGlassSupport = () => {
+  try {
+    const { isLiquidGlassSupported } = require('@callstack/liquid-glass');
+    return typeof isLiquidGlassSupported === 'function'
+      ? isLiquidGlassSupported()
+      : !!isLiquidGlassSupported;
+  } catch (error) {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn('Liquid glass native module unavailable; using classic nav.', error);
+    }
+    return false;
+  }
+};
+
+// Resolve liquid glass support once to avoid re-running the detection inside renders.
+const liquidGlassSupport = resolveLiquidGlassSupport();
 
 const getLeafRoute = (input) => {
   if (!input) return null;
@@ -80,6 +98,18 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   const [focusedRoute, setFocusedRoute] = useState(null);
   const iconScale = useRef(new Animated.Value(1)).current;
   const [visibleAction, setVisibleAction] = useState(null);
+  const isLiquidGlassNavSupported = !!liquidGlassSupport;
+  const classicTabBarStyle = useMemo(
+    () => ({
+      height: TAB_BAR_HEIGHT,
+      paddingBottom: Math.max(insets.bottom, 10),
+      paddingTop: 10,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: 'rgba(0,0,0,0.08)',
+      backgroundColor: themeVariables.whiteColor,
+    }),
+    [insets.bottom],
+  );
 
   const handleCreateActivity = useCallback(() => {
     if (!isLoggedIn) {
@@ -134,7 +164,17 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     [communityId, isLoggedIn, parentNavigation],
   );
 
-  const fabBottom = insets.bottom + FAB_VERTICAL_OFFSET;
+  const { fabBottom, fabRight } = useMemo(() => {
+    const baseBottom = insets.bottom + FAB_VERTICAL_OFFSET;
+    const baseRight = FAB_HORIZONTAL_OFFSET;
+    if (isLiquidGlassNavSupported) {
+      return { fabBottom: baseBottom, fabRight: baseRight };
+    }
+    return {
+      fabBottom: Math.max(insets.bottom + 50, baseBottom - 32),
+      fabRight: baseRight - 10,
+    };
+  }, [insets.bottom, isLiquidGlassNavSupported]);
 
   const syncFocusedRoute = useCallback(() => {
     const tabState = navigation.getState?.();
@@ -271,19 +311,54 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     <>
       <Tab.Navigator
         initialRouteName="Home"
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarIconName: tabIcons[route.name],
-          sceneContainerStyle: { backgroundColor: 'transparent' },
-        })}
-        tabBar={(props) => (
-          <LiquidBottomNav
-            {...props}
-            insetBottom={insets.bottom || 0}
-            chatBadgeCount={chatNotificationCount}
-          />
-        )}
+        screenOptions={({ route }) => {
+          const baseIconName = tabIcons[route.name] || 'ellipse-outline';
+          const tabBarBadge =
+            !isLiquidGlassNavSupported && route.name === 'Chat' && chatNotificationCount > 0
+              ? Math.min(chatNotificationCount, 99)
+              : undefined;
+
+          return {
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarIconName: baseIconName,
+            tabBarActiveTintColor: themeVariables.primaryColor,
+            tabBarInactiveTintColor: 'rgba(0,0,0,0.6)',
+            tabBarStyle: isLiquidGlassNavSupported ? undefined : classicTabBarStyle,
+            tabBarBadge,
+            sceneContainerStyle: { backgroundColor: 'transparent' },
+            tabBarIcon: ({ focused, color, size }) => {
+              const iconName =
+                typeof baseIconName === 'string'
+                  ? focused
+                    ? baseIconName.replace(/-outline$/, '')
+                    : baseIconName
+                  : baseIconName;
+
+              return (
+                <Ionicons
+                  name={iconName}
+                  size={size ?? 22}
+                  color={color || themeVariables.blackColor}
+                />
+              );
+            },
+          };
+        }}
+        tabBar={(props) =>
+          isLiquidGlassNavSupported ? (
+            <LiquidBottomNav
+              {...props}
+              insetBottom={insets.bottom || 0}
+              chatBadgeCount={chatNotificationCount}
+            />
+          ) : (
+            <BottomTabBar
+              {...props}
+              style={classicTabBarStyle}
+            />
+          )
+        }
         screenListeners={({ navigation, route }) => ({
           tabPress: (e) => {
             const state = navigation.getState();
@@ -323,7 +398,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
 
       {!hideFab && (
         <View pointerEvents="box-none" style={styles.fabPortal}>
-          <View style={[styles.fabColumn, { bottom: fabBottom }]}>
+          <View style={[styles.fabColumn, { bottom: fabBottom, right: fabRight }]}>
             <TouchableOpacity
               accessibilityRole="button"
               accessibilityLabel={
