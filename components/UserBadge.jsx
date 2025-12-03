@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import { Tooltip } from 'react-native-elements';
+import Tooltip from './Tooltip';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import resolveImageSource from '../utils/imageSource';

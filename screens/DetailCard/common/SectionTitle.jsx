@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Tooltip } from 'react-native-elements';
+import Tooltip from '../../../components/Tooltip';
 import sectionBaseStyles from './sectionBaseStyles';
 
 const SectionTitle = ({ title, note, showTooltip = true, titleStyle, tooltipTextStyle, tooltipStyle }) => {

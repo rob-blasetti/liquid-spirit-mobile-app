@@ -1,7 +1,17 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { View, FlatList, Dimensions, StyleSheet, Text, Animated } from 'react-native';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  FlatList,
+  Dimensions,
+  StyleSheet,
+  Text,
+  Animated,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import FastImage from 'react-native-fast-image';
-import Lightbox from 'react-native-lightbox-v2';
+import ZoomableImage from './ZoomableImage';
 
 const { width } = Dimensions.get('window');
 
@@ -33,18 +43,18 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
   ));
   // Track active slide index (1-based)
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [lightboxUri, setLightboxUri] = useState(null);
+
+  const openLightbox = useCallback(uri => {
+    if (uri) setLightboxUri(uri);
+  }, []);
+
+  const closeLightbox = useCallback(() => setLightboxUri(null), []);
 
   const renderItem = React.useCallback(
     ({ item }) => (
       <Animated.View style={{ width: itemWidth, marginRight: separatorWidth, height: itemHeight }}>
-        <Lightbox
-          underlayColor="transparent"
-          springConfig={{ tension: 30, friction: 20 }}
-          activeProps={{
-            style: styles.fullscreenImage,
-            resizeMode: FastImage.resizeMode.contain,
-          }}
-        >
+        <TouchableOpacity activeOpacity={0.85} onPress={() => openLightbox(item.uri)} style={{ flex: 1 }}>
           <FastImage
             style={styles.image}
             source={{
@@ -54,10 +64,10 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
             }}
             resizeMode={FastImage.resizeMode.cover}
           />
-        </Lightbox>
+        </TouchableOpacity>
       </Animated.View>
     ),
-    [itemWidth, separatorWidth, itemHeight]
+    [itemWidth, separatorWidth, itemHeight, openLightbox]
   );
 
   // On mount, scroll to the first real item if cyclic
@@ -109,6 +119,16 @@ const Carousel = ({ data, itemWidth = width * 0.8, separatorWidth = width * 0.05
       <View style={styles.counterContainer} pointerEvents="none">
         <Text style={styles.counterText}>{`${activeIndex}/${originalDataCount}`}</Text>
       </View>
+      <Modal visible={!!lightboxUri} transparent animationType="fade" onRequestClose={closeLightbox}>
+        <View style={styles.lightboxOverlay}>
+          <TouchableWithoutFeedback onPress={closeLightbox}>
+            <View style={StyleSheet.absoluteFill} />
+          </TouchableWithoutFeedback>
+          {lightboxUri ? (
+            <ZoomableImage uri={lightboxUri} onRequestClose={closeLightbox} />
+          ) : null}
+        </View>
+      </Modal>
     </Animated.View>
   );
 };
@@ -140,6 +160,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 12,
     fontWeight: '600',
+  },
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

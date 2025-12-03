@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Tooltip } from 'react-native-elements';
+import Tooltip from '../../../components/Tooltip';
 
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
 import themeVariables from '../../../styles/theme';

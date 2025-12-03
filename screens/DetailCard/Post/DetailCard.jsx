@@ -19,7 +19,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ZoomableImage from '../../../components/ZoomableImage';
 import { resolveMediaUrl } from '../../../utils/resolveMediaUrl';
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
-import { CardContent } from 'react-native-material-cards';
+import { CardContent } from '../../../components/Card';
 import CardContainer from '../common/CardContainer';
 import useDetailCardHeader from '../common/useDetailCardHeader';
 import sectionBaseStyles from '../common/sectionBaseStyles';

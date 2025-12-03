@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Tooltip } from 'react-native-elements';
+import Tooltip from './Tooltip';
 import themeVariables from '../styles/theme';
 
 /**

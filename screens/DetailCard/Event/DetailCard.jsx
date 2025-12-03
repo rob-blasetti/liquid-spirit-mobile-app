@@ -15,7 +15,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CardTitle, CardContent } from 'react-native-material-cards';
+import { CardTitle, CardContent } from '../../../components/Card';
 import FastImage from 'react-native-fast-image';
 import CardContainer from '../common/CardContainer';
 import SectionTitle from '../common/SectionTitle';

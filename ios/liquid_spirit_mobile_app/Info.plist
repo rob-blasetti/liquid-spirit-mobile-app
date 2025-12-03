@@ -66,6 +66,8 @@
 	<array>
 		<string>NSUserActivityTypeBrowsingWeb</string>
 	</array>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Ionicons.ttf</string>

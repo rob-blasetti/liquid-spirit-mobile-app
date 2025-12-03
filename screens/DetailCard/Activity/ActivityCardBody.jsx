@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, Dimensions } from 'react-native';
-import { CardTitle, CardContent } from 'react-native-material-cards';
+import { CardTitle, CardContent } from '../../../components/Card';
 
 import CardContainer from '../common/CardContainer';
 import CurriculumSection from './sections/CurriculumSection';
