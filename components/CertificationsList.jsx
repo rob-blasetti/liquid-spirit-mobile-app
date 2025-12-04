@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 4,
+    marginTop: 0,
   },
   badge: {
     width: 32,
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
-    marginTop: 8,
+    marginTop: 4,
   },
   text: {
     fontSize: 12,

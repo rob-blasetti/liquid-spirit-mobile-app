@@ -110,19 +110,11 @@ const NotificationSettings = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Back chevron above content */}
-      <View style={styles.chevronContainer}>
-        <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
-          <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      </View>
-
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.contentContainer, { paddingBottom: 40 + insets.bottom }]}
       >
-        <Text style={styles.header}>Notification Settings</Text>
         {groups.map((group) => (
           <View key={group.title} style={styles.section}>
             <Text style={styles.sectionTitle}>{group.title}</Text>
@@ -161,30 +153,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 20,
     paddingTop: 10,
-  },
-  chevronContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  chevronButton: {
-    backgroundColor: themeVariables.greyColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: themeVariables.blackColor,
-    marginTop: 10,
-    marginBottom: 20,
   },
   section: {
     marginBottom: 30,

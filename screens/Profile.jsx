@@ -24,6 +24,7 @@ import { fetchExploreFeed } from '../services/PostService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
+import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { shareContent } from '../utils/shareContent';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
@@ -483,9 +484,23 @@ const renderScene = ({ route }) => {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.pageTitle}>My Dashboard</Text>
-        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-          <Ionicons name="settings-outline" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <LiquidGlassIconButton
+            iconName="share-social-outline"
+            iconColor={themeVariables.blackColor}
+            onPress={() => handleShareProfile(user)}
+            hasShadow={false}
+            glassStyle={styles.topIconGlass}
+          />
+          <LiquidGlassIconButton
+            iconName="settings-outline"
+            iconColor={themeVariables.blackColor}
+            onPress={() => navigation.navigate('Settings')}
+            hasShadow={false}
+            glassStyle={styles.topIconGlass}
+            style={styles.headerIconSpacer}
+          />
+        </View>
       </View>
       {/* Header Section */}
       <View style={styles.headerContainer}>
@@ -506,15 +521,12 @@ const renderScene = ({ route }) => {
             </View>
           </View>
         </View>
-        <TouchableOpacity style={styles.shareButton} onPress={() => handleShareProfile(user)}>
-          <Ionicons name="share-social-outline" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
       </View>
 
       <View style={styles.badgesHeadingRow}>
         <Text style={styles.badgesHeading}>My Badges</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>See all</Text>
+          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
         </TouchableOpacity>
       </View>
       <View style={styles.badgesContainer}>
@@ -529,16 +541,16 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: 'transparent', flex: 1 }}
-        sceneContainerStyle={{ backgroundColor: 'transparent' }}
-        pagerStyle={{ backgroundColor: 'transparent' }}
+        style={{ backgroundColor: themeVariables.whiteColor, flex: 1 }}
+        sceneContainerStyle={{ backgroundColor: themeVariables.whiteColor }}
+        pagerStyle={{ backgroundColor: themeVariables.whiteColor }}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: themeVariables.whiteColor },
   bannerContainer: { width: '100%', height: 200 },
   banner: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
   bannerImage: { resizeMode: 'cover' },
@@ -614,12 +626,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     marginVertical: 8,
-    marginHorizontal: 16,
+    marginHorizontal: 8,
+    borderWidth: 0,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   listTitle: {
     fontSize: 16,
@@ -661,25 +674,29 @@ const styles = StyleSheet.create({
   badgesContainer: {
     backgroundColor: 'transparent',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconSpacer: {
+    marginLeft: 10,
+  },
+  topIconGlass: {
+    backgroundColor: 'rgba(240,240,240,0.8)',
+    borderColor: 'rgba(200,200,200,0.9)',
+    borderWidth: 1,
+    shadowColor: 'rgba(255,255,255,0.5)',
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
   headerProfileInfo: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    marginBottom: 8,
   },
   iconButton: {
-    backgroundColor: themeVariables.greyColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginLeft: 8,
-  },
-  shareButton: {
-    padding: 4,
   },
   badgesHeading: {
     color: themeVariables.blackColor,
@@ -692,28 +709,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 6,
     paddingHorizontal: 4,
     backgroundColor: 'transparent',
   },
   seeAllButton: {
     paddingHorizontal: 6,
     paddingVertical: 4,
-  },
-  seeAllText: {
-    color: themeVariables.primaryColor,
-    fontWeight: '600',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   badgesContainer: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     backgroundColor: themeVariables.whiteColor,
-    borderWidth: 1,
-    borderColor: themeVariables.blackColor,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    marginBottom: 8,
+    paddingTop: 2,
+    paddingBottom: 8,
+    paddingHorizontal: 8,
   },
   profilePictureSmall: {
     width: 44,

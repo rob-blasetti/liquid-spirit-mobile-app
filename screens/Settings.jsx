@@ -6,12 +6,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { CommonActions } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
-import { useNavigation } from '@react-navigation/native';
 // no-op
 
 const Settings = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
-  const nav = useNavigation();
   const { deleteAccount } = useAuthService();
 
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -65,21 +63,13 @@ const Settings = ({ navigation }) => {
   const togglePref = async () => {};
 
   return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Custom back chevron */}
-      <View style={styles.chevronContainer}>
-        <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
-          <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        {/* Screen title */}
-        <Text style={styles.header}>Settings</Text>
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
           <Ionicons name="person-outline" size={20} color="#312783" />
-          <Text style={styles.itemText}>Edit Profile</Text>
+          <Text style={styles.itemText}>Personal Information</Text>
           <Ionicons name="chevron-forward" size={18} color="#ccc" />
         </TouchableOpacity>
 {/*
@@ -99,10 +89,12 @@ const Settings = ({ navigation }) => {
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
           <Ionicons name="notifications-outline" size={20} color="#312783" />
-          <Text style={styles.itemText}>Notification Settings</Text>
+          <Text style={styles.itemText}>Notifications</Text>
           <Ionicons name="chevron-forward" size={18} color="#ccc" />
         </TouchableOpacity>
       </View>
+
+      <View style={styles.sectionDivider} />
 
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
@@ -160,34 +152,8 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 20,
   },
-  // Custom back chevron container (replaces default header)
-  chevronContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  // Header text style for Settings title
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: themeVariables.blackColor,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  chevronButton: {
-    backgroundColor: themeVariables.greyColor,
-    borderRadius: themeVariables.borderRadiusPill,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
   section: {
-    marginBottom: 30,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: 14,
@@ -202,9 +168,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#FFF',
     padding: 15,
-    borderRadius: 10,
-    elevation: 2,
-    marginBottom: 10,
+    borderRadius: 0,
+    elevation: 0,
+    marginBottom: 0,
+  },
+  sectionDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: themeVariables.borderLightColor,
+    marginVertical: 12,
   },
   itemText: {
     flex: 1,

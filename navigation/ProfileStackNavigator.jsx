@@ -57,18 +57,54 @@ const ProfileStackNavigator = () => {
       <Stack.Screen
         name="Settings"
         component={Settings}
-        options={{
-          // Hide default header; custom back chevron rendered in Settings component
-          headerShown: false,
-        }}
+        options={({ navigation }) => ({
+          title: 'Settings',
+          headerShown: true,
+          headerShadowVisible: true,
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
+        })}
       />
       <Stack.Screen
         name="NotificationSettings"
         component={NotificationSettings}
-        options={{
-          // Hide default header; custom back chevron rendered in screen component
-          headerShown: false,
-        }}
+        options={({ navigation }) => ({
+          title: 'Notifications',
+          headerShown: true,
+          headerShadowVisible: true,
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
+        })}
       />
       <Stack.Screen name="Events" component={EventsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Activities" component={ActivitiesScreen} options={{ headerShown: false }} />
@@ -91,8 +127,26 @@ const ProfileStackNavigator = () => {
         name="EditProfile"
         component={EditProfileScreen}
         options={{
-          // Hide default header; custom back chevron rendered in EditProfile screen
-          headerShown: false,
+          title: 'Personal Information',
+          headerShown: true,
+          headerShadowVisible: true,
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
         }}
       />
       {/* <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'ChangePassword', headerShown: false }} /> */}

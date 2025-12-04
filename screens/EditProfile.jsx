@@ -1,26 +1,22 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useContext, useRef, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { colors } from '../styles/colours';
 import { UserContext } from '../contexts/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { launchImageLibrary } from 'react-native-image-picker';
 import { useAuthService } from '../services/AuthService';
-import s3 from '../awsConfig';
-import FastImage from 'react-native-fast-image';
-import resolveImageSource from '../utils/imageSource';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const EditProfile = ({ navigation }) => {
   const { user, userDetails, setUserDetails, token, setUser } = useContext(UserContext);
   const { updateMe } = useAuthService();
-  const nav = useNavigation();
+  const inputRefs = useRef({});
 
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
   const [birthday, setBirthday] = useState(user.birthday ? new Date(user.birthday) : new Date());
-  const [, setShowDatePicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [email, setEmail] = useState(user.email || '');
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || '');
   const [address, setAddress] = useState(user.address || '');
@@ -32,47 +28,47 @@ const EditProfile = ({ navigation }) => {
   const [linkedin, setLinkedin] = useState(user.socialMedia?.linkedin || '');
   const [instagram, setInstagram] = useState(user.socialMedia?.instagram || '');
   const [tiktok, setTiktok] = useState(user.socialMedia?.tiktok || '');
-  const [imageUri, setImageUri] = useState(
-    // prefer detailed user data if available
-    (userDetails && userDetails.profilePicture) || user.profilePicture || null
-  );
+  const [editableFields, setEditableFields] = useState({});
+  const [errors, setErrors] = useState({});
 
-  const handleProfilePicturePress = async () => {
-    const options = {
-      mediaType: 'photo',
-      maxWidth: 1024,
-      maxHeight: 1024,
-      quality: 0.8,
-    };
-
-    launchImageLibrary(options, async response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        Alert.alert('Error', response.errorMessage);
-        return;
-      }
-
-      const asset = response.assets[0];
-      const { uri, fileName, type } = asset;
-
-      try {
-        const imageBlob = await fetch(uri).then(res => res.blob());
-        const s3Key = `profile-images/${fileName || Date.now()}`;
-        const params = {
-          Bucket: 'liquid-spirit',
-          Key: s3Key,
-          Body: imageBlob,
-          ContentType: type || 'image/jpeg',
-        };
-        const s3Upload = await s3.upload(params).promise();
-
-        setImageUri(s3Upload.Location);
-      } catch (err) {
-        Alert.alert('Upload Error', 'Failed to upload image.');
-      }
-    });
+  const handleDateChange = (event, selectedDate) => {
+    const date = selectedDate || birthday;
+    setShowDatePicker(false);
+    if (event?.type === 'dismissed') return;
+    setBirthday(date);
+    setErrors((prev) => ({ ...prev, birthday: validateField('birthday', date) }));
   };
 
+  const validateField = (key, value) => {
+    const trimmed = typeof value === 'string' ? value.trim() : value;
+    switch (key) {
+      case 'firstName':
+      case 'lastName':
+        return trimmed ? null : 'Required';
+      case 'email': {
+        if (!trimmed) return 'Required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(trimmed) ? null : 'Enter a valid email';
+      }
+      case 'phoneNumber': {
+        if (!trimmed) return null;
+        const phoneRegex = /^[0-9()+\\-\\s]{7,20}$/;
+        return phoneRegex.test(trimmed) ? null : 'Enter a valid phone number';
+      }
+      case 'birthday': {
+        if (!value) return 'Required';
+        const now = new Date();
+        return value > now ? 'Birthday cannot be in the future' : null;
+      }
+      default:
+        return null;
+    }
+  };
+
+  const handleChange = (itemKey, setter) => (next) => {
+    setter(next);
+    setErrors((prev) => ({ ...prev, [itemKey]: validateField(itemKey, next) }));
+  };
   const handleSave = async () => {
     const updatedUser = {
       firstName,
@@ -83,7 +79,6 @@ const EditProfile = ({ navigation }) => {
       address,
       occupation,
       skills: skills.split(',').map(skill => skill.trim()),
-      profilePicture: imageUri,
       preferredLanguage,
       socialMedia: { facebook, x, linkedin, instagram, tiktok },
     };
@@ -112,66 +107,101 @@ const EditProfile = ({ navigation }) => {
 
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Back chevron above content */}
-      <View style={styles.chevronContainer}>
-        <TouchableOpacity style={styles.chevronButton} onPress={() => nav.goBack()}>
-          <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.header}>Edit Profile</Text>
-      <View style={styles.avatarWrapper}>
-        <TouchableOpacity style={styles.avatarContainer} onPress={handleProfilePicturePress}>
-          {/* display the selected or detailed profile picture */}
-          <FastImage
-            source={resolveImageSource(imageUri, {
-              priority: 'high',
-              fallback: require('../assets/img/placeholder.png'),
-            })}
-            style={styles.avatar}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.changeAvatarButton} onPress={handleProfilePicturePress}>
-        <Ionicons name="camera-outline" color={themeVariables.primaryColor} size={16} />
-        <Text style={styles.changeAvatarButtonText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
 
 
       {[
-        { label: 'First Name', value: firstName, onChange: setFirstName },
-        { label: 'Last Name', value: lastName, onChange: setLastName },
-        { label: 'Birthday', value: birthday.toDateString(), onPress: () => setShowDatePicker(true), isDate: true },
-        { label: 'Email', value: email, onChange: setEmail },
-        { label: 'Phone Number', value: phoneNumber, onChange: setPhoneNumber },
-        { label: 'Address', value: address, onChange: setAddress },
-        { label: 'Occupation', value: occupation, onChange: setOccupation },
-        { label: 'Skills (comma separated)', value: skills, onChange: setSkills },
-        { label: 'Preferred Language', value: preferredLanguage, onChange: setPreferredLanguage },
-        { label: 'Facebook', value: facebook, onChange: setFacebook },
-        { label: 'X', value: x, onChange: setX },
-        { label: 'LinkedIn', value: linkedin, onChange: setLinkedin },
-        { label: 'Instagram', value: instagram, onChange: setInstagram },
-        { label: 'TikTok', value: tiktok, onChange: setTiktok },
+        { key: 'firstName', label: 'First Name', value: firstName, onChange: setFirstName },
+        { key: 'lastName', label: 'Last Name', value: lastName, onChange: setLastName },
+        {
+          key: 'birthday',
+          label: 'Birthday',
+          value: birthday.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }),
+          onPress: () => setShowDatePicker(true),
+          isDate: true,
+        },
+        { key: 'email', label: 'Email', value: email, onChange: setEmail },
+        { key: 'phoneNumber', label: 'Phone Number', value: phoneNumber, onChange: setPhoneNumber },
+        { key: 'address', label: 'Address', value: address, onChange: setAddress },
+        { key: 'occupation', label: 'Occupation', value: occupation, onChange: setOccupation },
+        { key: 'skills', label: 'Skills (comma separated)', value: skills, onChange: setSkills },
+        { key: 'preferredLanguage', label: 'Preferred Language', value: preferredLanguage, onChange: setPreferredLanguage },
+        { key: 'facebook', label: 'Facebook', value: facebook, onChange: setFacebook },
+        { key: 'x', label: 'X', value: x, onChange: setX },
+        { key: 'linkedin', label: 'LinkedIn', value: linkedin, onChange: setLinkedin },
+        { key: 'instagram', label: 'Instagram', value: instagram, onChange: setInstagram },
+        { key: 'tiktok', label: 'TikTok', value: tiktok, onChange: setTiktok },
       ].map((item, index) => (
-        <View key={index}>
-          <Text style={styles.label}>{item.label}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={item.label}
-            value={item.value}
-            onChangeText={item.onChange}
-          />
+        <View key={item.key || index}>
+          <View style={styles.cell}>
+            <View style={styles.cellContent}>
+              <Text style={styles.cellLabel}>{item.label}</Text>
+              <TextInput
+                style={styles.cellInput}
+                placeholder={item.label}
+                value={item.value}
+                onChangeText={handleChange(item.key, item.onChange)}
+                editable={item.isDate ? false : !!editableFields[item.key]}
+                placeholderTextColor={themeVariables.darkGreyColor || '#666'}
+                ref={(ref) => {
+                  if (ref && item.key) inputRefs.current[item.key] = ref;
+                }}
+              />
+              {errors[item.key] ? <Text style={styles.errorText}>{errors[item.key]}</Text> : null}
+            </View>
+            <Ionicons
+              name="create-outline"
+              size={18}
+              color={colors.text}
+              style={styles.cellIcon}
+              onPress={() => {
+                if (!item.key) return;
+                if (item.isDate) {
+                  setShowDatePicker(true);
+                  return;
+                }
+                setEditableFields((prev) => ({ ...prev, [item.key]: true }));
+                requestAnimationFrame(() => {
+                  inputRefs.current[item.key]?.focus?.();
+                });
+              }}
+            />
+          </View>
+          <View style={styles.cellDivider} />
         </View>
       ))}
 
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Ionicons name="save-outline" size={20} color="#fff" />
-        <Text style={styles.saveButtonText}>Save Changes</Text>
-      </TouchableOpacity>
       </ScrollView>
+      {showDatePicker && (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={showDatePicker}
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <View style={styles.pickerOverlay}>
+            <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowDatePicker(false)} />
+            <View style={styles.pickerSheet}>
+              <View style={styles.pickerHeader}>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Text style={styles.pickerAction}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                  <Text style={styles.pickerAction}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={birthday || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
@@ -190,92 +220,73 @@ const styles = StyleSheet.create({
       paddingTop: 10,
       paddingBottom: 60,
     },
-    chevronContainer: {
+    cell: {
       flexDirection: 'row',
-      justifyContent: 'flex-start',
-      paddingHorizontal: 16,
-      paddingTop: 16,
-      paddingBottom: 8,
-    },
-    chevronButton: {
-      backgroundColor: themeVariables.greyColor,
-      borderRadius: themeVariables.borderRadiusPill,
-      padding: 6,
+      alignItems: 'flex-start',
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      marginBottom: 12,
+      elevation: 1,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.05,
       shadowRadius: 2,
-      elevation: 2,
     },
-    header: {
-      fontSize: 28,
-      fontWeight: 'bold',
+    cellContent: {
+      flex: 1,
+    },
+    cellLabel: {
+      fontSize: 12,
       color: colors.text,
-      marginTop: 10,
-      marginBottom: 20,
-      textAlign: 'left',
-      alignSelf: 'flex-start',
+      marginBottom: 6,
     },
-    avatarWrapper: {
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    avatarContainer: {
-      alignItems: 'center',
-    },
-    changeAvatarButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'center',
-      backgroundColor: themeVariables.greyColor,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: themeVariables.borderRadiusPill,
-      marginTop: -15,
-      marginBottom: 20,
-    },
-    changeAvatarButtonText: {
-      marginLeft: 8,
-      color: colors.text,
+    cellInput: {
+      paddingVertical: 4,
+      paddingHorizontal: 0,
       fontSize: 16,
+      color: colors.text,
+    },
+    cellIcon: {
+      marginLeft: 12,
+      marginTop: 2,
+    },
+    cellDivider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: themeVariables.borderLightColor,
+      marginLeft: 4,
+      marginVertical: 2,
+    },
+    errorText: {
+      marginTop: 4,
+      color: themeVariables.redColor,
+      fontSize: 12,
+    },
+    pickerOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0,0,0,0.3)',
+    },
+    pickerSheet: {
+      backgroundColor: '#fff',
+      paddingBottom: 12,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      overflow: 'hidden',
+    },
+    pickerHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: themeVariables.borderLightColor,
+    },
+    pickerAction: {
+      color: themeVariables.primaryColor,
       fontWeight: '600',
-    },
-    avatar: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      backgroundColor: '#e1e4e8',
-    },
-    uploadIcon: {
-      position: 'absolute',
-      bottom: 10,
-      right: 10,
-      backgroundColor: '#fff',
-      padding: 8,
-      borderRadius: 20,
-      elevation: 4,
-    },
-    input: {
-      backgroundColor: '#fff',
-      borderRadius: 8,
-      padding: 15,
-      marginVertical: 8,
-      elevation: 2,
-    },
-    saveButton: {
-      backgroundColor: '#312783',
-      borderRadius: 10,
-      padding: 15,
-      alignItems: 'center',
-      marginTop: 20,
-      flexDirection: 'row',
-      justifyContent: 'center',
-    },
-    saveButtonText: {
-      color: '#fff',
-      fontWeight: 'bold',
       fontSize: 16,
-      marginLeft: 10,
     },
   });
 
