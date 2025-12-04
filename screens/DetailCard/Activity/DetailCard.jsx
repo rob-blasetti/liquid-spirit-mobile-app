@@ -147,6 +147,17 @@ const ActivityDetailCard = ({ route }) => {
   }, [activity]);
 
   useEffect(() => {
+    const detail = hydratedActivity || hydratedPrefillActivity || activityPreload || activity;
+    if (!detail) return;
+    console.log('[ActivityDetailCard] detail ready', {
+      id: detail._id || detail.id,
+      title: detail.title,
+      sessionsCount: Array.isArray(detail.sessions) ? detail.sessions.length : undefined,
+      activity: detail,
+    });
+  }, [hydratedActivity, hydratedPrefillActivity, activityPreload, activity]);
+
+  useEffect(() => {
     setPrefillActivity(activityPreload || null);
   }, [activityPreload]);
 

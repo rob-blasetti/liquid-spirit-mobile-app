@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginTop: 4,
-    marginRight: 10,
+    marginRight: 14,
   },
   sessionStatusInlineText: {
     color: themeVariables.whiteColor,

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -75,6 +75,16 @@ const Discover = ({ navigation }) => {
   const eventsTitle = `Events this ${timeframeLabel}`;
   const [showActivitiesGrid, setShowActivitiesGrid] = useState(false);
   const [showEventsGrid, setShowEventsGrid] = useState(false);
+
+  useEffect(() => {
+    if (!activityPreview) return;
+    console.log('[Discover] activities preview', activityPreview.map(({ activity, nextDate, addressLabel }) => ({
+      id: activity?._id || activity?.id,
+      title: activity?.title,
+      nextDate,
+      addressLabel,
+    })));
+  }, [activityPreview]);
 
   const handleEventPress = useCallback(
     (event) => {
@@ -499,7 +509,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 14,
     paddingBottom: 120,
   },
   loadingContainer: {

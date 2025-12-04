@@ -22,15 +22,28 @@ const deriveActivityAddress = (activity = {}) =>
     activity.location,
   );
 
-const resolveSessionAddress = (session = {}, activity = {}) =>
-  coalesceString(
-    getDisplayAddress({ sessionAddress: session.address, activityAddress: activity.address }),
-    session.address?.name,
+const resolveSessionAddress = (session = {}, activity = {}) => {
+  const venueAddress = Array.isArray(session.venues)
+    ? session.venues
+        .map((venue) => venue?.address)
+        .find((address) => getDisplayAddress({ sessionAddress: address }).length > 0)
+    : null;
+
+  const sessionAddress = venueAddress || session.address;
+  const venueName = Array.isArray(session.venues)
+    ? session.venues.map((venue) => venue?.name).find((name) => typeof name === 'string' && name.trim())
+    : null;
+
+  return coalesceString(
+    venueName,
+    getDisplayAddress({ sessionAddress, activityAddress: activity.address }),
+    sessionAddress?.name,
     session.location,
     session.venue,
     deriveActivityAddress(activity),
     'Location TBD',
   );
+};
 
 const getNextSessionInfo = (activity = {}) => {
   const now = new Date();

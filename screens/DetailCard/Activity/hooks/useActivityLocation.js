@@ -8,9 +8,18 @@ import {
 } from '../utils/locationUtils';
 
 const useActivityLocation = ({ activity, nextSession }) => useMemo(() => {
+  const sessionVenues = Array.isArray(nextSession?.normalizedVenues)
+    ? nextSession.normalizedVenues
+    : Array.isArray(nextSession?.venues)
+      ? nextSession.venues
+      : [];
+  const sessionVenueAddress =
+    sessionVenues.map(venue => venue?.address).find(addr => normalizeAddress(addr).length > 0) || null;
+
   const mapAddressSource =
-    nextSession?.address ||
+    sessionVenueAddress ||
     nextSession?.primaryVenue?.address ||
+    nextSession?.address ||
     activity?.address;
 
   const mapAddress = normalizeAddress(mapAddressSource);
@@ -21,7 +30,7 @@ const useActivityLocation = ({ activity, nextSession }) => useMemo(() => {
     'Upcoming Session'
   );
   const mapDisplayAddress = getDisplayAddress({
-    sessionAddress: mapAddressSource,
+    sessionAddress: sessionVenueAddress || nextSession?.address || nextSession?.primaryVenue?.address,
     activityAddress: activity?.address,
   });
 
