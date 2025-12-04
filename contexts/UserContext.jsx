@@ -217,7 +217,6 @@ export const UserProvider = ({ children }) => {
 
       setChatNotificationCount(total);
       setHasNewChatMessages(total > 0 && !chatTabActiveRef.current);
-      console.log('[ChatBadge] unread total:', total, '| breakdown:', JSON.stringify(breakdown));
     },
     [],
   );
@@ -486,7 +485,6 @@ export const UserProvider = ({ children }) => {
     if (!token) return;
     try {
       const response = await fetchChats({ token });
-      console.log('[ChatBadge] fetchChats response:', JSON.stringify(response)?.slice(0, 500));
       syncChatBadgeFromPayload(response);
     } catch (error) {
       const message = error?.message || '';

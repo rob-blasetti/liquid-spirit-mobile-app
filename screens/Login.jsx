@@ -1,19 +1,19 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Platform, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { Platform, View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, TextInput } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
 import { API_URL } from '../config';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import SlideBanner from '../components/SlideBanner';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import PasswordField from '../components/forms/inputs/PasswordField';
 
 const Login = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [bannerMessage, setBannerMessage] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const { login } = useContext(UserContext);
 
@@ -102,39 +102,28 @@ const Login = ({ navigation, route }) => {
     <View style={styles.screen}>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
       <View style={[styles.container, bannerMessage ? styles.containerWithBanner : null]}>
-        {/* Email Label and Input */}
         <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholderTextColor={themeVariables.darkGreyColor || '#777'}
+          />
+        </View>
+        <Text style={styles.label}>Password</Text>
+        <PasswordField
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Enter your password"
+          inputStyle={styles.input}
           autoCapitalize="none"
           autoCorrect={false}
         />
-        {/* Password Label and Input */}
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.passwordInputWrapper}>
-          <TextInput
-            style={[styles.input, styles.passwordInput]}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!passwordVisible}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          <TouchableOpacity
-            onPress={() => setPasswordVisible((prev) => !prev)}
-            style={styles.passwordToggle}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons
-              name={passwordVisible ? 'eye-off-outline' : 'eye-outline'}
-              size={22}
-              color="#777"
-            />
-          </TouchableOpacity>
-        </View>
         {loading ? (
           <ActivityIndicator size="large" color={themeVariables.primaryColor} />
         ) : (
@@ -161,44 +150,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    width: '100%',
     padding: 16,
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   containerWithBanner: {
     paddingTop: 70,
   },
-  // Label above inputs for clarity on all devices
   label: {
     width: '100%',
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 4,
-    alignSelf: 'flex-start',
+    fontSize: 16,
+    color: themeVariables.blackColor,
+    marginBottom: 6,
+    fontWeight: '600',
   },
   input: {
     width: '100%',
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    alignSelf: 'stretch',
+    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
-  },
-  passwordInputWrapper: {
-    width: '100%',
     marginBottom: 16,
-    position: 'relative',
   },
-  passwordInput: {
-    paddingRight: 44,
-    marginBottom: 0,
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: 16,
-    top: '50%',
-    marginTop: -11,
+  inputWrapper: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
   button: {
     backgroundColor: '#312783',
@@ -218,6 +196,7 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 16,
     backgroundColor: themeVariables.screenBackgroundColor,
+    alignSelf: 'center',
   },
   linkText: {
     color: '#0485e2',

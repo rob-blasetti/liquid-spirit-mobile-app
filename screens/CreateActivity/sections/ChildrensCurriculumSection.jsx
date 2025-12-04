@@ -27,6 +27,8 @@ const ChildrensCurriculumSection = ({
   const [lessonNumber, setLessonNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState('');
+  const [gradeWarning, setGradeWarning] = useState('');
+  const [setWarning, setSetWarning] = useState('');
 
   const isChildrensClass = activityType === "Children's Class";
   const gradeNorm = String(grade || '').trim().toLowerCase();
@@ -37,6 +39,8 @@ const ChildrensCurriculumSection = ({
     setSetCode('');
     setLessonNumber('');
     onChangeLessonValue('');
+    setGradeWarning('');
+    setSetWarning('');
   }, [grade, onChangeLessonValue]);
 
   useEffect(() => {
@@ -91,6 +95,14 @@ const ChildrensCurriculumSection = ({
     return sets.find((s) => String(s.setCode) === String(setCode))?.lessons ?? [];
   }, [isGradeOneSchema, curriculumDoc, sets, setCode]);
 
+  const lessonInfoMessage = useMemo(() => {
+    if (fetchError) return '';
+    if (!grade) return 'Pick a grade to load sets and lessons.';
+    if (isGradeOneSchema) return 'Select a lesson.';
+    if (!setCode) return 'Select a set to load lessons.';
+    return '';
+  }, [fetchError, grade, isGradeOneSchema, setCode]);
+
   useEffect(() => {
     setSetCode('');
     setLessonNumber('');
@@ -119,8 +131,8 @@ const ChildrensCurriculumSection = ({
   return (
     <View style={styles.section}>
       <Title style={styles.sectionTitle}>Curriculum</Title>
+      <Title style={styles.sectionLabel}>Grade</Title>
       <DropdownInput
-        label="Grade"
         value={grade}
         options={GRADE_OPTIONS}
         placeholder="Select grade"
@@ -138,13 +150,13 @@ const ChildrensCurriculumSection = ({
         <>
           {!isGradeOneSchema && (
             <>
+              <Title style={styles.sectionLabel}>Set</Title>
               <DropdownInput
-                label="Set"
                 value={setCode}
-            options={setOptions}
-            placeholder="Select set"
-            onSelect={(val, meta) => {
-              const selectedSet =
+                options={setOptions}
+                placeholder="Select set"
+                onSelect={(val, meta) => {
+                  const selectedSet =
                 meta ||
                 sets.find((s) => String(s.setCode || s.id || s._id || s.title) === String(val));
               const composeCode =
@@ -158,19 +170,26 @@ const ChildrensCurriculumSection = ({
                 title: selectedSet?.title || '',
               });
               onChangeLessonMeta?.(null);
+              setGradeWarning('');
+              setSetWarning('');
             }}
             disabled={!grade || loading}
             textInputProps={{ style: styles.input }}
             error={lessonError}
+            onDisabledPress={() => {
+              if (!grade) {
+                setGradeWarning('Select grade first.');
+              }
+            }}
           />
-              <HelperText type="error" visible={!grade && !!setCode}>
-                Select a grade first.
+              <HelperText type="error" visible={!grade && !!gradeWarning}>
+                {gradeWarning}
               </HelperText>
             </>
           )}
 
+          <Title style={styles.sectionLabel}>Lesson</Title>
           <DropdownInput
-            label="Lesson"
             value={lessonNumber}
             options={lessonOptions.map((lesson) => {
               const label = `${lesson.number}. ${lesson.title}`;
@@ -211,14 +230,21 @@ const ChildrensCurriculumSection = ({
             }}
             disabled={(!isGradeOneSchema && !setCode) || loading}
             textInputProps={{ style: styles.input }}
-            multilineDisplay
             error={lessonError || fetchError}
+            onDisabledPress={() => {
+              if (!setCode && !isGradeOneSchema && grade) {
+                setSetWarning('Select a set first.');
+              }
+            }}
           />
           <HelperText type="info" visible={!loading && !fetchError}>
-            Pick a grade to load sets and lessons.
+            {lessonInfoMessage || ' '}
           </HelperText>
           <HelperText type="error" visible={!!fetchError}>
             {fetchError}
+          </HelperText>
+          <HelperText type="error" visible={!setCode && !isGradeOneSchema && !!setWarning}>
+            {setWarning}
           </HelperText>
         </>
       )}

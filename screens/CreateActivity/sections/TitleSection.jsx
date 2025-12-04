@@ -13,7 +13,7 @@ const TitleSection = ({
   styles,
 }) => (
   <>
-    <Title style={styles.sectionLabel}>Title</Title>
+    <Title style={styles.sectionLabel}>Title *</Title>
     <FormTextInput
       inputProps={baseInputProps}
       label={label}

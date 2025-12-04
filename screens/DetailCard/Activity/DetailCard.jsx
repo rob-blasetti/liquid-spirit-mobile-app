@@ -146,6 +146,18 @@ const ActivityDetailCard = ({ route }) => {
     }
   }, [activity]);
 
+  const pickLatestSession = useCallback((sessions = []) => {
+    if (!Array.isArray(sessions) || sessions.length === 0) return null;
+    return sessions.reduce((latest, session) => {
+      const dateValue = session?.date || session?.createdAt || session?.updatedAt;
+      const time = dateValue ? new Date(dateValue).getTime() : 0;
+      if (!latest || time > latest.time) {
+        return { session, time };
+      }
+      return latest;
+    }, null)?.session;
+  }, []);
+
   useEffect(() => {
     const detail = hydratedActivity || hydratedPrefillActivity || activityPreload || activity;
     if (!detail) return;
@@ -201,13 +213,25 @@ const ActivityDetailCard = ({ route }) => {
   }, [navigation]);
 
   useEffect(() => {
-    if (!hydratedActivity || prefillParamsSetRef.current) return;
+    if (prefillParamsSetRef.current) return;
+    const detail = hydratedActivity || hydratedPrefillActivity || activityPreload || activity;
+    if (!detail) return;
+    const latestSession = pickLatestSession(detail.sessions || []);
+    const prefillFacilitators =
+      (latestSession?.facilitators && latestSession.facilitators.length > 0 && latestSession.facilitators) ||
+      detail.facilitators ||
+      [];
+    const prefillParticipants =
+      (latestSession?.participants && latestSession.participants.length > 0 && latestSession.participants) ||
+      detail.participants ||
+      [];
     navigation.setParams({
-      prefilledFacilitators: hydratedActivity.facilitators || [],
-      prefilledParticipants: hydratedActivity.participants || [],
+      activityReady: true,
+      prefilledFacilitators: prefillFacilitators,
+      prefilledParticipants: prefillParticipants,
     });
     prefillParamsSetRef.current = true;
-  }, [hydratedActivity, navigation]);
+  }, [activity, activityPreload, hydratedActivity, hydratedPrefillActivity, navigation, pickLatestSession]);
 
   const chatEligibleMemberCount = useMemo(() => {
     const memberLists = [latestActivityForChat?.participants, latestActivityForChat?.facilitators];

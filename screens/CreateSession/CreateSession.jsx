@@ -43,6 +43,8 @@ const resolveMemberDetails = (entry) => {
   if (entry.refId && typeof entry.refId === 'object') return entry.refId;
   if (entry.user && typeof entry.user === 'object') return entry.user;
   if (entry.profile && typeof entry.profile === 'object') return entry.profile;
+  if (entry.member && typeof entry.member === 'object') return entry.member;
+  if (entry.memberDetails && typeof entry.memberDetails === 'object') return entry.memberDetails;
   return entry;
 };
 
@@ -52,15 +54,33 @@ const normalizeMemberEntry = (entry) => {
   const rawId =
     details?._id ||
     details?.id ||
+    details?.memberId ||
+    details?.userId ||
+    details?.memberID ||
+    details?.userID ||
+    details?.refId ||
+    details?.refID ||
     entry._id ||
     entry.id ||
+    entry.memberId ||
+    entry.memberID ||
     entry.userId ||
+    entry.userID ||
+    entry.refId ||
+    entry.refID ||
     entry.refId?._id ||
     entry.refId?.id ||
+    entry.refID?._id ||
+    entry.refID?.id ||
     entry.user?._id ||
+    entry.user?.userId ||
+    entry.user?.userID ||
     entry.user?.id ||
     entry.profile?._id ||
-    entry.profile?.id;
+    entry.profile?.id ||
+    entry.member?._id ||
+    entry.member?.id ||
+    entry.member?.memberId;
   if (!rawId) return null;
   const id = String(rawId);
   const firstName =
@@ -76,11 +96,15 @@ const normalizeMemberEntry = (entry) => {
   const email = details?.email || entry.email;
   const fullName =
     details?.fullName ||
+    details?.full_name ||
     details?.displayName ||
     details?.name ||
+    details?.username ||
     entry.fullName ||
     entry.displayName ||
+    entry.full_name ||
     entry.name ||
+    entry.username ||
     [firstName, lastName].filter(Boolean).join(' ').trim();
   return {
     ...details,
@@ -103,15 +127,32 @@ const extractMemberId = (member) => {
   return (
     member._id ||
     member.id ||
+    member.memberId ||
+    member.memberID ||
     member.userId ||
+    member.userID ||
+    member.refId ||
+    member.refID ||
+    member.user?.userId ||
+    member.user?.userID ||
     member.refId?._id ||
     member.refId?.id ||
+    member.refID?._id ||
+    member.refID?.id ||
     member.user?._id ||
     member.user?.id ||
     member.profile?._id ||
     member.profile?.id ||
+    member.member?._id ||
+    member.member?.id ||
+    member.member?.memberId ||
+    member.member?.memberID ||
     resolveMemberDetails(member)?._id ||
     resolveMemberDetails(member)?.id ||
+    resolveMemberDetails(member)?.memberId ||
+    resolveMemberDetails(member)?.memberID ||
+    resolveMemberDetails(member)?.userId ||
+    resolveMemberDetails(member)?.userID ||
     ''
   );
 };
@@ -207,17 +248,19 @@ const CreateSession = ({ navigation, route }) => {
         primary: themeVariables.primaryColor,
         text: themeVariables.blackColor,
         placeholder: themeVariables.darkGreyColor || '#777',
-        outline: '#ddd',
+        outline: 'transparent',
       },
     }),
     [],
   );
   const baseInputProps = useMemo(
     () => ({
-      mode: 'outlined',
+      mode: 'flat',
       theme: inputTheme,
-      outlineColor: '#ddd',
-      activeOutlineColor: themeVariables.primaryColor,
+      outlineColor: 'transparent',
+      activeOutlineColor: 'transparent',
+      underlineColor: 'transparent',
+      activeUnderlineColor: 'transparent',
       contentStyle: styles.inputContent,
       outlineStyle: styles.inputOutline,
     }),
@@ -250,6 +293,26 @@ const CreateSession = ({ navigation, route }) => {
   const [curriculumError, setCurriculumError] = useState('');
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
   const [venuesLoading, setVenuesLoading] = useState(true);
+
+  useEffect(() => {
+    console.log('[CreateSession] route params', {
+      params,
+      resolvedActivityId,
+      activityTitle,
+      activityType,
+      prefilledFacilitatorsCount: prefilledFacilitators.length,
+      prefilledParticipantsCount: prefilledParticipants.length,
+      prefilledFacilitators,
+      prefilledParticipants,
+    });
+  }, [
+    params,
+    resolvedActivityId,
+    activityTitle,
+    activityType,
+    prefilledFacilitators,
+    prefilledParticipants,
+  ]);
 
   useEffect(() => {
     const grade = form.curriculumLesson.grade;
@@ -511,8 +574,15 @@ const CreateSession = ({ navigation, route }) => {
       try {
         const members = await getMemberList(communityId);
         if (!cancelled) {
-          setAllMembers(Array.isArray(members) ? members : []);
-          setMemberOptions(Array.isArray(members) ? members : []);
+          const rawList = Array.isArray(members) ? members : [];
+          const normalizedMembers = normalizeMemberList(rawList);
+          const listToUse = normalizedMembers.length ? normalizedMembers : rawList;
+          setAllMembers(listToUse);
+          setMemberOptions(listToUse);
+          console.log('[CreateSession] loaded members', {
+            count: listToUse.length,
+            sample: listToUse.slice(0, 5),
+          });
         }
       } catch (err) {
         if (!cancelled) {
@@ -536,13 +606,53 @@ const CreateSession = ({ navigation, route }) => {
       setMemberOptions(allMembers);
       return;
     }
-    const filtered = allMembers.filter((member) => {
-      const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
-      const email = (member.email || '').toLowerCase();
-      return fullName.includes(searchValue) || email.includes(searchValue);
+        const filtered = allMembers.filter((member) => {
+          const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
+          const email = (member.email || '').toLowerCase();
+          const name = (member.fullName || '').toLowerCase();
+          return fullName.includes(searchValue) || email.includes(searchValue) || name.includes(searchValue);
+        });
+        setMemberOptions(filtered);
+      }, [allMembers, form.facilitatorSearch, form.participantSearch]);
+
+  useEffect(() => {
+    if (!allMembers.length) return;
+    setForm((prev) => {
+      const mergeMember = (member) => {
+        const id = extractMemberId(member);
+        if (!id) return member;
+        const match = allMembers.find((m) => String(extractMemberId(m)) === String(id));
+        if (!match) return member;
+        const normalized = normalizeMemberEntry(match);
+        if (!normalized) return member;
+        const needsUpdate =
+          member.fullName === 'Member' ||
+          !member.fullName ||
+          member.firstName !== normalized.firstName ||
+          member.lastName !== normalized.lastName ||
+          (!member.email && normalized.email);
+        if (!needsUpdate) return member;
+        return {
+          ...member,
+          ...normalized,
+          _id: String(id),
+          id: String(id),
+        };
+      };
+
+      const mergedFacilitators = (prev.facilitators || []).map(mergeMember);
+      const mergedParticipants = (prev.participants || []).map(mergeMember);
+      const changed =
+        mergedFacilitators.some((m, idx) => m !== prev.facilitators[idx]) ||
+        mergedParticipants.some((m, idx) => m !== prev.participants[idx]);
+      if (!changed) return prev;
+      return {
+        ...prev,
+        facilitators: mergedFacilitators,
+        participants: mergedParticipants,
+      };
     });
-    setMemberOptions(filtered);
-  }, [allMembers, form.facilitatorSearch, form.participantSearch]);
+  }, [allMembers]);
 
   const onNext = useCallback(() => {
     if (validateStep()) {
@@ -553,6 +663,15 @@ const CreateSession = ({ navigation, route }) => {
   const onBackStep = useCallback(() => {
     setStep((prev) => Math.max(prev - 1, 1));
   }, []);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    console.log('[CreateSession] step 2 data', {
+      facilitators: form.facilitators,
+      participants: form.participants,
+      memberOptionsCount: memberOptions.length,
+    });
+  }, [step, form.facilitators, form.participants, memberOptions.length]);
 
   const handleSubmit = useCallback(async () => {
     if (!token) {
@@ -896,9 +1015,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   inputOutline: {
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderRadius: 6,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   inlineRow: {
     flexDirection: 'row',

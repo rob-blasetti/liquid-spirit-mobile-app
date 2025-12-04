@@ -85,17 +85,19 @@ export default function CreateActivity({ navigation, route }) {
         primary: themeVariables.primaryColor,
         text: themeVariables.blackColor,
         placeholder: themeVariables.darkGreyColor || '#777',
-        outline: '#ddd',
+        outline: 'transparent',
       },
     }),
     [],
   );
   const baseInputProps = useMemo(
     () => ({
-      mode: 'outlined',
+      mode: 'flat',
       theme: inputTheme,
-      outlineColor: '#ddd',
-      activeOutlineColor: themeVariables.primaryColor,
+      outlineColor: 'transparent',
+      activeOutlineColor: 'transparent',
+      underlineColor: 'transparent',
+      activeUnderlineColor: 'transparent',
       contentStyle: styles.inputContent,
       outlineStyle: styles.inputOutline,
     }),
@@ -801,9 +803,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   inputOutline: {
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderRadius: 6,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   locationModeRow: {
     flexDirection: 'row',

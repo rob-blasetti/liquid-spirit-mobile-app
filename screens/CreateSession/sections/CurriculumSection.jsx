@@ -23,8 +23,8 @@ const CurriculumSection = ({
 }) => (
   <View style={styles.section}>
     <Title style={styles.sectionTitle}>Curriculum</Title>
+    <Title style={styles.sectionLabel}>Grade</Title>
     <DropdownInput
-      label="Grade"
       value={selectedGrade}
       options={gradeOptions}
       placeholder="Select grade"
@@ -36,8 +36,8 @@ const CurriculumSection = ({
       Choose grade 1 or higher.
     </HelperText>
 
+    <Title style={styles.sectionLabel}>Set</Title>
     <DropdownInput
-      label="Set"
       value={selectedSet}
       options={setOptions}
       placeholder="Select set"
@@ -50,8 +50,8 @@ const CurriculumSection = ({
       Select a grade first.
     </HelperText>
 
+    <Title style={styles.sectionLabel}>Lesson</Title>
     <DropdownInput
-      label="Lesson"
       value={selectedLesson}
       options={lessonOptions}
       placeholder="Select lesson"

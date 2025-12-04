@@ -146,6 +146,14 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         return;
       }
       const { activityId, activityTitle, facilitators, participants } = activityContext || {};
+      console.log('[BottomBar] create session tap', {
+        activityId,
+        activityTitle,
+        facilitatorsCount: Array.isArray(facilitators) ? facilitators.length : 0,
+        participantsCount: Array.isArray(participants) ? participants.length : 0,
+        facilitators,
+        participants,
+      });
       if (!activityId) {
         Alert.alert(
           'Activity unavailable',
@@ -218,12 +226,13 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     }
     if (routeName === 'ActivityDetailCard') {
       const activityContext = extractActivityContext(focusedRoute?.params || {});
+      const activityReady = !!focusedRoute?.params?.activityReady;
       return {
         key: 'create-session',
         icon: 'time-outline',
         label: 'New Session',
         onPress: () => handleCreateSession(activityContext),
-        disabled: !activityContext.activityId,
+        disabled: !activityContext.activityId || !activityReady,
       };
     }
     if (routeName === 'Activities') {

@@ -33,6 +33,18 @@ const DatePickerInput = ({
   const [currentMonth, setCurrentMonth] = useState(value || new Date());
   const displayDate = useMemo(() => formatDate(value || new Date()), [value]);
   const cells = useMemo(() => getMonthMatrix(currentMonth), [currentMonth]);
+  const defaultBg = themeVariables.lightGreyColor || '#f3f3f3';
+  const outlineColor = 'transparent';
+  const activeOutlineColor = 'transparent';
+  const mergedStyle = [
+    inputProps?.style,
+    { backgroundColor: defaultBg },
+  ].filter(Boolean);
+  const mergedContentStyle = [inputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
+  const mergedOutlineStyle = [
+    { borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
+    inputProps?.outlineStyle,
+  ].filter(Boolean);
 
   const goMonth = (delta) => {
     setCurrentMonth(prev => {
@@ -51,9 +63,17 @@ const DatePickerInput = ({
       >
         <TextInput
           {...inputProps}
+          mode="flat"
           value={displayDate}
           editable={false}
           pointerEvents="none"
+          style={mergedStyle}
+          contentStyle={mergedContentStyle}
+          outlineStyle={mergedOutlineStyle}
+          outlineColor={outlineColor}
+          activeOutlineColor={activeOutlineColor}
+          underlineColor="transparent"
+          activeUnderlineColor="transparent"
           right={
             <TextInput.Icon
               icon={() => <Ionicons name="calendar-outline" size={20} color={themeVariables.primaryColor} />}

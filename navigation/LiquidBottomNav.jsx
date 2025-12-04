@@ -35,13 +35,6 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
   );
 
   useEffect(() => {
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log('[BottomNav] focused index ->', state.index, state.routes[state.index]?.name);
-    }
-  }, [state.index]);
-
-  useEffect(() => {
     const targetIndex = state.index;
     const layout = tabLayouts[targetIndex];
     if (!layout) return;
@@ -108,13 +101,6 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
                 : baseIcon
               : undefined;
           const label = labelForRoute(route, options);
-          if (__DEV__) {
-            // eslint-disable-next-line no-console
-            console.log('[BottomNav] render tab', route.name, {
-              focused,
-              isActive,
-            });
-          }
 
           const onPress = () => {
             const event = navigation.emit({
@@ -127,10 +113,6 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
             }
             if (!focused) {
               navigation.navigate(route.name);
-              if (__DEV__) {
-                // eslint-disable-next-line no-console
-                console.log('[BottomNav] navigate to', route.name);
-              }
             }
           };
           const onLongPress = () => {
@@ -138,10 +120,6 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
               type: 'tabLongPress',
               target: route.key,
             });
-            if (__DEV__) {
-              // eslint-disable-next-line no-console
-              console.log('[BottomNav] longPress', route.name);
-            }
           };
 
               return (

@@ -59,7 +59,6 @@ const formatGroupTime = (timeStr) => {
 const FEATURE_TABS = ['Activities', 'Events', 'Assembly'];
 
 const Home = ({ navigation, homeOverview, route }) => {
-  console.log(homeOverview);
   const insets = useSafeAreaInsets();
   // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
   const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight || 0) : insets.top;

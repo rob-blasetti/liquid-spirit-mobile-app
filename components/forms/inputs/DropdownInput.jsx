@@ -39,6 +39,7 @@ const DropdownInput = ({
   textInputProps,
   multilineDisplay = false,
   closeSiblings = true,
+  onDisabledPress,
 }) => {
   const [open, setOpen] = useState(false);
   const selfId = useRef(`dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -50,9 +51,25 @@ const DropdownInput = ({
   );
   const displayValue = selectedOption?.label || value || '';
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
+  const defaultBg = themeVariables.lightGreyColor || '#f3f3f3';
+  const defaultBorder = themeVariables.borderColor || '#d1d1d6';
+  const outlineColor = restTextInputProps?.outlineColor || 'transparent';
+  const activeOutlineColor = restTextInputProps?.activeOutlineColor || 'transparent';
+  const underlineColor = restTextInputProps?.underlineColor || 'transparent';
+  const mergedStyle = [
+    styles.input,
+    multilineDisplay && styles.inputMultiline,
+    inputStyle,
+    { backgroundColor: defaultBg },
+  ].filter(Boolean);
+  const mergedContentStyle = [restTextInputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
+  const mergedOutlineStyle = [restTextInputProps?.outlineStyle, { borderRadius: 6, borderWidth: 0, borderColor: defaultBorder }].filter(Boolean);
 
   const toggleOpen = useCallback(() => {
-    if (disabled) return;
+    if (disabled) {
+      onDisabledPress?.();
+      return;
+    }
     setOpen(prev => {
       const next = !prev;
       if (next && closeSiblings) {
@@ -60,7 +77,7 @@ const DropdownInput = ({
       }
       return next;
     });
-  }, [disabled, closeSiblings]);
+  }, [disabled, closeSiblings, onDisabledPress]);
 
   const handleSelect = useCallback(
     option => {
@@ -93,18 +110,20 @@ const DropdownInput = ({
       >
         <TextInput
           label={label}
-          mode="outlined"
+          mode="flat"
           value={displayValue || ''}
           placeholder={placeholder}
           editable={false}
           pointerEvents="none"
           multiline={multilineDisplay}
           numberOfLines={multilineDisplay ? 2 : 1}
-          style={[
-            styles.input,
-            multilineDisplay && styles.inputMultiline,
-            inputStyle,
-          ]}
+          style={mergedStyle}
+          contentStyle={mergedContentStyle}
+          outlineStyle={mergedOutlineStyle}
+          outlineColor={outlineColor}
+          activeOutlineColor={activeOutlineColor}
+          underlineColor={underlineColor}
+          activeUnderlineColor={underlineColor}
           {...restTextInputProps}
           right={
             <TextInput.Icon

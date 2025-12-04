@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-  Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform, TextInput } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +9,7 @@ import {
   isValidBahaiId,
   isValidPassword,
 } from '../utils/validation';
+import PasswordField from '../components/forms/inputs/PasswordField';
 
 const Register = () => {
   const navigation = useNavigation();
@@ -27,42 +19,47 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isEulaAccepted, setIsEulaAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const { signUp } = useAuthService();
 
+  const clearFieldError = (field) =>
+    setErrors((prev) => (prev[field] ? { ...prev, [field]: '' } : prev));
+
   const handleRegister = async () => {
-    if (!email || !bahaiId || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields.');
-      return;
+    const nextErrors = {};
+
+    if (!email) {
+      nextErrors.email = 'Email is required.';
+    } else if (!isValidEmail(email)) {
+      nextErrors.email = 'Please enter a valid email address.';
     }
 
-    if (!isValidEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address.');
-      return;
+    if (!bahaiId) {
+      nextErrors.bahaiId = "Bahá'í ID is required.";
+    } else if (!isValidBahaiId(bahaiId)) {
+      nextErrors.bahaiId = "Bahá'í ID must contain only numbers.";
     }
 
-    if (!isValidBahaiId(bahaiId)) {
-      Alert.alert('Error', "Bahá'í ID must contain only numbers.");
-      return;
+    if (!password) {
+      nextErrors.password = 'Password is required.';
+    } else if (!isValidPassword(password)) {
+      nextErrors.password =
+        'Password must be at least 8 characters and include a number and a letter. Special characters are allowed.';
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
-      return;
-    }
-
-    if (!isValidPassword(password)) {
-      Alert.alert(
-        'Error',
-        'Password must be at least 8 characters and include a number and a letter. Special characters are allowed.'
-      );
-      return;
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = 'Confirm your password.';
+    } else if (password !== confirmPassword) {
+      nextErrors.confirmPassword = 'Passwords do not match.';
     }
 
     if (!isEulaAccepted) {
-      Alert.alert('Error', 'You must accept the EULA before registering.');
-      return;
+      nextErrors.eula = 'You must accept the EULA before registering.';
     }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
 
     setLoading(true);
 
@@ -72,10 +69,10 @@ const Register = () => {
         Alert.alert('Success', 'Verification code sent to your email.');
         navigation.navigate('Verification', { bahaiId, email, password });
       } else {
-        Alert.alert('Error', data?.message || 'Registration failed.');
+        setErrors({ general: data?.message || 'Registration failed.' });
       }
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong. Please try again later.');
+      setErrors({ general: 'Something went wrong. Please try again later.' });
       console.error('Register error:', error);
     } finally {
       setLoading(false);
@@ -84,42 +81,76 @@ const Register = () => {
 
   return (
     <View style={styles.container}>
-      {/* Email Label and Input */}
       <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      {/* Bahá'í ID Label and Input */}
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="you@example.com"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
+          onChange={(e) => {
+            clearFieldError('email');
+            setEmail(e.nativeEvent.text);
+          }}
+        />
+        {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+      </View>
       <Text style={styles.label}>Bahá'í ID</Text>
-      <TextInput
-        style={styles.input}
-        value={bahaiId}
-        onChangeText={(text) => setBahaiId(text.replace(/[^0-9]/g, ''))}
-        keyboardType="numeric"
-      />
-      {/* Password Label and Input */}
+      <View style={styles.inputWrapper}>
+        <TextInput
+          style={styles.input}
+          placeholder="Numbers only"
+          value={bahaiId}
+          onChangeText={(text) => setBahaiId(text.replace(/[^0-9]/g, ''))}
+          keyboardType="numeric"
+          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
+          onChange={(e) => {
+            clearFieldError('bahaiId');
+            setBahaiId(e.nativeEvent.text.replace(/[^0-9]/g, ''));
+          }}
+        />
+        {!!errors.bahaiId && <Text style={styles.errorText}>{errors.bahaiId}</Text>}
+      </View>
       <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      {/* Confirm Password Label and Input */}
+      <View style={[styles.inputWrapper, styles.passwordWrapper]}>
+        <PasswordField
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Create a password"
+          inputStyle={styles.input}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
+          onChange={(e) => {
+            clearFieldError('password');
+            setPassword(e.nativeEvent.text);
+          }}
+        />
+        {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+      </View>
       <Text style={styles.label}>Confirm Password</Text>
-      <TextInput
-        style={styles.input}
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
+      <View style={[styles.inputWrapper, styles.passwordWrapper]}>
+        <PasswordField
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          placeholder="Re-enter your password"
+          inputStyle={styles.input}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
+          onChange={(e) => {
+            clearFieldError('confirmPassword');
+            setConfirmPassword(e.nativeEvent.text);
+          }}
+        />
+        {!!errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+      </View>
 
-      {/* ✅ Custom Checkbox Using FontAwesome */}
+      {/* Custom checkbox using Ionicons */}
       <TouchableOpacity
         style={styles.checkboxContainer}
         onPress={() => setIsEulaAccepted(!isEulaAccepted)}
@@ -133,6 +164,8 @@ const Register = () => {
           <Text style={styles.eulaText}>I agree to the EULA</Text>
         </TouchableOpacity>
       </TouchableOpacity>
+      {!!errors.eula && <Text style={styles.errorText}>{errors.eula}</Text>}
+      {!!errors.general && <Text style={styles.errorText}>{errors.general}</Text>}
 
       {loading ? (
         <ActivityIndicator size="large" color="#312783" />
@@ -162,26 +195,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    width: '100%',
     padding: 16,
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   // Label above inputs for clarity on all devices
   label: {
     width: '100%',
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 4,
+    fontSize: 16,
+    color: themeVariables.blackColor,
+    marginBottom: 6,
     alignSelf: 'flex-start',
+    fontWeight: '600',
   },
   input: {
     width: '100%',
-    padding: 12,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    alignSelf: 'stretch',
+    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     borderRadius: 8,
-    backgroundColor: '#f9f9f9',
+    marginBottom: 16,
+    color: themeVariables.blackColor,
+  },
+  inputWrapper: {
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  passwordWrapper: {
+    position: 'relative',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -194,6 +237,12 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     width: Platform.select({ android: 160 }),
     textAlign: 'center',
+  },
+  errorText: {
+    color: '#d32f2f',
+    marginTop: -8,
+    marginBottom: 8,
+    fontSize: 13,
   },
   button: {
     backgroundColor: '#312783',
@@ -217,6 +266,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     width: Platform.select({ android: 180 }),
     textAlign: 'center',
+    alignSelf: 'center',
   },
   linkText: {
     color: '#0485e2',

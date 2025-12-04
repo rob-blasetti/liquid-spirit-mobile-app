@@ -27,16 +27,12 @@ export async function registerDevice(authToken, apnsToken) {
     'Content-Type': 'application/json',
   };
 
-  log('registerDevice: attempting', { url: dashed, body: payload });
-
   try {
     let res = await fetch(dashed, { method: 'POST', headers, body: JSON.stringify(payload) });
     if (res.status === 404) {
-      log('registerDevice: 404 on dashed path, retrying camelCase', { url: camel });
       res = await fetch(camel, { method: 'POST', headers, body: JSON.stringify(payload) });
     }
     const data = await res.json().catch(() => ({}));
-    log('registerDevice: response', { ok: res.ok, status: res.status, tried: res.url });
     return { ok: res.ok, data };
   } catch (e) {
     console.warn('[PushService] registerDevice network error', e);

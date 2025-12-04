@@ -11,7 +11,7 @@ const TimeSection = ({
   styles,
 }) => (
   <>
-    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Start Time</Title>
+    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Start Time *</Title>
     <TimeSelect
       value={value}
       onChange={onChange}
