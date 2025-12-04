@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Platform,
   StatusBar,
+  Easing,
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -30,6 +31,7 @@ import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
+import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -53,6 +55,8 @@ const formatGroupTime = (timeStr) => {
   temp.setHours(hours, minutes, 0, 0);
   return temp.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 };
+
+const FEATURE_TABS = ['Activities', 'Events', 'Assembly'];
 
 const Home = ({ navigation, homeOverview, route }) => {
   console.log(homeOverview);
@@ -100,6 +104,14 @@ const Home = ({ navigation, homeOverview, route }) => {
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
+  const tabIndicatorX = useRef(new Animated.Value(0)).current;
+  const tabIndicatorWidth = useRef(new Animated.Value(0)).current;
+  const activeTabPosition = useRef(new Animated.Value(FEATURE_TABS.indexOf(activeTab))).current;
+  const [tabLayouts, setTabLayouts] = useState({});
+  const tabLayoutReady = useMemo(
+    () => Object.keys(tabLayouts).length === FEATURE_TABS.length,
+    [tabLayouts],
+  );
   const glassOpacity = useMemo(
     () =>
       scrollY.interpolate({
@@ -141,6 +153,7 @@ const Home = ({ navigation, homeOverview, route }) => {
   // handle tab switch: slide old panel left, then slide in new panel
   const handleTabPress = (tab) => {
     if (tab === activeTab) return;
+    animateTabIndicator(tab);
     Animated.timing(slideAnim, {
       toValue: -SCREEN_WIDTH,
       duration: 300,
@@ -155,6 +168,40 @@ const Home = ({ navigation, homeOverview, route }) => {
       }).start();
     });
   };
+
+  const animateTabIndicator = useCallback(
+    (targetTab) => {
+      const targetIndex = FEATURE_TABS.indexOf(targetTab);
+      const layout = tabLayouts[targetIndex];
+      if (!layout) return;
+      const isLast = targetIndex === FEATURE_TABS.length - 1;
+      const targetX = layout.x + (isLast ? 4 : 0);
+      const targetWidth = Math.max(10, layout.width - (isLast ? 8 : 0));
+      Animated.timing(activeTabPosition, {
+        toValue: targetIndex,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+      Animated.timing(tabIndicatorX, {
+        toValue: targetX,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+      Animated.timing(tabIndicatorWidth, {
+        toValue: targetWidth,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+    },
+    [activeTabPosition, tabIndicatorWidth, tabIndicatorX, tabLayouts],
+  );
+
+  useEffect(() => {
+    animateTabIndicator(activeTab);
+  }, [activeTab, animateTabIndicator]);
 
 
   // Removed refresh-on-focus to avoid redundant session refreshes; centralized elsewhere
@@ -182,6 +229,11 @@ const Home = ({ navigation, homeOverview, route }) => {
     );
   }
 
+  const iosVersion = Platform.OS === 'ios'
+    ? (typeof Platform.Version === 'string' ? parseFloat(Platform.Version) : Platform.Version)
+    : 0;
+  const useIconGlassButtons = Platform.OS === 'ios' && Number.isFinite(iosVersion) && iosVersion >= 26;
+
   return (
     <View style={{ flex: 1 }}>
       {bannerMessage && (
@@ -195,25 +247,47 @@ const Home = ({ navigation, homeOverview, route }) => {
         pointerEvents="box-none"
         style={[styles.floatingActions, { top: statusBarHeight + 12 }]}
       >
-        <LiquidGlassButton
-          onPress={() => navigation.navigate('Search')}
-          intensity={28}
-          style={styles.topActionButton}
-          containerStyle={styles.topGlassContainer}
-          accessibilityLabel="Search"
-        >
-          <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
-        </LiquidGlassButton>
-        <View style={styles.notificationWrapper}>
+        {useIconGlassButtons ? (
+          <LiquidGlassIconButton
+            iconName="search-outline"
+            iconColor={themeVariables.blackColor}
+            accessibilityLabel="Search"
+            onPress={() => navigation.navigate('Search')}
+            hasShadow={false}
+            glassStyle={styles.topIconGlass}
+          />
+        ) : (
           <LiquidGlassButton
-            onPress={() => navigation.navigate('Notifications')}
+            onPress={() => navigation.navigate('Search')}
             intensity={28}
             style={styles.topActionButton}
             containerStyle={styles.topGlassContainer}
-            accessibilityLabel="Notifications"
+            accessibilityLabel="Search"
           >
-            <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+            <Ionicons name="search-outline" size={18} color={themeVariables.blackColor} />
           </LiquidGlassButton>
+        )}
+        <View style={styles.notificationWrapper}>
+          {useIconGlassButtons ? (
+            <LiquidGlassIconButton
+              iconName="notifications-outline"
+              iconColor={themeVariables.blackColor}
+              accessibilityLabel="Notifications"
+              onPress={() => navigation.navigate('Notifications')}
+              hasShadow={false}
+              glassStyle={styles.topIconGlass}
+            />
+          ) : (
+            <LiquidGlassButton
+              onPress={() => navigation.navigate('Notifications')}
+              intensity={28}
+              style={styles.topActionButton}
+              containerStyle={styles.topGlassContainer}
+              accessibilityLabel="Notifications"
+            >
+              <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+            </LiquidGlassButton>
+          )}
           {unreadCount > 0 && (
             <View style={styles.notificationBadge} pointerEvents="none">
               <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
@@ -249,58 +323,94 @@ const Home = ({ navigation, homeOverview, route }) => {
           )}
         >
         {/* Banner Section */}
-        <ImageBanner
-          topInset={statusBarHeight}
-          height={bannerHeight}
-          overlayColor="rgba(0,0,0,0.15)"
-          containerStyle={styles.bannerContainer}
-          renderContent={({ totalHeight }) => (
-            <Animated.View style={{ height: totalHeight }}>
-              <Carousel
-                data={bannerData}
-                itemWidth={SCREEN_WIDTH}
-                separatorWidth={0}
-                itemHeight={totalHeight}
-              />
-            </Animated.View>
-          )}
-        >
-          <View
-            style={[
-              styles.bannerContent,
-              { top: statusBarHeight + BANNER_CONTENT_OFFSET },
-            ]}
-            pointerEvents="box-none"
+        <View style={styles.bannerShadow}>
+          <ImageBanner
+            topInset={statusBarHeight}
+            height={bannerHeight}
+            overlayColor="rgba(0,0,0,0.15)"
+            containerStyle={styles.bannerContainer}
+            renderContent={({ totalHeight }) => (
+              <Animated.View style={{ height: totalHeight }}>
+                <Carousel
+                  data={bannerData}
+                  itemWidth={SCREEN_WIDTH}
+                  separatorWidth={0}
+                  itemHeight={totalHeight}
+                />
+              </Animated.View>
+            )}
           >
-            {/* Community info at banner bottom-left */}
-            <View style={styles.bannerBottomLeft}>
-              <Text style={styles.communityBannerName}>{user?.community?.name}</Text>
+            <View
+              style={[
+                styles.bannerContent,
+                { top: statusBarHeight + BANNER_CONTENT_OFFSET },
+              ]}
+              pointerEvents="box-none"
+            >
+              {/* Community info at banner bottom-left */}
+              <View style={styles.bannerBottomLeft}>
+                <Text style={styles.communityBannerName}>{user?.community?.name}</Text>
+              </View>
+              {/* Date */}
+              {(() => {
+                const nowDate = new Date();
+                const gregorianDate = nowDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                const badi = getBadiDate(nowDate);
+                return (
+                  <Text style={styles.bahaiDate}>
+                    {gregorianDate} {'\u2022'} {badi.formatted}
+                  </Text>
+                );
+              })()}
             </View>
-            {/* Date */}
-            {(() => {
-              const nowDate = new Date();
-              const gregorianDate = nowDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-              const badi = getBadiDate(nowDate);
-              return (
-                <Text style={styles.bahaiDate}>
-                  {gregorianDate} {'\u2022'} {badi.formatted}
-                </Text>
-              );
-            })()}
-          </View>
-        </ImageBanner>
+          </ImageBanner>
+        </View>
 
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
-          {['Activities','Events', 'Assembly'].map(tab => (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.featureTabIndicator,
+              {
+                transform: [{ translateX: tabIndicatorX }],
+                width: tabIndicatorWidth,
+                opacity: tabLayoutReady ? 1 : 0,
+              },
+            ]}
+          />
+          {FEATURE_TABS.map((tab, index) => (
             <TouchableOpacity
               key={tab}
-              style={[styles.tabButton, activeTab === tab && styles.tabButtonActive]}
+              style={styles.tabButton}
               onPress={() => handleTabPress(tab)}
+              onLayout={({ nativeEvent }) => {
+                const { x, width } = nativeEvent.layout;
+                setTabLayouts((prev) => {
+                  if (prev[index]?.x === x && prev[index]?.width === width) return prev;
+                  return { ...prev, [index]: { x, width } };
+                });
+                if (!tabLayoutReady && Object.keys(tabLayouts).length === 0) {
+                  tabIndicatorX.setValue(x);
+                  tabIndicatorWidth.setValue(width);
+                }
+              }}
             >
-              <Text style={[styles.tabButtonText, activeTab === tab && styles.tabButtonTextActive]}>
+              <Animated.Text
+                style={[
+                  styles.tabButtonText,
+                  activeTab === tab && styles.tabButtonTextActive,
+                  {
+                    color: activeTabPosition.interpolate({
+                      inputRange: [index - 1, index, index + 1],
+                      outputRange: ['rgba(0,0,0,0.65)', themeVariables.whiteColor, 'rgba(0,0,0,0.65)'],
+                      extrapolate: 'clamp',
+                    }),
+                  },
+                ]}
+              >
                 {tab}
-              </Text>
+              </Animated.Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -685,6 +795,15 @@ const styles = StyleSheet.create({
     minWidth: 38,
     borderRadius: 19,
   },
+  topIconGlass: {
+    backgroundColor: 'rgba(240,240,240,0.8)',
+    borderColor: 'rgba(200,200,200,0.9)',
+    borderWidth: 1,
+    shadowColor: 'rgba(255,255,255,0.5)',
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
   notificationWrapper: {
     position: 'relative',
     alignItems: 'center',
@@ -721,9 +840,26 @@ const styles = StyleSheet.create({
   scrollView: {
     flexGrow: 1,
   },
+  bannerShadow: {
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 14,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    backgroundColor: themeVariables.whiteColor,
+  },
   bannerContainer: {
     position: 'relative',
-    marginBottom: 20,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    overflow: 'hidden',
   },
   bannerContent: {
     ...StyleSheet.absoluteFillObject,
@@ -966,31 +1102,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginHorizontal: 20,
-    padding: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 2,
     backgroundColor: themeVariables.whiteColor,
     borderColor: themeVariables.blackColor,
     borderWidth: 1,
     borderRadius: 25,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 14,
   },
   tabButton: {
     flex: 1,
+    flexBasis: 0,
+    minWidth: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    marginHorizontal: -1,
-    borderRadius: 20,
-  },
-  tabButtonActive: {
-    backgroundColor: themeVariables.primaryColor,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
   },
   tabButtonText: {
     fontSize: 14,
     color: themeVariables.blackColor,
     textAlign: 'center',
-    width: Platform.select({ android: 65 }),
+    fontWeight: '500',
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   tabButtonTextActive: {
-    color: themeVariables.whiteColor,
+    fontWeight: '700',
+  },
+  featureTabIndicator: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    left: 2,
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: 18,
   },
   // Create Activity row under tabs
   createRow: {
@@ -1013,8 +1164,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: themeVariables.blackColor,
     borderRadius: 8,
-    overflow: 'hidden',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 12,
   },
   createRowContent: {
     flexDirection: 'row',

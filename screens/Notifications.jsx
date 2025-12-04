@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
+import React, { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform, Alert, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
@@ -113,11 +113,18 @@ export default function Notifications() {
     user,
     refreshSession,
   } = useContext(UserContext);
+  const tabIndicatorX = useRef(new Animated.Value(0)).current;
+  const tabIndicatorWidth = useRef(new Animated.Value(0)).current;
+  const [tabLayouts, setTabLayouts] = useState({});
   const [groupedNotifList, setGroupedNotifList] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [activeTab, setActiveTab] = useState('community');
+  const tabLayoutReady = useMemo(
+    () => Object.keys(tabLayouts).length === 2,
+    [tabLayouts],
+  );
   const [flatNotifications, setFlatNotifications] = useState([]);
   const [prefetchedPosts, setPrefetchedPosts] = useState({});
   const [prefetchedEvents, setPrefetchedEvents] = useState({});
@@ -600,42 +607,93 @@ export default function Notifications() {
     return `${days}d ago`;
   };
 
+  useEffect(() => {
+    const targetKey = activeTab;
+    const layout = tabLayouts[targetKey];
+    if (!layout) return;
+    const isLast = targetKey === 'community';
+    const inset = isLast ? 4 : 0;
+    const targetX = layout.x + inset;
+    const targetWidth = Math.max(10, layout.width - inset * 2);
+    Animated.timing(tabIndicatorX, {
+      toValue: targetX,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+    Animated.timing(tabIndicatorWidth, {
+      toValue: targetWidth,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [activeTab, tabLayouts, tabIndicatorWidth, tabIndicatorX]);
+
   // Always render header and toggles, show spinner inline while loading
 
   return (
     <View style={styles.container}>
       <View style={styles.toggleContainer}>
-        <Pressable
+        <Animated.View
+          pointerEvents="none"
           style={[
-            styles.toggleButton,
-            activeTab === 'personal' && styles.activeTab,
+            styles.toggleIndicator,
+            {
+              transform: [{ translateX: tabIndicatorX }],
+              width: tabIndicatorWidth,
+              opacity: tabLayoutReady ? 1 : 0,
+            },
           ]}
+        />
+        <Pressable
+          style={styles.toggleButton}
           onPress={() => setActiveTab('personal')}
+          onLayout={({ nativeEvent }) => {
+            const { x, width } = nativeEvent.layout;
+            setTabLayouts((prev) => {
+              if (prev.personal?.x === x && prev.personal?.width === width) return prev;
+              return { ...prev, personal: { x, width } };
+            });
+            if (!tabLayoutReady && Object.keys(tabLayouts).length === 0) {
+              tabIndicatorX.setValue(x);
+              tabIndicatorWidth.setValue(width);
+            }
+          }}
         >
-          <Text
-            style={{
-              ...styles.toggleText,
-              color: activeTab === 'personal' ? themeVariables.whiteColor : themeVariables.blackColor,
-            }}
+          <Animated.Text
+            style={[
+              styles.toggleText,
+              {
+                color: activeTab === 'personal' ? themeVariables.whiteColor : themeVariables.blackColor,
+              },
+            ]}
           >
             Personal
-          </Text>
+          </Animated.Text>
         </Pressable>
         <Pressable
-          style={[
-            styles.toggleButton,
-            activeTab === 'community' && styles.activeTab,
-          ]}
+          style={styles.toggleButton}
           onPress={() => setActiveTab('community')}
+          onLayout={({ nativeEvent }) => {
+            const { x, width } = nativeEvent.layout;
+            setTabLayouts((prev) => {
+              if (prev.community?.x === x && prev.community?.width === width) return prev;
+              return { ...prev, community: { x, width } };
+            });
+            if (!tabLayoutReady && Object.keys(tabLayouts).length === 0) {
+              tabIndicatorX.setValue(x);
+              tabIndicatorWidth.setValue(width);
+            }
+          }}
         >
-          <Text
-            style={{
-              ...styles.toggleText,
-              color: activeTab === 'community' ? themeVariables.whiteColor : themeVariables.blackColor,
-            }}
+          <Animated.Text
+            style={[
+              styles.toggleText,
+              {
+                color: activeTab === 'community' ? themeVariables.whiteColor : themeVariables.blackColor,
+              },
+            ]}
           >
             Community
-          </Text>
+          </Animated.Text>
         </Pressable>
       </View>
       {/* Loading indicator while fetching notifications */}
@@ -759,22 +817,42 @@ const styles = StyleSheet.create({
   toggleContainer: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    marginBottom: 16,
-    backgroundColor: '#dcdcdc',
-    borderRadius: 20,
-    padding: 4,
+    marginBottom: 8,
+    backgroundColor: themeVariables.whiteColor,
+    borderColor: themeVariables.blackColor,
+    borderWidth: 1,
+    borderRadius: 25,
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+    marginHorizontal: 16,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 12,
   },
   toggleButton: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 2,
     borderRadius: 20,
   },
   toggleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    width: Platform.select({ android: 95 }),
     textAlign: 'center',
+    color: themeVariables.blackColor,
+  },
+  toggleIndicator: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    left: 2,
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: 18,
   },
   activeTab: {
     backgroundColor: '#312783', // active tab highlight

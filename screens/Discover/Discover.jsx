@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 import { UserContext } from '../../contexts/UserContext';
 import themeVariables from '../../styles/theme';
@@ -9,6 +10,7 @@ import { navigateToEventDetail } from '../../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../../utils/navigateToActivityDetail';
 import resolveImageSource from '../../utils/imageSource';
 import LiquidGlassButton from '../DetailCard/common/LiquidGlassButton';
+import LiquidGlassIconButton from '../../components/LiquidGlassIconButton';
 import DiscoverCard from './DiscoverCard';
 import useDiscoverData from './hooks/useDiscoverData';
 
@@ -104,24 +106,41 @@ const Discover = ({ navigation }) => {
     );
   }
 
+  const iosVersion = Platform.OS === 'ios'
+    ? (typeof Platform.Version === 'string' ? parseFloat(Platform.Version) : Platform.Version)
+    : 0;
+  const useIconGlassButtons = Platform.OS === 'ios' && Number.isFinite(iosVersion) && iosVersion >= 26;
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitle}>Discover</Text>
         <View style={styles.filterWrapper}>
-          <LiquidGlassButton
-            onPress={() => setIsFilterOpen((prev) => !prev)}
-            intensity={24}
-            accessibilityLabel="Filter discover content by timeframe"
-          >
-            <View style={styles.filterButtonContent}>
-              <View style={styles.filterGlyph}>
-                <View style={[styles.filterGlyphLine, styles.filterGlyphLineTop]} />
-                <View style={[styles.filterGlyphLine, styles.filterGlyphLineMiddle]} />
-                <View style={[styles.filterGlyphLine, styles.filterGlyphLineBottom]} />
+          {useIconGlassButtons ? (
+            <LiquidGlassIconButton
+              iconName="filter-outline"
+              iconColor={themeVariables.blackColor}
+              accessibilityLabel="Filter discover content by timeframe"
+              onPress={() => setIsFilterOpen((prev) => !prev)}
+              hasShadow={false}
+              forceFallback
+              glassStyle={styles.filterIconGlass}
+            />
+          ) : (
+            <LiquidGlassButton
+              onPress={() => setIsFilterOpen((prev) => !prev)}
+              intensity={24}
+              accessibilityLabel="Filter discover content by timeframe"
+            >
+              <View style={styles.filterButtonContent}>
+                <View style={styles.filterGlyph}>
+                  <View style={[styles.filterGlyphLine, styles.filterGlyphLineTop]} />
+                  <View style={[styles.filterGlyphLine, styles.filterGlyphLineMiddle]} />
+                  <View style={[styles.filterGlyphLine, styles.filterGlyphLineBottom]} />
+                </View>
               </View>
-            </View>
-          </LiquidGlassButton>
+            </LiquidGlassButton>
+          )}
           {isFilterOpen ? (
             <View style={styles.filterMenu}>
               {Object.keys(TIMEFRAME_WINDOWS).map((key) => {
@@ -387,6 +406,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  filterIconGlass: {
+    backgroundColor: 'rgba(240,240,240,0.8)',
+    borderColor: 'rgba(200,200,200,0.9)',
+    borderWidth: 1,
+  },
+  // TODO: legacy styles for the old filter glyph button; keep for non-iOS26 fallback
   filterGlyph: {
     width: 16,
     height: 16,

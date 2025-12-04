@@ -1,7 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
@@ -14,6 +12,7 @@ import EventDetailCard from '../screens/EventDetailCard';
 import ActivityDetailCard from '../screens/ActivityDetailCard';
 import PostDetailCard from '../screens/PostDetailCard';
 import Badges from '../screens/Badges';
+import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 // import ChangePasswordScreen from '../screens/ChangePassword';
 
 const Stack = createStackNavigator();
@@ -35,6 +34,7 @@ const ProfileStackNavigator = () => {
         headerStyle: { backgroundColor: themeVariables.whiteColor },
         headerTintColor: themeVariables.primaryColor,
         headerTitleStyle: { fontWeight: 'bold' },
+        headerBackVisible: false,
         headerBackTitleVisible: false,
         headerBackTitle: '',
         headerLeftContainerStyle: { paddingLeft: 16 },
@@ -44,26 +44,13 @@ const ProfileStackNavigator = () => {
         // Custom back arrow button invokes navigation.goBack()
         headerLeft: () =>
           navigation.canGoBack() ? (
-            <TouchableOpacity
+            <LiquidGlassIconButton
+              iconName="chevron-back"
+              iconColor={themeVariables.blackColor}
               onPress={() => navigation.goBack()}
-              style={{
-                backgroundColor: themeVariables.greyColor,
-                borderRadius: themeVariables.borderRadiusPill,
-                padding: 6,
-                // subtle shadow for raised effect
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-              }}
-            >
-              <Ionicons
-                name="chevron-back"
-                color={themeVariables.blackColor}
-                size={20}
-              />
-            </TouchableOpacity>
+              accessibilityLabel="Go back"
+              hasShadow={false}
+            />
           ) : null,
       })}>
       <Stack.Screen name="ProfileScreen" component={ProfileScreen} options={{ headerShown: false }} />

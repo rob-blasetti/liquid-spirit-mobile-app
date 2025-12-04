@@ -730,7 +730,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     paddingHorizontal: 0,
-    marginBottom: 80,
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   autocompleteContainer: {
@@ -807,7 +806,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   resultsContent: {
-    paddingBottom: 32,
+    paddingBottom: 0,
   },
   resultsList: {
     paddingHorizontal: 0,

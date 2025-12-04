@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: themeVariables.whiteColor,
     borderBottomWidth: 1,
-    borderBottomColor: themeVariables.whiteColor,
+    borderBottomColor: 'rgba(0,0,0,0.12)',
   },
   tabItem: {
     flex: 1,

@@ -23,7 +23,7 @@ const getLastMessagePreview = (chat) => {
     (Array.isArray(chat?.messages) ? chat.messages[chat.messages.length - 1] : null) ||
     chat?.preview;
 
-  if (!message) return 'Tap to view conversation';
+  if (!message) return '';
 
   if (typeof message === 'string') {
     return message;
@@ -251,6 +251,32 @@ const buildChatAvatarSource = (chat) => {
   return { uri: `${API_URL}${normalized}` };
 };
 
+const formatRelativeTime = (input) => {
+  if (!input) return '';
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return '';
+  const now = new Date();
+  const diffMs = now - date;
+  const oneMinute = 60 * 1000;
+  const oneHour = 60 * oneMinute;
+  const oneDay = 24 * oneHour;
+  const oneWeek = 7 * oneDay;
+
+  if (diffMs < oneDay && now.getDate() === date.getDate()) {
+    return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  }
+  if (diffMs < oneWeek) {
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return weekdays[date.getDay()];
+  }
+  if (diffMs < 4 * oneWeek) {
+    const weeks = Math.floor(diffMs / oneWeek);
+    return weeks <= 1 ? '1w' : `${weeks}w`;
+  }
+  const months = Math.max(1, Math.floor(diffMs / (30 * oneDay)));
+  return months <= 1 ? '1m' : `${months}m`;
+};
+
 const ChatRow = ({ chat, onPress }) => {
   const title =
     chat?.title ||
@@ -258,9 +284,11 @@ const ChatRow = ({ chat, onPress }) => {
     chat?.chatName ||
     chat?.roomName ||
     'Conversation';
-  const preview = getLastMessagePreview(chat);
+  const preview = (getLastMessagePreview(chat) || '').trim();
   const participants = buildParticipantsList(chat);
   const avatarSource = buildChatAvatarSource(chat);
+  const lastDate = chat?.lastMessage?.createdAt || chat?.last_message?.createdAt || chat?.updatedAt || chat?.updated_at || chat?.createdAt;
+  const lastDateLabel = formatRelativeTime(lastDate);
 
   return (
     <TouchableOpacity style={styles.chatRow} activeOpacity={0.85} onPress={onPress}>
@@ -280,17 +308,26 @@ const ChatRow = ({ chat, onPress }) => {
         )}
       </View>
       <View style={styles.chatContent}>
-        <Text style={styles.chatTitle} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.chatHeaderRow}>
+          <Text style={styles.chatTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          {Boolean(lastDateLabel) && (
+            <Text style={styles.chatTime} numberOfLines={1}>
+              {lastDateLabel}
+            </Text>
+          )}
+        </View>
         {participants.length > 0 && (
           <Text style={styles.chatParticipants} numberOfLines={1}>
             {participants.join(', ')}
           </Text>
         )}
-        <Text style={styles.chatPreview} numberOfLines={2}>
-          {preview}
-        </Text>
+        {preview.length > 0 && (
+          <Text style={styles.chatPreview} numberOfLines={2}>
+            {preview}
+          </Text>
+        )}
         <View style={styles.chatDivider} />
       </View>
     </TouchableOpacity>
@@ -439,7 +476,7 @@ export default ChatScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor,
     paddingBottom: 0,
     marginBottom: -40,
   },
@@ -483,7 +520,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 0,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor,
     flexGrow: 1,
   },
   emptyListContainer: {
@@ -491,17 +528,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: 'transparent',
+    backgroundColor: themeVariables.whiteColor,
   },
   chatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: 20,
   },
   chatAvatarWrapper: {
     width: 52,
-    marginRight: 16,
+    marginRight: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   chatAvatar: {
     width: 48,
@@ -522,26 +560,37 @@ const styles = StyleSheet.create({
   },
   chatContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   chatTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: themeVariables.blackColor,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   chatParticipants: {
     fontSize: 13,
     color: '#555',
-    marginBottom: 4,
+    marginBottom: 2,
+  },
+  chatHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  chatTime: {
+    marginLeft: 'auto',
+    fontSize: 12,
+    color: '#555',
   },
   chatPreview: {
     fontSize: 13,
     color: '#555',
+    marginTop: 2,
   },
   chatDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: themeVariables.borderColor,
-    marginTop: 12,
+    height: StyleSheet.hairlineWidth * 2,
+    backgroundColor: '#c0c0c0',
+    marginTop: 16,
   },
   emptyListContainer: {
     flexGrow: 1,

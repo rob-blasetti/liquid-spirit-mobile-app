@@ -2,9 +2,8 @@ import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { navigationRef, flushPendingNavigation } from './RootNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { TouchableOpacity } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
+import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 
 const linking = {
   prefixes: ['liquidspirit://', 'https://www.liquidspirit.org', 'https://liquidspirit.org'],
@@ -72,25 +71,19 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
           headerStyle: { backgroundColor: themeVariables.whiteColor },
           headerTintColor: themeVariables.primaryColor,
           headerTitleStyle: { fontWeight: 'bold', color: themeVariables.blackColor },
+          headerBackVisible: false,
           headerBackTitleVisible: false,
           headerBackTitle: '',
           headerLeftContainerStyle: { paddingLeft: 16 },
           headerLeft: () =>
             navigation.canGoBack() ? (
-              <TouchableOpacity
+              <LiquidGlassIconButton
                 onPress={() => navigation.goBack()}
-                style={{
-                  backgroundColor: themeVariables.greyColor,
-                  borderRadius: themeVariables.borderRadiusPill,
-                  padding: 6,
-                }}
-              >
-                <Ionicons
-                  name="chevron-back"
-                  color={themeVariables.blackColor}
-                  size={20}
-                />
-              </TouchableOpacity>
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+              />
             ) : null,
         })}
       >
@@ -101,7 +94,24 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ title: 'Forgot Password' }} />
       <Stack.Screen name="ForgotBahaiId" component={ForgotBahaiId} options={{ title: "Forgot Bahá'í ID" }} />
       <Stack.Screen name="EULA" component={Eula} />
-      <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={({ navigation }) => ({
+          title: 'Search',
+          headerLeft: () => (
+            <LiquidGlassIconButton
+              iconName="chevron-back"
+              iconColor={themeVariables.blackColor}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Go back"
+              hasShadow={false}
+              forceFallback
+            />
+          ),
+          headerBackVisible: false,
+        })}
+      />
       <Stack.Screen
         name="CreateActivity"
         component={CreateActivity}
@@ -117,13 +127,24 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen
         name="Notifications"
         component={NotificationScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Notifications',
           headerStyle: { backgroundColor: themeVariables.screenBackgroundColor, elevation: 0 },
-          headerShadowVisible: false,
+          headerShadowVisible: true,
           headerTintColor: themeVariables.blackColor,
           headerLeftContainerStyle: { paddingLeft: 16 },
-        }}
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
+        })}
       />
       <Stack.Screen
         name="CreatePostModal"

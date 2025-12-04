@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, StyleSheet, Easing } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
+
+const ACTIVE_TAB_BACKGROUND = themeVariables.greyColor;
+const NAV_TINT_COLOR = 'rgba(18,18,18,0.2)';
 
 const getLiquidGlassModule = () => {
   try {
@@ -22,9 +25,9 @@ const getLiquidGlassModule = () => {
 const { LiquidGlassView, isLiquidGlassSupported } = getLiquidGlassModule();
 
 const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chatBadgeCount = 0 }) => {
-  const [tabLayouts, setTabLayouts] = useState({});
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
+  const [tabLayouts, setTabLayouts] = useState({});
 
   const layoutReady = useMemo(
     () => Object.keys(tabLayouts).length === state.routes.length && state.routes.length > 0,
@@ -32,22 +35,29 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
   );
 
   useEffect(() => {
-    if (!layoutReady) return;
-    const layout = tabLayouts[state.index];
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[BottomNav] focused index ->', state.index, state.routes[state.index]?.name);
+    }
+  }, [state.index]);
+
+  useEffect(() => {
+    const targetIndex = state.index;
+    const layout = tabLayouts[targetIndex];
     if (!layout) return;
-    Animated.spring(indicatorX, {
+    Animated.timing(indicatorX, {
       toValue: layout.x,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-      bounciness: 12,
-      speed: 10,
     }).start();
-    Animated.spring(indicatorWidth, {
+    Animated.timing(indicatorWidth, {
       toValue: layout.width,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-      bounciness: 12,
-      speed: 10,
     }).start();
-  }, [indicatorWidth, indicatorX, layoutReady, state.index, tabLayouts]);
+  }, [state.index, tabLayouts, layoutReady]);
 
   const labelForRoute = (route, options) => {
     if (options?.tabBarLabel !== undefined) {
@@ -72,27 +82,39 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
       <LiquidGlassView
         interactive
         effect="regular"
-        tintColor="rgba(255,255,255,0.28)"
+        tintColor={NAV_TINT_COLOR}
         style={[styles.bar, !isLiquidGlassSupported && styles.barFallback]}
       >
         <Animated.View
           pointerEvents="none"
           style={[
             styles.indicator,
-            { transform: [{ translateX: indicatorX }], width: indicatorWidth },
+            {
+              transform: [{ translateX: indicatorX }],
+              width: indicatorWidth,
+              opacity: layoutReady ? 1 : 0,
+            },
           ]}
         />
         {state.routes.map((route, index) => {
           const focused = state.index === index;
+          const isActive = focused;
           const { options } = descriptors[route.key] || {};
           const baseIcon = options?.tabBarIconName || options?.tabBarIcon || 'ellipse-outline';
           const iconName =
             typeof baseIcon === 'string'
-              ? focused
+              ? isActive
                 ? baseIcon.replace(/-outline$/, '')
                 : baseIcon
               : undefined;
           const label = labelForRoute(route, options);
+          if (__DEV__) {
+            // eslint-disable-next-line no-console
+            console.log('[BottomNav] render tab', route.name, {
+              focused,
+              isActive,
+            });
+          }
 
           const onPress = () => {
             const event = navigation.emit({
@@ -100,8 +122,15 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
               target: route.key,
               canPreventDefault: true,
             });
-            if (!focused && !event.defaultPrevented) {
+            if (event.defaultPrevented) {
+              return;
+            }
+            if (!focused) {
               navigation.navigate(route.name);
+              if (__DEV__) {
+                // eslint-disable-next-line no-console
+                console.log('[BottomNav] navigate to', route.name);
+              }
             }
           };
           const onLongPress = () => {
@@ -109,6 +138,10 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
               type: 'tabLongPress',
               target: route.key,
             });
+            if (__DEV__) {
+              // eslint-disable-next-line no-console
+              console.log('[BottomNav] longPress', route.name);
+            }
           };
 
               return (
@@ -120,36 +153,33 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
                   testID={options?.tabBarTestID}
                   onPress={onPress}
                   onLongPress={onLongPress}
-                  activeOpacity={0.9}
+                  activeOpacity={1}
                   style={styles.tabButton}
                   onLayout={({ nativeEvent }) => {
                     const { x, width } = nativeEvent.layout;
-                    setTabLayouts((prev) => ({ ...prev, [route.key]: { x, width } }));
+                    setTabLayouts((prev) => {
+                      if (prev[index]?.x === x && prev[index]?.width === width) return prev;
+                      return { ...prev, [index]: { x, width } };
+                    });
                     if (Object.keys(tabLayouts).length === 0) {
                       indicatorX.setValue(x);
-                  indicatorWidth.setValue(width);
-                }
-              }}
+                      indicatorWidth.setValue(width);
+                    }
+                  }}
             >
-              <View
-                style={[
-                  styles.tabPill,
-                  focused && styles.tabPillActive,
-                  focused && !isLiquidGlassSupported && styles.tabPillFallback,
-                ]}
-              >
+              <View style={[styles.tabPill, isActive && !isLiquidGlassSupported && styles.tabPillFallback]}>
                 <View style={styles.tabIcon}>
                   {typeof baseIcon === 'string' ? (
                     <Ionicons
                       name={iconName}
                       size={18}
-                      color={focused ? themeVariables.primaryColor : themeVariables.blackColor}
+                      color={isActive ? themeVariables.primaryColor : themeVariables.blackColor}
                     />
                   ) : (
-                    baseIcon?.({ focused, color: focused ? themeVariables.primaryColor : themeVariables.blackColor, size: 18 })
+                    baseIcon?.({ focused: isActive, color: isActive ? themeVariables.primaryColor : themeVariables.blackColor, size: 18 })
                   )}
                 </View>
-                <Text style={[styles.tabLabel, focused && styles.tabLabelActive]} numberOfLines={1}>
+                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]} numberOfLines={1}>
                   {label}
                 </Text>
                 {route.name === 'Chat' && chatBadgeCount > 0 && (
@@ -181,13 +211,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     position: 'relative',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 6,
     borderRadius: 999,
     columnGap: 2,
     overflow: 'hidden',
     width: '100%',
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0,0,0,0.06)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -195,17 +224,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   barFallback: {
-    backgroundColor: 'rgba(255,255,255,0.24)',
+    backgroundColor: 'rgba(18,18,18,0.12)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.22)',
-  },
-  indicator: {
-    position: 'absolute',
-    top: 4,
-    bottom: 4,
-    left: 0,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.24)',
+    borderColor: 'rgba(0,0,0,0.08)',
   },
   tabButton: {
     flex: 1,
@@ -224,16 +245,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderRadius: 18,
   },
-  tabPillActive: {
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.24)',
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
   tabPillFallback: {
     backgroundColor: 'transparent',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.18)',
+  },
+  indicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 0,
+    backgroundColor: ACTIVE_TAB_BACKGROUND,
+    borderRadius: 999,
   },
   tabIcon: {
     alignItems: 'center',

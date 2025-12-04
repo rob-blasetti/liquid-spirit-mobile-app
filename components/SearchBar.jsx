@@ -22,6 +22,7 @@ const SearchBar = forwardRef(
       inputContainerStyle,
       inputStyle,
       testID,
+      placeholderTextColor = '#7a7a7a',
     },
     ref,
   ) => {
@@ -46,6 +47,7 @@ const SearchBar = forwardRef(
             returnKeyType={returnKeyType}
             autoCapitalize={autoCapitalize}
             autoCorrect={autoCorrect}
+            placeholderTextColor={placeholderTextColor}
             testID={testID}
           />
           {showSpinner ? (
@@ -98,6 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
     paddingRight: 40,
     width: '100%',
+    color: '#4a4a4a',
   },
   searchSpinner: {
     position: 'absolute',

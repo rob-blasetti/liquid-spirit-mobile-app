@@ -29,7 +29,7 @@ const tabIcons = {
   Profile: 'person-outline',
 };
 const TAB_BAR_HEIGHT = 80;
-const FAB_VERTICAL_OFFSET = 90;
+const FAB_VERTICAL_OFFSET = 70;
 const FAB_HORIZONTAL_OFFSET = 30;
 
 const resolveLiquidGlassSupport = () => {
@@ -168,7 +168,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     const baseBottom = insets.bottom + FAB_VERTICAL_OFFSET;
     const baseRight = FAB_HORIZONTAL_OFFSET;
     if (isLiquidGlassNavSupported) {
-      return { fabBottom: baseBottom, fabRight: baseRight };
+      return { fabBottom: baseBottom - 10, fabRight: baseRight };
     }
     return {
       fabBottom: Math.max(insets.bottom + 50, baseBottom - 32),
