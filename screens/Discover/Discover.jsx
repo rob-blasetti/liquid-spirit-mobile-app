@@ -168,17 +168,19 @@ const Discover = ({ navigation }) => {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{activitiesTitle}</Text>
-          <TouchableOpacity
-            onPress={() => setShowActivitiesGrid((prev) => !prev)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.iconButton}
-          >
-            <Ionicons
-              name={showActivitiesGrid ? 'remove-outline' : 'add-outline'}
-              size={22}
-              color={themeVariables.primaryColor}
-            />
-          </TouchableOpacity>
+          {filteredActivityPreview.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => setShowActivitiesGrid((prev) => !prev)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.iconButton}
+            >
+              <Ionicons
+                name={showActivitiesGrid ? 'remove-outline' : 'add-outline'}
+                size={22}
+                color={themeVariables.primaryColor}
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
         {filteredActivityPreview.length === 0 ? (
           <Text style={styles.emptyText}>
@@ -212,51 +214,56 @@ const Discover = ({ navigation }) => {
             })}
           </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carousel}
-          >
-            {filteredActivityPreview.map(({ activity, nextDate, addressLabel }) => {
-              const dayLabel = nextDate.toLocaleDateString('en-US', { weekday: 'short' });
-              const dateLabel = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              const timeLabel =
-                formatGroupTime(activity?.groupDetails?.time) ||
-                nextDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-              const imageSource = resolveImageSource(
-                activity.imageUrl || 'https://via.placeholder.com/300',
-                { priority: 'high' },
-              );
-              const typeLabel = activity.activityType?.name;
-              return (
-                <DiscoverCard
-                  key={activity._id}
-                  title={activity.title}
-                  imageSource={imageSource}
-                  typeLabel={typeLabel}
-                  locationLabel={addressLabel}
-                  timeLabel={`${timeLabel} · ${dayLabel} · ${dateLabel}`}
-                  onPress={() => handleActivityPress(activity)}
-                  style={styles.cardCarousel}
-                />
-              );
-            })}
-          </ScrollView>
+          <View style={styles.carouselWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carousel}
+              style={styles.carouselScroll}
+            >
+              {filteredActivityPreview.map(({ activity, nextDate, addressLabel }) => {
+                const dayLabel = nextDate.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateLabel = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeLabel =
+                  formatGroupTime(activity?.groupDetails?.time) ||
+                  nextDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                const imageSource = resolveImageSource(
+                  activity.imageUrl || 'https://via.placeholder.com/300',
+                  { priority: 'high' },
+                );
+                const typeLabel = activity.activityType?.name;
+                return (
+                  <DiscoverCard
+                    key={activity._id}
+                    title={activity.title}
+                    imageSource={imageSource}
+                    typeLabel={typeLabel}
+                    locationLabel={addressLabel}
+                    timeLabel={`${timeLabel} · ${dayLabel} · ${dateLabel}`}
+                    onPress={() => handleActivityPress(activity)}
+                    style={styles.cardCarousel}
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
 
         <View style={[styles.sectionHeader, styles.sectionSpacing]}>
           <Text style={styles.sectionTitle}>{eventsTitle}</Text>
-          <TouchableOpacity
-            onPress={() => setShowEventsGrid((prev) => !prev)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={styles.iconButton}
-          >
-            <Ionicons
-              name={showEventsGrid ? 'remove-outline' : 'add-outline'}
-              size={22}
-              color={themeVariables.primaryColor}
-            />
-          </TouchableOpacity>
+          {filteredEventPreview.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => setShowEventsGrid((prev) => !prev)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={styles.iconButton}
+            >
+              <Ionicons
+                name={showEventsGrid ? 'remove-outline' : 'add-outline'}
+                size={22}
+                color={themeVariables.primaryColor}
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
         {filteredEventPreview.length === 0 ? (
           <Text style={styles.emptyText}>
@@ -292,38 +299,41 @@ const Discover = ({ navigation }) => {
             })}
           </View>
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carousel}
-          >
-            {filteredEventPreview.map(({ event, when, addressLabel }) => {
-              const dayLabel = when.toLocaleDateString('en-US', { weekday: 'short' });
-              const dateLabel = when.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-              const timeLabel = when.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true,
-              });
-              const imageSource = resolveImageSource(event.imageUrl, {
-                priority: 'high',
-                fallback: '/img/events/Event_Placeholder.png',
-              });
-              const typeLabel = event.eventType;
-              return (
-                <DiscoverCard
-                  key={event._id || event.id || `${event.title}-${event.startTime || event.date}`}
-                  title={event.title || 'Untitled Event'}
-                  imageSource={imageSource}
-                  typeLabel={typeLabel}
-                  locationLabel={addressLabel}
-                  timeLabel={`${timeLabel} · ${dayLabel} · ${dateLabel}`}
-                  onPress={() => handleEventPress(event)}
-                  style={styles.cardCarousel}
-                />
-              );
-            })}
-          </ScrollView>
+          <View style={styles.carouselWrapper}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carousel}
+              style={styles.carouselScroll}
+            >
+              {filteredEventPreview.map(({ event, when, addressLabel }) => {
+                const dayLabel = when.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateLabel = when.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const timeLabel = when.toLocaleTimeString('en-US', {
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                });
+                const imageSource = resolveImageSource(event.imageUrl, {
+                  priority: 'high',
+                  fallback: '/img/events/Event_Placeholder.png',
+                });
+                const typeLabel = event.eventType;
+                return (
+                  <DiscoverCard
+                    key={event._id || event.id || `${event.title}-${event.startTime || event.date}`}
+                    title={event.title || 'Untitled Event'}
+                    imageSource={imageSource}
+                    typeLabel={typeLabel}
+                    locationLabel={addressLabel}
+                    timeLabel={`${timeLabel} · ${dayLabel} · ${dateLabel}`}
+                    onPress={() => handleEventPress(event)}
+                    style={styles.cardCarousel}
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -498,10 +508,17 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: themeVariables.darkGreyColor,
+    color: 'rgba(0, 0, 0, 0.6)',
+  },
+  carouselWrapper: {
+    overflow: 'visible',
+  },
+  carouselScroll: {
+    overflow: 'visible',
   },
   carousel: {
-    paddingBottom: 8,
+    paddingHorizontal: 0,
+    paddingVertical: 4,
   },
   gridList: {
     flexDirection: 'row',

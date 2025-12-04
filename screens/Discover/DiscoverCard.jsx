@@ -15,57 +15,74 @@ const DiscoverCard = ({
   style,
   testID,
 }) => (
-  <TouchableOpacity
-    style={[styles.card, style]}
-    onPress={onPress}
-    activeOpacity={0.9}
-    testID={testID}
-  >
-    <View style={styles.imageWrapper}>
-      <FastImage source={imageSource} style={styles.image} resizeMode={FastImage.resizeMode.cover} />
-      {typeLabel ? (
-        <View style={styles.typeChip}>
-          <Text style={styles.typeChipText} numberOfLines={1}>
-            {typeLabel}
+  <View style={[styles.cardShadow, style]}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9} testID={testID}>
+      <View style={styles.imageWrapper}>
+        <FastImage
+          source={imageSource}
+          style={styles.image}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {typeLabel ? (
+          <View style={styles.typeChip}>
+            <Text style={styles.typeChipText} numberOfLines={1}>
+              {typeLabel}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.content}>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+          {title}
+        </Text>
+        <View style={styles.divider} />
+        <View style={[styles.metaRow, styles.locationRow]}>
+          <Ionicons
+            name="location-outline"
+            size={13}
+            color={themeVariables.blackColor}
+            style={styles.metaIcon}
+          />
+          <Text style={styles.meta} numberOfLines={1}>
+            {locationLabel}
           </Text>
         </View>
-      ) : null}
-    </View>
-    <View style={styles.content}>
-      <Text style={styles.title} numberOfLines={2}>
-        {title}
-      </Text>
-      <View style={styles.divider} />
-      <View style={[styles.metaRow, styles.locationRow]}>
-        <Ionicons name="location-outline" size={13} color={themeVariables.blackColor} style={styles.metaIcon} />
-        <Text style={styles.meta} numberOfLines={1}>
-          {locationLabel}
-        </Text>
+        <View style={styles.metaRow}>
+          <Ionicons
+            name="time-outline"
+            size={12}
+            color={themeVariables.blackColor}
+            style={styles.metaIcon}
+          />
+          <Text style={styles.meta} numberOfLines={1}>
+            {timeLabel}
+          </Text>
+        </View>
       </View>
-      <View style={styles.metaRow}>
-        <Ionicons name="time-outline" size={12} color={themeVariables.blackColor} style={styles.metaIcon} />
-        <Text style={styles.meta} numberOfLines={1}>
-          {timeLabel}
-        </Text>
-      </View>
-    </View>
-  </TouchableOpacity>
+    </TouchableOpacity>
+  </View>
 );
 
 export default DiscoverCard;
 
 const styles = StyleSheet.create({
-  card: {
+  cardShadow: {
     width: '100%',
     marginRight: 0,
+    padding: 2,
+    marginVertical: 1,
+    shadowColor: 'rgba(12, 18, 28, 0.22)',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 8,
+    overflow: 'visible',
+  },
+  card: {
+    width: '100%',
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
   },
   imageWrapper: {
     padding: 4,
