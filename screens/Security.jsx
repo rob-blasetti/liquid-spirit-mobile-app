@@ -13,9 +13,19 @@ const Security = ({ navigation }) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
 
+  const getRootNavigation = () => {
+    let currentNav = navigation;
+    // walk up to the top-most navigator so reset targets the root stack (where Welcome exists)
+    while (currentNav?.getParent && currentNav.getParent()) {
+      currentNav = currentNav.getParent();
+    }
+    return currentNav || navigation;
+  };
+
   const handleLogout = async () => {
     await logout();
-    navigation.dispatch(
+    const rootNav = getRootNavigation();
+    rootNav?.dispatch?.(
       CommonActions.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],
@@ -28,7 +38,8 @@ const Security = ({ navigation }) => {
       try {
         await deleteAccount(user.id, token);
         await logout();
-        navigation.dispatch(
+        const rootNav = getRootNavigation();
+        rootNav?.dispatch?.(
           CommonActions.reset({
             index: 0,
             routes: [{ name: 'Welcome' }],

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Alert, Platform } from 'react-native';
 import { createBottomTabNavigator, BottomTabBar } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,6 +110,10 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     }),
     [insets.bottom],
   );
+  const contentBottomInset = useMemo(
+    () => (isLiquidGlassNavSupported ? Math.max(insets.bottom, 10) + TAB_BAR_HEIGHT + 12 : 0),
+    [insets.bottom],
+  );
 
   const handleCreateActivity = useCallback(() => {
     if (!isLoggedIn) {
@@ -176,10 +180,13 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     const baseBottom = insets.bottom + FAB_VERTICAL_OFFSET;
     const baseRight = FAB_HORIZONTAL_OFFSET;
     if (isLiquidGlassNavSupported) {
-      return { fabBottom: baseBottom - 10, fabRight: baseRight };
+      const lift = Platform.OS === 'android' ? 46 : 10;
+      return { fabBottom: baseBottom - lift, fabRight: baseRight };
     }
+    // On Android the system nav overlaps more, so lift the FAB a bit higher.
+    const androidLift = Platform.OS === 'android' ? 48 : 0;
     return {
-      fabBottom: Math.max(insets.bottom + 50, baseBottom - 32),
+      fabBottom: Math.max(insets.bottom + 50, baseBottom - 32 + androidLift),
       fabRight: baseRight - 10,
     };
   }, [insets.bottom, isLiquidGlassNavSupported]);
@@ -335,7 +342,10 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             tabBarInactiveTintColor: 'rgba(0,0,0,0.6)',
             tabBarStyle: isLiquidGlassNavSupported ? undefined : classicTabBarStyle,
             tabBarBadge,
-            sceneContainerStyle: { backgroundColor: 'transparent' },
+            sceneContainerStyle: {
+              backgroundColor: 'transparent',
+              paddingBottom: contentBottomInset,
+            },
             tabBarIcon: ({ focused, color, size }) => {
               const iconName =
                 typeof baseIconName === 'string'

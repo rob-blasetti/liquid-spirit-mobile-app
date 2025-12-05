@@ -46,7 +46,8 @@ const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 const BANNER_CONTENT_OFFSET = 60;
-const MIN_BANNER_HEIGHT = 100;
+const MIN_BANNER_HEIGHT = 160;
+const CONTENT_TOP_SPACING = 12;
 const BANNER_PULL_EXPANSION = 120;
 const RECENT_CARD_WIDTH = SCREEN_WIDTH * 0.72;
 const RECENT_CARD_GAP = 12;
@@ -131,14 +132,18 @@ const Home = ({ navigation, homeOverview, route }) => {
     () => Animated.diffClamp(scrollY, -BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT),
     [scrollY],
   );
+  const [isBannerLocked, setIsBannerLocked] = useState(false);
+  const hasLockedBannerRef = useRef(false);
   const bannerHeight = useMemo(
     () =>
-      clampedScroll.interpolate({
-        inputRange: [-BANNER_PULL_EXPANSION, 0, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT],
-        outputRange: [IMAGE_BANNER_HEIGHT + BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT, MIN_BANNER_HEIGHT],
-        extrapolate: 'clamp',
-      }),
-    [clampedScroll],
+      isBannerLocked
+        ? MIN_BANNER_HEIGHT
+        : clampedScroll.interpolate({
+            inputRange: [-BANNER_PULL_EXPANSION, 0, IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT],
+            outputRange: [IMAGE_BANNER_HEIGHT + BANNER_PULL_EXPANSION, IMAGE_BANNER_HEIGHT, MIN_BANNER_HEIGHT],
+            extrapolate: 'clamp',
+          }),
+    [clampedScroll, isBannerLocked],
   );
   // Banner message for redirects
   const [bannerMessage, setBannerMessage] = useState('');
@@ -249,18 +254,23 @@ const Home = ({ navigation, homeOverview, route }) => {
       }
     };
   }, [userActivities, userEvents, userPosts, navigation]);
-  if (userActivities === null || userEvents === null || userPosts === null) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      </View>
-    );
-  }
-
   const iosVersion = Platform.OS === 'ios'
     ? (typeof Platform.Version === 'string' ? parseFloat(Platform.Version) : Platform.Version)
     : 0;
   const useIconGlassButtons = Platform.OS === 'ios' && Number.isFinite(iosVersion) && iosVersion >= 26;
+  const bottomContentInset = useMemo(() => insets.bottom + 120, [insets.bottom]);
+  const isLoading = userActivities === null || userEvents === null || userPosts === null;
+  const handleScroll = useCallback(
+    (event) => {
+      const offsetY = event?.nativeEvent?.contentOffset?.y ?? 0;
+      const lockThreshold = IMAGE_BANNER_HEIGHT - MIN_BANNER_HEIGHT;
+      if (!hasLockedBannerRef.current && offsetY >= lockThreshold - 2) {
+        hasLockedBannerRef.current = true;
+        setIsBannerLocked(true);
+      }
+    },
+    [],
+  );
 
   return (
     <View style={{ flex: 1 }}>
@@ -383,443 +393,457 @@ const Home = ({ navigation, homeOverview, route }) => {
           </ImageBanner>
         </Animated.View>
         <Animated.ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={[styles.scrollView, { paddingTop: MIN_BANNER_HEIGHT }]}
+          style={styles.scrollArea}
+          contentContainerStyle={[
+            styles.scrollView,
+            {
+              paddingTop: CONTENT_TOP_SPACING,
+              paddingBottom: bottomContentInset,
+            },
+          ]}
           scrollEventThrottle={16}
           bounces
           alwaysBounceVertical
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
+            { useNativeDriver: false, listener: handleScroll }
           )}
         >
-        <Text style={styles.heading}>{'Featured'}</Text>
-        <View style={styles.tabContainer}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.featureTabIndicator,
-              {
-                transform: [{ translateX: tabIndicatorX }],
-                width: tabIndicatorWidth,
-                opacity: tabLayoutReady ? 1 : 0,
-              },
-            ]}
-          />
-          {FEATURE_TABS.map((tab, index) => (
-            <TouchableOpacity
-              key={tab}
-              style={styles.tabButton}
-              onPress={() => handleTabPress(tab)}
-              onLayout={({ nativeEvent }) => {
-                const { x, width } = nativeEvent.layout;
-                setTabLayouts((prev) => {
-                  if (prev[index]?.x === x && prev[index]?.width === width) return prev;
-                  return { ...prev, [index]: { x, width } };
-                });
-                if (!tabLayoutReady && Object.keys(tabLayouts).length === 0) {
-                  tabIndicatorX.setValue(x);
-                  tabIndicatorWidth.setValue(width);
-                }
-              }}
-            >
-              <Animated.Text
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+          </View>
+        ) : (
+          <>
+            <Text style={styles.heading}>{'Featured'}</Text>
+            <View style={styles.tabContainer}>
+              <Animated.View
+                pointerEvents="none"
                 style={[
-                  styles.tabButtonText,
-                  activeTab === tab && styles.tabButtonTextActive,
+                  styles.featureTabIndicator,
                   {
-                    color: activeTabPosition.interpolate({
-                      inputRange: [index - 1, index, index + 1],
-                      outputRange: ['rgba(0,0,0,0.65)', themeVariables.whiteColor, 'rgba(0,0,0,0.65)'],
-                      extrapolate: 'clamp',
-                    }),
+                    transform: [{ translateX: tabIndicatorX }],
+                    width: tabIndicatorWidth,
+                    opacity: tabLayoutReady ? 1 : 0,
                   },
                 ]}
-              >
-                {tab}
-              </Animated.Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
-        {/* Events Section */}
-        {activeTab === 'Events' && userEvents && userEvents.length > 0 && (() => {
-          const now = new Date();
-          const upcoming = userEvents
-            .filter(ev =>
-              ev.date &&
-              new Date(ev.date) >= now &&
-              (
-                ev.eventType === 'Feast' ||
-                ev.eventType === 'Holy Day'
-              )
-            )
-            .sort((a, b) => new Date(a.date) - new Date(b.date));
-          const nextEvent = upcoming[0];
-          if (!nextEvent) return null;
-          // format event date/time for tile
-          const eventDate = new Date(nextEvent.startTime);
-          const eventDateTime = eventDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
-          return (
-            <View style={styles.dualGrid}>
-              {/* Large Upcoming Event Tile */}
-              <RectangularTile
-                title={nextEvent.title}
-                bgImgColour="green"
-                subheading={`${nextEvent.eventType || ''}`}
-                dateTime={eventDateTime}
-                onPress={() => handleNavigateToEvent(nextEvent)}
-                style={styles.largeTile}
               />
-              {/* Adjacent Square Tiles */}
-              <View style={styles.smallTilesColumn}>
-                <SquareTile
-                  subheading="Can You Host?"
-                  bgImgColour="red"
-                  onPress={() => {
-                    if (eventWithoutHost) {
-                      handleNavigateToEvent(eventWithoutHost);
-                    } else {
-                      navigation.navigate('Events');
+              {FEATURE_TABS.map((tab, index) => (
+                <TouchableOpacity
+                  key={tab}
+                  style={styles.tabButton}
+                  onPress={() => handleTabPress(tab)}
+                  onLayout={({ nativeEvent }) => {
+                    const { x, width } = nativeEvent.layout;
+                    setTabLayouts((prev) => {
+                      if (prev[index]?.x === x && prev[index]?.width === width) return prev;
+                      return { ...prev, [index]: { x, width } };
+                    });
+                    if (!tabLayoutReady && Object.keys(tabLayouts).length === 0) {
+                      tabIndicatorX.setValue(x);
+                      tabIndicatorWidth.setValue(width);
                     }
                   }}
-                  actionIcon="help-circle-outline"
-                  style={styles.smallTileGap}
-                />
-                <SquareTile
-                  subheading={`Events this month: ${homeOverview.stats?.eventsCount}`}
-                  bgImgColour="red"
-                  onPress={() => navigation.navigate('Events')}
-                  actionIcon="bar-chart-outline"
-                  style={styles.smallTileLast}
-                />
-              </View>
+                >
+                  <Animated.Text
+                    style={[
+                      styles.tabButtonText,
+                      activeTab === tab && styles.tabButtonTextActive,
+                      {
+                        color: activeTabPosition.interpolate({
+                          inputRange: [index - 1, index, index + 1],
+                          outputRange: ['rgba(0,0,0,0.65)', themeVariables.whiteColor, 'rgba(0,0,0,0.65)'],
+                          extrapolate: 'clamp',
+                        }),
+                      },
+                    ]}
+                  >
+                    {tab}
+                  </Animated.Text>
+                </TouchableOpacity>
+              ))}
             </View>
-          );
-        })()}
-        {/* Assembly Section */}
-        {activeTab === 'Assembly' && (() => {
-          if (!Array.isArray(homeOverview?.events)) return null;
-          const now = new Date();
-          const lsaEvents = homeOverview.events.filter(e => e.title === 'Local Spiritual Assembly Meeting');
-          let nextLsaEvent = null;
-          if (lsaEvents.length > 0) {
-            const futureEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) >= now);
-            if (futureEvents.length > 0) {
-              futureEvents.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-              nextLsaEvent = futureEvents[0];
-            } else {
-              const pastEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) < now);
-              if (pastEvents.length > 0) {
-                pastEvents.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
-                const lastEvent = pastEvents[0];
-                const fallbackDate = new Date(lastEvent.startTime);
-                fallbackDate.setDate(fallbackDate.getDate() + 14);
-                nextLsaEvent = { ...lastEvent, startTime: fallbackDate.toISOString() };
-              }
-            }
-          }
-          if (!nextLsaEvent) {
-            // No upcoming assembly meeting: show fallback tile with Coming Soon ribbon
-            return (
-              <View style={styles.dualGrid}>
-                <RectangularTile
-                  title="Local Spiritual Assembly Meeting"
-                  bgImgColour="blue"
-                  style={styles.largeTile}
-                  ribbonText="Coming Soon"
-                  onPress={() => {}}
-                />
-                <View style={styles.smallTilesColumn}>
-                  <SquareTile
-                    subheading="My Local Spiritual Assembly"
-                    bgImgColour="red"
-                    actionIcon="people-outline"
-                    style={styles.smallTileGap}
-                    onPress={() => setAssemblyModalVisible(true)}
+            <Animated.View style={{ transform: [{ translateX: slideAnim }] }}>
+            {/* Events Section */}
+            {activeTab === 'Events' && userEvents && userEvents.length > 0 && (() => {
+              const now = new Date();
+              const upcoming = userEvents
+                .filter(ev =>
+                  ev.date &&
+                  new Date(ev.date) >= now &&
+                  (
+                    ev.eventType === 'Feast' ||
+                    ev.eventType === 'Holy Day'
+                  )
+                )
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+              const nextEvent = upcoming[0];
+              if (!nextEvent) return null;
+              // format event date/time for tile
+              const eventDate = new Date(nextEvent.startTime);
+              const eventDateTime = eventDate.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+              return (
+                <View style={styles.dualGrid}>
+                  {/* Large Upcoming Event Tile */}
+                  <RectangularTile
+                    title={nextEvent.title}
+                    bgImgColour="green"
+                    subheading={`${nextEvent.eventType || ''}`}
+                    dateTime={eventDateTime}
+                    onPress={() => handleNavigateToEvent(nextEvent)}
+                    style={styles.largeTile}
                   />
-                  <SquareTile
-                    subheading="Request Agenda Item"
-                    bgImgColour="red"
-                    actionIcon="document-text-outline"
-                    style={styles.smallTileLast}
-                    onPress={() => navigation.navigate('RequestAgendaItem')}
-                  />
+                  {/* Adjacent Square Tiles */}
+                  <View style={styles.smallTilesColumn}>
+                    <SquareTile
+                      subheading="Can You Host?"
+                      bgImgColour="red"
+                      onPress={() => {
+                        if (eventWithoutHost) {
+                          handleNavigateToEvent(eventWithoutHost);
+                        } else {
+                          navigation.navigate('Events');
+                        }
+                      }}
+                      actionIcon="help-circle-outline"
+                      style={styles.smallTileGap}
+                    />
+                    <SquareTile
+                      subheading={`Events this month: ${homeOverview.stats?.eventsCount}`}
+                      bgImgColour="red"
+                      onPress={() => navigation.navigate('Events')}
+                      actionIcon="bar-chart-outline"
+                      style={styles.smallTileLast}
+                    />
+                  </View>
                 </View>
-              </View>
-            );
-          }
-          const eventDate = new Date(nextLsaEvent.startTime);
-          const day = eventDate.toLocaleDateString(undefined, { weekday: 'short' });
-          const date = eventDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
-          const time = eventDate
-            .toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric', hour12: true })
-            .toLowerCase()
-            .replace(/\s+/g, '');
-          const dateTimeStr = `${day}, ${date} at ${time}`;
-          return (
-            <View style={styles.dualGrid}>
-              <RectangularTile
-                title="Local Spiritual Assembly Meeting"
-                bgImgColour="blue"
-                imageSource={localImages[nextLsaEvent.imageUrl] || { uri: nextLsaEvent.imageUrl }}
-                dateTime={dateTimeStr}
-                subheading="Admin"
-                onPress={() => handleNavigateToEvent(nextLsaEvent)}
-                style={styles.largeTile}
-                showRibbon={false}
-              />
-              <View style={styles.smallTilesColumn}>
-                <SquareTile
-                  subheading="My Local Spiritual Assembly"
-                  bgImgColour="red"
-                  actionIcon="people-outline"
-                  style={styles.smallTileGap}
-                  onPress={() => setAssemblyModalVisible(true)}
-                />
-                <SquareTile
-                  subheading="Request Agenda Item"
-                  bgImgColour="red"
-                  actionIcon="document-text-outline"
-                  style={styles.smallTileLast}
-                  onPress={() => navigation.navigate('RequestAgendaItem')}
-                />
-              </View>
-            </View>
-          );
-        })()}
-        {/* Activities Section (homeOverview) */}
-        {activeTab === 'Activities' && Array.isArray(homeOverview?.activities) && homeOverview?.activities.length > 0 && (() => {
-          const now = new Date();
-          // Prepare activities with next dates (session or root date)
-          const upcomingWithDate = homeOverview.activities
-          .map(a => ({ activity: a, nextDate: getEffectiveNextDate(a) }))
-          .filter(({ nextDate }) => nextDate && nextDate >= now)
-          .sort((a, b) => a.nextDate - b.nextDate);
-          const upcoming = upcomingWithDate.map(({ activity }) => activity);
-          const nextActData = upcomingWithDate[0] || null;
-          const nextAct = nextActData?.activity || null;
-          const nextDate = nextActData?.nextDate || null;
-          // Next activity with available facilitator slots
-          const activityToFacilitate = upcoming.find(a => {
-            const currentCount = Array.isArray(a.facilitators) ? a.facilitators.length : 0;
-            return typeof a.facilitatorLimit === 'number' && currentCount < a.facilitatorLimit;
-          }) || null;
-          if (!nextAct || !nextDate) return null;
-          // Format date/time for nextAct
-          const dateLabel = nextDate.toLocaleDateString(undefined, {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-          });
-          const timeLabel = formatGroupTime(nextAct?.groupDetails?.time) || nextDate.toLocaleTimeString(undefined, {
-            hour: 'numeric',
-            minute: '2-digit',
-          });
-          const actDateTime = `${dateLabel}, ${timeLabel}`;
-          return (
-            <View style={styles.dualGrid}>
-              <RectangularTile
-                title={nextAct.title}
-                dateTime={actDateTime}
-                subheading={`${nextAct.activityType?.name || ''}`}
-                imageSource={{ uri: nextAct.imageUrl }}
-                onPress={() =>
-                  navigateToActivityDetail({
-                    navigation,
-                    activity: nextAct,
-                  })
+              );
+            })()}
+            {/* Assembly Section */}
+            {activeTab === 'Assembly' && (() => {
+              if (!Array.isArray(homeOverview?.events)) return null;
+              const now = new Date();
+              const lsaEvents = homeOverview.events.filter(e => e.title === 'Local Spiritual Assembly Meeting');
+              let nextLsaEvent = null;
+              if (lsaEvents.length > 0) {
+                const futureEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) >= now);
+                if (futureEvents.length > 0) {
+                  futureEvents.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+                  nextLsaEvent = futureEvents[0];
+                } else {
+                  const pastEvents = lsaEvents.filter(e => e.startTime && new Date(e.startTime) < now);
+                  if (pastEvents.length > 0) {
+                    pastEvents.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+                    const lastEvent = pastEvents[0];
+                    const fallbackDate = new Date(lastEvent.startTime);
+                    fallbackDate.setDate(fallbackDate.getDate() + 14);
+                    nextLsaEvent = { ...lastEvent, startTime: fallbackDate.toISOString() };
+                  }
                 }
-                style={styles.largeTile}
-              />
-              <View style={styles.smallTilesColumn}>
-                <SquareTile
-                  subheading="Can You Facilitate?"
-                  bgImgColour="blue"
-                  onPress={() => {
-                    if (activityToFacilitate) {
+              }
+              if (!nextLsaEvent) {
+                // No upcoming assembly meeting: show fallback tile with Coming Soon ribbon
+                return (
+                  <View style={styles.dualGrid}>
+                    <RectangularTile
+                      title="Local Spiritual Assembly Meeting"
+                      bgImgColour="blue"
+                      style={styles.largeTile}
+                      ribbonText="Coming Soon"
+                      onPress={() => {}}
+                    />
+                    <View style={styles.smallTilesColumn}>
+                      <SquareTile
+                        subheading="My Local Spiritual Assembly"
+                        bgImgColour="red"
+                        actionIcon="people-outline"
+                        style={styles.smallTileGap}
+                        onPress={() => setAssemblyModalVisible(true)}
+                      />
+                      <SquareTile
+                        subheading="Request Agenda Item"
+                        bgImgColour="red"
+                        actionIcon="document-text-outline"
+                        style={styles.smallTileLast}
+                        onPress={() => navigation.navigate('RequestAgendaItem')}
+                      />
+                    </View>
+                  </View>
+                );
+              }
+              const eventDate = new Date(nextLsaEvent.startTime);
+              const day = eventDate.toLocaleDateString(undefined, { weekday: 'short' });
+              const date = eventDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+              const time = eventDate
+                .toLocaleTimeString(undefined, { hour: 'numeric', minute: 'numeric', hour12: true })
+                .toLowerCase()
+                .replace(/\s+/g, '');
+              const dateTimeStr = `${day}, ${date} at ${time}`;
+              return (
+                <View style={styles.dualGrid}>
+                  <RectangularTile
+                    title="Local Spiritual Assembly Meeting"
+                    bgImgColour="blue"
+                    imageSource={localImages[nextLsaEvent.imageUrl] || { uri: nextLsaEvent.imageUrl }}
+                    dateTime={dateTimeStr}
+                    subheading="Admin"
+                    onPress={() => handleNavigateToEvent(nextLsaEvent)}
+                    style={styles.largeTile}
+                    showRibbon={false}
+                  />
+                  <View style={styles.smallTilesColumn}>
+                    <SquareTile
+                      subheading="My Local Spiritual Assembly"
+                      bgImgColour="red"
+                      actionIcon="people-outline"
+                      style={styles.smallTileGap}
+                      onPress={() => setAssemblyModalVisible(true)}
+                    />
+                    <SquareTile
+                      subheading="Request Agenda Item"
+                      bgImgColour="red"
+                      actionIcon="document-text-outline"
+                      style={styles.smallTileLast}
+                      onPress={() => navigation.navigate('RequestAgendaItem')}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+            {/* Activities Section (homeOverview) */}
+            {activeTab === 'Activities' && Array.isArray(homeOverview?.activities) && homeOverview?.activities.length > 0 && (() => {
+              const now = new Date();
+              // Prepare activities with next dates (session or root date)
+              const upcomingWithDate = homeOverview.activities
+              .map(a => ({ activity: a, nextDate: getEffectiveNextDate(a) }))
+              .filter(({ nextDate }) => nextDate && nextDate >= now)
+              .sort((a, b) => a.nextDate - b.nextDate);
+              const upcoming = upcomingWithDate.map(({ activity }) => activity);
+              const nextActData = upcomingWithDate[0] || null;
+              const nextAct = nextActData?.activity || null;
+              const nextDate = nextActData?.nextDate || null;
+              // Next activity with available facilitator slots
+              const activityToFacilitate = upcoming.find(a => {
+                const currentCount = Array.isArray(a.facilitators) ? a.facilitators.length : 0;
+                return typeof a.facilitatorLimit === 'number' && currentCount < a.facilitatorLimit;
+              }) || null;
+              if (!nextAct || !nextDate) return null;
+              // Format date/time for nextAct
+              const dateLabel = nextDate.toLocaleDateString(undefined, {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              });
+              const timeLabel = formatGroupTime(nextAct?.groupDetails?.time) || nextDate.toLocaleTimeString(undefined, {
+                hour: 'numeric',
+                minute: '2-digit',
+              });
+              const actDateTime = `${dateLabel}, ${timeLabel}`;
+              return (
+                <View style={styles.dualGrid}>
+                  <RectangularTile
+                    title={nextAct.title}
+                    dateTime={actDateTime}
+                    subheading={`${nextAct.activityType?.name || ''}`}
+                    imageSource={{ uri: nextAct.imageUrl }}
+                    onPress={() =>
                       navigateToActivityDetail({
                         navigation,
-                        activity: activityToFacilitate,
-                      });
-                    } else {
-                      navigation.navigate('Activities');
+                        activity: nextAct,
+                      })
                     }
-                  }}
-                  actionIcon="help-circle-outline"
-                  style={styles.smallTileGap}
-                />
-                <SquareTile
-                  subheading={`Activities this month: ${homeOverview.stats?.activitiesCount}`}
-                  bgImgColour="blue"
-                  onPress={() => navigation.navigate('Activities')}
-                  actionIcon="bar-chart-outline"
-                  style={styles.smallTileLast}
-                />
-              </View>
-            </View>
-          );
-        })()}
-        {/* Posts Section */}
-        {activeTab === 'Posts' && userPosts && userPosts.length > 0 && (() => {
-          const posts = userPosts;
-          const firstPost = posts[0];
-          console.log('firstPost: ', firstPost);
-          const secondPost = posts[1];
-          return (
-            <View style={styles.dualGrid}>
-              <View style={styles.smallTilesColumn}>
-                {secondPost && (
-                  <SquareTile
-                    title={`${secondPost.content?.slice(0, 25)}...`}
-                    onPress={() => navigation.navigate('Feed', { post: secondPost })}
-                    style={styles.smallTileGap}
+                    style={styles.largeTile}
                   />
-                )}
-                <SquareTile
-                  title="See More Posts"
-                  onPress={() => navigation.navigate('Feed')}
-                  actionIcon="arrow-forward-outline"
-                  style={styles.smallTileLast}
+                  <View style={styles.smallTilesColumn}>
+                    <SquareTile
+                      subheading="Can You Facilitate?"
+                      bgImgColour="blue"
+                      onPress={() => {
+                        if (activityToFacilitate) {
+                          navigateToActivityDetail({
+                            navigation,
+                            activity: activityToFacilitate,
+                          });
+                        } else {
+                          navigation.navigate('Activities');
+                        }
+                      }}
+                      actionIcon="help-circle-outline"
+                      style={styles.smallTileGap}
+                    />
+                    <SquareTile
+                      subheading={`Activities this month: ${homeOverview.stats?.activitiesCount}`}
+                      bgImgColour="blue"
+                      onPress={() => navigation.navigate('Activities')}
+                      actionIcon="bar-chart-outline"
+                      style={styles.smallTileLast}
+                    />
+                  </View>
+                </View>
+              );
+            })()}
+            {/* Posts Section */}
+            {activeTab === 'Posts' && userPosts && userPosts.length > 0 && (() => {
+              const posts = userPosts;
+              const firstPost = posts[0];
+              console.log('firstPost: ', firstPost);
+              const secondPost = posts[1];
+              return (
+                <View style={styles.dualGrid}>
+                  <View style={styles.smallTilesColumn}>
+                    {secondPost && (
+                      <SquareTile
+                        title={`${secondPost.content?.slice(0, 25)}...`}
+                        onPress={() => navigation.navigate('Feed', { post: secondPost })}
+                        style={styles.smallTileGap}
+                      />
+                    )}
+                    <SquareTile
+                      title="See More Posts"
+                      onPress={() => navigation.navigate('Feed')}
+                      actionIcon="arrow-forward-outline"
+                      style={styles.smallTileLast}
+                    />
+                  </View>
+                  <RectangularTile
+                    subheading="Recent Post"
+                    title={`${firstPost.content?.slice(0, 30) || ''}...`}
+                    imageSource={{ uri: firstPost.mediaThumbnails[0] || null }}
+                    onPress={() => navigation.navigate('Feed', { post: firstPost })}
+                    style={styles.largeTile}
+                  />
+                </View>
+              );
+            })()}
+            </Animated.View>
+            <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
+            <View style={styles.createContainer}>
+              {/* <TouchableOpacity
+                style={styles.createRow}
+                onPress={() => navigation.navigate('CreateActivity', {
+                  communityId,
+                  userId: user?.id,
+                })}
+              >
+                <View style={styles.createRowContent}>
+                  <Ionicons
+                    name="list-outline"
+                    size={16}
+                    color={themeVariables.primaryColor}
+                    style={styles.createIcon}
+                  />
+                  <Text style={styles.createRowText}>Create Activity</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
+              </TouchableOpacity>
+              <View style={styles.separator} /> */}
+              <TouchableOpacity
+                style={styles.createRow}
+                onPress={() => Linking.openURL(RIDVAN_182_BE)}
+              >
+                <View style={styles.createRowContent}>
+                  <Ionicons
+                    name="mail-open-outline"
+                    size={16}
+                    color={themeVariables.blackColor}
+                    style={styles.createIcon}
+                  />
+                  <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
+              </TouchableOpacity>
+              <View style={styles.separator} />
+              <TouchableOpacity
+                style={styles.createRow}
+                onPress={() => navigation.navigate('Activities')}
+              >
+                <View style={styles.createRowContent}>
+                  <Ionicons
+                    name="list-outline"
+                    size={16}
+                    color={themeVariables.blackColor}
+                    style={styles.createIcon}
+                  />
+                  <Text style={styles.createRowText}>View All Activities</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
+              </TouchableOpacity>
+              <View style={styles.separator} />
+              <TouchableOpacity
+                style={styles.createRow}
+                onPress={() => navigation.navigate('Events')}
+              >
+                <View style={styles.createRowContent}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={themeVariables.blackColor}
+                    style={styles.createIcon}
+                  />
+                  <Text style={styles.createRowText}>View All Events</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
+              </TouchableOpacity>
+
+              {/* <TouchableOpacity
+                style={styles.createRow}
+                onPress={() => navigation.navigate('Activities')}
+              >
+                <View style={styles.createRowContent}>
+                  <Ionicons
+                    name="people-outline"
+                    size={16}
+                    color={themeVariables.primaryColor}
+                    style={styles.createIcon}
+                  />
+                  <Text style={styles.createRowText}>Recent Arrivals</Text>
+                </View>
+                <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
+              </TouchableOpacity> */}
+            </View>
+            {recentPosts.length > 0 && (
+              <View style={styles.recentPostsSection}>
+                <Text style={[styles.heading, styles.recentHeading]}>Recent Posts</Text>
+                <FlatList
+                  data={recentPosts}
+                  keyExtractor={(item, index) => item?._id?.toString?.() || `recent-${index}`}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  snapToInterval={RECENT_CARD_WIDTH + RECENT_CARD_GAP}
+                  snapToAlignment="start"
+                  decelerationRate="fast"
+                  contentContainerStyle={styles.recentListContent}
+                  ItemSeparatorComponent={() => <View style={{ width: RECENT_CARD_GAP }} />}
+                  renderItem={({ item }) => {
+                    const imageSource = resolveImageSource(item?.media?.[0], {
+                      priority: 'normal',
+                      fallback: '/img/events/Event_Placeholder.png',
+                    });
+                    return (
+                      <TouchableOpacity
+                        style={styles.recentCard}
+                        onPress={() => handleRecentPostPress(item)}
+                        activeOpacity={0.9}
+                      >
+                        <FastImage
+                          source={imageSource}
+                          style={styles.recentImage}
+                          resizeMode={FastImage.resizeMode.cover}
+                        />
+                        <View style={styles.recentOverlay}>
+                          <Text style={styles.recentTitle} numberOfLines={2} ellipsizeMode="tail">
+                            {item?.content || 'View Post'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  }}
                 />
               </View>
-              <RectangularTile
-                subheading="Recent Post"
-                title={`${firstPost.content?.slice(0, 30) || ''}...`}
-                imageSource={{ uri: firstPost.mediaThumbnails[0] || null }}
-                onPress={() => navigation.navigate('Feed', { post: firstPost })}
-                style={styles.largeTile}
-              />
-            </View>
-          );
-        })()}
-        </Animated.View>
-        <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
-        <View style={styles.createContainer}>
-          {/* <TouchableOpacity
-            style={styles.createRow}
-            onPress={() => navigation.navigate('CreateActivity', {
-              communityId,
-              userId: user?.id,
-            })}
-          >
-            <View style={styles.createRowContent}>
-              <Ionicons
-                name="list-outline"
-                size={16}
-                color={themeVariables.primaryColor}
-                style={styles.createIcon}
-              />
-              <Text style={styles.createRowText}>Create Activity</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
-          </TouchableOpacity>
-          <View style={styles.separator} /> */}
-          <TouchableOpacity
-            style={styles.createRow}
-            onPress={() => Linking.openURL(RIDVAN_182_BE)}
-          >
-            <View style={styles.createRowContent}>
-              <Ionicons
-                name="mail-open-outline"
-                size={16}
-                color={themeVariables.blackColor}
-                style={styles.createIcon}
-              />
-              <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-          <View style={styles.separator} />
-          <TouchableOpacity
-            style={styles.createRow}
-            onPress={() => navigation.navigate('Activities')}
-          >
-            <View style={styles.createRowContent}>
-              <Ionicons
-                name="list-outline"
-                size={16}
-                color={themeVariables.blackColor}
-                style={styles.createIcon}
-              />
-              <Text style={styles.createRowText}>View All Activities</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-          <View style={styles.separator} />
-          <TouchableOpacity
-            style={styles.createRow}
-            onPress={() => navigation.navigate('Events')}
-          >
-            <View style={styles.createRowContent}>
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={themeVariables.blackColor}
-                style={styles.createIcon}
-              />
-              <Text style={styles.createRowText}>View All Events</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-
-          {/* <TouchableOpacity
-            style={styles.createRow}
-            onPress={() => navigation.navigate('Activities')}
-          >
-            <View style={styles.createRowContent}>
-              <Ionicons
-                name="people-outline"
-                size={16}
-                color={themeVariables.primaryColor}
-                style={styles.createIcon}
-              />
-              <Text style={styles.createRowText}>Recent Arrivals</Text>
-            </View>
-            <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
-          </TouchableOpacity> */}
-        </View>
-        {recentPosts.length > 0 && (
-          <View style={styles.recentPostsSection}>
-            <Text style={[styles.heading, styles.recentHeading]}>Recent Posts</Text>
-            <FlatList
-              data={recentPosts}
-              keyExtractor={(item, index) => item?._id?.toString?.() || `recent-${index}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              snapToInterval={RECENT_CARD_WIDTH + RECENT_CARD_GAP}
-              snapToAlignment="start"
-              decelerationRate="fast"
-              contentContainerStyle={styles.recentListContent}
-              ItemSeparatorComponent={() => <View style={{ width: RECENT_CARD_GAP }} />}
-              renderItem={({ item }) => {
-                const imageSource = resolveImageSource(item?.media?.[0], {
-                  priority: 'normal',
-                  fallback: '/img/events/Event_Placeholder.png',
-                });
-                return (
-                  <TouchableOpacity
-                    style={styles.recentCard}
-                    onPress={() => handleRecentPostPress(item)}
-                    activeOpacity={0.9}
-                  >
-                    <FastImage
-                      source={imageSource}
-                      style={styles.recentImage}
-                      resizeMode={FastImage.resizeMode.cover}
-                    />
-                    <View style={styles.recentOverlay}>
-                      <Text style={styles.recentTitle} numberOfLines={2} ellipsizeMode="tail">
-                        {item?.content || 'View Post'}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
+            )}
+          </>
         )}
-      </Animated.ScrollView>
+        </Animated.ScrollView>
       {/* Local Spiritual Assembly Members Modal: members loaded from CommunityContext */}
       <LocalAssemblyModal
         visible={assemblyModalVisible}
@@ -904,16 +928,23 @@ const styles = StyleSheet.create({
   glassTint: {
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
+  scrollArea: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 1,
+    elevation: 3,
+  },
   scrollView: {
     flexGrow: 1,
   },
   bannerShadow: {
-    marginBottom: 20,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.16,
     shadowRadius: 18,
-    elevation: 14,
+    elevation: 1,
+    zIndex: 0,
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
     borderBottomLeftRadius: 0,
