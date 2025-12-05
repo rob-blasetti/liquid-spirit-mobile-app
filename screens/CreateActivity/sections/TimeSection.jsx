@@ -1,6 +1,7 @@
 import React from 'react';
-import { HelperText, Title } from 'react-native-paper';
+import { Text } from 'react-native';
 import TimeSelect from '../../../components/forms/inputs/TimeSelect';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const TimeSection = ({
   value,
@@ -11,19 +12,19 @@ const TimeSection = ({
   styles,
 }) => (
   <>
-    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Start Time *</Title>
+    <Text style={[styles.sectionLabel, styles.scheduleLabel]}>Start Time *</Text>
     <TimeSelect
       value={value}
       onChange={onChange}
       inputProps={styledInputProps}
       style={styles.timeSelect}
     />
-    <HelperText type="info" visible>
+    <FormHelperText type="info" visible>
       {helperText}
-    </HelperText>
-    <HelperText type="error" visible={!!error}>
+    </FormHelperText>
+    <FormHelperText type="error" visible={!!error}>
       {error}
-    </HelperText>
+    </FormHelperText>
   </>
 );
 

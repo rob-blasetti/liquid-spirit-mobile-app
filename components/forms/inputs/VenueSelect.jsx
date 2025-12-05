@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { HelperText } from 'react-native-paper';
 
 import { fetchAvailableVenuesForActivity, fetchVenues } from '../../../services/VenueService';
 import DropdownInput from './DropdownInput';
+import FormHelperText from './FormHelperText';
 
 const buildOptionLabel = (venue) => {
   const name = venue?.name || venue?.title || venue?.label || 'Venue';
@@ -99,17 +99,17 @@ const VenueSelect = ({
         disabled={loading || dropdownOptions.length === 0}
         textInputProps={inputProps}
       />
-      <HelperText type={fetchError ? 'error' : 'info'} visible>
+      <FormHelperText type={fetchError ? 'error' : 'info'} visible>
         {fetchError ||
           (loading && 'Loading venues...') ||
           (!loading && dropdownOptions.length === 0 && !validationError && 'No saved venues found. Add one to select it here.') ||
           (!loading && validationError) ||
           helperText}
-      </HelperText>
+      </FormHelperText>
       {validationError && !fetchError && (
-        <HelperText type="error" visible>
+        <FormHelperText type="error" visible>
           {validationError}
-        </HelperText>
+        </FormHelperText>
       )}
     </View>
   );

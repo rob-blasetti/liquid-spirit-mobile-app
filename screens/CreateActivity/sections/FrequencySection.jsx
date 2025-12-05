@@ -1,6 +1,7 @@
 import React from 'react';
-import { HelperText, Title } from 'react-native-paper';
+import { Text } from 'react-native';
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const FrequencySection = ({
   value,
@@ -10,7 +11,7 @@ const FrequencySection = ({
   styles,
 }) => (
   <>
-    <Title style={[styles.sectionLabel, styles.scheduleLabel]}>Session Frequency *</Title>
+    <Text style={[styles.sectionLabel, styles.scheduleLabel]}>Session Frequency *</Text>
     <DropdownInput
       value={value}
       options={options}
@@ -18,9 +19,9 @@ const FrequencySection = ({
       onSelect={onSelect}
       textInputProps={styledInputProps}
     />
-    <HelperText type="info" visible>
+    <FormHelperText type="info" visible>
       Pick how often the group meets so we can schedule it correctly.
-    </HelperText>
+    </FormHelperText>
   </>
 );
 

@@ -13,6 +13,7 @@ const LocationSection = ({
   mapDisplayAddress,
   mapAddress,
   region,
+  hasRegion,
   openGoogleMaps,
   resolvedOnlineLink,
   styles,
@@ -26,7 +27,7 @@ const LocationSection = ({
           titleStyle={styles.mapTitle}
         />
         <View style={styles.mapWrapper}>
-          {region ? (
+          {hasRegion ? (
             <MapView
               provider={MapView.PROVIDER_DEFAULT}
               style={styles.map}
@@ -35,8 +36,17 @@ const LocationSection = ({
               <Marker coordinate={region} />
             </MapView>
           ) : (
-            <View style={styles.mapLoader}>
-              <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+            <View style={[styles.mapLoader, styles.mapFallback]}>
+              <Ionicons
+                name="map-outline"
+                size={28}
+                color={themeVariables.primaryColor}
+                style={{ marginBottom: 6 }}
+              />
+              <Text style={styles.mapFallbackText}>Map preview unavailable</Text>
+              {mapAddress ? (
+                <Text style={styles.mapFallbackSubtext}>Tap the address to open in Maps</Text>
+              ) : null}
             </View>
           )}
         </View>

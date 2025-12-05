@@ -1,5 +1,5 @@
 import React from 'react';
-import { Title } from 'react-native-paper';
+import { Text } from 'react-native';
 import FormTextInput from '../../../components/forms/inputs/FormTextInput';
 
 const DescriptionSection = ({
@@ -13,7 +13,7 @@ const DescriptionSection = ({
   styles,
 }) => (
   <>
-    <Title style={styles.sectionLabel}>Description</Title>
+    <Text style={styles.sectionLabel}>Description</Text>
     <FormTextInput
       inputProps={baseInputProps}
       label={label}

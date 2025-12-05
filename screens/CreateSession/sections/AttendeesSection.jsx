@@ -1,6 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Title } from 'react-native-paper';
+import { View, Text } from 'react-native';
 
 import MultiSelectMemberInput from '../../../components/forms/inputs/MultiSelectMemberInput';
 
@@ -21,7 +20,7 @@ const AttendeesSection = ({
   styles,
 }) => (
   <View style={styles.section}>
-    <Title style={styles.sectionTitle}>People</Title>
+    <Text style={styles.sectionTitle}>Who will be attending?</Text>
     <MultiSelectMemberInput
       label="Facilitators"
       selected={facilitators}

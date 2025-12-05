@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, ScrollView } from 'react-native';
-import { TextInput, HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
+import FormHelperText from './FormHelperText';
 
 // Keep only one dropdown open at a time across the app
 const dropdownListeners = new Set();
@@ -50,21 +50,13 @@ const DropdownInput = ({
     [normalizedOptions, value],
   );
   const displayValue = selectedOption?.label || value || '';
-  const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
-  const defaultBg = themeVariables.lightGreyColor || '#f3f3f3';
-  const defaultBorder = themeVariables.borderColor || '#d1d1d6';
-  const outlineColor = restTextInputProps?.outlineColor || 'transparent';
-  const activeOutlineColor = restTextInputProps?.activeOutlineColor || 'transparent';
-  const underlineColor = restTextInputProps?.underlineColor || 'transparent';
-  const outlineStyleValue =
-    typeof restTextInputProps?.outlineStyle === 'string' ? restTextInputProps.outlineStyle : 'none';
+  const { style: inputStyle, placeholderTextColor, ...restTextInputProps } = textInputProps || {};
   const mergedStyle = [
     styles.input,
     multilineDisplay && styles.inputMultiline,
     inputStyle,
-    { backgroundColor: defaultBg, borderRadius: 6, borderWidth: 0, borderColor: defaultBorder },
+    disabled && styles.inputDisabled,
   ].filter(Boolean);
-  const mergedContentStyle = [restTextInputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
 
   const toggleOpen = useCallback(() => {
     if (disabled) {
@@ -103,41 +95,27 @@ const DropdownInput = ({
   return (
     <View style={[styles.wrapper, style]}>
       <TouchableOpacity
-        style={styles.touchWrapper}
+        style={[styles.touchWrapper, mergedStyle]}
         activeOpacity={0.9}
         onPress={toggleOpen}
         accessibilityRole="button"
         accessibilityLabel={typeof label === 'string' ? label : undefined}
+        {...restTextInputProps}
       >
-        <TextInput
-          label={label}
-          mode="flat"
-          value={displayValue || ''}
-          placeholder={placeholder}
-          editable={false}
-          pointerEvents="none"
-          multiline={multilineDisplay}
+        <Text
+          style={[
+            styles.inputText,
+            !displayValue && styles.placeholder,
+            !displayValue && placeholderTextColor ? { color: placeholderTextColor } : null,
+          ]}
           numberOfLines={multilineDisplay ? 2 : 1}
-          style={mergedStyle}
-          contentStyle={mergedContentStyle}
-          outlineStyle={outlineStyleValue}
-          outlineColor={outlineColor}
-          activeOutlineColor={activeOutlineColor}
-          underlineColor={underlineColor}
-          activeUnderlineColor={underlineColor}
-          {...restTextInputProps}
-          right={
-            <TextInput.Icon
-              icon={() => (
-                <Ionicons
-                  name={open ? 'chevron-up' : 'chevron-down'}
-                  size={18}
-                  color={themeVariables.primaryColor}
-                />
-              )}
-              onPress={toggleOpen}
-            />
-          }
+        >
+          {displayValue || placeholder}
+        </Text>
+        <Ionicons
+          name={open ? 'chevron-up' : 'chevron-down'}
+          size={18}
+          color={themeVariables.blackColor || '#000'}
         />
       </TouchableOpacity>
       {open && normalizedOptions.length > 0 && (
@@ -163,11 +141,9 @@ const DropdownInput = ({
           </ScrollView>
         </View>
       )}
-      {error ? (
-        <HelperText type="error" visible>
-          {error}
-        </HelperText>
-      ) : null}
+      <FormHelperText type="error" visible={!!error}>
+        {error}
+      </FormHelperText>
     </View>
   );
 };
@@ -179,13 +155,33 @@ const styles = StyleSheet.create({
   },
   touchWrapper: {
     position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   input: {
     marginBottom: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    borderWidth: 1,
+    borderColor: themeVariables.borderLightColor || '#e0e0e0',
   },
   inputMultiline: {
     minHeight: 64,
     textAlignVertical: 'top',
+  },
+  inputDisabled: {
+    opacity: 0.6,
+  },
+  inputText: {
+    color: themeVariables.blackColor,
+    flex: 1,
+    marginRight: 8,
+  },
+  placeholder: {
+    color: themeVariables.darkGreyColor || '#222',
   },
   dropdownList: {
     position: 'absolute',

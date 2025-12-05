@@ -1,13 +1,13 @@
 import React from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
-import { Text, Title, HelperText } from 'react-native-paper';
+import { View, TouchableOpacity, Image, Text } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const CoverImageSection = ({ form, onPickImage, styles }) => (
   <>
-    <Title style={[styles.sectionLabel, styles.coverLabel]}>Cover Image</Title>
+    <Text style={[styles.sectionLabel, styles.coverLabel]}>Cover Image</Text>
     <TouchableOpacity
       style={form.imageUrl ? styles.imagePreview : styles.imagePicker}
       onPress={onPickImage}
@@ -30,9 +30,9 @@ const CoverImageSection = ({ form, onPickImage, styles }) => (
         </>
       )}
     </TouchableOpacity>
-    <HelperText type="info" visible>
+    <FormHelperText type="info" visible>
       Add a landscape photo to help the activity stand out.
-    </HelperText>
+    </FormHelperText>
   </>
 );
 

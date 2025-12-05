@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useContext } from 'react';
+import { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import { Alert, BackHandler, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,11 +16,16 @@ const useActivityDetail = ({ route }) => {
   const { user, token } = useContext(UserContext);
   const {
     activityId,
-    activity: activityPreload,
+    activity: activityParam,
+    activityPreload: activityPreloadParam,
     initialSessionId,
   } = route.params || {};
 
-  const mappedPreload = mapActivityDetail(activityPreload) || null;
+  const activityPreload = activityParam || activityPreloadParam || null;
+  const mappedPreload = useMemo(
+    () => (activityPreload ? mapActivityDetail(activityPreload) : null),
+    [activityPreload],
+  );
 
   const [activity, setActivity] = useState(mappedPreload);
   const [loading, setLoading] = useState(!mappedPreload);
@@ -41,6 +46,18 @@ const useActivityDetail = ({ route }) => {
     });
     return navSub;
   }, [navigation]);
+
+  useEffect(() => {
+    if (mappedPreload) {
+      setActivity(prev => {
+        if (prev && (prev._id || prev.id) === (mappedPreload._id || mappedPreload.id)) {
+          return prev;
+        }
+        return mappedPreload;
+      });
+      setLoading(false);
+    }
+  }, [mappedPreload]);
 
   useEffect(() => {
     const id = activity?._id || activityId;

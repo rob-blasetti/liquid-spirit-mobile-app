@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useContext, useMemo, useCallback, useLayoutEffect } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Animated, Text, TouchableOpacity, BackHandler } from 'react-native';
-import { Title, Snackbar } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Button } from 'liquid-spirit-styleguide/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -76,37 +76,16 @@ export default function CreateActivity({ navigation, route }) {
   const { token } = useContext(UserContext);
 
   const [step, setStep] = useState(1);
-  const inputTheme = useMemo(
-    () => ({
-      roundness: 4,
-      colors: {
-        background: '#f9f9f9',
-        surface: '#f9f9f9',
-        primary: themeVariables.primaryColor,
-        text: themeVariables.blackColor,
-        placeholder: themeVariables.darkGreyColor || '#777',
-        outline: 'transparent',
-      },
-    }),
-    [],
-  );
   const baseInputProps = useMemo(
     () => ({
-      mode: 'flat',
-      theme: inputTheme,
-      outlineColor: 'transparent',
-      activeOutlineColor: 'transparent',
-      underlineColor: 'transparent',
-      activeUnderlineColor: 'transparent',
-      contentStyle: styles.inputContent,
-      style: styles.inputOutline,
+      placeholderTextColor: themeVariables.darkGreyColor || '#222',
     }),
-    [inputTheme],
+    [],
   );
   const styledInputProps = useMemo(
     () => ({
       ...baseInputProps,
-      style: [styles.inputOutline, styles.input],
+      style: styles.input,
     }),
     [baseInputProps],
   );
@@ -162,10 +141,10 @@ export default function CreateActivity({ navigation, route }) {
   useEffect(() => {
     Animated.timing(progressAnim, {
       toValue: step / TOTAL_STEPS,
-      duration: 250,
-      useNativeDriver: false,
-    }).start();
-  }, [step, progressAnim]);
+        duration: 250,
+        useNativeDriver: false,
+      }).start();
+    }, [step, progressAnim]);
 
   useEffect(() => {
     if (!communityId || !token) return;
@@ -564,7 +543,7 @@ export default function CreateActivity({ navigation, route }) {
     >
       <ScrollView contentContainerStyle={scrollContentStyle}>
         <View style={styles.progressHeader}>
-          <Title style={styles.title}>Create Activity</Title>
+          <Text style={styles.title}>Create Activity</Text>
           <Text style={styles.stepIndicator}>Step {step} of {TOTAL_STEPS}</Text>
         </View>
         <View style={styles.progressTrack}>
@@ -749,6 +728,8 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 0,
     color: themeVariables.blackColor,
+    fontSize: 22,
+    fontWeight: '700',
   },
   stepIndicator: {
     fontSize: 14,
@@ -798,14 +779,6 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#f9f9f9',
     marginBottom: themeVariables.spacing.m,
-  },
-  inputContent: {
-    backgroundColor: '#f9f9f9',
-  },
-  inputOutline: {
-    borderRadius: 6,
-    borderWidth: 0,
-    borderColor: 'transparent',
   },
   locationModeRow: {
     flexDirection: 'row',

@@ -265,6 +265,23 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  mapFallback: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f6f6f8',
+    paddingHorizontal: 16,
+  },
+  mapFallbackText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.textColor || '#555',
+  },
+  mapFallbackSubtext: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#777',
+  },
   sideSection: {
     flex: 1,
     paddingVertical: 10,

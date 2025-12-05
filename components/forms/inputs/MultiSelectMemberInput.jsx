@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput, ScrollView } from 'react-native';
-import { HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
+import FormHelperText from './FormHelperText';
 
 const MultiSelectMemberInput = ({
   label,
@@ -54,6 +54,7 @@ const MultiSelectMemberInput = ({
           onChangeText={onChangeSearch}
           placeholder={placeholder}
           style={styles.inlineSearchInput}
+          placeholderTextColor={restTextInputProps.placeholderTextColor || themeVariables.darkGreyColor || '#222'}
           {...restTextInputProps}
           onFocus={() => setDropdownVisible(true)}
           onBlur={() => {
@@ -63,7 +64,7 @@ const MultiSelectMemberInput = ({
           }}
         />
       </View>
-      {dropdownVisible && (
+        {dropdownVisible && (
         <View style={styles.dropdownList}>
           {loading ? (
             <View style={styles.dropdownLoading}>
@@ -71,9 +72,9 @@ const MultiSelectMemberInput = ({
               <Text style={styles.dropdownLoadingText}>Loading members…</Text>
             </View>
           ) : error ? (
-            <HelperText type="error" visible>
+            <FormHelperText type="error" visible>
               {error}
-            </HelperText>
+            </FormHelperText>
           ) : options.length === 0 ? (
             <Text style={styles.dropdownEmpty}>{emptyText}</Text>
           ) : (
@@ -126,19 +127,14 @@ const styles = StyleSheet.create({
     minHeight: 50,
     borderWidth: 1,
     borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 4,
-    backgroundColor: themeVariables.whiteColor,
+    borderRadius: 8,
+    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
     paddingHorizontal: 10,
     paddingVertical: 6,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
   },
   selectionChip: {
     flexDirection: 'row',

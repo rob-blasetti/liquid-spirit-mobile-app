@@ -1,11 +1,11 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HelperText, Title } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from 'liquid-spirit-styleguide/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../styles/theme';
+import FormHelperText from '../../components/forms/inputs/FormHelperText';
 import { UserContext } from '../../contexts/UserContext';
 import { createSession } from '../../services/SessionService';
 import { getMemberList } from '../../services/UserService';
@@ -239,37 +239,16 @@ const CreateSession = ({ navigation, route }) => {
     [params.activity, params.activityPreload, params.prefilledParticipants],
   );
 
-  const inputTheme = useMemo(
-    () => ({
-      roundness: 4,
-      colors: {
-        background: '#f9f9f9',
-        surface: '#f9f9f9',
-        primary: themeVariables.primaryColor,
-        text: themeVariables.blackColor,
-        placeholder: themeVariables.darkGreyColor || '#777',
-        outline: 'transparent',
-      },
-    }),
-    [],
-  );
   const baseInputProps = useMemo(
     () => ({
-      mode: 'flat',
-      theme: inputTheme,
-      outlineColor: 'transparent',
-      activeOutlineColor: 'transparent',
-      underlineColor: 'transparent',
-      activeUnderlineColor: 'transparent',
-      contentStyle: styles.inputContent,
-      style: styles.inputOutline,
+      placeholderTextColor: themeVariables.darkGreyColor || '#222',
     }),
-    [inputTheme],
+    [],
   );
   const styledInputProps = useMemo(
     () => ({
       ...baseInputProps,
-      style: [styles.inputOutline, styles.input],
+      style: styles.input,
     }),
     [baseInputProps],
   );
@@ -772,7 +751,7 @@ const CreateSession = ({ navigation, route }) => {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.progressHeader}>
-          <Title style={styles.heading}>Create Session</Title>
+          <Text style={styles.heading}>Create Session</Text>
           <Text style={styles.stepIndicator}>Step {step} of {TOTAL_STEPS}</Text>
         </View>
         <View style={styles.progressTrack}>
@@ -788,9 +767,9 @@ const CreateSession = ({ navigation, route }) => {
             ]}
           />
         </View>
-        <HelperText type="error" visible={!!errors.activity}>
+        <FormHelperText type="error" visible={!!errors.activity}>
           {errors.activity}
-        </HelperText>
+        </FormHelperText>
 
         <View style={styles.formCard}>
           {step === 1 && (
@@ -926,6 +905,8 @@ const styles = StyleSheet.create({
   heading: {
     marginBottom: 0,
     color: themeVariables.blackColor,
+    fontSize: 22,
+    fontWeight: '700',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -1010,14 +991,6 @@ const styles = StyleSheet.create({
   },
   multilineInput: {
     minHeight: 100,
-  },
-  inputContent: {
-    backgroundColor: '#f9f9f9',
-  },
-  inputOutline: {
-    borderRadius: 6,
-    borderWidth: 0,
-    borderColor: 'transparent',
   },
   inlineRow: {
     flexDirection: 'row',

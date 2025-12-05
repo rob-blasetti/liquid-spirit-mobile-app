@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { HelperText } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Tooltip from '../../../components/Tooltip';
 
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
 import themeVariables from '../../../styles/theme';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const ActivityTypeSection = ({
   value,
@@ -49,9 +49,9 @@ const ActivityTypeSection = ({
       textInputProps={styledInputProps}
       style={styles.activityTypeWrapper}
     />
-    <HelperText type="info" visible>
+    <FormHelperText type="info" visible>
       This helps participants know what to expect.
-    </HelperText>
+    </FormHelperText>
   </>
 );
 

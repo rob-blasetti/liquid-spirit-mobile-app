@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { Text, Title } from 'react-native-paper';
+import { View, TouchableOpacity, Text } from 'react-native';
 
 import FormTextInput from '../../../components/forms/inputs/FormTextInput';
 import VenueSelect from '../../../components/forms/inputs/VenueSelect';
@@ -15,13 +14,12 @@ const LocationSection = ({
   onChangeLocationMode,
   onChangeOnlineLink,
   onSelectVenue,
-  useVenueSelect = false,
   venueSelectProps = {},
   venuePlaceholder = 'Where will it be?',
   styles,
 }) => (
   <>
-    <Title style={styles.sectionLabel}>Location</Title>
+    <Text style={styles.sectionLabel}>Location</Text>
     <Row gap={themeVariables.spacing.s} style={styles.locationModeRow}>
       {[
         { key: 'inPerson', label: 'In Person' },
@@ -53,7 +51,7 @@ const LocationSection = ({
 
     {(form.locationMode === 'online' || form.locationMode === 'both') && (
       <>
-        <Title style={[styles.sectionLabel, styles.locationSubLabel]}>Online meeting</Title>
+        <Text style={[styles.sectionLabel, styles.locationSubLabel]}>Online meeting</Text>
         <FormTextInput
           inputProps={baseInputProps}
           label=""
@@ -69,7 +67,7 @@ const LocationSection = ({
 
     {(form.locationMode === 'inPerson' || form.locationMode === 'both') && (
       <>
-        <Title style={[styles.sectionLabel, styles.addressSectionLabel]}>In-person location</Title>
+        <Text style={[styles.sectionLabel, styles.addressSectionLabel]}>In-person location</Text>
         <VenueSelect
           {...venueSelectProps}
           value={form.venueId}

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text } from 'react-native';
-import { HelperText } from 'react-native-paper';
 
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const StudyCircleBookSection = ({
   value,
@@ -24,9 +24,9 @@ const StudyCircleBookSection = ({
       textInputProps={styledInputProps}
       style={styles.activityTypeWrapper}
     />
-    <HelperText type="info" visible={!error}>
+    <FormHelperText type="info" visible={!error}>
       Choose the Ruhi book this study circle will cover.
-    </HelperText>
+    </FormHelperText>
   </>
 );
 

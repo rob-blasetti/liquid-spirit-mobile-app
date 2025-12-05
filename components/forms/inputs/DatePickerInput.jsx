@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
-import { TextInput, HelperText, Title } from 'react-native-paper';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../../../styles/theme';
+import FormHelperText from './FormHelperText';
 
 const formatDate = (date) => {
   if (!(date instanceof Date)) return '';
@@ -33,15 +33,11 @@ const DatePickerInput = ({
   const [currentMonth, setCurrentMonth] = useState(value || new Date());
   const displayDate = useMemo(() => formatDate(value || new Date()), [value]);
   const cells = useMemo(() => getMonthMatrix(currentMonth), [currentMonth]);
-  const defaultBg = themeVariables.lightGreyColor || '#f3f3f3';
-  const outlineColor = 'transparent';
-  const activeOutlineColor = 'transparent';
-  const outlineStyleValue = typeof inputProps?.outlineStyle === 'string' ? inputProps.outlineStyle : 'none';
   const mergedStyle = [
+    styles.input,
     inputProps?.style,
-    { backgroundColor: defaultBg, borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
+    error && styles.inputError,
   ].filter(Boolean);
-  const mergedContentStyle = [inputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
 
   const goMonth = (delta) => {
     setCurrentMonth(prev => {
@@ -53,40 +49,23 @@ const DatePickerInput = ({
 
   return (
     <View style={style}>
-      {label ? <Title style={styles.label}>{label}</Title> : null}
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => setOpen(prev => !prev)}
+        style={mergedStyle}
       >
-        <TextInput
-          {...inputProps}
-          mode="flat"
-          value={displayDate}
-          editable={false}
-          pointerEvents="none"
-          style={mergedStyle}
-          contentStyle={mergedContentStyle}
-          outlineStyle={outlineStyleValue}
-          outlineColor={outlineColor}
-          activeOutlineColor={activeOutlineColor}
-          underlineColor="transparent"
-          activeUnderlineColor="transparent"
-          right={
-            <TextInput.Icon
-              icon={() => <Ionicons name="calendar-outline" size={20} color={themeVariables.primaryColor} />}
-              onPress={() => setOpen(prev => !prev)}
-            />
-          }
-        />
+        <Text style={[styles.inputText, !displayDate && styles.placeholder]}>
+          {displayDate || 'Select date'}
+        </Text>
+        <Ionicons name="calendar-outline" size={20} color={themeVariables.blackColor || '#000'} />
       </TouchableOpacity>
-      {helperText ? (
-        <HelperText type="info" visible>
-          {helperText}
-        </HelperText>
-      ) : null}
-      <HelperText type="error" visible={!!error}>
+      <FormHelperText type="info" visible={!!helperText}>
+        {helperText}
+      </FormHelperText>
+      <FormHelperText type="error" visible={!!error}>
         {error}
-      </HelperText>
+      </FormHelperText>
 
       {open && (
         <View style={styles.dropdown}>
@@ -94,11 +73,9 @@ const DatePickerInput = ({
             <TouchableOpacity onPress={() => goMonth(-1)} style={styles.monthNav}>
               <Ionicons name="chevron-back" size={20} color={themeVariables.blackColor} />
             </TouchableOpacity>
-            <TextInput
-              value={currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
-              editable={false}
-              style={styles.monthLabel}
-            />
+            <Text style={styles.monthLabel}>
+              {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+            </Text>
             <TouchableOpacity onPress={() => goMonth(1)} style={styles.monthNav}>
               <Ionicons name="chevron-forward" size={20} color={themeVariables.blackColor} />
             </TouchableOpacity>
@@ -157,6 +134,28 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+  },
+  input: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    borderWidth: 1,
+    borderColor: themeVariables.borderLightColor || '#e0e0e0',
+  },
+  inputError: {
+    borderColor: '#d32f2f',
+  },
+  inputText: {
+    color: themeVariables.blackColor,
+    flex: 1,
+    marginRight: 8,
+  },
+  placeholder: {
+    color: themeVariables.darkGreyColor || '#222',
   },
   dropdownHeader: {
     flexDirection: 'row',

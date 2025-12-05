@@ -4,7 +4,6 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  InteractionManager,
   TouchableOpacity,
   Alert,
   Text,
@@ -25,6 +24,15 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 import SkeletonPost from '../components/SkeletonPost';
+
+const scheduleIdleCallback = (callback) => {
+  const idle = typeof global?.requestIdleCallback === 'function'
+    ? global.requestIdleCallback
+    : (handler) => setTimeout(handler, 16);
+  return idle(callback);
+};
+
+const waitForIdle = () => new Promise(resolve => scheduleIdleCallback(resolve));
 
 const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const { token, isTokenExpired, refreshSession, user } = useContext(UserContext);
@@ -79,7 +87,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     const idx = data.findIndex(p => p._id === targetId);
     const ref = activeTab === 'explore' ? flatListExploreRef : flatListForYouRef;
     if (idx >= 0 && ref.current) {
-      InteractionManager.runAfterInteractions(() => {
+      waitForIdle().then(() => {
         // Delay to allow layout measurement
         setTimeout(() => {
           try {
@@ -107,8 +115,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
       const shouldSkeleton = (explorePosts?.length || 0) === 0;
       if (shouldSkeleton) setLoadingExplore(true);
       // Defer heavy state work until after initial interactions
-      await new Promise(resolve => InteractionManager.runAfterInteractions(resolve));
+      await waitForIdle();
       const exploreData = await fetchExploreFeed(token);
+      await waitForIdle();
       setExplorePosts(exploreData);
       if (shouldSkeleton) setLoadingExplore(false);
     } catch (error) {
@@ -127,8 +136,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     try {
       const shouldSkeleton = (forYouPosts?.length || 0) === 0;
       if (shouldSkeleton) setLoadingForYou(true);
-      await new Promise(resolve => InteractionManager.runAfterInteractions(resolve));
+      await waitForIdle();
       const forYouData = await fetchForYouFeed(communityId, token);
+      await waitForIdle();
       setForYouPosts(forYouData);
       if (shouldSkeleton) setLoadingForYou(false);
     } catch (error) {

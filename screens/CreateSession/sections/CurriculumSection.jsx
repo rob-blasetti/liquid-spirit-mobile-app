@@ -1,8 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
-import { HelperText, Title } from 'react-native-paper';
+import { View, Text } from 'react-native';
 
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const CurriculumSection = ({
   gradeOptions,
@@ -22,8 +22,8 @@ const CurriculumSection = ({
   styles,
 }) => (
   <View style={styles.section}>
-    <Title style={styles.sectionTitle}>Curriculum</Title>
-    <Title style={styles.sectionLabel}>Grade</Title>
+    <Text style={styles.sectionTitle}>Curriculum</Text>
+    <Text style={styles.sectionLabel}>Grade</Text>
     <DropdownInput
       value={selectedGrade}
       options={gradeOptions}
@@ -32,11 +32,11 @@ const CurriculumSection = ({
       textInputProps={{ style: styles.input }}
       error={gradeError}
     />
-    <HelperText type="info" visible>
+    <FormHelperText type="info" visible>
       Choose grade 1 or higher.
-    </HelperText>
+    </FormHelperText>
 
-    <Title style={styles.sectionLabel}>Set</Title>
+    <Text style={styles.sectionLabel}>Set</Text>
     <DropdownInput
       value={selectedSet}
       options={setOptions}
@@ -46,11 +46,11 @@ const CurriculumSection = ({
       textInputProps={{ style: styles.input }}
       error={setError}
     />
-    <HelperText type="error" visible={!selectedGrade && !!selectedSet}>
+    <FormHelperText type="error" visible={!selectedGrade && !!selectedSet}>
       Select a grade first.
-    </HelperText>
+    </FormHelperText>
 
-    <Title style={styles.sectionLabel}>Lesson</Title>
+    <Text style={styles.sectionLabel}>Lesson</Text>
     <DropdownInput
       value={selectedLesson}
       options={lessonOptions}
@@ -60,12 +60,12 @@ const CurriculumSection = ({
       textInputProps={{ style: styles.input }}
       error={lessonError || fetchError}
     />
-    <HelperText type="info" visible={!loading && !fetchError}>
+    <FormHelperText type="info" visible={!loading && !fetchError}>
       Sets and lessons filter after picking a grade.
-    </HelperText>
-    <HelperText type="error" visible={!!fetchError}>
+    </FormHelperText>
+    <FormHelperText type="error" visible={!!fetchError}>
       {fetchError}
-    </HelperText>
+    </FormHelperText>
   </View>
 );
 

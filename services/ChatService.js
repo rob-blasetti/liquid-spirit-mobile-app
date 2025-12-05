@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
 
-const CHAT_MESSAGES_BASE = '/api/chat/messages';
-const CHATS_BASE = '/api/chats';
+const CHATS_BASE = '/api/chat';
+const CHAT_MESSAGES_BASE = `${CHATS_BASE}/messages`;
 
 const buildQueryString = (params = {}) => {
   const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null);
@@ -294,7 +294,7 @@ export const createChat = (payload, options = {}) =>
   });
 
 export const fetchChatMessages = (chatId, params = {}, options = {}) =>
-  request(`/api/chat/${chatId}/messages`, {
+  request(`${CHATS_BASE}/${chatId}/messages`, {
     ...options,
     params,
   });

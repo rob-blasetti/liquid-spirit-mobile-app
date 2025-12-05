@@ -123,6 +123,7 @@ const ActivityCardBody = ({
             mapDisplayAddress={location.mapDisplayAddress}
             mapAddress={location.mapAddress}
             region={location.region}
+            hasRegion={location.hasRegion}
             openGoogleMaps={openGoogleMaps}
             resolvedOnlineLink={location.resolvedOnlineLink}
             styles={styles}

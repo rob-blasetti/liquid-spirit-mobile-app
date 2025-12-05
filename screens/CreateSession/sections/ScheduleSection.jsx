@@ -1,6 +1,5 @@
 import React from 'react';
 import { View } from 'react-native';
-import { HelperText } from 'react-native-paper';
 
 import DatePickerInput from '../../../components/forms/inputs/DatePickerInput';
 

@@ -1936,65 +1936,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-maps (1.26.19):
-    - react-native-maps/Maps (= 1.26.19)
-  - react-native-maps/Generated (1.26.19):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
+  - react-native-maps (2.0.0-beta.15):
     - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
-  - react-native-maps/Maps (1.26.19):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - react-native-maps/Generated
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
   - react-native-pager-view (6.9.1):
     - boost
     - DoubleConversion
@@ -3335,7 +3278,7 @@ SPEC CHECKSUMS:
   react-native-config: 2249b7e68644c86ea68358f5a0d746d1c648f900
   react-native-document-picker: d624d3d9bd9311da87f6f7b64aa44f69927d8543
   react-native-image-picker: b16541b587b275e81a12f9b82f215c5e9b0ccbf3
-  react-native-maps: cafe1c96d1d05b9b3789795be9bb6697a9bacebb
+  react-native-maps: b5cd8e934e9702b6b3242f838974bdf4e4e6d970
   react-native-pager-view: a0516effb17ca5120ac2113bfd21b91130ad5748
   react-native-safe-area-context: c00143b4823773bba23f2f19f85663ae89ceb460
   react-native-video: 7b821291837d8ba7b9d7574bfeb0cd651e910141

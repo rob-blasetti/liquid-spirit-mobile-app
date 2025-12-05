@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
-import { HelperText, Title } from 'react-native-paper';
+import { View, Text } from 'react-native';
 
 import DropdownInput from '../../../components/forms/inputs/DropdownInput';
 import { fetchChildrensCurriculum } from '../../../services/CurriculumService';
+import FormHelperText from '../../../components/forms/inputs/FormHelperText';
 
 const GRADE_OPTIONS = ['Preschool', '1', '2', '3', '4', '5', '6'].map((grade) => ({
   value: grade,
@@ -130,8 +130,8 @@ const ChildrensCurriculumSection = ({
 
   return (
     <View style={styles.section}>
-      <Title style={styles.sectionTitle}>Curriculum</Title>
-      <Title style={styles.sectionLabel}>Grade</Title>
+      <Text style={styles.sectionTitle}>Curriculum</Text>
+      <Text style={styles.sectionLabel}>Grade</Text>
       <DropdownInput
         value={grade}
         options={GRADE_OPTIONS}
@@ -142,15 +142,15 @@ const ChildrensCurriculumSection = ({
         textInputProps={{ style: styles.input }}
         error={gradeError}
       />
-      <HelperText type="info" visible>
+      <FormHelperText type="info" visible>
         Preschool hides curriculum; Grade 1 uses lessons without sets.
-      </HelperText>
+      </FormHelperText>
 
       {!isPreschool && (
         <>
           {!isGradeOneSchema && (
             <>
-              <Title style={styles.sectionLabel}>Set</Title>
+              <Text style={styles.sectionLabel}>Set</Text>
               <DropdownInput
                 value={setCode}
                 options={setOptions}
@@ -182,13 +182,13 @@ const ChildrensCurriculumSection = ({
               }
             }}
           />
-              <HelperText type="error" visible={!grade && !!gradeWarning}>
+              <FormHelperText type="error" visible={!grade && !!gradeWarning}>
                 {gradeWarning}
-              </HelperText>
+              </FormHelperText>
             </>
           )}
 
-          <Title style={styles.sectionLabel}>Lesson</Title>
+          <Text style={styles.sectionLabel}>Lesson</Text>
           <DropdownInput
             value={lessonNumber}
             options={lessonOptions.map((lesson) => {
@@ -237,15 +237,15 @@ const ChildrensCurriculumSection = ({
               }
             }}
           />
-          <HelperText type="info" visible={!loading && !fetchError}>
+          <FormHelperText type="info" visible={!loading && !fetchError}>
             {lessonInfoMessage || ' '}
-          </HelperText>
-          <HelperText type="error" visible={!!fetchError}>
+          </FormHelperText>
+          <FormHelperText type="error" visible={!!fetchError}>
             {fetchError}
-          </HelperText>
-          <HelperText type="error" visible={!setCode && !isGradeOneSchema && !!setWarning}>
+          </FormHelperText>
+          <FormHelperText type="error" visible={!setCode && !isGradeOneSchema && !!setWarning}>
             {setWarning}
-          </HelperText>
+          </FormHelperText>
         </>
       )}
     </View>
