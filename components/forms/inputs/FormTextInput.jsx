@@ -18,7 +18,9 @@ const FormTextInput = ({
   const outlineColor = inputProps?.outlineColor ?? 'transparent';
   const activeOutlineColor = inputProps?.activeOutlineColor ?? 'transparent';
   const underlineColor = inputProps?.underlineColor ?? 'transparent';
+  const outlineStyleValue = typeof inputProps?.outlineStyle === 'string' ? inputProps.outlineStyle : 'none';
   const mergedStyle = [
+    { borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
     inputProps?.style,
     style,
     { backgroundColor: defaultBg },
@@ -26,10 +28,6 @@ const FormTextInput = ({
   const mergedContentStyle = [
     inputProps?.contentStyle,
     { backgroundColor: defaultBg },
-  ].filter(Boolean);
-  const mergedOutlineStyle = [
-    inputProps?.outlineStyle,
-    { borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
   ].filter(Boolean);
 
   return (
@@ -40,7 +38,7 @@ const FormTextInput = ({
         error={hasError}
         style={mergedStyle}
         contentStyle={mergedContentStyle}
-        outlineStyle={mergedOutlineStyle}
+        outlineStyle={outlineStyleValue}
         mode={inputProps?.mode || 'flat'}
         underlineColor={underlineColor}
         activeUnderlineColor={underlineColor}

@@ -36,15 +36,12 @@ const DatePickerInput = ({
   const defaultBg = themeVariables.lightGreyColor || '#f3f3f3';
   const outlineColor = 'transparent';
   const activeOutlineColor = 'transparent';
+  const outlineStyleValue = typeof inputProps?.outlineStyle === 'string' ? inputProps.outlineStyle : 'none';
   const mergedStyle = [
     inputProps?.style,
-    { backgroundColor: defaultBg },
+    { backgroundColor: defaultBg, borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
   ].filter(Boolean);
   const mergedContentStyle = [inputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
-  const mergedOutlineStyle = [
-    { borderRadius: 6, borderWidth: 0, borderColor: outlineColor },
-    inputProps?.outlineStyle,
-  ].filter(Boolean);
 
   const goMonth = (delta) => {
     setCurrentMonth(prev => {
@@ -69,7 +66,7 @@ const DatePickerInput = ({
           pointerEvents="none"
           style={mergedStyle}
           contentStyle={mergedContentStyle}
-          outlineStyle={mergedOutlineStyle}
+          outlineStyle={outlineStyleValue}
           outlineColor={outlineColor}
           activeOutlineColor={activeOutlineColor}
           underlineColor="transparent"

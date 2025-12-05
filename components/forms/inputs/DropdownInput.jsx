@@ -56,14 +56,15 @@ const DropdownInput = ({
   const outlineColor = restTextInputProps?.outlineColor || 'transparent';
   const activeOutlineColor = restTextInputProps?.activeOutlineColor || 'transparent';
   const underlineColor = restTextInputProps?.underlineColor || 'transparent';
+  const outlineStyleValue =
+    typeof restTextInputProps?.outlineStyle === 'string' ? restTextInputProps.outlineStyle : 'none';
   const mergedStyle = [
     styles.input,
     multilineDisplay && styles.inputMultiline,
     inputStyle,
-    { backgroundColor: defaultBg },
+    { backgroundColor: defaultBg, borderRadius: 6, borderWidth: 0, borderColor: defaultBorder },
   ].filter(Boolean);
   const mergedContentStyle = [restTextInputProps?.contentStyle, { backgroundColor: defaultBg }].filter(Boolean);
-  const mergedOutlineStyle = [restTextInputProps?.outlineStyle, { borderRadius: 6, borderWidth: 0, borderColor: defaultBorder }].filter(Boolean);
 
   const toggleOpen = useCallback(() => {
     if (disabled) {
@@ -119,7 +120,7 @@ const DropdownInput = ({
           numberOfLines={multilineDisplay ? 2 : 1}
           style={mergedStyle}
           contentStyle={mergedContentStyle}
-          outlineStyle={mergedOutlineStyle}
+          outlineStyle={outlineStyleValue}
           outlineColor={outlineColor}
           activeOutlineColor={activeOutlineColor}
           underlineColor={underlineColor}

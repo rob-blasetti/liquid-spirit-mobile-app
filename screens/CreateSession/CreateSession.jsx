@@ -262,14 +262,14 @@ const CreateSession = ({ navigation, route }) => {
       underlineColor: 'transparent',
       activeUnderlineColor: 'transparent',
       contentStyle: styles.inputContent,
-      outlineStyle: styles.inputOutline,
+      style: styles.inputOutline,
     }),
     [inputTheme],
   );
   const styledInputProps = useMemo(
     () => ({
       ...baseInputProps,
-      style: styles.input,
+      style: [styles.inputOutline, styles.input],
     }),
     [baseInputProps],
   );
