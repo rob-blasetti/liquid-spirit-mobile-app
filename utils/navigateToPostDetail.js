@@ -28,6 +28,7 @@ export const navigateToPostDetail = async ({
   imageAspect,
   token,
   isTokenExpired,
+  stayInCurrentStack = false,
 }) => {
   if (!navigation) return;
 
@@ -59,12 +60,22 @@ export const navigateToPostDetail = async ({
     }
   }
 
-  const { usedFallback, targetNavigation } = navigateWithinMainTabs({
-    navigation,
-    tab: 'Feed',
-    screen: 'PostDetailCard',
-    params: baseParams,
-  });
+  let targetNavigation = null;
+  let usedFallback = false;
+
+  if (stayInCurrentStack) {
+    targetNavigation = navigation;
+    navigation.navigate('PostDetailCard', baseParams);
+  } else {
+    const navResult = navigateWithinMainTabs({
+      navigation,
+      tab: 'Feed',
+      screen: 'PostDetailCard',
+      params: baseParams,
+    });
+    usedFallback = navResult.usedFallback;
+    targetNavigation = navResult.targetNavigation;
+  }
 
   const resolveAspectAsync = () => {
     if (aspect || !mediaUrl || !targetNavigation) return;

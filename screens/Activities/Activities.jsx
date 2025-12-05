@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext, useMemo } from 'react';
-import SlideBanner from '../components/SlideBanner';
 import {
   View,
   Text,
@@ -11,16 +10,79 @@ import {
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { UserContext } from '../contexts/UserContext';
+import { UserContext } from '../../contexts/UserContext';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import themeVariables from '../styles/theme';
-import { getNextSessionDate } from '../utils/activityDate';
-import resolveImageSource from '../utils/imageSource';
-import usePrefetchImages from '../hooks/usePrefetchImages';
-import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import themeVariables from '../../styles/theme';
+import resolveImageSource from '../../utils/imageSource';
+import usePrefetchImages from '../../hooks/usePrefetchImages';
+import { navigateToActivityDetail } from '../../utils/navigateToActivityDetail';
+import useNextSessionVenue from './hooks/useNextSessionVenue';
+import SlideBanner from '../../components/SlideBanner';
+import { getNextSessionDate } from '../../utils/activityDate';
 
-const TAB_BAR_HEIGHT = 80;
+const ActivityCard = ({ activity, navigation }) => {
+  const { nextSessionDate, venueLabel, isOnline } = useNextSessionVenue(activity);
+
+  let sessionLabel = 'TBA';
+  if (nextSessionDate) {
+    const datePart = nextSessionDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+    const timePart = nextSessionDate.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+    sessionLabel = `${datePart} | ${timePart}`;
+  }
+
+  return (
+    <TouchableOpacity
+      style={styles.activityCard}
+      onPress={() =>
+        navigateToActivityDetail({
+          navigation,
+          activity,
+        })
+      }
+    >
+      <View style={styles.imageContainer}>
+        <FastImage
+          source={resolveImageSource(activity.imageUrl || 'https://via.placeholder.com/400', { priority: 'high' })}
+          style={styles.activityImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {activity.activityType?.name && (
+          <View style={styles.activityTag}>
+            <Text style={styles.activityTagText}>{activity.activityType.name}</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.cardContent}>
+        <Text style={styles.activityTitle}>{activity.title}</Text>
+
+        <View style={styles.infoRow}>
+          <Ionicons name="calendar-outline" size={16} color="#666" />
+          <Text style={styles.activityDetails}>{sessionLabel}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Ionicons
+            name={isOnline ? 'videocam-outline' : 'location-outline'}
+            size={16}
+            color="#666"
+          />
+          <Text style={styles.activityAddress}>{venueLabel}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const Activities = ({ navigation, route }) => {
   const { bottom: bottomInset } = useSafeAreaInsets();
@@ -41,7 +103,6 @@ const Activities = ({ navigation, route }) => {
   const [selectedType, setSelectedType] = useState('All');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const slideAnim = useState(new Animated.Value(0))[0];
-  console.log(userActivities);
 
   const activityTypes = [
     { name: "Children's Class", icon: 'accessibility-outline' },
@@ -109,79 +170,12 @@ const Activities = ({ navigation, route }) => {
 
   usePrefetchImages(prefetchTargets, { priority: 'high' });
 
-  const bottomContentInset = bottomInset + TAB_BAR_HEIGHT;
-
-  const renderActivity = ({ item }) => {
-    const nextSession = getNextSessionDate(item);
-    let sessionLabel = 'TBA';
-    if (nextSession) {
-      const datePart = nextSession.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
-      const timePart = nextSession.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      });
-      sessionLabel = `${datePart} | ${timePart}`;
-    }
-
-    return (
-      <TouchableOpacity
-        style={styles.activityCard}
-        onPress={() =>
-          navigateToActivityDetail({
-            navigation,
-            activity: item,
-          })
-        }
-      >
-        <View style={styles.imageContainer}>
-          <FastImage
-            source={resolveImageSource(item.imageUrl || 'https://via.placeholder.com/400', { priority: 'high' })}
-            style={styles.activityImage}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-          {item.activityType?.name && (
-            <View style={styles.activityTag}>
-              <Text style={styles.activityTagText}>{item.activityType.name}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.cardContent}>
-          <Text style={styles.activityTitle}>{item.title}</Text>
-
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={16} color="#666" />
-            <Text style={styles.activityDetails}>{sessionLabel}</Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Ionicons
-              name={item.onlineLink ? 'videocam-outline' : 'location-outline'}
-              size={16}
-              color="#666"
-            />
-            <Text style={styles.activityAddress}>
-              {item.onlineLink
-                ? 'Online'
-                : `${item.address?.streetAddress || 'No Address'}, ${item.address?.suburb || 'No Suburb'}`}
-            </Text>
-          </View>
-
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const bottomPadding = Math.max(bottomInset, 16);
 
   return (
     <>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
-      <View style={[styles.container, { paddingBottom: bottomContentInset }]}>
+      <View style={styles.container}>
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
           <Ionicons name="filter" size={16} color="#fff" />
@@ -230,8 +224,10 @@ const Activities = ({ navigation, route }) => {
           style={styles.flatListContainer}
           data={filteredActivities}
           keyExtractor={(item) => item._id.toString()}
-          renderItem={renderActivity}
-          contentContainerStyle={{ paddingBottom: bottomContentInset }}
+          renderItem={({ item }) => (
+            <ActivityCard activity={item} navigation={navigation} />
+          )}
+          contentContainerStyle={[styles.listContentContainer, { paddingBottom: bottomPadding }]}
         />
       ) : (
         !drawerOpen && <Text style={styles.noActivities}>No matching activities.</Text>
@@ -331,6 +327,9 @@ const styles = StyleSheet.create({
   },
   selectedFilterText: {
     color: '#fff', // White text for selected filters
+  },
+  listContentContainer: {
+    paddingBottom: 16,
   },
   activityCard: {
     backgroundColor: '#fff',

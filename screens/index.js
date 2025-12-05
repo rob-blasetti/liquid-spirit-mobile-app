@@ -1,5 +1,5 @@
 // Consolidated exports for screens
-export { default as Activities } from './Activities';
+export { default as Activities } from './Activities/Activities';
 export { default as ActivityDetailCard } from './ActivityDetailCard';
 export { default as ChangePassword } from './ChangePassword';
 export { default as CreateActivity } from './CreateActivity/CreateActivity';
@@ -9,7 +9,7 @@ export { default as Discover } from './Discover/Discover';
 export { default as EditProfile } from './EditProfile';
 export { default as Eula } from './Eula';
 export { default as EventDetailCard } from './EventDetailCard';
-export { default as Events } from './Events';
+export { default as Events } from './Events/Events';
 export { default as ForgotBahaiId } from './ForgotBahaiId';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as Home } from './Home';

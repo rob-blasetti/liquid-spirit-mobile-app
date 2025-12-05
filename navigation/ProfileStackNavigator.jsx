@@ -5,13 +5,14 @@ import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
 import Settings from '../screens/Settings';
 import NotificationSettings from '../screens/NotificationSettings';
-import EventsScreen from '../screens/Events';
-import ActivitiesScreen from '../screens/Activities';
+import EventsScreen from '../screens/Events/Events';
+import ActivitiesScreen from '../screens/Activities/Activities';
 import EditProfileScreen from '../screens/EditProfile';
 import EventDetailCard from '../screens/EventDetailCard';
 import ActivityDetailCard from '../screens/ActivityDetailCard';
 import PostDetailCard from '../screens/PostDetailCard';
 import Badges from '../screens/Badges';
+import Security from '../screens/Security';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 // import ChangePasswordScreen from '../screens/ChangePassword';
 
@@ -81,6 +82,32 @@ const ProfileStackNavigator = () => {
         })}
       />
       <Stack.Screen
+        name="Security"
+        component={Security}
+        options={({ navigation }) => ({
+          title: 'Security',
+          headerShown: true,
+          headerShadowVisible: true,
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
+        })}
+      />
+      <Stack.Screen
         name="NotificationSettings"
         component={NotificationSettings}
         options={({ navigation }) => ({
@@ -126,7 +153,7 @@ const ProfileStackNavigator = () => {
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Personal Information',
           headerShown: true,
           headerShadowVisible: true,
@@ -147,7 +174,7 @@ const ProfileStackNavigator = () => {
                 forceFallback
               />
             ) : null,
-        }}
+        })}
       />
       {/* <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'ChangePassword', headerShown: false }} /> */}
       <Stack.Screen

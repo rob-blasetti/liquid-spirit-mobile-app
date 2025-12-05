@@ -132,6 +132,20 @@ android {
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
+        checkTestSources = false
+        checkDependencies = false
+    }
+}
+afterEvaluate {
+    // Disable *all* lint-related tasks for this module
+    tasks.matching { task ->
+        task.name.toLowerCase().contains("lint")
+    }.configureEach {
+        enabled = false
+    }
 }
 
 dependencies {

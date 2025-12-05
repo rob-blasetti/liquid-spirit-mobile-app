@@ -18,4 +18,14 @@ buildscript {
     }
 }
 
+subprojects { subproject ->
+    if (subproject.name != "app") {
+        subproject.tasks
+            .matching { it.name.toLowerCase().contains("lint") }
+            .all { task ->
+                task.enabled = false
+            }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"

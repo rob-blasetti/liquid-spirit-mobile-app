@@ -2,10 +2,11 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import themeVariables from '../styles/theme';
 import Home from '../screens/Home';
-import Events from '../screens/Events';
-import Activities from '../screens/Activities';
+import Events from '../screens/Events/Events';
+import Activities from '../screens/Activities/Activities';
 import EventDetailCard from '../screens/EventDetailCard';
 import ActivityDetailCard from '../screens/ActivityDetailCard';
+import PostDetailCard from '../screens/DetailCard/Post/DetailCard';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 
 const Stack = createStackNavigator();
@@ -53,6 +54,11 @@ const HomeStackNavigator = ({ homeOverview }) => (
     <Stack.Screen
       name="ActivityDetailCard"
       component={ActivityDetailCard}
+      options={detailScreenOptions}
+    />
+    <Stack.Screen
+      name="PostDetailCard"
+      component={PostDetailCard}
       options={detailScreenOptions}
     />
   </Stack.Navigator>

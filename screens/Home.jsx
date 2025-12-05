@@ -5,6 +5,7 @@ import {
   View,
   TouchableOpacity,
   Animated,
+  FlatList,
   Dimensions,
   Linking,
   ActivityIndicator,
@@ -14,6 +15,7 @@ import {
 } from 'react-native';
 import { BlurView } from '@react-native-community/blur';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
@@ -29,9 +31,11 @@ import SlideBanner from '../components/SlideBanner';
 import { getEffectiveNextDate } from '../utils/activityDate';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
+import resolveImageSource from '../utils/imageSource';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -42,8 +46,11 @@ const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 const BANNER_CONTENT_OFFSET = 60;
-const MIN_BANNER_HEIGHT = 160;
+const MIN_BANNER_HEIGHT = 100;
 const BANNER_PULL_EXPANSION = 120;
+const RECENT_CARD_WIDTH = SCREEN_WIDTH * 0.72;
+const RECENT_CARD_GAP = 12;
+const RECENT_CARD_HEIGHT = 180;
 
 const formatGroupTime = (timeStr) => {
   if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
@@ -202,6 +209,28 @@ const Home = ({ navigation, homeOverview, route }) => {
     animateTabIndicator(activeTab);
   }, [activeTab, animateTabIndicator]);
 
+  const recentPosts = useMemo(() => {
+    const overviewPosts = Array.isArray(homeOverview?.posts) ? homeOverview.posts : [];
+    const fallbackPosts = Array.isArray(userPosts) ? userPosts : [];
+    const source = overviewPosts.length > 0 ? overviewPosts : fallbackPosts;
+    return source.slice(0, 6);
+  }, [homeOverview?.posts, userPosts]);
+
+  const handleRecentPostPress = useCallback(
+    (post) => {
+      if (!post) return;
+      navigateToPostDetail({
+        navigation,
+        post,
+        postId: post._id,
+        token,
+        isTokenExpired,
+        stayInCurrentStack: true,
+      });
+    },
+    [navigation, token, isTokenExpired],
+  );
+
 
   // Removed refresh-on-focus to avoid redundant session refreshes; centralized elsewhere
   // Fallback redirect to Login if loading takes too long
@@ -310,19 +339,8 @@ const Home = ({ navigation, homeOverview, route }) => {
         {isFocused && (
           <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
         )}
-        <Animated.ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollView}
-          scrollEventThrottle={16}
-          bounces
-          alwaysBounceVertical
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: false }
-          )}
-        >
-        {/* Banner Section */}
-        <View style={styles.bannerShadow}>
+        {/* Banner sits above scroll content and shrinks on scroll */}
+        <Animated.View style={[styles.bannerShadow, { height: bannerHeight }]} pointerEvents="box-none">
           <ImageBanner
             topInset={statusBarHeight}
             height={bannerHeight}
@@ -363,8 +381,18 @@ const Home = ({ navigation, homeOverview, route }) => {
               })()}
             </View>
           </ImageBanner>
-        </View>
-
+        </Animated.View>
+        <Animated.ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.scrollView, { paddingTop: MIN_BANNER_HEIGHT }]}
+          scrollEventThrottle={16}
+          bounces
+          alwaysBounceVertical
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: false }
+          )}
+        >
         <Text style={styles.heading}>{'Featured'}</Text>
         <View style={styles.tabContainer}>
           <Animated.View
@@ -751,6 +779,46 @@ const Home = ({ navigation, homeOverview, route }) => {
             <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
           </TouchableOpacity> */}
         </View>
+        {recentPosts.length > 0 && (
+          <View style={styles.recentPostsSection}>
+            <Text style={[styles.heading, styles.recentHeading]}>Recent Posts</Text>
+            <FlatList
+              data={recentPosts}
+              keyExtractor={(item, index) => item?._id?.toString?.() || `recent-${index}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={RECENT_CARD_WIDTH + RECENT_CARD_GAP}
+              snapToAlignment="start"
+              decelerationRate="fast"
+              contentContainerStyle={styles.recentListContent}
+              ItemSeparatorComponent={() => <View style={{ width: RECENT_CARD_GAP }} />}
+              renderItem={({ item }) => {
+                const imageSource = resolveImageSource(item?.media?.[0], {
+                  priority: 'normal',
+                  fallback: '/img/events/Event_Placeholder.png',
+                });
+                return (
+                  <TouchableOpacity
+                    style={styles.recentCard}
+                    onPress={() => handleRecentPostPress(item)}
+                    activeOpacity={0.9}
+                  >
+                    <FastImage
+                      source={imageSource}
+                      style={styles.recentImage}
+                      resizeMode={FastImage.resizeMode.cover}
+                    />
+                    <View style={styles.recentOverlay}>
+                      <Text style={styles.recentTitle} numberOfLines={2} ellipsizeMode="tail">
+                        {item?.content || 'View Post'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+        )}
       </Animated.ScrollView>
       {/* Local Spiritual Assembly Members Modal: members loaded from CommunityContext */}
       <LocalAssemblyModal
@@ -970,7 +1038,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 20,
-    marginBottom: 10,
+    marginBottom: 0,
     // align tiles at top of grid rows
     alignItems: 'flex-start',
   },
@@ -1180,6 +1248,47 @@ const styles = StyleSheet.create({
   },
   createIcon: {
     marginRight: 8,
+  },
+  recentPostsSection: {
+    marginTop: 6,
+    paddingBottom: 20,
+  },
+  recentHeading: {
+    marginBottom: 12,
+  },
+  recentListContent: {
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    paddingBottom: 6,
+  },
+  recentCard: {
+    width: RECENT_CARD_WIDTH,
+    height: RECENT_CARD_HEIGHT,
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: themeVariables.whiteColor,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  recentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  recentOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 12,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  recentTitle: {
+    color: themeVariables.whiteColor,
+    fontSize: 14,
+    fontWeight: '600',
   },
   // Posts Section
   postsList: {

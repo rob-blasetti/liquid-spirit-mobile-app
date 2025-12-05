@@ -35,18 +35,18 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../../../styles/theme';
 import { fetchEventDetails, joinEvent, addEventMaterials, addEventHostRequest, addEventHost } from '../../../services/EventService';
 import { getMemberList } from '../../../services/UserService';
-import DocumentPicker from 'react-native-document-picker';
+import { DocumentPicker, types as documentTypes } from '@react-native-documents/picker';
 // Allowed document types for materials
 const allowedMaterialTypes = [
-  DocumentPicker.types.pdf,
-  DocumentPicker.types.doc,
-  DocumentPicker.types.docx,
-  DocumentPicker.types.xls,
-  DocumentPicker.types.xlsx,
-  DocumentPicker.types.ppt,
-  DocumentPicker.types.pptx,
-  DocumentPicker.types.csv,
-  DocumentPicker.types.plainText,
+  documentTypes.pdf,
+  documentTypes.doc,
+  documentTypes.docx,
+  documentTypes.xls,
+  documentTypes.xlsx,
+  documentTypes.ppt,
+  documentTypes.pptx,
+  documentTypes.csv,
+  documentTypes.plainText,
 ];
 import resolveImageSource from '../../../utils/imageSource';
 import UserBadge from '../../../components/UserBadge';
@@ -509,18 +509,28 @@ const EventCardBody = ({
     // clear previous error
     setMaterialError(null);
     try {
-      const res = await DocumentPicker.pickSingle({ type: allowedMaterialTypes });
+      const results = await DocumentPicker.pick({
+        type: allowedMaterialTypes,
+        allowMultiSelection: false,
+        copyTo: 'cachesDirectory',
+      });
+      const res = Array.isArray(results) ? results[0] : results;
+      if (!res) {
+        setMaterialError('No document selected.');
+        return;
+      }
       // auto-fill title from file name (without extension)
       let baseName = res.name || res.filename || '';
-      if (!baseName && res.uri) {
-        const parts = res.uri.split('/');
+      const uri = res.uri || res.fileCopyUri || '';
+      if (!baseName && uri) {
+        const parts = uri.split('/');
         baseName = decodeURIComponent(parts[parts.length - 1] || '');
       }
       if (baseName.includes('.')) {
         baseName = baseName.substring(0, baseName.lastIndexOf('.'));
       }
       setNewMaterialTitle(baseName);
-      setNewMaterialDoc(res);
+      setNewMaterialDoc({ ...res, uri });
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         // user cancelled, do nothing

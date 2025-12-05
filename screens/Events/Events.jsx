@@ -1,5 +1,4 @@
 import React, { useState, useContext, useRef, useEffect, useCallback, useMemo } from 'react';
-import SlideBanner from '../components/SlideBanner';
 import {
   View,
   Text,
@@ -13,14 +12,53 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // navigation prop is provided by the navigator, no need for useNavigation()
 import FastImage from 'react-native-fast-image';
-import themeVariables from '../styles/theme';
+import themeVariables from '../../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { UserContext } from '../contexts/UserContext';
-import { navigateToEventDetail } from '../utils/navigateToEventDetail';
-import resolveImageSource from '../utils/imageSource';
-import usePrefetchImages from '../hooks/usePrefetchImages';
+import { UserContext } from '../../contexts/UserContext';
+import { navigateToEventDetail } from '../../utils/navigateToEventDetail';
+import resolveImageSource from '../../utils/imageSource';
+import usePrefetchImages from '../../hooks/usePrefetchImages';
+import useEventVenue from './hooks/useEventVenue';
+import SlideBanner from '../../components/SlideBanner';
 
-const TAB_BAR_HEIGHT = 80;
+const EventCard = ({ event, onPress, formatDate }) => {
+  const { venueLabel, isOnline } = useEventVenue(event);
+  const imageSource = resolveImageSource(event.imageUrl, {
+    priority: 'high',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
+
+  return (
+    <TouchableOpacity
+      style={styles.eventCard}
+      onPress={() => onPress(event)}
+    >
+      <View style={styles.imageContainer}>
+        <FastImage
+          source={imageSource}
+          style={styles.eventImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+        {event.eventType && (
+          <View style={styles.eventTag}>
+            <Text style={styles.eventTagText}>{event.eventType}</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.cardContent}>
+        <Text style={styles.eventTitle}>{event.title || 'No Title Available'}</Text>
+        <View style={styles.infoRow}>
+          <Ionicons name="calendar-outline" size={14} color="#666" />
+          <Text style={styles.eventDate}>{formatDate(event.date, event.startTime)}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Ionicons name={isOnline ? 'videocam-outline' : 'location-outline'} size={16} color="#666" />
+          <Text style={styles.eventAddress}>{venueLabel}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const Events = ({ navigation, route }) => {
   const { bottom: bottomInset } = useSafeAreaInsets();
@@ -113,51 +151,13 @@ const Events = ({ navigation, route }) => {
 
   usePrefetchImages(prefetchTargets, { priority: 'high' });
 
-  const bottomContentInset = bottomInset + TAB_BAR_HEIGHT;
-
-  const RenderEvent = ({ item }) => {
-    const imageSource = resolveImageSource(item.imageUrl, {
-      priority: 'high',
-      fallback: '/img/events/Event_Placeholder.png',
-    });
-
-    return (
-      <TouchableOpacity
-        style={styles.eventCard}
-        onPress={() => handleEventPress(item)}
-      >
-        <View style={styles.imageContainer}>
-          <FastImage
-            source={imageSource}
-            style={styles.eventImage}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-          {item.eventType && (
-            <View style={styles.eventTag}>
-              <Text style={styles.eventTagText}>{item.eventType}</Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.cardContent}>
-          <Text style={styles.eventTitle}>{item.title || 'No Title Available'}</Text>
-          <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={14} color="#666" />
-            <Text style={styles.eventDate}>{formatDate(item.date, item.startTime)}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Ionicons name="location-outline" size={16} color="#666" />
-            <Text style={styles.eventAddress}>{item.venue || 'No Address, No City'}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  const bottomPadding = Math.max(bottomInset, 16);
 
   // Filter events if an event type is selected; otherwise show all.
   return (
     <>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
-      <View style={[styles.container, { paddingBottom: bottomContentInset }]}>
+      <View style={styles.container}>
       {/* Control Bar with Filter & Sort */}
       <View style={styles.controlContainer}>
         <TouchableOpacity style={styles.buttonBase} onPress={toggleDrawer}>
@@ -268,8 +268,14 @@ const Events = ({ navigation, route }) => {
         <FlatList
           data={filteredEvents}
           keyExtractor={(item) => item._id.toString()}
-          renderItem={RenderEvent}
-          contentContainerStyle={{ paddingBottom: bottomContentInset }}
+          renderItem={({ item }) => (
+            <EventCard
+              event={item}
+              onPress={handleEventPress}
+              formatDate={formatDate}
+            />
+          )}
+          contentContainerStyle={[styles.listContentContainer, { paddingBottom: bottomPadding }]}
         />
       ) : (
         <Text style={styles.noEvents}>No upcoming events.</Text>
@@ -373,6 +379,9 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: 20,
+  },
+  listContentContainer: {
+    paddingBottom: 16,
   },
   eventCard: {
     backgroundColor: '#fff',
