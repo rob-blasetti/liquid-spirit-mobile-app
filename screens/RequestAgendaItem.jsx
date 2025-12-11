@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { createAgendaItem } from '../services/AgendaItemService';
 import { UserContext } from '../contexts/UserContext';
-import { CommunityContext } from '../contexts/CommunityContext';
 import themeVariables from '../styles/theme';
 import { Button } from 'liquid-spirit-styleguide/native';
 import TitleSection from './CreateActivity/sections/TitleSection';
@@ -18,7 +17,6 @@ import DescriptionSection from './CreateActivity/sections/DescriptionSection';
 
 export default function RequestAgendaItem({ navigation, route }) {
   const { token } = useContext(UserContext);
-  const { communityId } = useContext(CommunityContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState({});
@@ -47,14 +45,12 @@ export default function RequestAgendaItem({ navigation, route }) {
     try {
       setLoading(true);
       console.log('[RequestAgendaItem] Sending', {
-        communityId,
         hasToken: Boolean(token),
         title,
         descriptionLength: description?.length || 0,
       });
       await createAgendaItem({
         token,
-        communityId,
         title,
         description,
       });
