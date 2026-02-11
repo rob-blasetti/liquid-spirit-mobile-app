@@ -769,8 +769,10 @@ const CreateSession = ({ navigation, route }) => {
       if (!includeAddress || (payload.address && Object.keys(payload.address).length === 0)) {
         delete payload.address;
       }
-      // Only send online link when not providing a venue, so backend can create an Online venue instead of storing raw link
-      if (form.locationMode !== 'inPerson' && !payload.venues?.length) {
+      // Online venue support:
+      // - online/both: send onlineLink (backend will create/fetch an Online venue and include it)
+      // - inPerson: omit
+      if (form.locationMode === 'online' || form.locationMode === 'both') {
         payload.onlineLink = form.onlineLink;
       }
       console.log('[CreateSession] submitting payload', {
