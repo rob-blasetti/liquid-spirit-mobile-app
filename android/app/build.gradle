@@ -97,7 +97,7 @@ android {
         applicationId "com.liquid_spirit_mobile_app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
+        versionCode 17
         versionName "2.0.1"
 
         // Force 64-bit only. This removes 32-bit/x86 native libs from the AAB,
