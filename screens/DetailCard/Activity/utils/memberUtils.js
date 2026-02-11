@@ -15,22 +15,34 @@ export const resolveEntryId = (entry) => {
     const value = String(entry).trim();
     return value.length ? value : '';
   }
+
+  // Prefer a string refId when present (common backend shape: { type, refId: '<realId>', _id: '<wrapperId>' })
+  if (typeof entry.refId === 'string' || typeof entry.refId === 'number') {
+    const value = String(entry.refId).trim();
+    if (value.length) return value;
+  }
+  if (typeof entry.refID === 'string' || typeof entry.refID === 'number') {
+    const value = String(entry.refID).trim();
+    if (value.length) return value;
+  }
+
+  if (entry.refId && typeof entry.refId === 'object' && (entry.refId._id || entry.refId.id)) {
+    return String(entry.refId._id || entry.refId.id);
+  }
+  if (entry.refID && typeof entry.refID === 'object' && (entry.refID._id || entry.refID.id)) {
+    return String(entry.refID._id || entry.refID.id);
+  }
+
   const details = resolveEntryDetails(entry);
   if (details?._id || details?.id) {
     return String(details._id || details.id);
   }
-  if (entry.refId) {
-    if (typeof entry.refId === 'string' || typeof entry.refId === 'number') {
-      const value = String(entry.refId).trim();
-      if (value.length) return value;
-    }
-    if (entry.refId && typeof entry.refId === 'object' && (entry.refId._id || entry.refId.id)) {
-      return String(entry.refId._id || entry.refId.id);
-    }
-  }
+
   if (entry.userId) return String(entry.userId);
   if (entry.user && (entry.user._id || entry.user.id)) return String(entry.user._id || entry.user.id);
   if (entry.profile && (entry.profile._id || entry.profile.id)) return String(entry.profile._id || entry.profile.id);
+
+  // Fall back to entry id last (often wrapper id, so lowest priority)
   if (entry._id || entry.id) return String(entry._id || entry.id);
   return '';
 };
