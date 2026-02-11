@@ -553,7 +553,15 @@ const CreateSession = ({ navigation, route }) => {
       try {
         const members = await getMemberList(communityId);
         if (!cancelled) {
-          const rawList = Array.isArray(members) ? members : [];
+          const rawList = Array.isArray(members)
+            ? members
+            : Array.isArray(members?.memberDetails)
+              ? members.memberDetails
+              : Array.isArray(members?.data)
+                ? members.data
+                : Array.isArray(members?.members)
+                  ? members.members
+                  : [];
           const normalizedMembers = normalizeMemberList(rawList);
           const listToUse = normalizedMembers.length ? normalizedMembers : rawList;
           setAllMembers(listToUse);
@@ -825,6 +833,7 @@ const CreateSession = ({ navigation, route }) => {
                 onRemoveFacilitator={(memberId) => handleRemoveMember('facilitators', memberId)}
                 onRemoveParticipant={(memberId) => handleRemoveMember('participants', memberId)}
                 memberOptions={memberOptions}
+                memberOptionsFull={allMembers}
                 memberLoading={memberLoading}
                 memberError={memberError}
                 styles={styles}

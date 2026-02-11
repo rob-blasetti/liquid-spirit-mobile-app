@@ -15,6 +15,7 @@ const AttendeesSection = ({
   onRemoveFacilitator,
   onRemoveParticipant,
   memberOptions,
+  memberOptionsFull,
   memberLoading,
   memberError,
   styles,
@@ -28,6 +29,7 @@ const AttendeesSection = ({
       searchValue={facilitatorSearch}
       onChangeSearch={onChangeFacilitatorSearch}
       options={memberOptions}
+      labelOptions={memberOptionsFull}
       onSelectOption={onAddFacilitator}
       loading={memberLoading}
       error={memberError}
@@ -40,6 +42,7 @@ const AttendeesSection = ({
       searchValue={participantSearch}
       onChangeSearch={onChangeParticipantSearch}
       options={memberOptions}
+      labelOptions={memberOptionsFull}
       onSelectOption={onAddParticipant}
       loading={memberLoading}
       error={memberError}

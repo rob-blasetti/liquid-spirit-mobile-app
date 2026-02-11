@@ -13,6 +13,9 @@ const MultiSelectMemberInput = ({
   onChangeSearch,
   placeholder = 'Search',
   options = [],
+  // Use this when your dropdown options are filtered but you still want chip labels
+  // to resolve from the full member list.
+  labelOptions,
   onSelectOption,
   loading,
   error,
@@ -25,7 +28,8 @@ const MultiSelectMemberInput = ({
 
   const optionLabelById = useMemo(() => {
     const map = new Map();
-    (options || []).forEach((opt) => {
+    const list = Array.isArray(labelOptions) ? labelOptions : options;
+    (list || []).forEach((opt) => {
       if (!opt) return;
       const id = String(opt._id || opt.id || '');
       if (!id) return;
@@ -38,7 +42,7 @@ const MultiSelectMemberInput = ({
       map.set(id, label);
     });
     return map;
-  }, [options]);
+  }, [labelOptions, options]);
 
   return (
     <View style={[styles.wrapper, style]}>
