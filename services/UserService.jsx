@@ -112,8 +112,15 @@ export const helloUsers = async () => {
  * @param {string} userId
  * @param {string} token  Bearer token
  */
+const userByIdCache = new Map();
+
 export const fetchUserById = async (userId, token) => {
   try {
+    const key = userId ? String(userId) : '';
+    if (key && userByIdCache.has(key)) {
+      return userByIdCache.get(key);
+    }
+
     const response = await fetch(`${API_URL}/api/users/getUser/${userId}`, {
       method: 'GET',
       headers: {
@@ -122,7 +129,11 @@ export const fetchUserById = async (userId, token) => {
       },
     });
     let data = null;
-    try { data = await response.json(); } catch (_) { data = null; }
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = null;
+    }
     if (!response.ok) {
       // handle errors from API wrapper
       const msg = data?.message || (data?.error && data.error.message) || 'Failed to fetch user';
@@ -130,7 +141,11 @@ export const fetchUserById = async (userId, token) => {
       err.status = response.status;
       throw err;
     }
+
     // API may return wrapper { data: user } or { user: {...} }
+    if (key) {
+      userByIdCache.set(key, data);
+    }
     return data;
   } catch (error) {
     if (error.status) throw error;

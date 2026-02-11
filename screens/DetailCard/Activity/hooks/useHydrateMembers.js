@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import FastImage from 'react-native-fast-image';
 import { fetchUserById } from '../../../../services/UserService';
 import {
   applyHydratedMembers,
@@ -8,8 +9,17 @@ import {
   resolveFetchedUser,
 } from '../utils/memberUtils';
 
+// Cross-screen in-memory cache to avoid re-fetching the same profiles on every detail open.
+const hydratedProfileCache = new Map();
+
 const useHydrateMembers = ({ activity, prefillActivity, token }) => {
-  const [hydratedProfiles, setHydratedProfiles] = useState({});
+  const [hydratedProfiles, setHydratedProfiles] = useState(() => {
+    const initial = {};
+    hydratedProfileCache.forEach((value, key) => {
+      initial[String(key)] = value;
+    });
+    return initial;
+  });
   const hydratedIdsRef = useRef(new Set());
 
   useEffect(() => {
@@ -30,8 +40,26 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
     });
     if (!missingIds.length) return;
     const uniqueIds = Array.from(new Set(missingIds));
-    const batchSize = 6;
-    const batch = uniqueIds.slice(0, batchSize);
+
+    // Pull anything we already have from the shared cache to reduce "avatars popping in" delay.
+    const cachedMap = {};
+    uniqueIds.forEach((id) => {
+      if (hydratedProfileCache.has(id)) {
+        cachedMap[id] = hydratedProfileCache.get(id);
+        hydratedIdsRef.current.add(id);
+      }
+    });
+    if (Object.keys(cachedMap).length) {
+      setHydratedProfiles((prev) => ({ ...prev, ...cachedMap }));
+    }
+
+    const idsToFetch = uniqueIds.filter((id) => !hydratedIdsRef.current.has(id));
+    if (!idsToFetch.length) return;
+
+    // Larger batches -> less time with empty/placeholder avatars.
+    const batchSize = 12;
+    const batch = idsToFetch.slice(0, batchSize);
+
     let cancelled = false;
     const hydrate = async () => {
       try {
@@ -45,15 +73,31 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
           ),
         );
         if (cancelled) return;
+
         const userMap = {};
+        const avatarUris = [];
+
         results.forEach((payload) => {
           const user = resolveFetchedUser(payload);
           if (user?._id) {
             const key = String(user._id);
             userMap[key] = user;
+            hydratedProfileCache.set(key, user);
             hydratedIdsRef.current.add(key);
+            if (user.profilePicture) {
+              avatarUris.push({ uri: user.profilePicture });
+            }
           }
         });
+
+        if (avatarUris.length) {
+          try {
+            FastImage.preload(avatarUris);
+          } catch (_) {
+            // non-fatal
+          }
+        }
+
         if (Object.keys(userMap).length) {
           setHydratedProfiles((prev) => ({ ...prev, ...userMap }));
         }
@@ -61,6 +105,7 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
         console.warn('Failed to batch hydrate activity members', err);
       }
     };
+
     hydrate();
     return () => {
       cancelled = true;
