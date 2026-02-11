@@ -97,8 +97,14 @@ android {
         applicationId "com.liquid_spirit_mobile_app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 13
+        versionCode 16
         versionName "2.0.1"
+
+        // Force 64-bit only. This removes 32-bit/x86 native libs from the AAB,
+        // which is required for Play's 16KB page-size compatibility checks.
+        ndk {
+            abiFilters "arm64-v8a"
+        }
         
         buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
         buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
