@@ -262,6 +262,8 @@ const CreateSession = ({ navigation, route }) => {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(() => ({
     ...initialForm,
+    // Default the calendar/date input to today.
+    date: new Date(),
     address: { ...initialForm.address },
     facilitators: prefilledFacilitators,
     participants: prefilledParticipants,
