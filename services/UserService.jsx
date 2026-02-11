@@ -156,6 +156,40 @@ export const fetchUserById = async (userId, token) => {
   }
 };
 
+export const fetchEntitiesBatch = async ({ users = [], members = [], guests = [] } = {}, token) => {
+  try {
+    const response = await fetch(`${API_URL}/api/entities/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ users, members, guests }),
+    });
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const msg = data?.message || 'Failed to batch fetch entities';
+      const err = new Error(msg);
+      err.status = response.status;
+      throw err;
+    }
+
+    return data;
+  } catch (error) {
+    if (error.status) throw error;
+    const e = new Error(`fetchEntitiesBatch error: ${error.message}`);
+    e.status = error.status;
+    throw e;
+  }
+};
+
 export const fetchMemberById = async (memberId, token) => {
   try {
     const key = memberId ? String(memberId) : '';

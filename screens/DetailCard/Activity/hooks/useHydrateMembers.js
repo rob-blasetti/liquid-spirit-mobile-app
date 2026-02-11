@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import FastImage from 'react-native-fast-image';
-import { fetchMemberById, fetchUserById } from '../../../../services/UserService';
+import { fetchEntitiesBatch, fetchMemberById, fetchUserById } from '../../../../services/UserService';
 import {
   applyHydratedMembers,
   collectAllMemberEntries,
@@ -64,30 +64,66 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
     if (!idsToFetch.length) return;
 
     // Larger batches -> less time with empty/placeholder avatars.
-    const batchSize = 12;
+    const batchSize = 40;
     const batch = idsToFetch.slice(0, batchSize);
+
+    const userIds = [];
+    const memberIds = [];
+    const guestIds = [];
+
+    batch.forEach((entityId) => {
+      const entityType = idTypeMap.get(entityId);
+      if (entityType === 'member') {
+        memberIds.push(entityId);
+      } else if (entityType === 'guest') {
+        guestIds.push(entityId);
+      } else {
+        userIds.push(entityId);
+      }
+    });
 
     let cancelled = false;
     const hydrate = async () => {
       try {
-        const results = await Promise.all(
-          batch.map((entityId) => {
-            const entityType = idTypeMap.get(entityId);
-            const fetcher = entityType === 'member' ? fetchMemberById : fetchUserById;
-            return fetcher(entityId, token).catch((err) => {
-              console.warn('Failed to hydrate user profile', entityId, err?.message || err);
-              hydratedIdsRef.current.add(entityId);
-              return null;
-            });
-          }),
-        );
+        let payload = null;
+        try {
+          payload = await fetchEntitiesBatch(
+            { users: userIds, members: memberIds, guests: guestIds },
+            token,
+          );
+        } catch (batchErr) {
+          // Fallback: if the batch endpoint isn't deployed yet, keep app functional.
+          payload = null;
+          if (__DEV__) console.warn('Batch hydrate failed, falling back to per-id fetch', batchErr?.message || batchErr);
+        }
+
+        let results = [];
+        if (payload && typeof payload === 'object') {
+          results = []
+            .concat(Array.isArray(payload.users) ? payload.users : [])
+            .concat(Array.isArray(payload.members) ? payload.members : [])
+            .concat(Array.isArray(payload.guests) ? payload.guests : []);
+        } else {
+          results = await Promise.all(
+            batch.map((entityId) => {
+              const entityType = idTypeMap.get(entityId);
+              const fetcher = entityType === 'member' ? fetchMemberById : fetchUserById;
+              return fetcher(entityId, token).catch((err) => {
+                console.warn('Failed to hydrate user profile', entityId, err?.message || err);
+                hydratedIdsRef.current.add(entityId);
+                return null;
+              });
+            }),
+          );
+        }
+
         if (cancelled) return;
 
         const userMap = {};
         const avatarUris = [];
 
-        results.forEach((payload) => {
-          const user = resolveFetchedUser(payload);
+        results.forEach((raw) => {
+          const user = resolveFetchedUser(raw);
           if (user?._id) {
             const key = String(user._id);
             userMap[key] = user;
