@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import FastImage from 'react-native-fast-image';
-import { fetchUserById } from '../../../../services/UserService';
+import { fetchMemberById, fetchUserById } from '../../../../services/UserService';
 import {
   applyHydratedMembers,
   collectAllMemberEntries,
@@ -30,6 +30,8 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
     hydratedKeys.forEach((id) => hydratedIdsRef.current.add(String(id)));
     const members = collectAllMemberEntries(sourceActivity);
     const missingIds = [];
+    const idTypeMap = new Map();
+
     members.forEach((entry) => {
       if (!entryNeedsHydration(entry)) return;
       const id = resolveEntryId(entry);
@@ -37,6 +39,11 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
       const normalized = String(id);
       if (hydratedIdsRef.current.has(normalized)) return;
       missingIds.push(normalized);
+
+      const rawType = entry?.type || entry?.memberType || entry?.refType;
+      if (typeof rawType === 'string' && rawType.trim()) {
+        idTypeMap.set(normalized, rawType.trim().toLowerCase());
+      }
     });
     if (!missingIds.length) return;
     const uniqueIds = Array.from(new Set(missingIds));
@@ -64,13 +71,15 @@ const useHydrateMembers = ({ activity, prefillActivity, token }) => {
     const hydrate = async () => {
       try {
         const results = await Promise.all(
-          batch.map((userId) =>
-            fetchUserById(userId, token).catch((err) => {
-              console.warn('Failed to hydrate user profile', userId, err?.message || err);
-              hydratedIdsRef.current.add(userId);
+          batch.map((entityId) => {
+            const entityType = idTypeMap.get(entityId);
+            const fetcher = entityType === 'member' ? fetchMemberById : fetchUserById;
+            return fetcher(entityId, token).catch((err) => {
+              console.warn('Failed to hydrate user profile', entityId, err?.message || err);
+              hydratedIdsRef.current.add(entityId);
               return null;
-            }),
-          ),
+            });
+          }),
         );
         if (cancelled) return;
 

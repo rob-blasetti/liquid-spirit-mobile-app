@@ -113,6 +113,7 @@ export const helloUsers = async () => {
  * @param {string} token  Bearer token
  */
 const userByIdCache = new Map();
+const memberByIdCache = new Map();
 
 export const fetchUserById = async (userId, token) => {
   try {
@@ -150,6 +151,48 @@ export const fetchUserById = async (userId, token) => {
   } catch (error) {
     if (error.status) throw error;
     const e = new Error(`fetchUserById error: ${error.message}`);
+    e.status = error.status;
+    throw e;
+  }
+};
+
+export const fetchMemberById = async (memberId, token) => {
+  try {
+    const key = memberId ? String(memberId) : '';
+    if (key && memberByIdCache.has(key)) {
+      return memberByIdCache.get(key);
+    }
+
+    const response = await fetch(`${API_URL}/api/members/${memberId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = null;
+    }
+
+    if (!response.ok) {
+      const msg = data?.message || (data?.error && data.error.message) || 'Failed to fetch member';
+      const err = new Error(msg);
+      err.status = response.status;
+      throw err;
+    }
+
+    if (key) {
+      memberByIdCache.set(key, data);
+    }
+
+    return data;
+  } catch (error) {
+    if (error.status) throw error;
+    const e = new Error(`fetchMemberById error: ${error.message}`);
     e.status = error.status;
     throw e;
   }
