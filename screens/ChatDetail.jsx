@@ -892,7 +892,9 @@ const participantsSection = chatParticipants.length ? (
           <>
             {chatParticipants.map((participant, index) => {
               const avatarUri = normalizeImageUrl(participant.avatar);
-              const avatarSource = avatarUri ? { uri: avatarUri } : null;
+              const avatarSource = avatarUri
+                ? { uri: avatarUri, priority: FastImage.priority.high, cache: FastImage.cacheControl.immutable }
+                : null;
               const key = participant.id || participant.name || `participant-${index}`;
               const initials = getSenderInitials(participant.name);
               return (
@@ -903,7 +905,7 @@ const participantsSection = chatParticipants.length ? (
                   activeOpacity={0.85}
                 >
                   {avatarSource ? (
-                    <FastImage source={avatarSource} style={styles.participantAvatar} />
+                    <FastImage source={avatarSource} style={styles.participantAvatar} resizeMode={FastImage.resizeMode.cover} />
                   ) : (
                     <View style={styles.participantAvatarPlaceholder}>
                       <Text style={styles.participantAvatarPlaceholderText}>{initials || '?'}</Text>

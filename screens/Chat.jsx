@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -15,6 +15,7 @@ import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import { UserContext, ChatContext } from '../contexts';
 import { API_URL } from '../config';
+import { prefetchImageSources } from '../utils/imageSource';
 
 const getLastMessagePreview = (chat) => {
   const message =
@@ -415,6 +416,17 @@ const ChatScreen = () => {
     [],
   );
   const listData = chats;
+
+  // Prefetch chat avatars for the first screenful to reduce "pop-in".
+  useEffect(() => {
+    const sources = (listData || [])
+      .slice(0, 20)
+      .map(c => resolveChatImageUrl(c))
+      .filter(Boolean);
+    if (sources.length > 0) {
+      prefetchImageSources(sources, { priority: 'high' });
+    }
+  }, [listData]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'top']}>
