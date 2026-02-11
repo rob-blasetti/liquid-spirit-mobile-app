@@ -8,7 +8,7 @@ import themeVariables from '../../styles/theme';
 import FormHelperText from '../../components/forms/inputs/FormHelperText';
 import { UserContext } from '../../contexts/UserContext';
 import { createSession } from '../../services/SessionService';
-import { getMemberList } from '../../services/UserService';
+import { fetchUserById, getMemberList } from '../../services/UserService';
 import { fetchChildrensCurriculum } from '../../services/CurriculumService';
 import ScheduleSection from './sections/ScheduleSection';
 import LocationSection from '../CreateActivity/sections/LocationSection';
@@ -52,6 +52,9 @@ const normalizeMemberEntry = (entry) => {
   if (!entry) return null;
   const details = resolveMemberDetails(entry);
   const rawId =
+    // Prefer a refId when it's a string (common backend shape: { type, refId: '<realId>', _id: '<wrapperId>' })
+    (typeof entry?.refId === 'string' ? entry.refId : null) ||
+    (typeof entry?.refID === 'string' ? entry.refID : null) ||
     details?._id ||
     details?.id ||
     details?.memberId ||
@@ -125,6 +128,9 @@ const normalizeMemberList = (list) => {
 const extractMemberId = (member) => {
   if (!member) return '';
   return (
+    // Prefer refId when it's a string (real member/user id)
+    (typeof member?.refId === 'string' ? member.refId : null) ||
+    (typeof member?.refID === 'string' ? member.refID : null) ||
     member._id ||
     member.id ||
     member.memberId ||
@@ -421,19 +427,25 @@ const CreateSession = ({ navigation, route }) => {
   }, []);
 
   const handleAddMember = useCallback((field, member) => {
-    const memberId = member?._id || member?.id;
+    const memberId = extractMemberId(member);
     if (!memberId) return;
     setForm((prev) => {
       const existing = prev[field] || [];
-      if (existing.some((m) => (m._id || m.id) === memberId)) return prev;
-      return { ...prev, [field]: [...existing, member], [`${field.slice(0, -1)}Search`]: '' };
+      if (existing.some((m) => String(extractMemberId(m)) === String(memberId))) return prev;
+      // Normalize to ensure the chip renderer can find the real id even if backend provides wrapper docs.
+      const normalized = normalizeMemberEntry(member) || member;
+      return {
+        ...prev,
+        [field]: [...existing, normalized],
+        [`${field.slice(0, -1)}Search`]: '',
+      };
     });
   }, []);
 
   const handleRemoveMember = useCallback((field, memberId) => {
     setForm((prev) => ({
       ...prev,
-      [field]: (prev[field] || []).filter((m) => (m._id || m.id) !== memberId),
+      [field]: (prev[field] || []).filter((m) => String(extractMemberId(m)) !== String(memberId)),
     }));
   }, []);
 
