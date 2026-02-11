@@ -44,6 +44,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 20;
 const GUTTER = 10;
 const BOTTOM_SQUARE_SIZE = (SCREEN_WIDTH - 2 * GRID_PADDING - GUTTER) / 2;
+import { DEFAULT_HOME_LINKS, loadRemoteConfig } from '../utils/remoteConfig';
+
 const RIDVAN_182_BE = 'https://universalhouseofjustice.bahai.org/ridvan-messages/20250420_001';
 const BANNER_CONTENT_OFFSET = 60;
 const MIN_BANNER_HEIGHT = 160;
@@ -107,6 +109,7 @@ const Home = ({ navigation, homeOverview, route }) => {
     return upcoming.find(e => !e.hosts || (Array.isArray(e.hosts) && e.hosts.length === 0)) || null;
   }, [homeOverview?.events]);
   const [activeTab, setActiveTab] = useState('Activities');
+  const [homeLinks, setHomeLinks] = useState(DEFAULT_HOME_LINKS);
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
   // animated value for sliding panels
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -154,6 +157,22 @@ const Home = ({ navigation, homeOverview, route }) => {
       navigation.setParams({ bannerMessage: undefined });
     }
   }, [route?.params?.bannerMessage, navigation]);
+
+  // Remote-configurable "Your Liquid Spirit" links (fallback to defaults)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const cfg = await loadRemoteConfig();
+      const links = cfg?.homeLinks;
+      if (!cancelled && Array.isArray(links) && links.length) {
+        setHomeLinks(links);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleNavigateToEvent = useCallback(
     (eventData) => {
@@ -760,88 +779,44 @@ const Home = ({ navigation, homeOverview, route }) => {
             </Animated.View>
             <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
             <View style={styles.createContainer}>
-              {/* <TouchableOpacity
-                style={styles.createRow}
-                onPress={() => navigation.navigate('CreateActivity', {
-                  communityId,
-                  userId: user?.id,
-                })}
-              >
-                <View style={styles.createRowContent}>
-                  <Ionicons
-                    name="list-outline"
-                    size={16}
-                    color={themeVariables.primaryColor}
-                    style={styles.createIcon}
-                  />
-                  <Text style={styles.createRowText}>Create Activity</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
-              </TouchableOpacity>
-              <View style={styles.separator} /> */}
-              <TouchableOpacity
-                style={styles.createRow}
-                onPress={() => Linking.openURL(RIDVAN_182_BE)}
-              >
-                <View style={styles.createRowContent}>
-                  <Ionicons
-                    name="mail-open-outline"
-                    size={16}
-                    color={themeVariables.blackColor}
-                    style={styles.createIcon}
-                  />
-                  <Text style={styles.createRowText}>Ridvan Message 182 BE</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-              </TouchableOpacity>
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.createRow}
-                onPress={() => navigation.navigate('Activities')}
-              >
-                <View style={styles.createRowContent}>
-                  <Ionicons
-                    name="list-outline"
-                    size={16}
-                    color={themeVariables.blackColor}
-                    style={styles.createIcon}
-                  />
-                  <Text style={styles.createRowText}>View All Activities</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-              </TouchableOpacity>
-              <View style={styles.separator} />
-              <TouchableOpacity
-                style={styles.createRow}
-                onPress={() => navigation.navigate('Events')}
-              >
-                <View style={styles.createRowContent}>
-                  <Ionicons
-                    name="calendar-outline"
-                    size={16}
-                    color={themeVariables.blackColor}
-                    style={styles.createIcon}
-                  />
-                  <Text style={styles.createRowText}>View All Events</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
-              </TouchableOpacity>
+              {homeLinks.map((link, idx) => {
+                const key = link?.id || `home-link-${idx}`;
+                const iconName = link?.icon || 'link-outline';
+                const title = link?.title || 'Link';
 
-              {/* <TouchableOpacity
-                style={styles.createRow}
-                onPress={() => navigation.navigate('Activities')}
-              >
-                <View style={styles.createRowContent}>
-                  <Ionicons
-                    name="people-outline"
-                    size={16}
-                    color={themeVariables.primaryColor}
-                    style={styles.createIcon}
-                  />
-                  <Text style={styles.createRowText}>Recent Arrivals</Text>
-                </View>
-                <Ionicons name="arrow-forward" size={16} color={themeVariables.primaryColor} />
-              </TouchableOpacity> */}
+                const handlePress = () => {
+                  if (link.type === 'route' && link.routeName) {
+                    navigation.navigate(link.routeName, link.params || {});
+                    return;
+                  }
+                  if (link.type === 'url' && link.url) {
+                    Linking.openURL(link.url);
+                    return;
+                  }
+                  // Back-compat fallback: if remote config omitted fields.
+                  if (title.toLowerCase().includes('ridvan')) {
+                    Linking.openURL(RIDVAN_182_BE);
+                  }
+                };
+
+                return (
+                  <React.Fragment key={key}>
+                    <TouchableOpacity style={styles.createRow} onPress={handlePress}>
+                      <View style={styles.createRowContent}>
+                        <Ionicons
+                          name={iconName}
+                          size={16}
+                          color={themeVariables.blackColor}
+                          style={styles.createIcon}
+                        />
+                        <Text style={styles.createRowText}>{title}</Text>
+                      </View>
+                      <Ionicons name="arrow-forward" size={16} color={themeVariables.blackColor} />
+                    </TouchableOpacity>
+                    {idx < homeLinks.length - 1 ? <View style={styles.separator} /> : null}
+                  </React.Fragment>
+                );
+              })}
             </View>
             {recentPosts.length > 0 && (
               <View style={styles.recentPostsSection}>
