@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -22,6 +22,23 @@ const MultiSelectMemberInput = ({
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
+
+  const optionLabelById = useMemo(() => {
+    const map = new Map();
+    (options || []).forEach((opt) => {
+      if (!opt) return;
+      const id = String(opt._id || opt.id || '');
+      if (!id) return;
+      const label =
+        opt.fullName ||
+        `${opt.firstName || ''} ${opt.lastName || ''}`.trim() ||
+        opt.email ||
+        opt.name ||
+        'Member';
+      map.set(id, label);
+    });
+    return map;
+  }, [options]);
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -60,6 +77,8 @@ const MultiSelectMemberInput = ({
             member?.name ||
             [firstName, lastName].filter(Boolean).join(' ').trim() ||
             email ||
+            // Fall back to the current option list (often has names even when selected entries are id-only)
+            optionLabelById.get(key) ||
             'Member';
           const displayName = typeof displayNameRaw === 'string' ? displayNameRaw : String(displayNameRaw);
 
