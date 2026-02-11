@@ -27,16 +27,45 @@ const MultiSelectMemberInput = ({
     <View style={[styles.wrapper, style]}>
       <Text style={styles.sectionLabel}>{label}</Text>
       <View style={[styles.selectionInput, inputStyle]}>
-        {selected.map(member => {
-          const key = member._id || member.id;
-          const displayName =
-            member.fullName ||
-            `${member.firstName || ''} ${member.lastName || ''}`.trim() ||
-            member.email ||
+        {selected.map((member, index) => {
+          // Selected members can come through in a few shapes (string ids, {details}, {refId}, etc.).
+          const details =
+            member && typeof member === 'object'
+              ? (member.details && typeof member.details === 'object'
+                  ? member.details
+                  : member.refId && typeof member.refId === 'object'
+                    ? member.refId
+                    : member.user && typeof member.user === 'object'
+                      ? member.user
+                      : member.profile && typeof member.profile === 'object'
+                        ? member.profile
+                        : member)
+              : null;
+
+          const rawId =
+            (details && (details._id || details.id)) ||
+            (member && typeof member === 'object' && (member._id || member.id)) ||
+            (typeof member === 'string' ? member : null);
+          const key = rawId ? String(rawId) : `member-${index}`;
+
+          const firstName = details?.firstName || details?.first_name || member?.firstName;
+          const lastName = details?.lastName || details?.last_name || member?.lastName;
+          const email = details?.email || member?.email;
+          const displayNameRaw =
+            details?.fullName ||
+            details?.displayName ||
+            details?.name ||
+            member?.fullName ||
+            member?.displayName ||
+            member?.name ||
+            [firstName, lastName].filter(Boolean).join(' ').trim() ||
+            email ||
             'Member';
+          const displayName = typeof displayNameRaw === 'string' ? displayNameRaw : String(displayNameRaw);
+
           return (
             <View key={key} style={styles.selectionChip}>
-              <Text style={styles.selectionChipText}>
+              <Text style={styles.selectionChipText} numberOfLines={1}>
                 {displayName}
               </Text>
               <TouchableOpacity
@@ -151,6 +180,8 @@ const styles = StyleSheet.create({
   selectionChipText: {
     color: themeVariables.primaryColor,
     marginRight: 8,
+    maxWidth: 180,
+    flexShrink: 1,
   },
   selectionChipRemove: {
     width: 18,
