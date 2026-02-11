@@ -167,6 +167,8 @@ const Search = () => {
         navigation,
         activity: selected,
         activityId: primaryId,
+        token,
+        isTokenExpired,
       });
       return;
     }
@@ -176,6 +178,8 @@ const Search = () => {
       navigateToActivityDetail({
         navigation,
         activityId,
+        token,
+        isTokenExpired,
         params: { initialSessionId: primaryId },
       });
       return;
@@ -185,6 +189,8 @@ const Search = () => {
       navigateToActivityDetail({
         navigation,
         activityId: primaryId,
+        token,
+        isTokenExpired,
       });
     }
   }, [navigation, token, isTokenExpired]);

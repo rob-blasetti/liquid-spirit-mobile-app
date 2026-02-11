@@ -688,6 +688,8 @@ const Home = ({ navigation, homeOverview, route }) => {
                       navigateToActivityDetail({
                         navigation,
                         activity: nextAct,
+                        token,
+                        isTokenExpired,
                       })
                     }
                     style={styles.largeTile}
@@ -701,6 +703,8 @@ const Home = ({ navigation, homeOverview, route }) => {
                           navigateToActivityDetail({
                             navigation,
                             activity: activityToFacilitate,
+                            token,
+                            isTokenExpired,
                           });
                         } else {
                           navigation.navigate('Activities');

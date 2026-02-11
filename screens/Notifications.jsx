@@ -495,6 +495,8 @@ export default function Notifications() {
             navigation,
             activityPreload: preload,
             activityId,
+            token,
+            isTokenExpired,
             params,
           });
           break;

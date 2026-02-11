@@ -230,8 +230,8 @@ const filterUserActivities = (allActivities, userId) => {
       isTokenExpired,
     });
     } else if (type === 'activities') {
-      // Open the activity detail view
-      navigateToActivityDetail({ navigation, activity: item });
+      // Open the activity detail view (prefetch latest detail payload)
+      navigateToActivityDetail({ navigation, activity: item, token, isTokenExpired });
     } else if (type === 'events') {
       // Open the event detail view
       navigateToEventDetail({ navigation, event: item, token, isTokenExpired });

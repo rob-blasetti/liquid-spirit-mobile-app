@@ -95,9 +95,9 @@ const Discover = ({ navigation }) => {
 
   const handleActivityPress = useCallback(
     (activity) => {
-      navigateToActivityDetail({ navigation, activity });
+      navigateToActivityDetail({ navigation, activity, token, isTokenExpired });
     },
-    [navigation],
+    [navigation, token, isTokenExpired],
   );
 
   const handleViewAllActivities = useCallback(() => {

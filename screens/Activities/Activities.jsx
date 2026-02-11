@@ -21,7 +21,7 @@ import useNextSessionVenue from './hooks/useNextSessionVenue';
 import SlideBanner from '../../components/SlideBanner';
 import { getNextSessionDate } from '../../utils/activityDate';
 
-const ActivityCard = ({ activity, navigation }) => {
+const ActivityCard = ({ activity, navigation, token, isTokenExpired }) => {
   const { nextSessionDate, venueLabel, isOnline } = useNextSessionVenue(activity);
 
   let sessionLabel = 'TBA';
@@ -47,6 +47,8 @@ const ActivityCard = ({ activity, navigation }) => {
         navigateToActivityDetail({
           navigation,
           activity,
+          token,
+          isTokenExpired,
         })
       }
     >
@@ -86,7 +88,7 @@ const ActivityCard = ({ activity, navigation }) => {
 
 const Activities = ({ navigation, route }) => {
   const { bottom: bottomInset } = useSafeAreaInsets();
-  const { userActivities } = useContext(UserContext);
+  const { userActivities, token, isTokenExpired } = useContext(UserContext);
   // Banner for missing activity redirect
   const [bannerMessage, setBannerMessage] = useState('');
   useEffect(() => {
@@ -226,7 +228,12 @@ const Activities = ({ navigation, route }) => {
           data={filteredActivities}
           keyExtractor={(item) => item._id.toString()}
           renderItem={({ item }) => (
-            <ActivityCard activity={item} navigation={navigation} />
+            <ActivityCard
+              activity={item}
+              navigation={navigation}
+              token={token}
+              isTokenExpired={isTokenExpired}
+            />
           )}
           contentContainerStyle={[styles.listContentContainer, { paddingBottom: bottomPadding }]}
         />
