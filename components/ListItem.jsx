@@ -14,7 +14,7 @@ const ListItem = ({ imageSource, leadingComponent, title, content, date, time, o
               {leadingComponent}
             </View>
           ) : (
-            <FastImage source={imageSource} style={styles.image} />
+            <FastImage source={imageSource} style={styles.image} resizeMode={FastImage.resizeMode.cover} />
           )}
           {chipText && (
             <View style={styles.chip}>

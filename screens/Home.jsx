@@ -35,7 +35,7 @@ import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
-import resolveImageSource from '../utils/imageSource';
+import resolveImageSource, { prefetchImageSources } from '../utils/imageSource';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -220,6 +220,44 @@ const Home = ({ navigation, homeOverview, route }) => {
     const source = overviewPosts.length > 0 ? overviewPosts : fallbackPosts;
     return source.slice(0, 6);
   }, [homeOverview?.posts, userPosts]);
+
+  // Prefetch images likely to appear on first load (banner, featured tiles, recent posts).
+  // This noticeably improves perceived performance on Android.
+  useEffect(() => {
+    const targets = [];
+
+    // Banner carousel
+    for (const item of bannerData || []) {
+      if (item?.uri) targets.push(item.uri);
+    }
+
+    // Featured tiles (best-effort)
+    const nextActivity = Array.isArray(homeOverview?.activities)
+      ? homeOverview.activities
+          .map(a => ({ a, d: getEffectiveNextDate(a) }))
+          .filter(x => x.d)
+          .sort((x, y) => x.d - y.d)[0]?.a
+      : null;
+    if (nextActivity?.imageUrl) targets.push(nextActivity.imageUrl);
+
+    const nextEvent = Array.isArray(homeOverview?.events)
+      ? homeOverview.events
+          .map(e => ({ e, d: new Date(e.startTime || e.date) }))
+          .filter(x => x.d instanceof Date && !isNaN(x.d))
+          .sort((x, y) => x.d - y.d)[0]?.e
+      : null;
+    if (nextEvent?.imageUrl) targets.push(nextEvent.imageUrl);
+
+    // Recent posts media
+    for (const p of recentPosts || []) {
+      const uri = Array.isArray(p?.media) ? p.media[0] : null;
+      if (uri) targets.push(uri);
+    }
+
+    if (targets.length > 0) {
+      prefetchImageSources(targets, { priority: 'high' });
+    }
+  }, [bannerData, homeOverview?.activities, homeOverview?.events, recentPosts]);
 
   const handleRecentPostPress = useCallback(
     (post) => {
@@ -816,7 +854,7 @@ const Home = ({ navigation, homeOverview, route }) => {
                   ItemSeparatorComponent={() => <View style={{ width: RECENT_CARD_GAP }} />}
                   renderItem={({ item }) => {
                     const imageSource = resolveImageSource(item?.media?.[0], {
-                      priority: 'normal',
+                      priority: 'high',
                       fallback: '/img/events/Event_Placeholder.png',
                     });
                     return (

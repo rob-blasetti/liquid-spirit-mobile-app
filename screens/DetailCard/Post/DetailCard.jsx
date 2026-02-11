@@ -89,8 +89,8 @@ const PostDetailCard = ({ route }) => {
   // Ref for comment TextInput to focus when tapping comment icon
   const commentInputRef = useRef(null);
   // Fade in overall content and media for smoother entry
-  const contentOpacity = useRef(new Animated.Value(0.6)).current;
-  const mediaOpacity = useRef(new Animated.Value(0.6)).current;
+  const contentOpacity = useRef(new Animated.Value(Platform.OS === 'android' ? 1 : 0.6)).current;
+  const mediaOpacity = useRef(new Animated.Value(Platform.OS === 'android' ? 1 : 0.6)).current;
   const bottomOffset = safeAreaBottom + TAB_BAR_HEIGHT;
   const scrollContentStyle = useMemo(
     () => [styles.scrollContent, { paddingBottom: Math.max(48, bottomOffset) }],

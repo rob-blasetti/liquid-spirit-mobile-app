@@ -24,6 +24,7 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 import SkeletonPost from '../components/SkeletonPost';
+import { prefetchImageSources } from '../utils/imageSource';
 
 const scheduleIdleCallback = (callback) => {
   const idle = typeof global?.requestIdleCallback === 'function'
@@ -158,21 +159,21 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     loadData();
   }, [activeTab, fetchExplorePosts, fetchForYouPosts, token]);
 
-  // Preload first few images to speed up perception of load
+  // Preload first few images (post media + author avatars) to speed up perception of load.
+  // Using our shared helper keeps caching/priority consistent.
   useEffect(() => {
     const data = activeTab === 'explore' ? explorePosts : forYouPosts;
-    const urls = data
-      .slice(0, 4)
+    const slice = (data || []).slice(0, 8);
+
+    const media = slice
       .map(p => (Array.isArray(p.media) && p.media[0] ? p.media[0] : null))
-      .filter(Boolean)
-      .map(uri => ({ uri }));
-    if (urls.length > 0) {
-      try {
-        // Dynamically require to avoid import cost if not needed
-        const FastImage = require('react-native-fast-image');
-        FastImage.preload(urls);
-      } catch (_) {}
-    }
+      .filter(Boolean);
+
+    const avatars = slice
+      .map(p => p?.author?.profilePicture)
+      .filter(Boolean);
+
+    prefetchImageSources([...media, ...avatars], { priority: 'high' });
   }, [activeTab, explorePosts, forYouPosts]);
 
   const hasUserLiked = useCallback((likes, uid) => {

@@ -260,8 +260,10 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
     return `${years}y`;
   };
 
-  // Fade media on load for smoother appearance
-  const mediaOpacity = useRef(new Animated.Value(0.6)).current;
+  // Fade media on load for smoother appearance.
+  // On Android (especially emulator), starting at low opacity can make images feel "washed out"
+  // if onLoad/onLoadEnd is delayed or missed. Keep it fully opaque on Android.
+  const mediaOpacity = useRef(new Animated.Value(Platform.OS === 'android' ? 1 : 0.6)).current;
   const animateMediaIn = () => {
     Animated.timing(mediaOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
   };
@@ -279,7 +281,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
             onPress={() => navigation.navigate('PublicUserProfile', { userId: post.author?._id })}
           >
             <FastImage
-              source={resolveImageSource(profilePic, { priority: 'normal' })}
+              source={resolveImageSource(profilePic, { priority: 'high' })}
               style={styles.profilePic}
               resizeMode={FastImage.resizeMode.cover}
               onError={(e) => console.error('Profile picture failed to load:', e.nativeEvent.error)}

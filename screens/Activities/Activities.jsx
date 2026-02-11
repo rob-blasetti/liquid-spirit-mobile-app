@@ -163,8 +163,9 @@ const Activities = ({ navigation, route }) => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
 
+  // Prefetch only the first screenful to keep things snappy and avoid flooding the cache/network.
   const prefetchTargets = useMemo(
-    () => filteredActivities.map(act => act?.imageUrl).filter(Boolean),
+    () => filteredActivities.map(act => act?.imageUrl).filter(Boolean).slice(0, 12),
     [filteredActivities]
   );
 

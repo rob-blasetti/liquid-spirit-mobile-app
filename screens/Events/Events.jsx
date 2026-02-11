@@ -144,8 +144,9 @@ const Events = ({ navigation, route }) => {
     ? events.filter((e) => e.eventType === selectedEventType)
     : events;
 
+  // Prefetch only the first screenful to keep things snappy and avoid flooding the cache/network.
   const prefetchTargets = useMemo(
-    () => filteredEvents.map(event => event?.imageUrl).filter(Boolean),
+    () => filteredEvents.map(event => event?.imageUrl).filter(Boolean).slice(0, 12),
     [filteredEvents]
   );
 
