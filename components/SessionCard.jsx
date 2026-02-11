@@ -46,15 +46,30 @@ const SessionCard = ({
   const [modalVisible, setModalVisible] = useState(false);
   const overlayOpacity = useState(new Animated.Value(0))[0];
 
-  const renderUserList = (users = []) => sanitizeUserList(users)
-    .slice(0, 3)
-    .map((item, i) => (
-      <UserCell
-        key={item?.refId?._id || i}
-        user={item?.refId || item?.details || item}
-        type={item?.type}
-      />
-    ));
+  const resolveUserDetails = (entry) => {
+    if (!entry) return null;
+    // Prefer hydrated details.
+    if (entry.details && typeof entry.details === 'object') return entry.details;
+    // refId can be an object (already hydrated) or a string (id wrapper). Only use when it's an object.
+    if (entry.refId && typeof entry.refId === 'object') return entry.refId;
+    if (entry.refID && typeof entry.refID === 'object') return entry.refID;
+    if (typeof entry === 'object') return entry;
+    return null;
+  };
+
+  const renderUserList = (users = []) =>
+    sanitizeUserList(users)
+      .slice(0, 3)
+      .map((item, i) => {
+        const userDetails = resolveUserDetails(item);
+        return (
+          <UserCell
+            key={userDetails?._id || item?.refId?._id || item?._id || i}
+            user={userDetails || { firstName: '', lastName: '' }}
+            type={item?.type}
+          />
+        );
+      });
 
   const openModal = () => {
   setModalVisible(true);
@@ -137,13 +152,16 @@ const closeModal = () => {
                 </TouchableOpacity>
               )}
             </View>
-            {sanitizeUserList(session.facilitators).map((item, i) => (
-              <UserCell
-                key={item?.refId?._id || i}
-                user={item?.refId || item?.details || item}
-                type={item?.type}
-              />
-            ))}
+            {sanitizeUserList(session.facilitators).map((item, i) => {
+              const userDetails = resolveUserDetails(item);
+              return (
+                <UserCell
+                  key={userDetails?._id || item?.refId?._id || item?._id || i}
+                  user={userDetails || { firstName: '', lastName: '' }}
+                  type={item?.type}
+                />
+              );
+            })}
 
             {/* Participants Section */}
             <View style={styles.modalSectionHeader}>
@@ -155,13 +173,16 @@ const closeModal = () => {
                 </TouchableOpacity>
               )}
             </View>
-            {sanitizeUserList(session.participants).map((item, i) => (
-              <UserCell
-                key={item?.refId?._id || i}
-                user={item?.refId || item?.details || item}
-                type={item?.type}
-              />
-            ))}
+            {sanitizeUserList(session.participants).map((item, i) => {
+              const userDetails = resolveUserDetails(item);
+              return (
+                <UserCell
+                  key={userDetails?._id || item?.refId?._id || item?._id || i}
+                  user={userDetails || { firstName: '', lastName: '' }}
+                  type={item?.type}
+                />
+              );
+            })}
 
           </ScrollView>
         </View>
