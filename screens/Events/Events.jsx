@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#312783',
+    color: themeVariables.blackColor || '#111',
     flexShrink: 1,
     marginBottom: 6,
   },
