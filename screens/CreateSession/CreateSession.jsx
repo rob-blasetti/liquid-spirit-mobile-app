@@ -653,6 +653,68 @@ const CreateSession = ({ navigation, route }) => {
     });
   }, [allMembers]);
 
+  // If selected ids aren't in the member list (common when prefilled selections come from wrapper docs),
+  // fetch those users by id so chips can show names.
+  useEffect(() => {
+    if (!token) return;
+    const selected = [...(form.facilitators || []), ...(form.participants || [])];
+    const selectedIds = Array.from(
+      new Set(selected.map(extractMemberId).filter(Boolean).map(String))
+    );
+    if (!selectedIds.length) return;
+
+    const known = new Set((allMembers || []).map((m) => String(extractMemberId(m))).filter(Boolean));
+    const missing = selectedIds.filter((id) => !known.has(String(id)));
+    if (!missing.length) return;
+
+    let cancelled = false;
+    (async () => {
+      const toFetch = missing.slice(0, 20);
+      if (__DEV__) console.log('[CreateSession] fetching missing selected members', { toFetch });
+
+      const results = await Promise.allSettled(
+        toFetch.map(async (id) => {
+          const data = await fetchUserById(id, token);
+          const user = data?.data || data?.user || data;
+          return normalizeMemberEntry(user);
+        })
+      );
+
+      if (cancelled) return;
+      const fetched = results
+        .filter((r) => r.status === 'fulfilled')
+        .map((r) => r.value)
+        .filter(Boolean);
+
+      if (!fetched.length) return;
+
+      setAllMembers((prev) => {
+        const map = new Map((prev || []).map((m) => [String(extractMemberId(m)), m]));
+        fetched.forEach((m) => map.set(String(extractMemberId(m)), m));
+        return Array.from(map.values());
+      });
+
+      // Also patch the selected arrays immediately.
+      setForm((prev) => {
+        const byId = new Map(fetched.map((m) => [String(extractMemberId(m)), m]));
+        const patch = (list) =>
+          (list || []).map((m) => {
+            const id = String(extractMemberId(m) || '');
+            return byId.get(id) ? { ...m, ...byId.get(id), _id: id, id } : m;
+          });
+        return {
+          ...prev,
+          facilitators: patch(prev.facilitators),
+          participants: patch(prev.participants),
+        };
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, allMembers, form.facilitators, form.participants]);
+
   const onNext = useCallback(() => {
     if (validateStep()) {
       setStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
