@@ -1,9 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../config';
 
-// Stable URL: you can update the JSON at this URL without shipping a new app version.
-// Recommended: host as a public object on S3/CloudFront.
-export const REMOTE_CONFIG_URL =
-  'https://liquid-spirit.s3.us-east-1.amazonaws.com/app-config/mobile.json';
+// Backend-served config so you can update server-side without shipping a new app version.
+// NOTE: this endpoint is public.
+export const REMOTE_CONFIG_URL = `${API_URL}/api/app-config/mobile`;
 
 const STORAGE_KEY = 'remoteConfig:v1';
 const STORAGE_TTL_MS = 6 * 60 * 60 * 1000; // 6h
