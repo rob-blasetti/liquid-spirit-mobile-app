@@ -44,10 +44,14 @@ platform :ios do
       scheme: "liquid_spirit_mobile_app",
       export_method: "app-store",
       export_options: {
+        signingStyle: "manual",
+        signingCertificate: "Apple Distribution",
         provisioningProfiles: {
           "org.reactjs.native.example.liquid-spirit-mobile-app" => "match AppStore org.reactjs.native.example.liquid-spirit-mobile-app"
         }
-      }
+      },
+      # Force manual signing during the archive step too (prevents Xcode from trying automatic dev signing).
+      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=7MGG8ZRN25 PROVISIONING_PROFILE_SPECIFIER='match AppStore org.reactjs.native.example.liquid-spirit-mobile-app' CODE_SIGN_IDENTITY='Apple Distribution'"
     )
 
     # 5. Upload to TestFlight
