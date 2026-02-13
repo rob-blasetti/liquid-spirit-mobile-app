@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 
-import { fetchAvailableVenuesForActivity, fetchVenues } from '../../../services/VenueService';
+import { fetchEligibleVenuesForActivity, fetchVenues } from '../../../services/VenueService';
 import DropdownInput from './DropdownInput';
 import FormHelperText from './FormHelperText';
 
@@ -46,7 +46,15 @@ const VenueSelect = ({
         }
         let venues = [];
         if (activityId) {
-          venues = await fetchAvailableVenuesForActivity(activityId, token, { signal });
+          const eligible = await fetchEligibleVenuesForActivity(activityId, token, { signal });
+          if (Array.isArray(eligible) && eligible.length && eligible[0]?.venue) {
+            venues = eligible
+              .filter((row) => !row?.disabled)
+              .map((row) => row?.venue)
+              .filter(Boolean);
+          } else {
+            venues = Array.isArray(eligible) ? eligible : [];
+          }
         }
         if ((!Array.isArray(venues) || venues.length === 0) && communityId) {
           const communityVenues = await fetchVenues(communityId, token, { signal });
