@@ -42,6 +42,16 @@ export const fetchVenues = (communityId, token, options = {}) =>
     ...options,
   });
 
+export const fetchEligibleVenuesForActivity = (activityId, token, options = {}) =>
+  makeRequest(
+    `/api/activities/${encodeURIComponent(activityId)}/eligible-venues`,
+    'GET',
+    token,
+    null,
+    options,
+  );
+
+// Back-compat: older callers used /api/activities/:id/venues.
 export const fetchAvailableVenuesForActivity = (activityId, token, options = {}) =>
   makeRequest(`/api/activities/${encodeURIComponent(activityId)}/venues`, 'GET', token, null, options);
 
