@@ -101,3 +101,7 @@ android/fastlane/playstore_credentials.json
 upload_certificate.pem
 
 ios/fastlane/AuthKey_*.p8
+
+# Maestro automation scripts
+.maestro/*.yaml
+.maestro/

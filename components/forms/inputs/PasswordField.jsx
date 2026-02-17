@@ -10,6 +10,10 @@ const PasswordField = ({
   style,
   inputStyle,
   iconColor = '#777',
+  inputTestID,
+  inputAccessibilityLabel,
+  toggleTestID,
+  toggleAccessibilityLabel,
   ...rest
 }) => {
   const [visible, setVisible] = useState(false);
@@ -25,6 +29,8 @@ const PasswordField = ({
   return (
     <View style={mergedWrapper}>
       <TextInput
+        testID={inputTestID}
+        accessibilityLabel={inputAccessibilityLabel || inputTestID}
         style={mergedInput}
         value={value}
         onChangeText={onChangeText}
@@ -36,6 +42,9 @@ const PasswordField = ({
         {...rest}
       />
       <TouchableOpacity
+        testID={toggleTestID}
+        accessibilityRole="button"
+        accessibilityLabel={toggleAccessibilityLabel || toggleTestID || 'toggle-password-visibility'}
         onPress={() => setVisible((prev) => !prev)}
         style={styles.icon}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

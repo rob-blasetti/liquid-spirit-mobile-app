@@ -9,16 +9,20 @@ const WelcomeModal = ({ visible, onClose }) => {
       animationType="slide"
       transparent
     >
-      {/* Touch outside the modal container to close */}
-      <TouchableOpacity
-        style={styles.modalBackground}
-        activeOpacity={1}
-        onPress={onClose}
-      >
+      <View style={styles.modalBackground}>
+        {/* Backdrop tap target */}
+        <TouchableOpacity
+          testID="welcome-modal-backdrop"
+          accessibilityLabel="welcome-modal-backdrop"
+          accessibilityRole="button"
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onClose}
+        />
         <View style={styles.modalContainer}>
           <WelcomeScreen closeModal={onClose} />
         </View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 };

@@ -398,11 +398,21 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
           },
         })}
       >
-        <Tab.Screen name="Home">
+        <Tab.Screen
+          name="Home"
+          options={{ tabBarButtonTestID: 'tab-home', tabBarTestID: 'tab-home', tabBarAccessibilityLabel: 'tab-home' }}
+        >
           {(props) => <HomeStackNavigator {...props} homeOverview={homeOverview} />}
         </Tab.Screen>
-        <Tab.Screen name="Discover" component={DiscoverStackNavigator} />
-        <Tab.Screen name="Feed">
+        <Tab.Screen
+          name="Discover"
+          component={DiscoverStackNavigator}
+          options={{ tabBarButtonTestID: 'tab-discover', tabBarTestID: 'tab-discover', tabBarAccessibilityLabel: 'tab-discover' }}
+        />
+        <Tab.Screen
+          name="Feed"
+          options={{ tabBarButtonTestID: 'tab-feed', tabBarTestID: 'tab-feed', tabBarAccessibilityLabel: 'tab-feed' }}
+        >
           {(props) => (
             <SocialStackNavigator
               {...props}
@@ -411,18 +421,28 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Chat" component={ChatStackNavigator} />
-        <Tab.Screen name="Profile" component={ProfileStackNavigator} />
+        <Tab.Screen
+          name="Chat"
+          component={ChatStackNavigator}
+          options={{ tabBarButtonTestID: 'tab-chat', tabBarTestID: 'tab-chat', tabBarAccessibilityLabel: 'tab-chat' }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileStackNavigator}
+          options={{ tabBarButtonTestID: 'tab-profile', tabBarTestID: 'tab-profile', tabBarAccessibilityLabel: 'tab-profile' }}
+        />
       </Tab.Navigator>
 
       {!hideFab && (
         <View pointerEvents="box-none" style={styles.fabPortal}>
           <View style={[styles.fabColumn, { bottom: fabBottom, right: fabRight }]}>
             <TouchableOpacity
+              testID="fab-create-activity"
               accessibilityRole="button"
               accessibilityLabel={
                 visibleAction?.label || currentAction?.label || 'Create Post'
               }
+              accessibilityHint="Opens create flow for activities, posts, or sessions"
               style={[
                 styles.fab,
                 currentAction?.disabled && styles.fabDisabled,

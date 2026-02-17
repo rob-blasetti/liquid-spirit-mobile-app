@@ -105,6 +105,8 @@ const Login = ({ navigation, route }) => {
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputWrapper}>
           <TextInput
+            testID="login-email"
+            accessibilityLabel="login-email"
             style={styles.input}
             placeholder="you@example.com"
             value={email}
@@ -120,6 +122,10 @@ const Login = ({ navigation, route }) => {
           value={password}
           onChangeText={setPassword}
           placeholder="Enter your password"
+          inputTestID="login-password"
+          inputAccessibilityLabel="login-password"
+          toggleTestID="login-password-toggle"
+          toggleAccessibilityLabel="login-password-toggle"
           inputStyle={styles.input}
           autoCapitalize="none"
           autoCorrect={false}
@@ -127,11 +133,20 @@ const Login = ({ navigation, route }) => {
         {loading ? (
           <ActivityIndicator size="large" color={themeVariables.primaryColor} />
         ) : (
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <TouchableOpacity
+            testID="login-submit"
+            accessibilityRole="button"
+            accessibilityLabel="login-submit"
+            style={styles.button}
+            onPress={handleLogin}
+          >
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
+          testID="login-register-link"
+          accessibilityRole="button"
+          accessibilityLabel="login-register-link"
           onPress={() => navigation.navigate('Register')}
           style={styles.link}
         >

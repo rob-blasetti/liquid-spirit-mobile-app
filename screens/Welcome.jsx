@@ -18,6 +18,9 @@ const Welcome = ({ closeModal }) => {
       <Text style={styles.subtitle}>Join the Baha'i vibe.</Text>
 
       <TouchableOpacity
+        testID="welcome-login"
+        accessibilityRole="button"
+        accessibilityLabel="welcome-login"
         style={styles.button}
         onPress={() => {
           navigation.navigate('Login');
@@ -28,6 +31,9 @@ const Welcome = ({ closeModal }) => {
       </TouchableOpacity>
 
       <TouchableOpacity
+        testID="welcome-register"
+        accessibilityRole="button"
+        accessibilityLabel="welcome-register"
         style={[styles.button, styles.registerButton]}
         onPress={() => {
           navigation.navigate('Register');
@@ -39,6 +45,9 @@ const Welcome = ({ closeModal }) => {
 
       {/* Forgot Password Button */}
       <TouchableOpacity
+        testID="welcome-forgot-password"
+        accessibilityRole="button"
+        accessibilityLabel="welcome-forgot-password"
         style={styles.forgotPasswordButton}
         onPress={() => {
           navigation.navigate('ForgotPassword');

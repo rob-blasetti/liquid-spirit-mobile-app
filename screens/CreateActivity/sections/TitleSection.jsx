@@ -23,6 +23,8 @@ const TitleSection = ({
       error={!!error}
       errorText={error}
       helperText={helperText}
+      testID="create-activity-title"
+      accessibilityLabel="create-activity-title"
       style={styles.input}
     />
   </>
