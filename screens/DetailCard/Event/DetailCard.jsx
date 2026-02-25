@@ -630,10 +630,10 @@ const EventCardBody = ({
   return (
     <>
     <CardContainer
-      imageUrl={imageUrl ? resolveImageSource(imageUrl, {
+      imageUrl={resolveImageSource(imageUrl, {
         priority: 'high',
         fallback: '/img/events/Event_Placeholder.png',
-      }) : null}
+      })}
       cardStyle={styles.card}
       bannerStyle={styles.banner}
     >
@@ -1032,7 +1032,12 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'transparent',
   },
-  banner: { width: '100%', height: IMAGE_BANNER_HEIGHT, borderRadius: 0 },
+  banner: {
+    width: '100%',
+    height: IMAGE_BANNER_HEIGHT,
+    borderRadius: 0,
+    backgroundColor: '#f1f5f9',
+  },
   overlayCard: {
     ...detailCardOverlay,
   },
