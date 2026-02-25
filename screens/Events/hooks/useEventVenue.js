@@ -10,25 +10,41 @@ const coalesceString = (...values) => {
   return '';
 };
 
-const pickEventAddress = (event = {}) => {
-  const venueAddress = Array.isArray(event.venues)
-    ? event.venues
-        .map((venue) => venue?.address)
-        .find((address) => getDisplayAddress({ sessionAddress: address }).length > 0)
-    : null;
+const getString = (value) => (typeof value === 'string' ? value.trim() : '');
 
-  const sessionAddress = venueAddress || event.address;
-  const venueName = Array.isArray(event.venues)
-    ? event.venues
-        .map((venue) => venue?.name || venue?.title || venue?.label)
-        .find((name) => typeof name === 'string' && name.trim().length > 0)
-    : event.venueName || event.venue;
+const asAddressObject = (value) => {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  return null;
+};
+
+const pickEventAddress = (event = {}) => {
+  const venueObjects = Array.isArray(event.venues)
+    ? event.venues.filter((venue) => typeof venue === 'object')
+    : [];
+
+  const venueAddress = venueObjects
+    .map((venue) => venue?.address)
+    .find((address) => getDisplayAddress({ sessionAddress: address }).length > 0)
+    || asAddressObject(event.address);
+
+  const venueName = venueObjects
+    .map((venue) => venue?.name || venue?.title || venue?.label)
+    .find((name) => typeof name === 'string' && name.trim().length > 0)
+    || event.venueName
+    || event.venue
+    || getString(event.locationName);
+
+  const addressString = getString(event.address);
 
   return coalesceString(
     venueName,
-    getDisplayAddress({ sessionAddress }),
-    sessionAddress?.name,
-    event.location,
+    getDisplayAddress({ sessionAddress: venueAddress }),
+    venueAddress?.name,
+    addressString,
+    venueAddress?.label,
+    getString(event.location),
+    event.locationName || event.locationAddress,
   );
 };
 
