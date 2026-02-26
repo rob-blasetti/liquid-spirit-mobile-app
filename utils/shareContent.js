@@ -47,7 +47,9 @@ export const shareContent = async ({
 
   try {
     const sharePayload = { message: payload.message };
-    if (payload.url) {
+    // Avoid passing both `message` and `url` when message already includes the link.
+    // Some targets append an encoded URL payload (e.g. bplist artifacts) in that case.
+    if (!payload.message && payload.url) {
       sharePayload.url = payload.url;
     }
     if (title) {

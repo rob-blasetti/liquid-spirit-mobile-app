@@ -7,6 +7,7 @@ export const IMAGE_BANNER_HEIGHT = 300;
 
 const ImageBanner = ({
   imageSource,
+  defaultImageSource,
   renderContent,
   children,
   height = IMAGE_BANNER_HEIGHT,
@@ -37,6 +38,7 @@ const ImageBanner = ({
         <ImageWrapper style={[styles.imageWrapper, { height: heightWithInset }, imageStyle]}>
           <FastImage
             source={imageSource}
+            defaultSource={defaultImageSource}
             style={styles.image}
             resizeMode={FastImage.resizeMode.cover}
           />

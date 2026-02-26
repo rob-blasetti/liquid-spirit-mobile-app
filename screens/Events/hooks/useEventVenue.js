@@ -10,24 +10,66 @@ const coalesceString = (...values) => {
   return '';
 };
 
-const pickEventAddress = (event = {}) => {
-  const venueAddress = Array.isArray(event.venues)
-    ? event.venues
-        .map((venue) => venue?.address)
-        .find((address) => getDisplayAddress({ sessionAddress: address }).length > 0)
-    : null;
+const formatAddressLike = (address) => {
+  if (typeof address === 'string') return address.trim();
+  if (!address || typeof address !== 'object') return '';
 
-  const sessionAddress = venueAddress || event.address;
-  const venueName = Array.isArray(event.venues)
-    ? event.venues
-        .map((venue) => venue?.name || venue?.title || venue?.label)
-        .find((name) => typeof name === 'string' && name.trim().length > 0)
-    : event.venueName || event.venue;
+  const fallbackParts = [
+    address.streetAddress,
+    address.street,
+    address.line1,
+    address.suburb,
+    address.city,
+    address.state,
+    address.postalCode,
+    address.zip,
+    address.country,
+  ]
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(', ');
 
   return coalesceString(
-    venueName,
-    getDisplayAddress({ sessionAddress }),
-    sessionAddress?.name,
+    getDisplayAddress({ sessionAddress: address }),
+    fallbackParts,
+    address.name,
+    address.address,
+    address.formatted,
+    address.formattedAddress,
+  );
+};
+
+const pickEventAddress = (event = {}) => {
+  const venueNameFromArray = Array.isArray(event.venues)
+    ? event.venues
+        .map((venue) =>
+          typeof venue === 'object'
+            ? venue?.name || venue?.title || venue?.label || venue?.venueName
+            : ''
+        )
+        .find((name) => typeof name === 'string' && name.trim().length > 0)
+    : '';
+
+  const venueAddressFromArray = Array.isArray(event.venues)
+    ? event.venues
+        .map((venue) =>
+          typeof venue === 'object'
+            ? formatAddressLike(venue?.address || venue?.location || venue)
+            : ''
+        )
+        .find((address) => address.length > 0)
+    : '';
+
+  const eventAddress = formatAddressLike(event.address);
+
+  return coalesceString(
+    venueNameFromArray,
+    event.venueName,
+    event.venue,
+    venueAddressFromArray,
+    eventAddress,
+    event.address?.name,
+    event.address?.address,
     event.location,
   );
 };

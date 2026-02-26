@@ -33,6 +33,12 @@ export const navigateToEventDetail = async ({
     params: baseParams,
   });
 
+  // For card/list navigations we already pass a preload event payload.
+  // Let EventDetailCard handle post-transition refresh to avoid transition jank.
+  if (event) {
+    return;
+  }
+
   if (!id || !token || (typeof isTokenExpired === 'function' && isTokenExpired(token))) {
     return;
   }

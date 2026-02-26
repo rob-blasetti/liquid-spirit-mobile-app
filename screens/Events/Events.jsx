@@ -411,9 +411,9 @@ const styles = StyleSheet.create({
     bottom: 10,
     right: 10,
     backgroundColor: '#58DB33',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 999,
     opacity: 0.9,
   },
   eventTagText: {
@@ -421,7 +421,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1C5C0E',
     textAlign: 'center',
-    width: Platform.select({ android: 70 }),
   },
   cardContent: {
     padding: 16,
@@ -448,6 +447,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 6,
     fontWeight: '500',
+    flexShrink: 1,
   },
 });
 

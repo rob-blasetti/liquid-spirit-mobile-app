@@ -93,19 +93,14 @@ const parseTime = timeStr => {
 const EventDetailCard = ({ route }) => {
   // Enable swipe-down to dismiss
   const navigation = useNavigation();
-  const { bottom: safeAreaBottom } = useSafeAreaInsets();
+  const { top: safeAreaTop, bottom: safeAreaBottom } = useSafeAreaInsets();
   const { eventPreload, oversightMembersPreload, eventId } = route.params;
   const [event, setEvent] = useState(eventPreload || null);
   const [loading, setLoading] = useState(!eventPreload);
   const [error, setError] = useState(null);
   const [redirected, setRedirected] = useState(false);
   const [chatCommitteeMembers, setChatCommitteeMembers] = useState(oversightMembersPreload || []);
-  useEffect(() => {
-    console.log('[EventDetailCard] route', { name: route?.name, params: route?.params });
-  }, [route]);
-  useEffect(() => {
-    if (event) console.log('[EventDetailCard] event', event);
-  }, [event]);
+  const [didFinishEntryTransition, setDidFinishEntryTransition] = useState(!eventPreload);
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -131,7 +126,6 @@ const EventDetailCard = ({ route }) => {
   const [optimisticJoin, setOptimisticJoin] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
   const [didRefresh, setDidRefresh] = useState(false);
-  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const { startChat, startingChat } = useChatStarter({
     context: 'event',
     entity: event || eventPreload || {},
@@ -151,6 +145,20 @@ const EventDetailCard = ({ route }) => {
     showChat: false,
   });
 
+  useEffect(() => {
+    if (!eventPreload) {
+      setDidFinishEntryTransition(true);
+      return;
+    }
+
+    setDidFinishEntryTransition(false);
+    const unsubscribe = navigation.addListener('transitionEnd', (evt) => {
+      if (evt?.data?.closing) return;
+      setDidFinishEntryTransition(true);
+    });
+    return unsubscribe;
+  }, [navigation, eventPreload]);
+
   const normalizeEventId = (raw) => {
     const str = String(raw || '').trim();
     const match = str.match(/[a-fA-F0-9]{24}/);
@@ -165,12 +173,15 @@ const EventDetailCard = ({ route }) => {
       if (eventPreload) {
         setEvent(prev => {
           if (!prev) return eventPreload;
+          if (prev === eventPreload) return prev;
           if (prev._id && eventPreload._id && prev._id !== eventPreload._id) {
             return eventPreload;
           }
+          if (!didFinishEntryTransition) return prev;
           return { ...prev, ...eventPreload };
         });
         setLoading(false);
+        if (!didFinishEntryTransition) return;
       }
 
       const id = normalizeEventId(eventId || eventPreload?._id);
@@ -200,12 +211,8 @@ const EventDetailCard = ({ route }) => {
       }
 
       const useFullScreenSpinner = !eventPreload;
-      let usedBackgroundRefresh = false;
       if (useFullScreenSpinner) {
         setLoading(true);
-      } else {
-        setBackgroundRefreshing(true);
-        usedBackgroundRefresh = true;
       }
 
       try {
@@ -233,15 +240,13 @@ const EventDetailCard = ({ route }) => {
         if (!isMounted) return;
         if (useFullScreenSpinner) {
           setLoading(false);
-        } else if (usedBackgroundRefresh) {
-          setBackgroundRefreshing(false);
         }
       }
     };
 
     run();
     return () => { isMounted = false; };
-  }, [eventId, token, eventPreload, storageLoaded, didRefresh]);
+  }, [eventId, token, eventPreload, storageLoaded, didRefresh, didFinishEntryTransition]);
   // Redirect unauthenticated or missing events to appropriate screens
   useEffect(() => {
     if (redirected || loading) return;
@@ -266,9 +271,7 @@ const EventDetailCard = ({ route }) => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-      </View>
+      <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']} />
     );
   }
   // If error or no event data, redirect is handled via effect; render nothing
@@ -279,11 +282,6 @@ const EventDetailCard = ({ route }) => {
     <SafeAreaView style={styles.safeArea} edges={['left','right','bottom']}>
       {/* Use dark-content for status bar icons */}
       <StatusBar animated translucent backgroundColor="transparent" barStyle="dark-content" />
-      {backgroundRefreshing && (
-        <View style={styles.refreshIndicator}>
-          <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-        </View>
-      )}
       <SwipeToCloseScrollView
         style={styles.scrollView}
         contentContainerStyle={scrollContentStyle}
@@ -297,6 +295,7 @@ const EventDetailCard = ({ route }) => {
           setEvent={setEvent}
           userId={user?.id}
           token={token}
+          topInset={safeAreaTop}
           optimisticJoin={optimisticJoin}
           setOptimisticJoin={setOptimisticJoin}
           oversightMembersPreload={oversightMembersPreload}
@@ -312,6 +311,7 @@ const EventCardBody = ({
   setEvent,
   userId,
   token,
+  topInset = 0,
   optimisticJoin,
   setOptimisticJoin,
   oversightMembersPreload,
@@ -345,7 +345,6 @@ const EventCardBody = ({
       setMemberLoading(true);
       getMemberList(communityId)
         .then(data => {
-          console.log('data: ', data);
           const members = Array.isArray(data) ? data : (data.data || []);
           setMemberList(members);
           setFilteredMembers(members);
@@ -457,7 +456,6 @@ const EventCardBody = ({
   // Handle host request submission
   const handleRequestHost = async () => {
     try {
-      console.log('host request for event: ', event._id);
       // submit host request then re-fetch full event details to maintain consistent data shape
       await addEventHostRequest(token, event._id);
       const updatedEvent = await fetchEventDetails(event._id, token || '');
@@ -626,16 +624,22 @@ const EventCardBody = ({
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   // Error message for material upload issues
   const [materialError, setMaterialError] = useState(null);
+  const bannerPlaceholderSource = resolveImageSource('/img/events/Event_Placeholder.png', {
+    priority: 'high',
+  });
+  const bannerImageSource = resolveImageSource(imageUrl, {
+    priority: 'high',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
 
   return (
     <>
     <CardContainer
-      imageUrl={imageUrl ? resolveImageSource(imageUrl, {
-        priority: 'high',
-        fallback: '/img/events/Event_Placeholder.png',
-      }) : null}
+      imageUrl={bannerImageSource}
+      bannerDefaultImageSource={bannerPlaceholderSource}
       cardStyle={styles.card}
       bannerStyle={styles.banner}
+      topInset={topInset}
     >
       <View style={styles.overlayCard}>
         {hasJoined && (
@@ -976,13 +980,16 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor || '#fff',
   },
   refreshIndicator: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 20,
     alignSelf: 'center',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     backgroundColor: 'rgba(255,255,255,0.85)',
     borderRadius: 16,
-    marginBottom: 12,
   },
   headerInfoContainer: {
     alignItems: 'center',
@@ -1032,7 +1039,12 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: 'transparent',
   },
-  banner: { width: '100%', height: IMAGE_BANNER_HEIGHT, borderRadius: 0 },
+  banner: {
+    width: '100%',
+    height: IMAGE_BANNER_HEIGHT,
+    borderRadius: 0,
+    backgroundColor: '#DDE5F4',
+  },
   overlayCard: {
     ...detailCardOverlay,
   },
