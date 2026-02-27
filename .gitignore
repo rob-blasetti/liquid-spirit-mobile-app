@@ -101,3 +101,6 @@ android/fastlane/playstore_credentials.json
 upload_certificate.pem
 
 ios/fastlane/AuthKey_*.p8
+
+# local Android gradle overrides
+android/gradle.properties
