@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,16 @@ import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
+const normalizeRuhiBadges = (value) => {
+  if (!Array.isArray(value)) return [];
+
+  const parsed = value
+    .map((badge) => (typeof badge === 'string' ? badge.trim() : ''))
+    .filter((badge) => badge.length > 0);
+
+  return Array.from(new Set(parsed));
+};
+
 const TAB_BAR_HEIGHT = 80;
 
 const ProfileScreen = ({ navigation }) => {
@@ -40,14 +50,26 @@ const ProfileScreen = ({ navigation }) => {
           isTokenExpired, refreshSession } = useContext(UserContext);
   // Certification data from context
   const certData = userDetails?.certifications || {};
+  const ruhiBadges = useMemo(
+    () => normalizeRuhiBadges(certData.ruhiBadges),
+    [certData.ruhiBadges],
+  );
   const badgeDefs = [
     { flag: certData.isVerified, label: 'Verified User', icon: 'checkmark', color: '#3e8e41' },
     { flag: certData.hasChildProtection, label: 'Child Protection Certified', icon: 'shield-checkmark', color: '#d81b60' },
     { flag: certData.isLocalAssemblyMember, label: 'LSA Member', icon: 'star', color: '#b71c1c' },
   ];
-  const certItems = badgeDefs
-    .filter(b => b.flag)
-    .map(b => ({ label: b.label, icon: b.icon, color: b.color }));
+  const certItems = [
+    ...badgeDefs
+      .filter((b) => b.flag)
+      .map((b) => ({ label: b.label, icon: b.icon, color: b.color })),
+    ...ruhiBadges.map((badge) => ({
+      key: `ruhi:${badge}`,
+      label: `RUHI: ${badge}`,
+      icon: 'book-outline',
+      color: '#4A148C',
+    })),
+  ];
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'activities', title: 'Activities' },
@@ -669,9 +691,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
     marginBottom: 12,
-    backgroundColor: 'transparent',
-  },
-  badgesContainer: {
     backgroundColor: 'transparent',
   },
   headerActions: {

@@ -31,6 +31,16 @@ const normalizeActivitiesPayload = (payload) => {
   return [];
 };
 
+const normalizeRuhiBadges = (value) => {
+  if (!Array.isArray(value)) return [];
+
+  const parsed = value
+    .map((badge) => (typeof badge === 'string' ? badge.trim() : ''))
+    .filter((badge) => badge.length > 0);
+
+  return Array.from(new Set(parsed));
+};
+
 const normalizeEventsPayload = (payload) => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload.filter(Boolean);
@@ -335,6 +345,8 @@ const PublicUserProfile = () => {
   const certData = userData.certifications || {};
   const eventsCount = filteredEvents.length;
   // Build certifications list
+  const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
+
   const certs = [];
   if (certData.isVerified) certs.push('Verified User');
   if (certData.hasChildProtection) certs.push('Child Protection');
@@ -375,6 +387,18 @@ const PublicUserProfile = () => {
             .map(b => ({ label: b.label, icon: b.icon, color: b.color }))
           }
         />
+        {ruhiBadges.length > 0 && (
+          <View style={styles.ruhiSection}>
+            <Text style={styles.ruhiTitle}>RUHI Badges</Text>
+            <View style={styles.ruhiBadgesRow}>
+              {ruhiBadges.map((badge) => (
+                <View key={badge} style={styles.ruhiBadge}>
+                  <Text style={styles.ruhiBadgeText}>{badge}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
         {/* Community Chip in header top-right */}
         {communityName ? (
           <TouchableOpacity
@@ -460,6 +484,35 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 10,
     borderRadius: 14,
+  },
+  ruhiSection: {
+    marginTop: 10,
+    width: '100%',
+  },
+  ruhiTitle: {
+    color: '#312783',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  ruhiBadgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  ruhiBadge: {
+    backgroundColor: '#ececff',
+    borderWidth: 1,
+    borderColor: '#312783',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 8,
+    marginBottom: 6,
+  },
+  ruhiBadgeText: {
+    color: '#312783',
+    fontSize: 12,
+    fontWeight: '600',
   },
   communityChipText: {
     color: '#fff',

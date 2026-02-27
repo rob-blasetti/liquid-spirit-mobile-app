@@ -4,6 +4,16 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
 
+const normalizeRuhiBadges = (value) => {
+  if (!Array.isArray(value)) return [];
+
+  const parsed = value
+    .map((badge) => (typeof badge === "string" ? badge.trim() : ""))
+    .filter((badge) => badge.length > 0);
+
+  return Array.from(new Set(parsed));
+};
+
 const BADGE_DEFS = [
   {
     key: 'isVerified',
@@ -31,14 +41,28 @@ const BADGE_DEFS = [
 const Badges = () => {
   const { userDetails } = useContext(UserContext);
   const certData = userDetails?.certifications || {};
+  const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
 
   const badgeItems = useMemo(
     () =>
-      BADGE_DEFS.map(def => ({
+      BADGE_DEFS.map((def) => ({
         ...def,
         earned: Boolean(certData?.[def.key]),
       })),
     [certData],
+  );
+
+  const ruhiList = useMemo(
+    () =>
+      ruhiBadges.map((badge) => ({
+        key: `ruhi:${badge}`,
+        label: `RUHI: ${badge}`,
+        description: 'Registered RUHI badge.',
+        icon: 'book-outline',
+        color: '#4A148C',
+        earned: true,
+      })),
+    [ruhiBadges],
   );
 
   return (
@@ -46,7 +70,7 @@ const Badges = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>My Badges</Text>
         <View style={styles.badgesCard}>
-          {badgeItems.map((badge, idx) => {
+          {[...badgeItems, ...ruhiList].map((badge, idx, list) => {
             const activeColor = badge.color;
             const inactiveColor = '#b0b0b0';
             const color = badge.earned ? activeColor : inactiveColor;
@@ -59,7 +83,7 @@ const Badges = () => {
                     <Text style={styles.badgeDescription}>{badge.description}</Text>
                   </View>
                 </View>
-                {idx < badgeItems.length - 1 && <View style={styles.divider} />}
+                {idx < list.length - 1 && <View style={styles.divider} />}
               </View>
             );
           })}
