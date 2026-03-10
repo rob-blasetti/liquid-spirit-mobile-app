@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  TextInput,
   ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -20,6 +19,7 @@ import { isValidEmail, isValidPassword } from '../utils/validation';
 import { useAuthService, getCurrentUserId } from '../services/AuthService';
 import SlideBanner from '../components/SlideBanner';
 import PasswordField from '../components/forms/inputs/PasswordField';
+import FormTextInput from '../components/forms/inputs/FormTextInput';
 
 const Login = ({ navigation, route }) => {
   const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
@@ -195,15 +195,18 @@ const Login = ({ navigation, route }) => {
       >
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            placeholder="you@example.com"
+          <FormTextInput
             value={email}
             onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholderTextColor={themeVariables.darkGreyColor || '#777'}
+            inputProps={{
+              placeholder: 'you@example.com',
+              keyboardType: 'email-address',
+              autoCapitalize: 'none',
+              autoCorrect: false,
+              textContentType: 'emailAddress',
+              autoComplete: 'email',
+              accessibilityLabel: 'Email',
+            }}
           />
         </View>
         <Text style={styles.label}>Password</Text>
@@ -214,6 +217,8 @@ const Login = ({ navigation, route }) => {
           inputStyle={styles.input}
           autoCapitalize="none"
           autoCorrect={false}
+          textContentType="password"
+          autoComplete="password"
         />
 
         {loading ? (
@@ -279,12 +284,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   input: {
-    width: '100%',
-    alignSelf: 'stretch',
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    borderRadius: 8,
     marginBottom: 16,
   },
   inputWrapper: {

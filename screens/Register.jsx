@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Platform } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAuthService } from '../services/AuthService';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +10,7 @@ import {
   isValidPassword,
 } from '../utils/validation';
 import PasswordField from '../components/forms/inputs/PasswordField';
+import FormTextInput from '../components/forms/inputs/FormTextInput';
 
 const Register = () => {
   const navigation = useNavigation();
@@ -83,52 +84,54 @@ const Register = () => {
     <View style={styles.container}>
       <Text style={styles.label}>Email</Text>
       <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.input}
-          placeholder="you@example.com"
+        <FormTextInput
           value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
-          onChange={(e) => {
+          onChangeText={(text) => {
             clearFieldError('email');
-            setEmail(e.nativeEvent.text);
+            setEmail(text);
+          }}
+          errorText={errors.email}
+          inputProps={{
+            placeholder: 'you@example.com',
+            keyboardType: 'email-address',
+            autoCapitalize: 'none',
+            autoCorrect: false,
+            textContentType: 'emailAddress',
+            autoComplete: 'email',
+            accessibilityLabel: 'Email',
           }}
         />
-        {!!errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
       </View>
       <Text style={styles.label}>Bahá'í ID</Text>
       <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.input}
-          placeholder="Numbers only"
+        <FormTextInput
           value={bahaiId}
-          onChangeText={(text) => setBahaiId(text.replace(/[^0-9]/g, ''))}
-          keyboardType="numeric"
-          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
-          onChange={(e) => {
+          onChangeText={(text) => {
             clearFieldError('bahaiId');
-            setBahaiId(e.nativeEvent.text.replace(/[^0-9]/g, ''));
+            setBahaiId(text.replace(/[^0-9]/g, ''));
+          }}
+          errorText={errors.bahaiId}
+          inputProps={{
+            placeholder: 'Numbers only',
+            keyboardType: 'numeric',
+            accessibilityLabel: "Bahá'í ID",
           }}
         />
-        {!!errors.bahaiId && <Text style={styles.errorText}>{errors.bahaiId}</Text>}
       </View>
       <Text style={styles.label}>Password</Text>
       <View style={[styles.inputWrapper, styles.passwordWrapper]}>
         <PasswordField
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            clearFieldError('password');
+            setPassword(text);
+          }}
           placeholder="Create a password"
           inputStyle={styles.input}
           autoCapitalize="none"
           autoCorrect={false}
-          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
-          onChange={(e) => {
-            clearFieldError('password');
-            setPassword(e.nativeEvent.text);
-          }}
+          textContentType="newPassword"
+          autoComplete="password-new"
         />
         {!!errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
       </View>
@@ -136,16 +139,16 @@ const Register = () => {
       <View style={[styles.inputWrapper, styles.passwordWrapper]}>
         <PasswordField
           value={confirmPassword}
-          onChangeText={setConfirmPassword}
+          onChangeText={(text) => {
+            clearFieldError('confirmPassword');
+            setConfirmPassword(text);
+          }}
           placeholder="Re-enter your password"
           inputStyle={styles.input}
           autoCapitalize="none"
           autoCorrect={false}
-          placeholderTextColor={themeVariables.darkGreyColor || '#444'}
-          onChange={(e) => {
-            clearFieldError('confirmPassword');
-            setConfirmPassword(e.nativeEvent.text);
-          }}
+          textContentType="password"
+          autoComplete="password"
         />
         {!!errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
       </View>
@@ -194,7 +197,6 @@ export default Register;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'stretch',
     width: '100%',
     padding: 16,
@@ -210,14 +212,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   input: {
-    width: '100%',
-    alignSelf: 'stretch',
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    borderRadius: 8,
     marginBottom: 16,
-    color: themeVariables.blackColor,
   },
   inputWrapper: {
     width: '100%',
