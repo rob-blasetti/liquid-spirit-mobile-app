@@ -6444,6 +6444,11 @@ react-native-paper@^5.13.1:
     color "^3.1.2"
     use-latest-callback "^0.2.3"
 
+react-native-passkey@^3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/react-native-passkey/-/react-native-passkey-3.3.2.tgz#1efe2c8fc875a9e73ba3f08fe83606bb7b6bb5e7"
+  integrity sha512-YgXERrBlgVHAYkxGPpncB0zoiRQfZyMMMlWfNTYMyKvOS6muFMlhzk6w5lG4FyEEVrvXHGV4AS6twbmt2Rv8GA==
+
 react-native-progress@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/react-native-progress/-/react-native-progress-5.0.1.tgz#4e15258b5661c49bad74554352326ca540bb7c58"

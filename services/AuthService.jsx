@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import jwtDecode from 'jwt-decode';
+import { Passkey } from 'react-native-passkey';
 
 import { API_URL, AUTH_API_URL } from '../config';
 
@@ -22,29 +23,45 @@ const extractUserId = (decodedToken) => {
 const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
 
 const resolveAccessToken = (payload) => payload?.token || payload?.accessToken || payload?.newAccessToken || null;
-
+const resolveTokenFromResult = (payload) => resolveAccessToken(payload) || resolveAccessToken(payload?.data) || null;
 
 const resolveUserIdFromToken = (tokenValue) => {
   if (!tokenValue) return null;
   const decoded = decodeToken(tokenValue);
   return extractUserId(decoded);
 };
-// By wrapping our functions into a custom hook, we can retrieve 'token' and 'setToken' only once at the top.
-// Then we can reuse them in the exported methods without repeating useContext calls.
 
 export const useAuthService = () => {
   const { token, setToken } = useContext(UserContext);
 
+  const jsonHeaders = (withAuth = false) => ({
+    'Content-Type': 'application/json',
+    ...(withAuth && token ? { Authorization: `Bearer ${token}` } : {}),
+  });
+
+  const fetchJson = async (url, options = {}) => {
+    const response = await fetch(url, options);
+    const data = await response.json();
+    return { response, data };
+  };
+
+  const requestPasskeyPayload = async (url, body = null, withAuth = false) => {
+    const { response, data } = await fetchJson(url, {
+      method: body ? 'POST' : 'GET',
+      headers: jsonHeaders(withAuth),
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+
+    return { response, data };
+  };
+
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/login`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ email, password }),
       });
-      const data = await response.json();
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
@@ -61,14 +78,11 @@ export const useAuthService = () => {
 
   const signUp = async (email, bahaiId, password) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/register`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ email, bahaiId, password }),
       });
-      const data = await response.json();
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
@@ -85,14 +99,11 @@ export const useAuthService = () => {
 
   const verify = async (bahaiId, verificationCode, password) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/verify`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/verify`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ bahaiId, verificationCode, password }),
       });
-      const data = await response.json();
       console.log('data: ', data);
 
       if (response.ok) {
@@ -110,14 +121,11 @@ export const useAuthService = () => {
 
   const forgotPassword = async (email) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/forgot-password`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/forgot-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ email }),
       });
-      const data = await response.json();
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
@@ -134,14 +142,11 @@ export const useAuthService = () => {
 
   const forgotBahaiId = async (email) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/forgot-bahai-id`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/forgot-bahai-id`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ email }),
       });
-      const data = await response.json();
 
       return { ok: response.ok, data };
     } catch (error) {
@@ -151,13 +156,10 @@ export const useAuthService = () => {
 
   const fetchHomeOverview = async (communityId) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/homeOverview/${communityId}`, {
+      const { response, data } = await fetchJson(`${API_URL}/api/auth/homeOverview/${communityId}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
       });
-      const data = await response.json();
 
       return { ok: response.ok, data };
     } catch (error) {
@@ -167,14 +169,10 @@ export const useAuthService = () => {
 
   const fetchMe = async () => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/me`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/me`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(true),
       });
-      const data = await response.json();
       return { ok: response.ok, data };
     } catch (error) {
       throw new Error(`Sign-in error: ${error.message}`);
@@ -183,23 +181,18 @@ export const useAuthService = () => {
 
   const updateMe = async (updatedUser) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/me`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/me`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(true),
         body: JSON.stringify(updatedUser),
       });
 
-      const data = await response.json();
       return { ok: response.ok, data };
     } catch (error) {
       throw new Error(`Update error: ${error.message}`);
     }
   };
 
-  // Get current user ID from token in hook context
   const getCurrentUserId = () => resolveUserIdFromToken(token);
 
   const checkTokenExpiration = () => {
@@ -208,7 +201,6 @@ export const useAuthService = () => {
       return { isValid: false, reason: 'No token found' };
     }
 
-    // Check if token has the correct format with 3 parts
     const tokenParts = token.split('.');
     if (tokenParts.length !== 3) {
       console.error('Invalid token format');
@@ -218,7 +210,6 @@ export const useAuthService = () => {
     try {
       const decodedToken = decodeToken(token);
 
-      // Check if the token has expired
       if (decodedToken.exp * 1000 < Date.now()) {
         console.warn('Token has expired');
         return { isValid: false, reason: 'Token expired' };
@@ -231,17 +222,83 @@ export const useAuthService = () => {
     }
   };
 
+  const createPasskey = async () => {
+    const optionsUrl = `${AUTH_BASE}/api/auth/passkey/register/options`;
+    const verifyUrl = `${AUTH_BASE}/api/auth/passkey/register/verify`;
+
+    try {
+      const optionsResult = await requestPasskeyPayload(optionsUrl, null, true);
+      if (!optionsResult.response.ok) {
+        return { ok: false, data: optionsResult.data };
+      }
+
+      const challenge = optionsResult.data?.challenge;
+      if (!challenge) {
+        return { ok: false, data: { message: 'Invalid registration options from server.' } };
+      }
+
+      const credential = await Passkey.create(JSON.stringify(optionsResult.data));
+      const verifyResponse = await requestPasskeyPayload(
+        verifyUrl,
+        { challenge, credential },
+        true,
+      );
+
+      return { ok: verifyResponse.response.ok, data: verifyResponse.data };
+    } catch (error) {
+      console.error('Passkey create error:', error);
+      return { ok: false, data: { message: error.message || 'Passkey registration failed' } };
+    }
+  };
+
+  const authenticateWithPasskey = async () => {
+    const optionsUrl = `${AUTH_BASE}/api/auth/passkey/authenticate/options`;
+    const verifyUrl = `${AUTH_BASE}/api/auth/passkey/authenticate/verify`;
+
+    try {
+      const optionsResult = await requestPasskeyPayload(optionsUrl);
+      if (!optionsResult.response.ok) {
+        return { ok: false, data: optionsResult.data };
+      }
+
+      const challenge = optionsResult.data?.challenge;
+      if (!challenge) {
+        return { ok: false, data: { message: 'Invalid authentication options from server.' } };
+      }
+
+      const credential = await Passkey.get(JSON.stringify(optionsResult.data));
+      const verifyResponse = await requestPasskeyPayload(verifyUrl, { challenge, credential });
+
+      const { response, data } = verifyResponse;
+      if (response.ok) {
+        const resolvedToken = resolveTokenFromResult(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
+      }
+
+      return { ok: response.ok, data };
+    } catch (error) {
+      console.error('Passkey authentication error:', error);
+      return { ok: false, data: { message: error.message || 'Passkey authentication failed' } };
+    }
+  };
+
+  const isPasskeySupported = async () => {
+    try {
+      return await Passkey.isSupported();
+    } catch {
+      return false;
+    }
+  };
+
   const googleSignIn = async (idToken) => {
     try {
-      const response = await fetch(`${AUTH_BASE}/api/auth/google`, {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/google`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: jsonHeaders(false),
         body: JSON.stringify({ token: idToken }),
       });
-
-      const data = await response.json();
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
@@ -249,16 +306,13 @@ export const useAuthService = () => {
           setToken(resolvedToken);
         }
         return { ok: true, data };
-      } else {
-        return { ok: false, data };
       }
+      return { ok: false, data };
     } catch (error) {
       throw new Error(`Google sign-in error: ${error.message}`);
     }
   };
 
-  // Retrieve and parse user information from token after Google sign-in
-  // Retrieve and parse user information from token after Google sign-in
   const fetchGoogleUserInfo = () => {
     if (!token) return null;
     const decoded = decodeToken(token);
@@ -266,19 +320,21 @@ export const useAuthService = () => {
     return decoded;
   };
 
-  const deleteAccount = async (userId, token) => {
+  const deleteAccount = async (userId, userToken) => {
     try {
       const response = await fetch(`${API_URL}/api/auth/delete-user/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${userToken}`,
         },
       });
 
       if (response.status === 204) {
         return { ok: true };
-      } else if (!response.ok) {
+      }
+
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete account');
       }
@@ -303,10 +359,12 @@ export const useAuthService = () => {
     checkTokenExpiration,
     googleSignIn,
     fetchGoogleUserInfo,
+    isPasskeySupported,
+    createPasskey,
+    authenticateWithPasskey,
     deleteAccount,
     fetchHomeOverview,
   };
 };
 
-// Static helper to extract user ID from a JWT token
 export const getCurrentUserId = (token) => resolveUserIdFromToken(token);

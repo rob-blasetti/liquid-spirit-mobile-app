@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -20,19 +21,29 @@ import themeVariables from '../styles/theme';
 
 const Security = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
-  const { deleteAccount } = useAuthService();
+  const { deleteAccount, createPasskey, isPasskeySupported } = useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
 
   const getRootNavigation = () => {
     let currentNav = navigation;
-    // walk up to the top-most navigator so reset targets the root stack (where Welcome exists)
     while (currentNav?.getParent && currentNav.getParent()) {
       currentNav = currentNav.getParent();
     }
     return currentNav || navigation;
+  };
+
+  const openPasskeyFallback = async () => {
+    try {
+      const url = `${baseWebSettingsUrl}?from=mobile&jwt=${encodeURIComponent(token || '')}`;
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error('Error opening passkey setup:', error);
+      Alert.alert('Passkey setup unavailable', 'Could not open web setup link from this device.');
+    }
   };
 
   const handleCreatePasskey = async () => {
@@ -41,12 +52,26 @@ const Security = ({ navigation }) => {
       return;
     }
 
+    setPasskeyLoading(true);
     try {
-      const url = `${baseWebSettingsUrl}?from=mobile&jwt=${encodeURIComponent(token)}`;
-      await Linking.openURL(url);
+      const supported = await isPasskeySupported();
+      if (!supported) {
+        await openPasskeyFallback();
+        return;
+      }
+
+      const result = await createPasskey();
+      if (result?.ok) {
+        Alert.alert('Passkey Created', 'Your passkey was set up successfully.');
+      } else {
+        const reason = result?.data?.message || 'Could not complete passkey setup.';
+        Alert.alert('Passkey setup failed', reason);
+      }
     } catch (error) {
-      console.error('Error opening passkey setup:', error);
-      Alert.alert('Unable to open passkey setup', 'Passkey setup is not available right now.');
+      console.error('Error during passkey setup:', error);
+      await openPasskeyFallback();
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -94,11 +119,17 @@ const Security = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={handleCreatePasskey}>
+        <TouchableOpacity style={styles.item} onPress={handleCreatePasskey} disabled={passkeyLoading}>
           <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
           <Text style={styles.itemText}>Create Passkey</Text>
-          <Text style={styles.itemSubText}>Open web setup</Text>
-          <Ionicons name="open-outline" size={18} color={themeVariables.blackColor} />
+          {passkeyLoading ? (
+            <ActivityIndicator color={themeVariables.blackColor} size="small" />
+          ) : (
+            <>
+              <Text style={styles.itemSubText}>Use app or web setup</Text>
+              <Ionicons name="open-outline" size={18} color={themeVariables.blackColor} />
+            </>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
