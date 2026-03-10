@@ -2,4 +2,6 @@
 <array>
   <string>applinks:liquidspirit.org</string>
   <string>applinks:www.liquidspirit.org</string>
+  <string>webcredentials:liquidspirit.org</string>
+  <string>webcredentials:www.liquidspirit.org</string>
 </array>
