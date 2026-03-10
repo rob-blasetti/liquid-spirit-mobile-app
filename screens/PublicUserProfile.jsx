@@ -11,7 +11,6 @@ import { fetchEventsForAttendee } from '../services/EventService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import PostGallery from '../components/PostGallery';
-import CertificationsList from '../components/CertificationsList';
 import resolveImageSource from '../utils/imageSource';
 import themeVariables from '../styles/theme';
 
@@ -340,17 +339,9 @@ const PublicUserProfile = () => {
 
   const { firstName, lastName, profilePicture, bio } = userData.user;
   const communityName = userData.user.community?.name;
-  const preferredLang = userData.user.preferredLanguage || userData.user.language;
   const social = userData.user.socialMedia || userData.user.social || {};
   const certData = userData.certifications || {};
-  const eventsCount = filteredEvents.length;
-  // Build certifications list
   const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
-
-  const certs = [];
-  if (certData.isVerified) certs.push('Verified User');
-  if (certData.hasChildProtection) certs.push('Child Protection');
-  if (certData.isLocalAssemblyMember) certs.push('LSA Member');
 
   // certification badges definitions using Ionicons
   const badgeDefs = [
@@ -358,63 +349,121 @@ const PublicUserProfile = () => {
     { flag: certData.hasChildProtection, icon: 'shield-checkmark', color: '#d81b60', label: 'Child Protection' },
     { flag: certData.isLocalAssemblyMember, icon: 'star', color: '#b71c1c', label: 'LSA Member' },
   ];
-  const postsCount = sortedPosts.length;
-  const activitiesCount = filteredActivities.length;
+  const earnedBadges = [
+    ...badgeDefs.filter(b => b.flag).map(b => ({
+      key: b.label,
+      label: b.label,
+      icon: b.icon,
+      color: b.color,
+    })),
+    ...ruhiBadges.map(badge => ({
+      key: `ruhi:${badge}`,
+      label: `RUHI: ${badge}`,
+      icon: 'book-outline',
+      color: '#4A148C',
+    })),
+  ];
+  const badgeSummaryItems = earnedBadges.slice(0, 3);
+  const badgeCount = earnedBadges.length;
+  const stats = {
+    activities: filteredActivities.length,
+    events: filteredEvents.length,
+    posts: sortedPosts.length,
+  };
   return (
     <View style={styles.flexContainer}>
       <View contentContainerStyle={styles.container} scrollEnabled={false}>
-      <View style={styles.header}>
-        {profilePicture ? (
-          <FastImage
-            style={styles.avatar}
-            source={resolveImageSource(profilePicture, { priority: 'high' })}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-        ) : (
-          <Avatar
-            size={100}
-            name={`${firstName || ''} ${lastName || ''}`.trim()}
-            variant="beam"
-            colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-            style={styles.avatar}
-          />
-        )}
-        <Text style={styles.name}>{firstName} {lastName}</Text>
-        {/* Certifications badges */}
-        <CertificationsList
-          items={badgeDefs
-            .filter(b => b.flag)
-            .map(b => ({ label: b.label, icon: b.icon, color: b.color }))
-          }
-        />
-        {ruhiBadges.length > 0 && (
-          <View style={styles.ruhiSection}>
-            <Text style={styles.ruhiTitle}>RUHI Badges</Text>
-            <View style={styles.ruhiBadgesRow}>
-              {ruhiBadges.map((badge) => (
-                <View key={badge} style={styles.ruhiBadge}>
-                  <Text style={styles.ruhiBadgeText}>{badge}</Text>
+      <View style={styles.headerContainer}>
+        <View style={styles.headerProfileInfo}>
+          {profilePicture ? (
+            <FastImage
+              style={styles.profilePictureSmall}
+              source={resolveImageSource(profilePicture, { priority: 'high' })}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <Avatar
+              size={44}
+              name={`${firstName || ''} ${lastName || ''}`.trim()}
+              variant="beam"
+              colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
+              style={styles.profilePictureSmall}
+            />
+          )}
+          <View style={styles.profileDetails}>
+            <Text style={styles.nameSmall}>{firstName} {lastName}</Text>
+            <View style={styles.statsRow}>
+              <Text style={styles.statsItem}>Activities: {stats.activities}</Text>
+              <Text style={styles.statsItem}>Events: {stats.events}</Text>
+              <Text style={styles.statsItem}>Posts: {stats.posts}</Text>
+            </View>
+            {communityName ? (
+              <TouchableOpacity
+                style={styles.communityChipInline}
+                onPress={() =>
+                  navigation.navigate('Search', {
+                    initialQuery: communityName,
+                    initialQueryTs: Date.now(),
+                  })
+                }
+              >
+                <Text style={styles.communityChipText}>{communityName}</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+      </View>
+      {bio ? <Text style={styles.bio}>{bio}</Text> : null}
+      <View style={styles.badgesSection}>
+        <View style={styles.badgesHeadingRow}>
+          <View style={styles.badgesHeadingText}>
+            <Text style={styles.badgesLabel}>Badges</Text>
+            <Text style={styles.badgesSummary}>
+              {badgeCount > 0 ? `${badgeCount} earned` : 'No badges yet'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('PublicUserBadges', {
+                certifications: certData,
+                profileName: `${firstName || ''} ${lastName || ''}`.trim() || 'Member',
+              })
+            }
+            style={styles.seeAllButton}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${firstName || 'member'} ${lastName || ''} badges`}
+            accessibilityHint="Opens the full badges screen for this user"
+          >
+            <Text style={styles.seeAllText}>View all</Text>
+            <Ionicons name="chevron-forward" size={16} color={themeVariables.primaryColor} />
+          </TouchableOpacity>
+        </View>
+        {badgeSummaryItems.length > 0 ? (
+          <View style={styles.badgesPreviewRow}>
+            {badgeSummaryItems.map(item => (
+              <View key={item.key} style={styles.badgePreviewItem}>
+                <View style={styles.badgePreviewCard}>
+                  <View style={[styles.badgePreviewIcon, { backgroundColor: item.color }]}>
+                    <Ionicons name={item.icon} size={18} color={themeVariables.whiteColor} />
+                  </View>
+                  <Text style={styles.badgePreviewText} numberOfLines={2}>
+                    {item.label}
+                  </Text>
                 </View>
-              ))}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.badgesContainer}>
+            <View style={styles.badgesEmptyState}>
+              <View style={styles.badgesEmptyIcon}>
+                <Ionicons name="ribbon-outline" size={18} color={themeVariables.primaryColor} />
+              </View>
+              <Text style={styles.badgesEmptyText}>Earn badges and they will show up here.</Text>
             </View>
           </View>
         )}
-        {/* Community Chip in header top-right */}
-        {communityName ? (
-          <TouchableOpacity
-            style={styles.communityChip}
-            onPress={() =>
-              navigation.navigate('Search', {
-                initialQuery: communityName,
-                initialQueryTs: Date.now(),
-              })
-            }
-          >
-            <Text style={styles.communityChipText}>{communityName}</Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
-      {bio ? <Text style={styles.bio}>{bio}</Text> : null}
       {/* Social links */}
       {Object.entries(social).length > 0 && (
         <View style={styles.socialRow}>
@@ -460,14 +509,160 @@ const PublicUserProfile = () => {
 
 const styles = StyleSheet.create({
   // Container padding for header content; bottom padding reduced to minimize space before tabs
-  container: { padding: 16, paddingBottom: 0 },
+  container: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 0 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   errorText: { color: 'red' },
   tabMessageContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 },
-  header: { position: 'relative', alignItems: 'center', marginBottom: 16, marginTop: 16 },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 12 },
-  name: { fontSize: 24, fontWeight: '600' },
-  bio: { fontSize: 16, color: '#444', marginTop: 8 },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  headerProfileInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  profilePictureSmall: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: 12,
+  },
+  profileDetails: {
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    flex: 1,
+  },
+  nameSmall: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: themeVariables.blackColor,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  statsItem: {
+    marginRight: 10,
+    fontSize: 12,
+    color: themeVariables.blackColor,
+  },
+  bio: { fontSize: 16, color: '#444', marginTop: 4, paddingHorizontal: 4, marginBottom: 4 },
+  badgesSection: {
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+  },
+  badgesLabel: {
+    color: themeVariables.blackColor,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  badgesSummary: {
+    marginTop: 2,
+    fontSize: 13,
+    color: '#6C7690',
+  },
+  badgesHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 8,
+    backgroundColor: 'transparent',
+  },
+  badgesHeadingText: {
+    marginLeft: 4,
+  },
+  seeAllButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderRadius: 999,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+  },
+  seeAllText: {
+    marginRight: 4,
+    fontSize: 13,
+    fontWeight: '700',
+    color: themeVariables.primaryColor,
+  },
+  badgesContainer: {
+    backgroundColor: '#F8FAFF',
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F4',
+  },
+  badgesPreviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 12,
+  },
+  badgePreviewItem: {
+    flex: 1,
+    paddingHorizontal: 4,
+    maxWidth: '33.33%',
+  },
+  badgePreviewCard: {
+    minHeight: 112,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  badgePreviewIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  badgePreviewText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: themeVariables.primaryColor,
+    textAlign: 'center',
+  },
+  badgesEmptyState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgesEmptyIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF2FF',
+    marginRight: 10,
+  },
+  badgesEmptyText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#6C7690',
+  },
   row: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
   label: { fontWeight: '600', marginRight: 6, fontSize: 16, color: '#333' },
   value: { fontSize: 16, color: '#444', flexShrink: 1 },
@@ -476,10 +671,9 @@ const styles = StyleSheet.create({
   // Certifications badges container and badge styles are now extracted into CertificationsList component
   chipContainer: { marginTop: 12, flexDirection: 'row', borderRadius: 20 },
   chip: { alignSelf: 'flex-start' },
-  communityChip: {
-    position: 'absolute',
-    top: 0,
-    right: 10,
+  communityChipInline: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
     backgroundColor: '#312783',
     paddingVertical: 2,
     paddingHorizontal: 10,

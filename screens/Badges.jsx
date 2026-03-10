@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, View, Text, ScrollView, Pressable } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useRoute } from '@react-navigation/native';
 import { UserContext } from '../contexts/UserContext';
 import themeVariables from '../styles/theme';
 import { STUDY_CIRCLE_BOOKS } from './CreateActivity/constants';
@@ -36,6 +37,7 @@ const BADGE_DEFS = [
     description: 'Serving on the Local Spiritual Assembly.',
     icon: 'star',
     color: '#b71c1c',
+    hideWhenLocked: true,
   },
 ];
 
@@ -51,9 +53,12 @@ const FILTERS = [
 ];
 
 const Badges = () => {
+  const route = useRoute();
   const { userDetails } = useContext(UserContext);
   const [activeFilter, setActiveFilter] = useState('all');
-  const certData = userDetails?.certifications || {};
+  const routeCertifications = route.params?.certifications;
+  const profileName = route.params?.profileName || 'My';
+  const certData = routeCertifications || userDetails?.certifications || {};
   const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
 
   const badgeItems = useMemo(
@@ -61,13 +66,26 @@ const Badges = () => {
       BADGE_DEFS.map((def) => ({
         ...def,
         earned: Boolean(certData?.[def.key]),
-      })),
+      })).filter(badge => badge.earned || !badge.hideWhenLocked),
     [certData],
   );
 
   const ruhiList = useMemo(
-    () =>
-      ruhiBadges.map((badge) => ({
+    () => {
+      if (ruhiBadges.length === 0) {
+        return [
+          {
+            key: 'ruhi:locked',
+            label: 'Ruhi Sequence',
+            description: 'Complete a Ruhi book to unlock this badge.',
+            icon: 'book-outline',
+            color: '#4A148C',
+            earned: false,
+          },
+        ];
+      }
+
+      return ruhiBadges.map((badge) => ({
         key: `ruhi:${badge}`,
         label: `RUHI: ${badge}`,
         description: RUHI_BOOK_LABELS[badge]
@@ -76,7 +94,8 @@ const Badges = () => {
         icon: 'book-outline',
         color: '#4A148C',
         earned: true,
-      })),
+      }));
+    },
     [ruhiBadges],
   );
 
@@ -125,6 +144,14 @@ const Badges = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
+        {routeCertifications ? (
+          <View style={styles.profileHeading}>
+            <Text style={styles.profileHeadingTitle}>{profileName} Badges</Text>
+            <Text style={styles.profileHeadingSubtitle}>
+              Community recognition and Ruhi study milestones visible on this profile.
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.filterRow}>
           {FILTERS.map((filter, index) => {
             const isActive = filter.key === activeFilter;
@@ -169,11 +196,7 @@ const Badges = () => {
             </View>
 
             <View style={styles.badgesCard}>
-              {ruhiList.length > 0 ? (
-                ruhiList.map((badge, idx, list) => renderBadgeRow(badge, idx, list))
-              ) : (
-                <Text style={styles.emptyStateText}>No Ruhi badges earned yet.</Text>
-              )}
+              {ruhiList.map((badge, idx, list) => renderBadgeRow(badge, idx, list))}
             </View>
           </>
         )}
@@ -191,6 +214,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     paddingBottom: 28,
+  },
+  profileHeading: {
+    marginBottom: 16,
+  },
+  profileHeadingTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#172033',
+  },
+  profileHeadingSubtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#667085',
   },
   filterRow: {
     flexDirection: 'row',
@@ -297,11 +334,6 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#E9EDF5',
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: '#667085',
-    paddingVertical: 12,
   },
 });
 
