@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import DropdownInput from './DropdownInput';
+import themeVariables from '../../../styles/theme';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MINUTES = ['00', '15', '30', '45'];
@@ -58,6 +59,8 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
               parts.meridiem === 'AM' && styles.meridiemToggleActive,
             ]}
             onPress={() => updateTime(null, null, 'AM')}
+            accessibilityRole="button"
+            accessibilityLabel="Set time to AM"
           >
             <Text style={[
               styles.meridiemText,
@@ -70,6 +73,8 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
               parts.meridiem === 'PM' && styles.meridiemToggleActive,
             ]}
             onPress={() => updateTime(null, null, 'PM')}
+            accessibilityRole="button"
+            accessibilityLabel="Set time to PM"
           >
             <Text style={[
               styles.meridiemText,
@@ -101,18 +106,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
+    borderRadius: 12,
     overflow: 'hidden',
-    height: 56,
+    height: 52,
     width: 92,
     marginLeft: 4,
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
   },
   meridiemToggle: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f7f7f7',
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
   },
   meridiemToggleActive: {
     backgroundColor: '#312783',

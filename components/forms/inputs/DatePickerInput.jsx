@@ -36,6 +36,7 @@ const DatePickerInput = ({
   const mergedStyle = [
     styles.input,
     inputProps?.style,
+    open && styles.inputOpen,
     error && styles.inputError,
   ].filter(Boolean);
 
@@ -54,6 +55,9 @@ const DatePickerInput = ({
         activeOpacity={0.9}
         onPress={() => setOpen(prev => !prev)}
         style={mergedStyle}
+        accessibilityRole="button"
+        accessibilityLabel={label || 'Select date'}
+        accessibilityHint={open ? 'Closes the calendar' : 'Opens the calendar'}
       >
         <Text style={[styles.inputText, !displayDate && styles.placeholder]}>
           {displayDate || 'Select date'}
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
   dropdown: {
     marginTop: 8,
     backgroundColor: themeVariables.whiteColor,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 12,
     shadowColor: '#000',
     shadowOpacity: 0.15,
@@ -141,21 +145,30 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 14,
     paddingVertical: 14,
-    borderRadius: 8,
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    borderRadius: 12,
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
     borderWidth: 1,
-    borderColor: themeVariables.borderLightColor || '#e0e0e0',
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
+  },
+  inputOpen: {
+    borderColor: themeVariables.primaryColor,
+    shadowColor: themeVariables.primaryColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   inputError: {
-    borderColor: '#d32f2f',
+    borderColor: themeVariables.formErrorBorder || '#d32f2f',
   },
   inputText: {
     color: themeVariables.blackColor,
     flex: 1,
     marginRight: 8,
+    fontSize: 16,
   },
   placeholder: {
-    color: themeVariables.darkGreyColor || '#222',
+    color: '#667085',
   },
   dropdownHeader: {
     flexDirection: 'row',
@@ -168,6 +181,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     backgroundColor: 'transparent',
     color: themeVariables.blackColor,
+    fontSize: 16,
+    fontWeight: '600',
   },
   monthNav: {
     padding: 4,
