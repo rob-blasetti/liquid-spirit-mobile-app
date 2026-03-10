@@ -1,10 +1,21 @@
 import React, { useContext, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
+  TextInput,
+  Alert,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { CommonActions } from '@react-navigation/native';
+
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
+import { PASSKEY_WEBSITE_PATH, WEB_APP_URL } from '../config';
 import themeVariables from '../styles/theme';
 
 const Security = ({ navigation }) => {
@@ -12,6 +23,8 @@ const Security = ({ navigation }) => {
   const { deleteAccount } = useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
+
+  const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
 
   const getRootNavigation = () => {
     let currentNav = navigation;
@@ -22,6 +35,21 @@ const Security = ({ navigation }) => {
     return currentNav || navigation;
   };
 
+  const handleCreatePasskey = async () => {
+    if (!token) {
+      Alert.alert('Not signed in', 'Please sign in before setting up a passkey.');
+      return;
+    }
+
+    try {
+      const url = `${baseWebSettingsUrl}?from=mobile&jwt=${encodeURIComponent(token)}`;
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error('Error opening passkey setup:', error);
+      Alert.alert('Unable to open passkey setup', 'Passkey setup is not available right now.');
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     const rootNav = getRootNavigation();
@@ -29,7 +57,7 @@ const Security = ({ navigation }) => {
       CommonActions.reset({
         index: 0,
         routes: [{ name: 'Welcome' }],
-      })
+      }),
     );
   };
 
@@ -43,7 +71,7 @@ const Security = ({ navigation }) => {
           CommonActions.reset({
             index: 0,
             routes: [{ name: 'Welcome' }],
-          })
+          }),
         );
       } catch (error) {
         console.error('Error deleting account:', error);
@@ -66,6 +94,13 @@ const Security = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.section}>
+        <TouchableOpacity style={styles.item} onPress={handleCreatePasskey}>
+          <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
+          <Text style={styles.itemText}>Create Passkey</Text>
+          <Text style={styles.itemSubText}>Open web setup</Text>
+          <Ionicons name="open-outline" size={18} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color={themeVariables.blackColor} />
           <Text style={styles.itemText}>Logout</Text>
@@ -91,10 +126,16 @@ const Security = ({ navigation }) => {
             />
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={handleConfirmDelete}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleConfirmDelete}
+              >
                 <Text style={styles.modalButtonText}>Confirm</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={closeModal}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={closeModal}
+              >
                 <Text style={styles.modalButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -129,6 +170,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
     color: themeVariables.blackColor,
+  },
+  itemSubText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'right',
+    flexShrink: 0,
   },
   modalOverlay: {
     flex: 1,
