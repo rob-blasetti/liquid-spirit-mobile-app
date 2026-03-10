@@ -237,11 +237,12 @@ const Login = ({ navigation, route }) => {
         ) : (
           <TouchableOpacity
             style={styles.passkeyButton}
+            activeOpacity={0.85}
             onPress={handlePasskeyLogin}
             disabled={passkeyLoading}
           >
-            <Ionicons name="key" size={18} color={themeVariables.whiteColor} />
-            <Text style={styles.passkeyButtonText}>Sign in with passkey</Text>
+            <Ionicons name="finger-print" size={18} color="#fff" />
+            <Text style={styles.passkeyButtonText}>Continue with Passkey</Text>
           </TouchableOpacity>
         )}
 
@@ -262,7 +263,6 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   container: {
-    flex: 1,
     alignItems: 'stretch',
     width: '100%',
     padding: 16,
@@ -293,8 +293,10 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#312783',
-    padding: 16,
-    borderRadius: 30,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    alignItems: 'center',
     width: '100%',
     marginBottom: 16,
   },
@@ -302,7 +304,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-    width: Platform.select({ android: 120 }),
     textAlign: 'center',
   },
   passkeyButtonContainer: {
@@ -311,14 +312,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   passkeyButton: {
-    backgroundColor: '#0485e2',
+    backgroundColor: '#353535',
     paddingVertical: 14,
-    borderRadius: 30,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
     marginBottom: 16,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
   },
   passkeyButtonText: {
