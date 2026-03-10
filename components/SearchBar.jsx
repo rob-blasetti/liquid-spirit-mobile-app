@@ -23,6 +23,7 @@ const SearchBar = forwardRef(
       inputStyle,
       testID,
       placeholderTextColor = '#7a7a7a',
+      accessibilityLabel,
     },
     ref,
   ) => {
@@ -49,6 +50,9 @@ const SearchBar = forwardRef(
             autoCorrect={autoCorrect}
             placeholderTextColor={placeholderTextColor}
             testID={testID}
+            accessibilityLabel={accessibilityLabel || placeholder}
+            accessibilityRole="search"
+            clearButtonMode="while-editing"
           />
           {showSpinner ? (
             <ActivityIndicator
@@ -63,6 +67,8 @@ const SearchBar = forwardRef(
             style={styles.cancelButton}
             onPress={onCancel}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel search"
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>

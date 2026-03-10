@@ -122,14 +122,7 @@ const Security = ({ navigation }) => {
         <TouchableOpacity style={styles.item} onPress={handleCreatePasskey} disabled={passkeyLoading}>
           <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
           <Text style={styles.itemText}>Create Passkey</Text>
-          {passkeyLoading ? (
-            <ActivityIndicator color={themeVariables.blackColor} size="small" />
-          ) : (
-            <>
-              <Text style={styles.itemSubText}>Use app or web setup</Text>
-              <Ionicons name="open-outline" size={18} color={themeVariables.blackColor} />
-            </>
-          )}
+          {passkeyLoading ? <ActivityIndicator color={themeVariables.blackColor} size="small" /> : null}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
@@ -201,13 +194,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
     color: themeVariables.blackColor,
-  },
-  itemSubText: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'right',
-    flexShrink: 0,
   },
   modalOverlay: {
     flex: 1,

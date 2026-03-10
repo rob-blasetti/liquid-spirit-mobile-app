@@ -67,6 +67,7 @@ import {
   detailCardContent,
   detailCardHorizontalPadding,
 } from '../common/detailCardLayout';
+import { getDisplayAddress } from '../Activity/utils/locationUtils';
 import useChatStarter from '../common/useChatStarter';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
@@ -88,6 +89,43 @@ const parseTime = timeStr => {
   const hour = parseInt(parts[0], 10) || 0;
   const minute = parseInt(parts[1], 10) || 0;
   return new Date(1970, 0, 1, hour, minute).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+
+const coalesceString = (...values) => {
+  for (const value of values) {
+    if (typeof value !== 'string') continue;
+    const trimmed = value.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return '';
+};
+
+const formatEventAddress = address => {
+  if (typeof address === 'string') return address.trim();
+  if (!address || typeof address !== 'object') return '';
+
+  const fallbackParts = [
+    address.streetAddress,
+    address.street,
+    address.line1,
+    address.suburb,
+    address.city,
+    address.state,
+    address.postalCode,
+    address.zip,
+    address.country,
+  ]
+    .map(part => (typeof part === 'string' ? part.trim() : ''))
+    .filter(Boolean)
+    .join(', ');
+
+  return coalesceString(
+    getDisplayAddress({ sessionAddress: address }),
+    fallbackParts,
+    address.address,
+    address.formatted,
+    address.formattedAddress,
+  );
 };
 
 const EventDetailCard = ({ route }) => {
@@ -408,13 +446,45 @@ const EventCardBody = ({
   const timeMain = startTime ? parseTime(startTime) : 'N/A';
   // Append hyphen before end time to indicate range
   const timeSub = endTime ? `- ${parseTime(endTime)}` : '';
-  const fullAddr = venue || 'No location';
+  const venueName = coalesceString(
+    Array.isArray(event.venues)
+      ? event.venues
+          .map(item =>
+            typeof item === 'object'
+              ? item?.name || item?.title || item?.label || item?.venueName
+              : ''
+          )
+          .find(Boolean)
+      : '',
+    event.venueName,
+    venue,
+    event.address?.name,
+  );
+  const addressText = coalesceString(
+    Array.isArray(event.venues)
+      ? event.venues
+          .map(item =>
+            typeof item === 'object'
+              ? formatEventAddress(item?.address || item?.location || item)
+              : ''
+          )
+          .find(Boolean)
+      : '',
+    formatEventAddress(event.address),
+    event.address?.address,
+    event.location,
+  );
+  const fullAddr =
+    venueName && addressText && venueName.toLowerCase() !== addressText.toLowerCase()
+      ? `${venueName} - ${addressText}`
+      : venueName || addressText || 'No location';
+  const mapQuery = addressText || venueName || fullAddr;
   // Map region state for location map
   const [region, setRegion] = useState(null);
   const { openGoogleMaps } = useGoogleMaps();
   useEffect(() => {
-    if (!fullAddr) return;
-    const q = encodeURIComponent(fullAddr);
+    if (!mapQuery || mapQuery === 'No location') return;
+    const q = encodeURIComponent(mapQuery);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
       headers: {
         'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
@@ -433,11 +503,11 @@ const EventCardBody = ({
         }
       })
       .catch(err => console.warn('Geocode error', err));
-  }, [fullAddr]);
+  }, [mapQuery]);
   // Determine join status based on raw attendees (before enrichment)
   const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
 
-  const openMaps = useCallback(() => openGoogleMaps(fullAddr), [openGoogleMaps, fullAddr]);
+  const openMaps = useCallback(() => openGoogleMaps(mapQuery), [openGoogleMaps, mapQuery]);
   const handleJoin = async () => {
     setOptimisticJoin(true);
     try {

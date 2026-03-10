@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { memo, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   SafeAreaView,
   View,
@@ -278,7 +278,7 @@ const formatRelativeTime = (input) => {
   return months <= 1 ? '1m' : `${months}m`;
 };
 
-const ChatRow = ({ chat, onPress }) => {
+const ChatRow = memo(({ chat, onOpen }) => {
   const title =
     chat?.title ||
     chat?.name ||
@@ -290,9 +290,20 @@ const ChatRow = ({ chat, onPress }) => {
   const avatarSource = buildChatAvatarSource(chat);
   const lastDate = chat?.lastMessage?.createdAt || chat?.last_message?.createdAt || chat?.updatedAt || chat?.updated_at || chat?.createdAt;
   const lastDateLabel = formatRelativeTime(lastDate);
+  const accessibilityLabel = [title, participants.length > 0 ? participants.join(', ') : null, preview, lastDateLabel]
+    .filter(Boolean)
+    .join('. ');
+  const handlePress = useCallback(() => onOpen(chat), [chat, onOpen]);
 
   return (
-    <TouchableOpacity style={styles.chatRow} activeOpacity={0.85} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.chatRow}
+      activeOpacity={0.85}
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint="Opens the conversation"
+    >
       <View style={styles.chatAvatarWrapper}>
         {avatarSource ? (
           <FastImage
@@ -333,7 +344,7 @@ const ChatRow = ({ chat, onPress }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const ChatScreen = () => {
   const {
@@ -408,14 +419,14 @@ const ChatScreen = () => {
   );
 
   const renderChat = useCallback(
-    ({ item }) => <ChatRow chat={item} onPress={() => handleOpenChat(item)} />,
+    ({ item }) => <ChatRow chat={item} onOpen={handleOpenChat} />,
     [handleOpenChat],
   );
   const keyExtractor = useCallback(
     (item, index) => item?._id || item?.id || `chat-${index}`,
     [],
   );
-  const listData = chats;
+  const listData = useMemo(() => chats || [], [chats]);
 
   // Prefetch chat avatars for the first screenful to reduce "pop-in".
   useEffect(() => {
@@ -471,6 +482,10 @@ const ChatScreen = () => {
               to chat.
             </Text>
           }
+          initialNumToRender={12}
+          maxToRenderPerBatch={10}
+          windowSize={7}
+          removeClippedSubviews
         />
       )}
 
@@ -603,12 +618,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth * 2,
     backgroundColor: '#c0c0c0',
     marginTop: 16,
-  },
-  emptyListContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
   },
   emptyText: {
     textAlign: 'center',

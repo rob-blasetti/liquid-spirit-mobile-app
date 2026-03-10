@@ -13,13 +13,14 @@ const PasswordField = ({
   ...rest
 }) => {
   const [visible, setVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const mergedWrapper = useMemo(
     () => [styles.wrapper, style].filter(Boolean),
     [style],
   );
   const mergedInput = useMemo(
-    () => [styles.input, inputStyle].filter(Boolean),
-    [inputStyle],
+    () => [styles.input, isFocused && styles.inputFocused, inputStyle].filter(Boolean),
+    [inputStyle, isFocused],
   );
 
   return (
@@ -32,13 +33,24 @@ const PasswordField = ({
         secureTextEntry={!visible}
         autoCapitalize="none"
         autoCorrect={false}
-        placeholderTextColor={themeVariables.darkGreyColor || '#444'}
+        placeholderTextColor="#667085"
+        selectionColor={themeVariables.primaryColor}
+        onFocus={event => {
+          setIsFocused(true);
+          rest.onFocus?.(event);
+        }}
+        onBlur={event => {
+          setIsFocused(false);
+          rest.onBlur?.(event);
+        }}
         {...rest}
       />
       <TouchableOpacity
         onPress={() => setVisible((prev) => !prev)}
         style={styles.icon}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel={visible ? 'Hide password' : 'Show password'}
       >
         <Ionicons
           name={visible ? 'eye-off-outline' : 'eye-outline'}
@@ -59,18 +71,31 @@ const styles = StyleSheet.create({
   input: {
     width: '100%',
     alignSelf: 'stretch',
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
-    paddingHorizontal: 14,
+    minHeight: 52,
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
     paddingRight: 44,
+    color: themeVariables.blackColor,
+    fontSize: 16,
+  },
+  inputFocused: {
+    borderColor: themeVariables.primaryColor,
+    shadowColor: themeVariables.primaryColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   icon: {
     position: 'absolute',
     right: 12,
-    top: -2,
-    bottom: 14,
+    top: 0,
+    bottom: 16,
     justifyContent: 'center',
   },
 });

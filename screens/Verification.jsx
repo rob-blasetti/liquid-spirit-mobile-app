@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   StyleSheet,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import themeVariables from '../styles/theme';
 
 // Import the custom hook
 import { useAuthService } from '../services/AuthService';
+import FormTextInput from '../components/forms/inputs/FormTextInput';
 
 const Verification = ({ route }) => {
   const navigation = useNavigation();
@@ -59,14 +60,20 @@ const Verification = ({ route }) => {
         Enter the 6-digit code sent to your email: {email}
       </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Verification Code"
-        value={verificationCode}
-        onChangeText={setVerificationCode}
-        keyboardType="numeric"
-        maxLength={6}
-      />
+      <Text style={styles.label}>Verification Code</Text>
+      <View style={styles.inputWrapper}>
+        <FormTextInput
+          value={verificationCode}
+          onChangeText={setVerificationCode}
+          errorText={message}
+          inputProps={{
+            placeholder: 'Enter verification code',
+            keyboardType: 'numeric',
+            maxLength: 6,
+            accessibilityLabel: 'Verification Code',
+          }}
+        />
+      </View>
 
       <TouchableOpacity
         style={styles.button}
@@ -78,8 +85,6 @@ const Verification = ({ route }) => {
           : <Text style={styles.buttonText}>Verify</Text>
         }
       </TouchableOpacity>
-
-      {message ? <Text style={styles.errorText}>{message}</Text> : null}
     </View>
   );
 };
@@ -91,14 +96,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: themeVariables.screenBackgroundColor,
   },
   header: {
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
-    color: '#312783',
+    color: themeVariables.primaryColor,
   },
   description: {
     fontSize: 14,
@@ -106,20 +111,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#555',
   },
-  input: {
-    height: 50,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+  label: {
+    width: '100%',
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    color: themeVariables.blackColor,
+    marginBottom: 6,
+    alignSelf: 'flex-start',
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    width: '100%',
+    alignSelf: 'stretch',
+    marginBottom: 15,
   },
   button: {
-    backgroundColor: '#312783',
+    backgroundColor: themeVariables.primaryColor,
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
     marginTop: 10,
   },
@@ -127,10 +135,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  errorText: {
-    color: 'red',
-    textAlign: 'center',
-    marginTop: 10,
   },
 });

@@ -2,10 +2,10 @@ import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, us
 import { Alert, Animated, BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from 'liquid-spirit-styleguide/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../styles/theme';
 import FormHelperText from '../../components/forms/inputs/FormHelperText';
+import LiquidGlassIconButton from '../../components/LiquidGlassIconButton';
 import { UserContext } from '../../contexts/UserContext';
 import { createSession } from '../../services/SessionService';
 import { fetchUserById, getMemberList } from '../../services/UserService';
@@ -247,7 +247,7 @@ const CreateSession = ({ navigation, route }) => {
 
   const baseInputProps = useMemo(
     () => ({
-      placeholderTextColor: themeVariables.darkGreyColor || '#222',
+      placeholderTextColor: '#667085',
     }),
     [],
   );
@@ -280,26 +280,6 @@ const CreateSession = ({ navigation, route }) => {
   const [curriculumError, setCurriculumError] = useState('');
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
   const [venuesLoading, setVenuesLoading] = useState(true);
-
-  useEffect(() => {
-    console.log('[CreateSession] route params', {
-      params,
-      resolvedActivityId,
-      activityTitle,
-      activityType,
-      prefilledFacilitatorsCount: prefilledFacilitators.length,
-      prefilledParticipantsCount: prefilledParticipants.length,
-      prefilledFacilitators,
-      prefilledParticipants,
-    });
-  }, [
-    params,
-    resolvedActivityId,
-    activityTitle,
-    activityType,
-    prefilledFacilitators,
-    prefilledParticipants,
-  ]);
 
   useEffect(() => {
     const grade = form.curriculumLesson.grade;
@@ -580,10 +560,6 @@ const CreateSession = ({ navigation, route }) => {
           const listToUse = normalizedMembers.length ? normalizedMembers : rawList;
           setAllMembers(listToUse);
           setMemberOptions(listToUse);
-          console.log('[CreateSession] loaded members', {
-            count: listToUse.length,
-            sample: listToUse.slice(0, 5),
-          });
         }
       } catch (err) {
         if (!cancelled) {
@@ -672,8 +648,6 @@ const CreateSession = ({ navigation, route }) => {
     let cancelled = false;
     (async () => {
       const toFetch = missing.slice(0, 20);
-      if (__DEV__) console.log('[CreateSession] fetching missing selected members', { toFetch });
-
       const results = await Promise.allSettled(
         toFetch.map(async (id) => {
           const data = await fetchUserById(id, token);
@@ -727,15 +701,6 @@ const CreateSession = ({ navigation, route }) => {
     setStep((prev) => Math.max(prev - 1, 1));
   }, []);
 
-  useEffect(() => {
-    if (step !== 2) return;
-    console.log('[CreateSession] step 2 data', {
-      facilitators: form.facilitators,
-      participants: form.participants,
-      memberOptionsCount: memberOptions.length,
-    });
-  }, [step, form.facilitators, form.participants, memberOptions.length]);
-
   const handleSubmit = useCallback(async () => {
     if (!token) {
       Alert.alert('Not signed in', 'Please log in to create a new session.');
@@ -777,10 +742,6 @@ const CreateSession = ({ navigation, route }) => {
       if (form.locationMode === 'online' || form.locationMode === 'both') {
         payload.onlineLink = form.onlineLink;
       }
-      console.log('[CreateSession] submitting payload', {
-        activityId: resolvedActivityId,
-        payload,
-      });
       await createSession(resolvedActivityId, payload, { token });
       Alert.alert('Session Created', 'Your session has been scheduled.', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -804,13 +765,13 @@ const CreateSession = ({ navigation, route }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity
+        <LiquidGlassIconButton
           onPress={handleNavBack}
-          style={{ paddingHorizontal: 8, paddingVertical: 4 }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="chevron-back" size={24} color={themeVariables.blackColor} />
-        </TouchableOpacity>
+          iconName="chevron-back"
+          iconColor={themeVariables.blackColor}
+          accessibilityLabel="Go back"
+          hasShadow={false}
+        />
       ),
       headerBackVisible: false,
       title: activityTitle || 'Create Session',
@@ -1073,7 +1034,6 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
   },
   input: {
-    backgroundColor: '#f9f9f9',
     marginBottom: themeVariables.spacing.s,
   },
   multilineInput: {

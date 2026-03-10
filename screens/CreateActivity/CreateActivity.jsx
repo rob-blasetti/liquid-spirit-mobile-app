@@ -5,7 +5,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { Button } from 'liquid-spirit-styleguide/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../../styles/theme';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import LiquidGlassIconButton from '../../components/LiquidGlassIconButton';
 import TitleSection from './sections/TitleSection';
 import ActivityTypeSection from './sections/ActivityTypeSection';
 import StudyCircleBookSection from './sections/StudyCircleBookSection';
@@ -78,7 +78,7 @@ export default function CreateActivity({ navigation, route }) {
   const [step, setStep] = useState(1);
   const baseInputProps = useMemo(
     () => ({
-      placeholderTextColor: themeVariables.darkGreyColor || '#222',
+      placeholderTextColor: '#667085',
     }),
     [],
   );
@@ -453,13 +453,13 @@ export default function CreateActivity({ navigation, route }) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity
+        <LiquidGlassIconButton
           onPress={handleNavBack}
-          style={{ paddingHorizontal: 8, paddingVertical: 4 }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="chevron-back" size={24} color={themeVariables.blackColor} />
-        </TouchableOpacity>
+          iconName="chevron-back"
+          iconColor={themeVariables.blackColor}
+          accessibilityLabel="Go back"
+          hasShadow={false}
+        />
       ),
       headerBackVisible: false,
       title: form.title || 'Create Activity',
@@ -777,7 +777,6 @@ const styles = StyleSheet.create({
     marginRight: themeVariables.spacing.m,
   },
   input: {
-    backgroundColor: '#f9f9f9',
     marginBottom: themeVariables.spacing.m,
   },
   locationModeRow: {

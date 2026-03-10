@@ -1,4 +1,5 @@
 import React, { useContext, useEffect } from 'react';
+import { Buffer } from 'buffer';
 import { render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider } from '../contexts/UserContext.jsx';
@@ -24,6 +25,16 @@ jest.mock('../services/NotificationService', () => ({
   },
   filterOutSelfAuthoredPostNotifications: jest.fn(notifications => notifications || []),
 }));
+jest.mock('../services/ChatService', () => ({
+  fetchChats: jest.fn(() => Promise.resolve({ data: [] })),
+}));
+jest.mock('../services/SocketService', () => ({
+  initializeSocket: jest.fn(() => ({
+    on: jest.fn(),
+    off: jest.fn(),
+    disconnect: jest.fn(),
+  })),
+}));
 jest.mock('react-native-keychain', () => ({
   setGenericPassword: jest.fn(() => Promise.resolve()),
   getGenericPassword: jest.fn(() => Promise.resolve(null)),
@@ -41,7 +52,8 @@ const toBase64Url = value =>
     .toString('base64')
     .replace(/=/g, '')
     .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+    .split('/')
+    .join('_');
 
 const buildTokenWithExp = exp => {
   const header = toBase64Url({ alg: 'HS256', typ: 'JWT' });

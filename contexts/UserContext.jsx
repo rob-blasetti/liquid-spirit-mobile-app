@@ -516,7 +516,7 @@ export const UserProvider = ({ children }) => {
     }
   }, [token, syncChatBadgeFromPayload, ensureValidSession]);
 
-  const appStateRef = useRef(AppState.currentState);
+  const appStateRef = useRef(AppState?.currentState || 'active');
 
   useEffect(() => {
     const handleAppStateChange = nextAppState => {
@@ -529,10 +529,14 @@ export const UserProvider = ({ children }) => {
       }
     };
 
+    if (!AppState?.addEventListener) {
+      return undefined;
+    }
+
     const subscription = AppState.addEventListener('change', handleAppStateChange);
 
     return () => {
-      subscription.remove();
+      subscription?.remove?.();
     };
   }, [ensureValidSession, refreshChatBadgeFromServer]);
   // Load notifications on token change

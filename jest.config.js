@@ -1,5 +1,6 @@
 module.exports = {
   preset: 'react-native',
+  setupFiles: ['<rootDir>/jest.setup.js'],
   // Ignore the default App.tsx test which uses TSX without proper transform
   testPathIgnorePatterns: ['<rootDir>/__tests__/App.test.tsx'],
   // Use babel-jest to transform JS and TS files

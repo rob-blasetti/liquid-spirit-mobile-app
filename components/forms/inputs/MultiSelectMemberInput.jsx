@@ -24,6 +24,7 @@ const MultiSelectMemberInput = ({
   textInputProps,
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const optionLabelById = useMemo(() => {
@@ -47,7 +48,14 @@ const MultiSelectMemberInput = ({
   return (
     <View style={[styles.wrapper, style]}>
       <Text style={styles.sectionLabel}>{label}</Text>
-      <View style={[styles.selectionInput, inputStyle]}>
+      <View
+        style={[
+          styles.selectionInput,
+          inputStyle,
+          isFocused && styles.selectionInputFocused,
+          error && styles.selectionInputError,
+        ]}
+      >
         {selected.map((member, index) => {
           // Selected members can come through in a few shapes (string ids, {details}, {refId}, etc.).
           const details =
@@ -106,16 +114,27 @@ const MultiSelectMemberInput = ({
           onChangeText={onChangeSearch}
           placeholder={placeholder}
           style={styles.inlineSearchInput}
-          placeholderTextColor={restTextInputProps.placeholderTextColor || themeVariables.darkGreyColor || '#222'}
+          placeholderTextColor={restTextInputProps.placeholderTextColor || '#667085'}
           {...restTextInputProps}
-          onFocus={() => setDropdownVisible(true)}
-          onBlur={() => {
+          onFocus={event => {
+            setIsFocused(true);
+            setDropdownVisible(true);
+            restTextInputProps.onFocus?.(event);
+          }}
+          onBlur={event => {
+            setIsFocused(false);
             if (!searchValue) {
               setDropdownVisible(false);
             }
+            restTextInputProps.onBlur?.(event);
           }}
+          selectionColor={themeVariables.primaryColor}
+          accessibilityLabel={label || placeholder}
         />
       </View>
+      <FormHelperText type="error" visible={!!error}>
+        {error}
+      </FormHelperText>
         {dropdownVisible && (
         <View style={styles.dropdownList}>
           {loading ? (
@@ -176,17 +195,28 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   selectionInput: {
-    minHeight: 50,
+    minHeight: 54,
     borderWidth: 1,
-    borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 8,
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
+    borderRadius: 12,
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  selectionInputFocused: {
+    borderColor: themeVariables.primaryColor,
+    shadowColor: themeVariables.primaryColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  selectionInputError: {
+    borderColor: themeVariables.formErrorBorder || '#d32f2f',
   },
   selectionChip: {
     flexDirection: 'row',
@@ -218,14 +248,21 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 80,
     paddingVertical: 6,
+    color: themeVariables.blackColor,
+    fontSize: 16,
   },
   dropdownList: {
     borderWidth: 1,
-    borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 4,
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
+    borderRadius: 12,
     backgroundColor: themeVariables.whiteColor,
     maxHeight: 220,
     overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   dropdownScroll: {
     maxHeight: 220,
@@ -247,13 +284,14 @@ const styles = StyleSheet.create({
     color: themeVariables.darkGreyColor || '#666',
   },
   dropdownOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: themeVariables.borderLightColor || '#ededed',
   },
   dropdownOptionText: {
     color: themeVariables.blackColor,
+    fontSize: 15,
   },
 });
 

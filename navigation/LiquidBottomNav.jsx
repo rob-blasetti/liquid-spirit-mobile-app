@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, StyleSheet, Easing } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
@@ -12,7 +12,6 @@ const getLiquidGlassModule = () => {
     return { LiquidGlassView, isLiquidGlassSupported: !!isLiquidGlassSupported };
   } catch (error) {
     if (__DEV__) {
-      // eslint-disable-next-line no-console
       console.warn('Liquid glass native module unavailable; using fallback view.', error);
     }
     return {
@@ -61,6 +60,18 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
     }
     return route.name;
   };
+
+  const handleTabLayout = useCallback((index, nativeLayout) => {
+    const { x, width } = nativeLayout;
+    setTabLayouts((prev) => {
+      if (prev[index]?.x === x && prev[index]?.width === width) return prev;
+      return { ...prev, [index]: { x, width } };
+    });
+    if (Object.keys(tabLayouts).length === 0) {
+      indicatorX.setValue(x);
+      indicatorWidth.setValue(width);
+    }
+  }, [indicatorWidth, indicatorX, tabLayouts]);
 
   return (
     <View
@@ -127,23 +138,14 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
                   key={route.key}
                   accessibilityRole="button"
                   accessibilityState={focused ? { selected: true } : {}}
-                  accessibilityLabel={options?.tabBarAccessibilityLabel}
+                  accessibilityLabel={options?.tabBarAccessibilityLabel || `${label}, tab`}
+                  accessibilityHint={focused ? undefined : `Navigates to ${label}`}
                   testID={options?.tabBarTestID}
                   onPress={onPress}
                   onLongPress={onLongPress}
                   activeOpacity={1}
                   style={styles.tabButton}
-                  onLayout={({ nativeEvent }) => {
-                    const { x, width } = nativeEvent.layout;
-                    setTabLayouts((prev) => {
-                      if (prev[index]?.x === x && prev[index]?.width === width) return prev;
-                      return { ...prev, [index]: { x, width } };
-                    });
-                    if (Object.keys(tabLayouts).length === 0) {
-                      indicatorX.setValue(x);
-                      indicatorWidth.setValue(width);
-                    }
-                  }}
+                  onLayout={({ nativeEvent }) => handleTabLayout(index, nativeEvent.layout)}
             >
               <View style={[styles.tabPill, isActive && !isLiquidGlassSupported && styles.tabPillFallback]}>
                 <View style={styles.tabIcon}>

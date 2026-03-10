@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -10,6 +9,7 @@ import {
 import { useAuthService } from '../services/AuthService';
 import themeVariables from '../styles/theme';
 import { isValidEmail } from '../utils/validation';
+import FormTextInput from '../components/forms/inputs/FormTextInput';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -58,13 +58,21 @@ const ForgotPassword = ({ navigation }) => {
 
       {/* Email Label and Input */}
       <Text style={styles.label}>Email Address</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+      <View style={styles.inputWrapper}>
+        <FormTextInput
+          value={email}
+          onChangeText={setEmail}
+          inputProps={{
+            placeholder: 'you@example.com',
+            keyboardType: 'email-address',
+            autoCapitalize: 'none',
+            autoCorrect: false,
+            textContentType: 'emailAddress',
+            autoComplete: 'email',
+            accessibilityLabel: 'Email Address',
+          }}
+        />
+      </View>
 
       <TouchableOpacity style={styles.button} onPress={handleForgotPassword}>
         <Text style={styles.buttonText}>Send Password Reset</Text>
@@ -102,26 +110,21 @@ const styles = StyleSheet.create({
   // Label above inputs for clarity on all devices
   label: {
     width: '100%',
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 4,
-    alignSelf: 'flex-start',
-  },
-  input: {
-    height: 50,
-    width: '100%',
-    backgroundColor: themeVariables.whiteColor,
-    paddingHorizontal: 16,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 20,
     fontSize: 16,
+    color: themeVariables.blackColor,
+    marginBottom: 6,
+    alignSelf: 'flex-start',
+    fontWeight: '600',
+  },
+  inputWrapper: {
+    width: '100%',
+    alignSelf: 'stretch',
+    marginBottom: 20,
   },
   button: {
-    backgroundColor: '#312783',
+    backgroundColor: themeVariables.primaryColor,
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 999,
     alignItems: 'center',
     width: '100%',
   },

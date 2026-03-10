@@ -55,6 +55,8 @@ const DropdownInput = ({
     styles.input,
     multilineDisplay && styles.inputMultiline,
     inputStyle,
+    open && styles.inputOpen,
+    error && styles.inputError,
     disabled && styles.inputDisabled,
   ].filter(Boolean);
 
@@ -94,12 +96,14 @@ const DropdownInput = ({
 
   return (
     <View style={[styles.wrapper, style]}>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TouchableOpacity
         style={[styles.touchWrapper, mergedStyle]}
         activeOpacity={0.9}
         onPress={toggleOpen}
         accessibilityRole="button"
-        accessibilityLabel={typeof label === 'string' ? label : undefined}
+        accessibilityLabel={typeof label === 'string' ? label : placeholder}
+        accessibilityHint={open ? 'Closes the list of options' : 'Opens the list of options'}
         {...restTextInputProps}
       >
         <Text
@@ -119,7 +123,7 @@ const DropdownInput = ({
         />
       </TouchableOpacity>
       {open && normalizedOptions.length > 0 && (
-        <View style={styles.dropdownList}>
+        <View style={[styles.dropdownList, label && styles.dropdownListWithLabel]}>
           <ScrollView
             style={styles.dropdownScroll}
             contentContainerStyle={styles.dropdownContent}
@@ -153,35 +157,56 @@ const styles = StyleSheet.create({
     marginTop: 12,
     position: 'relative',
   },
+  label: {
+    marginBottom: 6,
+    color: themeVariables.blackColor,
+    fontSize: 16,
+    fontWeight: '600',
+    paddingLeft: 4,
+  },
   touchWrapper: {
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 52,
   },
   input: {
     marginBottom: 0,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 8,
-    backgroundColor: themeVariables.lightGreyColor || '#f3f3f3',
+    borderRadius: 12,
+    backgroundColor: themeVariables.formInputBg || '#ffffff',
     borderWidth: 1,
-    borderColor: themeVariables.borderLightColor || '#e0e0e0',
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
   },
   inputMultiline: {
     minHeight: 64,
     textAlignVertical: 'top',
   },
+  inputOpen: {
+    borderColor: themeVariables.primaryColor,
+    shadowColor: themeVariables.primaryColor,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  inputError: {
+    borderColor: themeVariables.formErrorBorder || '#d32f2f',
+  },
   inputDisabled: {
-    opacity: 0.6,
+    opacity: 0.7,
+    backgroundColor: '#F8FAFC',
   },
   inputText: {
     color: themeVariables.blackColor,
     flex: 1,
     marginRight: 8,
+    fontSize: 16,
   },
   placeholder: {
-    color: themeVariables.darkGreyColor || '#222',
+    color: '#667085',
   },
   dropdownList: {
     position: 'absolute',
@@ -190,12 +215,19 @@ const styles = StyleSheet.create({
     top: '100%',
     maxHeight: 280,
     borderWidth: 1,
-    borderColor: themeVariables.borderLightColor || '#dcdcdc',
-    borderRadius: 4,
+    borderColor: themeVariables.formInputBorder || '#CBD5E1',
+    borderRadius: 12,
     backgroundColor: themeVariables.whiteColor,
     overflow: 'hidden',
     zIndex: 10,
     elevation: 4,
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  dropdownListWithLabel: {
+    top: 58,
   },
   dropdownScroll: {
     maxHeight: 280,
@@ -204,16 +236,17 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   dropdownOption: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: themeVariables.borderLightColor || '#ededed',
   },
   dropdownOptionActive: {
-    backgroundColor: (themeVariables.primaryColor || '#007aff') + '15',
+    backgroundColor: (themeVariables.primaryColor || '#007aff') + '12',
   },
   dropdownOptionText: {
     color: themeVariables.blackColor,
+    fontSize: 15,
   },
 });
 

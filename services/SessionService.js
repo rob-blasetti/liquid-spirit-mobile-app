@@ -1,25 +1,15 @@
 import { API_URL as MOBILE_API_URL } from '../config';
 
-const resolveViteApiUrl = () => {
-  try {
-    // Access import.meta via Function to avoid Metro parse errors in React Native
-    return Function(
-      'try { return typeof import !== "undefined" && import.meta && import.meta.env && import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : ""; } catch (e) { return ""; }',
-    )();
-  } catch (_) {
-    return '';
-  }
-};
-
-const API_URL = resolveViteApiUrl() || MOBILE_API_URL || '';
+const API_URL = MOBILE_API_URL || '';
 const SESSIONS_BASE = '/api/sessions';
 
 const resolveToken = () => {
-  if (typeof localStorage === 'undefined') return null;
-  const direct = localStorage.getItem('token');
+  const storage = typeof global !== 'undefined' ? global.localStorage : null;
+  if (!storage) return null;
+  const direct = storage.getItem('token');
   if (direct) return direct;
   try {
-    const stored = JSON.parse(localStorage.getItem('authToken') || 'null');
+    const stored = JSON.parse(storage.getItem('authToken') || 'null');
     if (!stored) return null;
     if (typeof stored === 'string') return stored;
     if (typeof stored === 'object' && stored.token) return stored.token;

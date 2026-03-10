@@ -46,6 +46,7 @@ import {
   CurriculumDetailScreen,
   Notifications as NotificationScreen,
   PushDiagnostics,
+  Badges,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -123,6 +124,11 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
         options={{ title: 'Create Session', animation: 'slide_from_bottom' }}
       />
       <Stack.Screen name="PublicUserProfile" component={PublicUserProfile} options={{ title: 'User Profile' }} />
+      <Stack.Screen
+        name="PublicUserBadges"
+        component={Badges}
+        options={{ title: 'Badges' }}
+      />
       <Stack.Screen name="RequestAgendaItem" component={RequestAgendaItem} options={{ title: 'Request Agenda Item' }} />
       <Stack.Screen
         name="Notifications"
