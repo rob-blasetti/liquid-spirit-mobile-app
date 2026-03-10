@@ -57,7 +57,7 @@ const Discover = ({ navigation }) => {
   const { userActivities, userEvents, token, isTokenExpired } = useContext(UserContext);
   const insets = useSafeAreaInsets();
   const { activityPreview, eventPreview } = useDiscoverData({ userActivities, userEvents });
-  const [timeframe, setTimeframe] = useState('week');
+  const [timeframe, setTimeframe] = useState('month');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const filteredActivityPreview = useMemo(
