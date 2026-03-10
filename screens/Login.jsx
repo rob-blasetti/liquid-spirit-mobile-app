@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
@@ -187,7 +188,11 @@ const Login = ({ navigation, route }) => {
   return (
     <View style={styles.screen}>
       {bannerMessage ? <SlideBanner message={bannerMessage} onClose={() => setBannerMessage('')} /> : null}
-      <View style={[styles.container, bannerMessage ? styles.containerWithBanner : null]}>
+      <ScrollView
+        contentContainerStyle={[styles.container, bannerMessage ? styles.containerWithBanner : null]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.label}>Email</Text>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -246,7 +251,7 @@ const Login = ({ navigation, route }) => {
         >
           <Text style={styles.linkText}>Don't have an account?</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -258,7 +263,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'stretch',
     width: '100%',
     padding: 16,
@@ -291,7 +295,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#312783',
     padding: 16,
     borderRadius: 30,
-    alignItems: 'center',
     width: '100%',
     marginBottom: 16,
   },
@@ -311,10 +314,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0485e2',
     paddingVertical: 14,
     borderRadius: 30,
-    alignItems: 'center',
     width: '100%',
     marginBottom: 16,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
