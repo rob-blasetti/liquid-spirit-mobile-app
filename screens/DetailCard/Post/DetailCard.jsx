@@ -13,6 +13,7 @@ import {
   TextInput,
   Image as RNImage,
   Animated,
+  Platform,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -546,7 +547,7 @@ const PostDetailCard = ({ route }) => {
         />
         {/* Tags Section */}
         {Array.isArray(post.tags) && post.tags.length > 0 && (
-          <View style={styles.sectionContainer}>
+          <View style={styles.tagsSection}>
             <View style={styles.divider} />
             <Text style={styles.sectionTitle}>Tags</Text>
             <ScrollView
@@ -758,11 +759,22 @@ const styles = StyleSheet.create({
   sectionContainer: {
     ...sectionBaseStyles.sectionContainer,
   },
+  tagsSection: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    backgroundColor: themeVariables.whiteColor,
+  },
   sectionTitle: {
     ...sectionBaseStyles.sectionTitle,
   },
   // Related posts section
-  relatedSection: { marginTop: 16, paddingHorizontal: 16, backgroundColor: themeVariables.whiteColor },
+  relatedSection: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    backgroundColor: themeVariables.whiteColor,
+  },
   relatedTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: themeVariables.blackColor },
   relatedItem: { marginRight: 12 },
   relatedImage: { width: 100, height: 100, borderRadius: 8 },

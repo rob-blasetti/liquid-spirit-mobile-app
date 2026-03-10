@@ -5,6 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../../../../styles/theme';
 import { timeSince } from '../../../../utils/timeSince';
+import sectionBaseStyles from '../../common/sectionBaseStyles';
 
 const CommentsSection = ({
   showCommentBox,
@@ -111,16 +112,22 @@ const CommentsSection = ({
 const styles = StyleSheet.create({
   container: {
     marginTop: 16,
-    marginHorizontal: 16,
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 8,
     paddingTop: 10,
-    paddingHorizontal: 12,
-    paddingBottom: 2,
+    paddingHorizontal: 16,
+    paddingBottom: 10,
   },
-  divider: { height: 1, backgroundColor: '#eee', marginBottom: 12 },
+  divider: {
+    ...sectionBaseStyles.sectionDivider,
+    marginBottom: 10,
+  },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: themeVariables.blackColor },
+  sectionTitle: {
+    ...sectionBaseStyles.sectionTitle,
+    marginTop: 0,
+    marginBottom: 8,
+  },
   commentRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4, gap: 8 },
   commentInput: {
     borderWidth: 1,

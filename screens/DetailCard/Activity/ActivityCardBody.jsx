@@ -30,7 +30,7 @@ const ActivityCardBody = ({
   optimisticFacilitatorRequest,
   optimisticParticipantRequest,
 }) => {
-  if (!activity) return null;
+  const safeActivity = activity || {};
 
   const {
     imageUrl,
@@ -40,18 +40,18 @@ const ActivityCardBody = ({
     description,
     guidelines,
     forms,
-  } = activity || {};
+  } = safeActivity;
 
   const dayOfWeek = groupDetails?.day ?? 'N/A';
   const timeMain = formatTime(groupDetails?.time);
   const safeActivityTypeName = activityType?.name || activityType || 'Unknown';
 
   const { orderedUpcomingSessions, nextSession, curriculumLesson } = useActivitySessions(
-    activity,
+    safeActivity,
     initialSessionId
   );
   const curriculumDetails = useCurriculumDetails(curriculumLesson);
-  const location = useActivityLocation({ activity, nextSession });
+  const location = useActivityLocation({ activity: safeActivity, nextSession });
   const {
     isUserFacilitator,
     isUserParticipant,
@@ -60,7 +60,7 @@ const ActivityCardBody = ({
     hasRequestedFacilitator,
     hasRequestedParticipant,
   } = useActivityUserStatus({
-    activity,
+    activity: safeActivity,
     userId,
     optimisticFacilitatorRequest,
     optimisticParticipantRequest,
@@ -77,6 +77,8 @@ const ActivityCardBody = ({
   const imageSource = imageUrl
     ? resolveImageSource(imageUrl, { priority: 'high', fallback: '/img/events/Event_Placeholder.png' })
     : null;
+
+  if (!activity) return null;
 
   return (
     <>
