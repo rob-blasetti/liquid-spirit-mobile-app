@@ -7,7 +7,7 @@ import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
 import { fetchUserById } from '../services/UserService.jsx';
 import { parseJwt } from '../utils/parseJwt';
-import { API_URL } from '../config';
+import { API_URL, AUTH_API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
 import { initializeSocket } from '../services/SocketService';
@@ -221,6 +221,8 @@ export const UserProvider = ({ children }) => {
     [],
   );
 
+  const authBase = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
+
   const clearChatUnread = useCallback(
     (chatId) => {
       if (!chatId) return;
@@ -423,7 +425,7 @@ export const UserProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/api/auth/refresh`, {
+        const response = await fetch(`${authBase}/api/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken: storedRefreshToken }),
@@ -443,7 +445,8 @@ export const UserProvider = ({ children }) => {
           return null;
         }
 
-        const { accessToken, newRefreshToken } = data;
+        const accessToken = data.accessToken || data.token || data.newAccessToken || null;
+        const newRefreshToken = data.newRefreshToken || data.refreshToken || null;
 
         await AsyncStorage.multiSet([
           ['authToken', accessToken],
@@ -628,7 +631,7 @@ export const UserProvider = ({ children }) => {
       });
 
       if (credentials) {
-        const response = await fetch(`${API_URL}/api/auth/login`, {
+        const response = await fetch(`${authBase}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -640,10 +643,12 @@ export const UserProvider = ({ children }) => {
         const data = await response.json();
 
         if (response.ok) {
+          const authToken = data.accessToken || data.token || data.newAccessToken;
+          const refreshToken = data.newRefreshToken || data.refreshToken;
           await login(
             data.user,
-            data.token,
-            data.refreshToken,
+            authToken,
+            refreshToken,
             credentials.username,
             credentials.password
           );

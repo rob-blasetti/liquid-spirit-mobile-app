@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { UserContext } from '../contexts/UserContext';
 import jwtDecode from 'jwt-decode';
 
-import { API_URL } from '../config';
+import { API_URL, AUTH_API_URL } from '../config';
 
 const decodeToken = (token) => {
   if (!token) return null;
@@ -19,6 +19,11 @@ const extractUserId = (decodedToken) => {
   return decodedToken.userId || decodedToken.id || decodedToken._id || null;
 };
 
+const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
+
+const resolveAccessToken = (payload) => payload?.token || payload?.accessToken || payload?.newAccessToken || null;
+
+
 const resolveUserIdFromToken = (tokenValue) => {
   if (!tokenValue) return null;
   const decoded = decodeToken(tokenValue);
@@ -32,7 +37,7 @@ export const useAuthService = () => {
 
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,8 +46,11 @@ export const useAuthService = () => {
       });
       const data = await response.json();
 
-      if (response.ok && data.token) {
-        setToken(data.token);
+      if (response.ok) {
+        const resolvedToken = resolveAccessToken(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
       }
 
       return { ok: response.ok, data };
@@ -53,7 +61,7 @@ export const useAuthService = () => {
 
   const signUp = async (email, bahaiId, password) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,8 +70,11 @@ export const useAuthService = () => {
       });
       const data = await response.json();
 
-      if (response.ok && data.token) {
-        setToken(data.token);
+      if (response.ok) {
+        const resolvedToken = resolveAccessToken(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
       }
 
       return { ok: response.ok, data };
@@ -74,7 +85,7 @@ export const useAuthService = () => {
 
   const verify = async (bahaiId, verificationCode, password) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,8 +95,11 @@ export const useAuthService = () => {
       const data = await response.json();
       console.log('data: ', data);
 
-      if (response.ok && data.token) {
-        setToken(data.token);
+      if (response.ok) {
+        const resolvedToken = resolveAccessToken(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
       }
 
       return { ok: response.ok, data };
@@ -96,7 +110,7 @@ export const useAuthService = () => {
 
   const forgotPassword = async (email) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,8 +119,11 @@ export const useAuthService = () => {
       });
       const data = await response.json();
 
-      if (response.ok && data.token) {
-        setToken(data.token);
+      if (response.ok) {
+        const resolvedToken = resolveAccessToken(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
       }
 
       return { ok: response.ok, data };
@@ -117,7 +134,7 @@ export const useAuthService = () => {
 
   const forgotBahaiId = async (email) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-bahai-id`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/forgot-bahai-id`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,7 +167,7 @@ export const useAuthService = () => {
 
   const fetchMe = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -166,7 +183,7 @@ export const useAuthService = () => {
 
   const updateMe = async (updatedUser) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/me`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/me`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -216,7 +233,7 @@ export const useAuthService = () => {
 
   const googleSignIn = async (idToken) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/google`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -226,8 +243,11 @@ export const useAuthService = () => {
 
       const data = await response.json();
 
-      if (response.ok && data.token) {
-        setToken(data.token);
+      if (response.ok) {
+        const resolvedToken = resolveAccessToken(data);
+        if (resolvedToken) {
+          setToken(resolvedToken);
+        }
         return { ok: true, data };
       } else {
         return { ok: false, data };

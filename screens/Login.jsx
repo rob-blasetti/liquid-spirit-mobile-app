@@ -4,12 +4,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
-import { API_URL } from '../config';
+import { AUTH_API_URL, API_URL } from '../config';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import SlideBanner from '../components/SlideBanner';
 import PasswordField from '../components/forms/inputs/PasswordField';
 
 const Login = ({ navigation, route }) => {
+  const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ const Login = ({ navigation, route }) => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -82,7 +83,9 @@ const Login = ({ navigation, route }) => {
       const result = await response.json();
 
       if (response.ok) {
-        await login(result.user, result.token, result.refreshToken, email, password);
+        const authToken = result.accessToken || result.token || result.newAccessToken;
+        const refreshToken = result.newRefreshToken || result.refreshToken;
+        await login(result.user, authToken, refreshToken, email, password);
         await Keychain.setGenericPassword(email, password, {
           accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         });
