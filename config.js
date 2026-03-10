@@ -1,10 +1,23 @@
 import Config from 'react-native-config';
 
+const resolveBoolean = (value, fallback = false) => {
+  if (typeof value !== 'string') {
+    return fallback;
+  }
+
+  return ['1', 'true', 'yes', 'on'].includes(value.trim().toLowerCase());
+};
+
 // Set primary API URL
 export const API_URL = Config.PROD_API;
 
-// New auth gateway API URL (defaults to primary API if not explicitly set)
-export const AUTH_API_URL = Config.AUTH_API_URL || API_URL;
+export const USE_AUTH_GATEWAY = resolveBoolean(Config.USE_AUTH_GATEWAY, true);
+
+// New auth gateway API URL, with runtime switch to force legacy backend auth path.
+export const AUTH_API_URL =
+  USE_AUTH_GATEWAY && Boolean(Config.AUTH_API_URL)
+    ? Config.AUTH_API_URL
+    : API_URL;
 
 // Removed debug log to prevent console output during tests
 // console.log(API_URL);
