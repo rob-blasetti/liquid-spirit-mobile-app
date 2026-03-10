@@ -97,8 +97,8 @@ android {
         applicationId "com.liquid_spirit_mobile_app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 19
-        versionName "2.0.3"
+        versionCode 20
+        versionName "2.1.0"
 
         // Force 64-bit only. This removes 32-bit/x86 native libs from the AAB,
         // which is required for Play's 16KB page-size compatibility checks.
