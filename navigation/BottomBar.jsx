@@ -40,7 +40,6 @@ const resolveLiquidGlassSupport = () => {
       : !!isLiquidGlassSupported;
   } catch (error) {
     if (__DEV__) {
-      // eslint-disable-next-line no-console
       console.warn('Liquid glass native module unavailable; using classic nav.', error);
     }
     return false;
@@ -150,14 +149,6 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
         return;
       }
       const { activityId, activityTitle, facilitators, participants } = activityContext || {};
-      console.log('[BottomBar] create session tap', {
-        activityId,
-        activityTitle,
-        facilitatorsCount: Array.isArray(facilitators) ? facilitators.length : 0,
-        participantsCount: Array.isArray(participants) ? participants.length : 0,
-        facilitators,
-        participants,
-      });
       if (!activityId) {
         Alert.alert(
           'Activity unavailable',
@@ -305,9 +296,11 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
     });
   }, [currentAction, iconScale, visibleAction]);
 
+  const settingsRoutes = ['Settings', 'EditProfile', 'Security', 'NotificationSettings'];
   const hideFab =
     focusedRoute?.name === 'NewMessage' ||
-    focusedRoute?.name === 'ChatDetail';
+    focusedRoute?.name === 'ChatDetail' ||
+    settingsRoutes.includes(focusedRoute?.name);
 
   const handleFabPress = () => {
     if (!currentAction || currentAction.disabled) {
@@ -423,6 +416,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
               accessibilityLabel={
                 visibleAction?.label || currentAction?.label || 'Create Post'
               }
+              accessibilityHint="Opens the primary create action for the current screen"
               style={[
                 styles.fab,
                 currentAction?.disabled && styles.fabDisabled,

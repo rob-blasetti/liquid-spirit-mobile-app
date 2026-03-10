@@ -1,12 +1,38 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 
-const ListItem = ({ imageSource, leadingComponent, title, content, date, time, onPress, commentCount, countLabel = 'Comments', chipText }) => {
+const ListItem = ({
+  imageSource,
+  leadingComponent,
+  title,
+  content,
+  date,
+  time,
+  onPress,
+  commentCount,
+  countLabel = 'Comments',
+  chipText,
+  accessibilityLabel,
+  accessibilityHint,
+}) => {
   const hasLeading = Boolean(imageSource) || Boolean(leadingComponent);
+  const itemAccessibilityLabel =
+    accessibilityLabel ||
+    [title, content, time ? `${time}${date ? `, ${date}` : ''}` : date, chipText]
+      .filter(Boolean)
+      .join(', ') ||
+    'Open item';
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={itemAccessibilityLabel}
+      accessibilityHint={accessibilityHint}
+    >
       {hasLeading && (
         <View style={styles.imageContainer}>
           {leadingComponent ? (
@@ -132,4 +158,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ListItem;
+export default memo(ListItem);

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { memo, useCallback, useContext, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import Video from 'react-native-video';
 import { useNavigation } from '@react-navigation/native';
@@ -13,13 +13,72 @@ import usePrefetchImages from '../hooks/usePrefetchImages';
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = width / 2 - 15;
 
+const PostGalleryItem = memo(({ item, onPress }) => {
+  const mediaUrl = item.media?.[0] || item.imageUrl;
+  const isVideo = mediaUrl?.endsWith('.mp4') || mediaUrl?.includes('video');
+  const imageSource = resolveImageSource(mediaUrl, {
+    priority: 'normal',
+    fallback: '/img/events/Event_Placeholder.png',
+  });
+  const accessibilityLabel = item.content
+    ? `Open post, ${item.content?.slice(0, 80)}`
+    : `Open ${item.eventType ? 'event' : 'activity'}, ${item.title || 'item'}`;
+
+  return (
+    <TouchableOpacity
+      style={styles.postContainer}
+      onPress={() => onPress(item)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+    >
+      {mediaUrl && !isVideo &&
+        <FastImage
+          style={styles.postImage}
+          source={imageSource}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      }
+      {mediaUrl && isVideo && (
+        <View style={styles.mediaWrapper}>
+          <Video
+            source={{ uri: mediaUrl }}
+            style={styles.videoInside}
+            resizeMode="cover"
+            muted
+            repeat
+            paused
+            controls={false}
+          />
+        </View>
+      )}
+
+      {item.content ? (
+        <Text style={styles.listContent}>
+          {item.content?.length > 50 ? `${item.content?.slice(0, 50)}...` : item.content}
+        </Text>
+      ) : (
+        <View style={styles.listContent}>
+          <Text style={styles.listTitle}>{item.title}</Text>
+          {item.activityType && <Text style={styles.listType}>{item.activityType?.name}</Text>}
+          {item.eventType && <Text style={styles.listType}>{item.eventType}</Text>}
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+});
+
+const EmptyGallery = memo(() => (
+  <View style={styles.emptyContainer}>
+    <Text style={styles.emptyText}>No items to display right now.</Text>
+  </View>
+));
+
 const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
   const navigation = useNavigation();
   const { token, isTokenExpired } = useContext(UserContext);
 
-  const handlePress = (item) => {
+  const handlePress = useCallback((item) => {
     if (item.content) {
-      // Navigate to the post detail card if it's a post
       navigateToPostDetail({
         navigation,
         post: item,
@@ -32,24 +91,28 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
         // ✅ Navigate to the event detail page if it's an event
         navigateToEventDetail({ navigation, event: item, token, isTokenExpired });
       } else {
-        // ✅ Navigate to the activity detail page if it's an activity
         navigateToActivityDetail({
           navigation,
           activity: item,
         });
       }
     }
-  };
+  }, [navigation, token, isTokenExpired]);
 
   const prefetchTargets = useMemo(
     () =>
       posts
         .map(item => item?.media?.[0] || item?.imageUrl)
         .filter(uri => uri && !/\.(mp4|mov|m4v|avi)(\?.*)?$/i.test(uri)),
-    [posts]
+    [posts],
   );
 
   usePrefetchImages(prefetchTargets, { priority: 'normal' });
+
+  const renderItem = useCallback(
+    ({ item }) => <PostGalleryItem item={item} onPress={handlePress} />,
+    [handlePress],
+  );
 
   return (
     <FlatList
@@ -59,56 +122,12 @@ const PostGallery = ({ posts = [], refreshing = false, onRefresh }) => {
       refreshing={refreshing}
       onRefresh={onRefresh}
       contentContainerStyle={styles.galleryContainer}
-      ListEmptyComponent={() => (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No items to display right now.</Text>
-        </View>
-      )}
-      renderItem={({ item }) => {
-        let mediaUrl = item.media?.[0] || item.imageUrl;
-        const isVideo = mediaUrl?.endsWith('.mp4') || mediaUrl?.includes('video');
-        const imageSource = resolveImageSource(mediaUrl, {
-          priority: 'normal',
-          fallback: '/img/events/Event_Placeholder.png',
-        });
-
-        return (
-          <TouchableOpacity style={styles.postContainer} onPress={() => handlePress(item)}>
-            {mediaUrl && !isVideo &&
-              <FastImage
-                style={styles.postImage}
-                source={imageSource}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-            }
-            {mediaUrl && isVideo && (
-              <View style={styles.mediaWrapper}>
-                <Video
-                  source={{ uri: mediaUrl }}
-                  style={styles.videoInside}
-                  resizeMode="cover"
-                  muted
-                  repeat
-                  controls={false} // Prevents user controls, just a preview
-                />
-              </View>
-            )}
-
-            {/* Render Post Content OR Title */}
-            {item.content ? (
-              <Text style={styles.listContent}>
-                {item.content?.length > 50 ? `${item.content?.slice(0, 50)}...` : item.content}
-              </Text>
-            ) : (
-              <View style={styles.listContent}>
-                <Text style={styles.listTitle}>{item.title}</Text>
-                { item.activityType && <Text style={styles.listType}>{item.activityType?.name}</Text> }
-                { item.eventType && <Text style={styles.listType}>{item.eventType}</Text> }
-              </View>
-            )}
-          </TouchableOpacity>
-        );
-      }}
+      renderItem={renderItem}
+      ListEmptyComponent={EmptyGallery}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={5}
+      removeClippedSubviews
     />
   );
 };
@@ -183,4 +202,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PostGallery;
+export default memo(PostGallery);

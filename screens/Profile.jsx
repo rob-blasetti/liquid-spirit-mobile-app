@@ -11,8 +11,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
-import CertificationsList from '../components/CertificationsList';
-import FastImage from 'react-native-fast-image';
 import { TabView } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import PostItem from '../components/PostItem';
@@ -70,6 +68,7 @@ const ProfileScreen = ({ navigation }) => {
       color: '#4A148C',
     })),
   ];
+  const recentBadges = certItems.slice(0, 3);
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'activities', title: 'Activities' },
@@ -240,7 +239,6 @@ const filterUserActivities = (allActivities, userId) => {
    * Handle item tap: pass imageAspect for posts to detail screen
    */
   const handleItemPress = (type, item, imageAspect) => {
-    console.log(`Navigating to ${type} item:`, item);
   if (type === 'posts') {
     // Navigate to Post Detail page, passing preloaded post and image aspect
     navigateToPostDetail({
@@ -544,16 +542,43 @@ const renderScene = ({ route }) => {
           </View>
         </View>
       </View>
-
       <View style={styles.badgesHeadingRow}>
-        <Text style={styles.badgesHeading}>My Badges</Text>
+        <View>
+          <Text style={styles.badgesLabel}>Recent Badges</Text>
+          <Text style={styles.badgesSummary}>
+            {certItems.length > 0 ? `${certItems.length} earned` : 'No badges yet'}
+          </Text>
+        </View>
         <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          <Text style={styles.seeAllText}>View all</Text>
+          <Ionicons name="chevron-forward" size={16} color={themeVariables.primaryColor} />
         </TouchableOpacity>
       </View>
-      <View style={styles.badgesContainer}>
-        <CertificationsList items={certItems} />
-      </View>
+      {recentBadges.length > 0 ? (
+        <View style={styles.badgesPreviewRow}>
+          {recentBadges.map((badge, index) => (
+            <View key={`${badge.label}-${index}`} style={styles.badgePreviewItem}>
+              <View style={styles.badgePreviewCard}>
+                <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
+                  <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
+                </View>
+                <Text style={styles.badgePreviewText} numberOfLines={2}>
+                  {badge.label}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.badgesContainer}>
+          <View style={styles.badgesEmptyState}>
+            <View style={styles.badgesEmptyIcon}>
+              <Ionicons name="ribbon-outline" size={18} color={themeVariables.primaryColor} />
+            </View>
+            <Text style={styles.badgesEmptyText}>Earn badges and they will show up here.</Text>
+          </View>
+        </View>
+      )}
 
 
 
@@ -717,34 +742,111 @@ const styles = StyleSheet.create({
   iconButton: {
     marginLeft: 8,
   },
-  badgesHeading: {
+  badgesLabel: {
     color: themeVariables.blackColor,
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  badgesSummary: {
+    marginTop: 2,
+    fontSize: 13,
+    color: '#6C7690',
   },
   badgesHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 20,
-    marginBottom: 6,
-    paddingHorizontal: 4,
+    marginBottom: 8,
+    paddingHorizontal: 0,
     backgroundColor: 'transparent',
   },
   seeAllButton: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    flexDirection: 'row',
+    borderRadius: 999,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: themeVariables.primaryColor,
+  },
+  seeAllText: {
+    marginRight: 4,
+    fontSize: 13,
+    fontWeight: '700',
+    color: themeVariables.primaryColor,
   },
   badgesContainer: {
     marginHorizontal: 16,
-    backgroundColor: themeVariables.whiteColor,
+    backgroundColor: '#F8FAFF',
+    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#E2E8F4',
+  },
+  badgesPreviewRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  badgePreviewItem: {
+    flex: 1,
+    paddingHorizontal: 4,
+    maxWidth: '33.33%',
+  },
+  badgePreviewCard: {
+    minHeight: 112,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 14,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  badgePreviewIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
-    paddingTop: 2,
-    paddingBottom: 8,
-    paddingHorizontal: 8,
+  },
+  badgePreviewText: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: themeVariables.primaryColor,
+    textAlign: 'center',
+  },
+  badgesEmptyState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgesEmptyIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF2FF',
+    marginRight: 10,
+  },
+  badgesEmptyText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#6C7690',
   },
   profilePictureSmall: {
     width: 44,

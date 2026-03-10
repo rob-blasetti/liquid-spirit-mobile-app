@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -25,6 +25,7 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
   // Pending user data
   const user = pendingUser || {};
   const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  const requestKind = type === 'participant' ? 'participation' : 'facilitator';
 
   const handlePress = () => {
     navigateToActivityDetail({
@@ -34,7 +35,14 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.container}
+      onPress={handlePress}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={`${activity?.title || 'Activity'}, ${requestKind} request from ${userName || 'member'}`}
+      accessibilityHint="Opens the activity details"
+    >
       {imageSource && <FastImage source={imageSource} style={styles.image} />}
       <View style={styles.textContainer}>
         <Text style={styles.title} numberOfLines={1}>
@@ -58,10 +66,20 @@ const RequestItem = ({ request: reqItem, onAccept, onDecline }) => {
         </View>
       </View>
       <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => onAccept(reqItem)}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => onAccept(reqItem)}
+          accessibilityRole="button"
+          accessibilityLabel={`Accept ${requestKind} request from ${userName || 'member'}`}
+        >
           <Ionicons name="checkmark-circle" size={24} color={themeVariables.secondaryColor} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconButton} onPress={() => onDecline(reqItem)}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => onDecline(reqItem)}
+          accessibilityRole="button"
+          accessibilityLabel={`Decline ${requestKind} request from ${userName || 'member'}`}
+        >
           <Ionicons name="close-circle" size={24} color={themeVariables.redColor} />
         </TouchableOpacity>
       </View>
@@ -139,4 +157,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RequestItem;
+export default memo(RequestItem);

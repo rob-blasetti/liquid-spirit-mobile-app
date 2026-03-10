@@ -1,10 +1,28 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
 
-const BasicTile = ({ heading, subheading, icon, iconColor, headingColor, subheadingColor, headingStyle, subheadingStyle, dateTime, dateTimeStyle, onPress, imageSource, bgImgColour, overlayColor, style }) => {
+const BasicTile = ({
+  heading,
+  subheading,
+  icon,
+  iconColor,
+  headingColor,
+  subheadingColor,
+  headingStyle,
+  subheadingStyle,
+  dateTime,
+  dateTimeStyle,
+  onPress,
+  imageSource,
+  bgImgColour,
+  overlayColor,
+  style,
+  accessibilityLabel,
+  accessibilityHint,
+}) => {
   // Background image mapping
   const BG_IMAGES = {
     blue: require('../assets/img/bgCovers/blue.png'),
@@ -17,9 +35,19 @@ const BasicTile = ({ heading, subheading, icon, iconColor, headingColor, subhead
   const containerProps = finalImageSource
     ? { source: finalImageSource, style: styles.container, imageStyle: styles.imageStyle }
     : { style: styles.container };
+  const tileAccessibilityLabel =
+    accessibilityLabel ||
+    [heading, subheading, dateTime].filter(Boolean).join(', ') ||
+    'Open item';
 
   return (
-    <TouchableOpacity onPress={onPress} style={[styles.wrapper, style]}>
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.wrapper, style]}
+      accessibilityRole="button"
+      accessibilityLabel={tileAccessibilityLabel}
+      accessibilityHint={accessibilityHint}
+    >
       <Container {...containerProps}>
         {overlayColor && <View style={[styles.overlay, { backgroundColor: overlayColor }]} />}
         <View>
@@ -99,4 +127,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BasicTile;
+export default memo(BasicTile);

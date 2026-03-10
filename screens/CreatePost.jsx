@@ -10,7 +10,6 @@ import {
   Platform,
   Keyboard,
   StatusBar,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -54,14 +53,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
     'Holy Day',
     'Admin',
   ];
-  useEffect(() => {
-    console.log('SafeArea insets:', insets);
-    console.log('Window dimensions on mount:', Dimensions.get('window'));
-  }, []);
-
-
   const openCamera = async () => {
-    console.log('openCamera pressed. window dimensions:', Dimensions.get('window'));
     const options = { mediaType: 'mixed', quality: 0.7 };
     launchCamera(options, (response) => {
       if (response.didCancel) return;
@@ -76,7 +68,6 @@ export default function CreatePost({ onPostCreated, onClose }) {
   };
 
   const openLibrary = async () => {
-    console.log('openLibrary pressed. window dimensions:', Dimensions.get('window'));
     const options = { mediaType: 'mixed', quality: 0.7 };
     launchImageLibrary(options, (response) => {
       if (response.didCancel) return;
@@ -165,35 +156,35 @@ export default function CreatePost({ onPostCreated, onClose }) {
           styles.container,
           { paddingTop: insets.top + 20, paddingBottom: insets.bottom },
         ]}
-        onLayout={e => console.log('SafeAreaView layout:', e.nativeEvent.layout)}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
-          onLayout={e => console.log('KeyboardAvoidingView layout:', e.nativeEvent.layout)}
         >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View
-            style={{ flex: 1 }}
-            onLayout={e => console.log('CreatePost root View layout:', e.nativeEvent.layout)}
-          >
-            <View
-              style={styles.headerRow}
-              onLayout={e => console.log('headerRow layout:', e.nativeEvent.layout)}
-            >
+          <View style={{ flex: 1 }}>
+            <View style={styles.headerRow}>
               <Text style={styles.header}>Create a post</Text>
-              <TouchableOpacity style={styles.closeIcon} onPress={handleClose}>
+              <TouchableOpacity
+                style={styles.closeIcon}
+                onPress={handleClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close create post"
+              >
                 <Ionicons name="close" size={24} color={themeVariables.primaryColor} />
               </TouchableOpacity>
             </View>
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.content}
-              onLayout={e => console.log('ScrollView layout:', e.nativeEvent.layout)}
-              onContentSizeChange={(w, h) => console.log('ScrollView content size:', w, h)}
             >
 
-              <TouchableOpacity style={styles.uploadButton} onPress={openLibrary}>
+              <TouchableOpacity
+                style={styles.uploadButton}
+                onPress={openLibrary}
+                accessibilityRole="button"
+                accessibilityLabel="Upload image or video"
+              >
                 <Ionicons name="images-outline" size={40} color={themeVariables.primaryColor} />
                 <Text style={styles.uploadButtonText}>Upload image or video</Text>
               </TouchableOpacity>
@@ -216,6 +207,9 @@ export default function CreatePost({ onPostCreated, onClose }) {
               <TouchableOpacity
                 style={styles.dropdown}
                 onPress={() => setDropdownOpen(!dropdownOpen)}
+                accessibilityRole="button"
+                accessibilityLabel="Select tags"
+                accessibilityHint={dropdownOpen ? 'Closes the tags list' : 'Opens the tags list'}
               >
                 <Text style={styles.dropdownText}>
                   {tags.length > 0 ? tags.join(', ') : 'Select tags'}
@@ -283,7 +277,6 @@ export default function CreatePost({ onPostCreated, onClose }) {
             </ScrollView>
             <View
               style={styles.footer}
-              onLayout={e => console.log('footer layout:', e.nativeEvent.layout)}
             >
               <TouchableOpacity style={styles.submitButton} onPress={handlePost} disabled={isUploading}>
                 <Text style={styles.submitButtonText}>{isUploading ? 'Posting...' : 'Create post'}</Text>
