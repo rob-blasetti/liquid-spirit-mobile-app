@@ -45,11 +45,14 @@ export const useAuthService = () => {
     return { response, data };
   };
 
-  const requestPasskeyPayload = async (url, body = null, withAuth = false) => {
+  const requestPasskeyPayload = async (url, body = null, withAuth = false, method = 'POST') => {
+    const hasBody = body !== null && body !== undefined;
+    const requestMethod = method || (hasBody ? 'POST' : 'GET');
+
     const { response, data } = await fetchJson(url, {
-      method: body ? 'POST' : 'GET',
+      method: requestMethod,
       headers: jsonHeaders(withAuth),
-      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(hasBody ? { body: JSON.stringify(body) } : {}),
     });
 
     return { response, data };
