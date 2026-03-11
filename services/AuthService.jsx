@@ -228,9 +228,10 @@ export const useAuthService = () => {
   const createPasskey = async () => {
     const optionsUrl = `${AUTH_BASE}/api/auth/passkey/register/options`;
     const verifyUrl = `${AUTH_BASE}/api/auth/passkey/register/verify`;
+    let optionsResult = null;
 
     try {
-      const optionsResult = await requestPasskeyPayload(optionsUrl, null, true);
+      optionsResult = await requestPasskeyPayload(optionsUrl, null, true);
       if (!optionsResult.response.ok) {
         return { ok: false, data: optionsResult.data };
       }
@@ -240,7 +241,7 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid registration options from server.' } };
       }
 
-      const credential = await Passkey.create(JSON.stringify(optionsResult.data));
+      const credential = await Passkey.create(optionsResult.data);
       const verifyResponse = await requestPasskeyPayload(
         verifyUrl,
         { challenge, credential },
@@ -250,6 +251,7 @@ export const useAuthService = () => {
       return { ok: verifyResponse.response.ok, data: verifyResponse.data };
     } catch (error) {
       console.error('Passkey create error:', error);
+      console.error('Passkey options response:', JSON.stringify(optionsResult?.data || {}));
       return { ok: false, data: { message: error.message || 'Passkey registration failed' } };
     }
   };
@@ -257,9 +259,10 @@ export const useAuthService = () => {
   const authenticateWithPasskey = async () => {
     const optionsUrl = `${AUTH_BASE}/api/auth/passkey/authenticate/options`;
     const verifyUrl = `${AUTH_BASE}/api/auth/passkey/authenticate/verify`;
+    let optionsResult = null;
 
     try {
-      const optionsResult = await requestPasskeyPayload(optionsUrl);
+      optionsResult = await requestPasskeyPayload(optionsUrl);
       if (!optionsResult.response.ok) {
         return { ok: false, data: optionsResult.data };
       }
@@ -269,7 +272,7 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid authentication options from server.' } };
       }
 
-      const credential = await Passkey.get(JSON.stringify(optionsResult.data));
+      const credential = await Passkey.get(optionsResult.data);
       const verifyResponse = await requestPasskeyPayload(verifyUrl, { challenge, credential });
 
       const { response, data } = verifyResponse;
@@ -283,6 +286,7 @@ export const useAuthService = () => {
       return { ok: response.ok, data };
     } catch (error) {
       console.error('Passkey authentication error:', error);
+      console.error('Passkey auth options response:', JSON.stringify(optionsResult?.data || {}));
       return { ok: false, data: { message: error.message || 'Passkey authentication failed' } };
     }
   };
