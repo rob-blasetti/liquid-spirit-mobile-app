@@ -65,9 +65,16 @@ const Security = ({ navigation }) => {
         Alert.alert('Passkey Created', 'Your passkey was set up successfully.');
       } else {
         const stage = result?.data?.stage ? ` (${result.data.stage})` : '';
-        const detail = result?.data?.message || 'Could not complete passkey setup.';
+        const nested = result?.data?.error || null;
+        const detail =
+          nested?.message ||
+          result?.data?.message ||
+          (Array.isArray(nested?.details) && nested.details[0]?.message) ||
+          'Could not complete passkey setup.';
+        const requestId = nested?.requestId || result?.data?.requestId;
         const status = result?.status ? ` [HTTP ${result.status}]` : '';
-        Alert.alert('Passkey setup failed', `${detail}${status}${stage}`);
+        const requestHint = requestId ? ` [req ${requestId}]` : '';
+        Alert.alert('Passkey setup failed', `${detail}${status}${requestHint}${stage}`);
       }
     } catch (error) {
       console.error('Error during passkey setup:', error);
