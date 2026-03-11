@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { Platform } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import jwtDecode from 'jwt-decode';
 import { Passkey } from 'react-native-passkey';
@@ -241,7 +242,12 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid registration options from server.' } };
       }
 
-      const credential = await Passkey.create(optionsResult.data);
+      const credential = Platform.OS === 'ios'
+        ? await Passkey.createPlatformKey(optionsResult.data)
+        : await Passkey.create(optionsResult.data);
+      if (!credential) {
+        return { ok: false, data: { message: 'No credentials returned from authenticator' } };
+      }
       const verifyResponse = await requestPasskeyPayload(
         verifyUrl,
         { challenge, credential },
@@ -250,8 +256,10 @@ export const useAuthService = () => {
 
       return { ok: verifyResponse.response.ok, data: verifyResponse.data };
     } catch (error) {
-      console.error('Passkey create error:', error);
-      console.error('Passkey options response:', JSON.stringify(optionsResult?.data || {}));
+      console.error('Passkey create error:', error?.message || String(error));
+      if (optionsResult) {
+        console.error('Passkey options response:', JSON.stringify(optionsResult.data || {}));
+      }
       return { ok: false, data: { message: error.message || 'Passkey registration failed' } };
     }
   };
@@ -272,7 +280,12 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid authentication options from server.' } };
       }
 
-      const credential = await Passkey.get(optionsResult.data);
+      const credential = Platform.OS === 'ios'
+        ? await Passkey.getPlatformKey(optionsResult.data)
+        : await Passkey.get(optionsResult.data);
+      if (!credential) {
+        return { ok: false, data: { message: 'No credentials returned from authenticator' } };
+      }
       const verifyResponse = await requestPasskeyPayload(verifyUrl, { challenge, credential });
 
       const { response, data } = verifyResponse;
@@ -285,8 +298,10 @@ export const useAuthService = () => {
 
       return { ok: response.ok, data };
     } catch (error) {
-      console.error('Passkey authentication error:', error);
-      console.error('Passkey auth options response:', JSON.stringify(optionsResult?.data || {}));
+      console.error('Passkey authentication error:', error?.message || String(error));
+      if (optionsResult) {
+        console.error('Passkey auth options response:', JSON.stringify(optionsResult.data || {}));
+      }
       return { ok: false, data: { message: error.message || 'Passkey authentication failed' } };
     }
   };
