@@ -242,9 +242,18 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid registration options from server.' } };
       }
 
-      const credential = Platform.OS === 'ios'
-        ? await Passkey.createPlatformKey(optionsResult.data)
-        : await Passkey.create(optionsResult.data);
+      let credential = null;
+      if (Platform.OS === 'ios') {
+        try {
+          credential = await Passkey.createPlatformKey(optionsResult.data);
+        } catch (platformError) {
+          console.warn('createPlatformKey failed, falling back to create():', platformError?.message || String(platformError));
+          credential = await Passkey.create(optionsResult.data);
+        }
+      } else {
+        credential = await Passkey.create(optionsResult.data);
+      }
+
       if (!credential) {
         return { ok: false, data: { message: 'No credentials returned from authenticator' } };
       }
@@ -280,9 +289,18 @@ export const useAuthService = () => {
         return { ok: false, data: { message: 'Invalid authentication options from server.' } };
       }
 
-      const credential = Platform.OS === 'ios'
-        ? await Passkey.getPlatformKey(optionsResult.data)
-        : await Passkey.get(optionsResult.data);
+      let credential = null;
+      if (Platform.OS === 'ios') {
+        try {
+          credential = await Passkey.getPlatformKey(optionsResult.data);
+        } catch (platformError) {
+          console.warn('getPlatformKey failed, falling back to get():', platformError?.message || String(platformError));
+          credential = await Passkey.get(optionsResult.data);
+        }
+      } else {
+        credential = await Passkey.get(optionsResult.data);
+      }
+
       if (!credential) {
         return { ok: false, data: { message: 'No credentials returned from authenticator' } };
       }
