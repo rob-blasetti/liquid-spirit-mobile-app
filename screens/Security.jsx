@@ -64,8 +64,10 @@ const Security = ({ navigation }) => {
       if (result?.ok) {
         Alert.alert('Passkey Created', 'Your passkey was set up successfully.');
       } else {
-        const reason = result?.data?.message || 'Could not complete passkey setup.';
-        Alert.alert('Passkey setup failed', reason);
+        const stage = result?.data?.stage ? ` (${result.data.stage})` : '';
+        const detail = result?.data?.message || 'Could not complete passkey setup.';
+        const status = result?.status ? ` [HTTP ${result.status}]` : '';
+        Alert.alert('Passkey setup failed', `${detail}${status}${stage}`);
       }
     } catch (error) {
       console.error('Error during passkey setup:', error);

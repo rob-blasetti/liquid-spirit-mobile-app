@@ -247,23 +247,28 @@ export const useAuthService = () => {
         try {
           credential = await Passkey.createPlatformKey(optionsResult.data);
         } catch (platformError) {
-          console.warn('createPlatformKey failed, falling back to create():', platformError?.message || String(platformError));
-          credential = await Passkey.create(optionsResult.data);
+          const message = platformError?.message || String(platformError);
+          console.warn('createPlatformKey failed:', message);
+          return { ok: false, data: { message, stage: 'create_platform_failed' } };
         }
       } else {
         credential = await Passkey.create(optionsResult.data);
       }
 
       if (!credential) {
-        return { ok: false, data: { message: 'No credentials returned from authenticator' } };
+        return { ok: false, data: { message: 'No credentials returned from authenticator', stage: 'registration' } };
       }
       const verifyResponse = await requestPasskeyPayload(
         verifyUrl,
         { challenge, credential },
         true,
       );
-
-      return { ok: verifyResponse.response.ok, data: verifyResponse.data };
+      return {
+        ok: verifyResponse.response.ok,
+        status: verifyResponse.response.status,
+        data: verifyResponse.data,
+        stage: 'verify',
+      };
     } catch (error) {
       console.error('Passkey create error:', error?.message || String(error));
       if (optionsResult) {
@@ -294,8 +299,9 @@ export const useAuthService = () => {
         try {
           credential = await Passkey.getPlatformKey(optionsResult.data);
         } catch (platformError) {
-          console.warn('getPlatformKey failed, falling back to get():', platformError?.message || String(platformError));
-          credential = await Passkey.get(optionsResult.data);
+          const message = platformError?.message || String(platformError);
+          console.warn('getPlatformKey failed:', message);
+          return { ok: false, data: { message, stage: 'get_platform_failed' } };
         }
       } else {
         credential = await Passkey.get(optionsResult.data);
