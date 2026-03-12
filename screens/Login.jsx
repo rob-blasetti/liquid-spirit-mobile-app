@@ -141,10 +141,20 @@ const Login = ({ navigation, route }) => {
         return;
       }
 
-      const { ok, data } = await authenticateWithPasskey();
+      const authResult = await authenticateWithPasskey();
+      const { ok, data, status: authStatus } = authResult;
       if (!ok) {
-        const reason = data?.message || 'Passkey authentication failed. Please try again.';
-        Alert.alert('Passkey Sign In Failed', reason);
+        const nested = data?.error || null;
+        const reason =
+          nested?.message ||
+          nested?.error ||
+          data?.message ||
+          (Array.isArray(nested?.details) && nested.details[0]?.message) ||
+          'Passkey authentication failed. Please try again.';
+        const requestId = nested?.requestId || data?.requestId;
+        const status = authStatus ? ` [HTTP ${authStatus}]` : '';
+        const requestHint = requestId ? ` [req ${requestId}]` : '';
+        Alert.alert('Passkey Sign In Failed', `${reason}${status}${requestHint}`);
         return;
       }
 
