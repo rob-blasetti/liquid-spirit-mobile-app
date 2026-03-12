@@ -232,7 +232,7 @@ export const useAuthService = () => {
     let optionsResult = null;
 
     try {
-      optionsResult = await requestPasskeyPayload(optionsUrl, null, true);
+      optionsResult = await requestPasskeyPayload(optionsUrl, null, true, 'POST');
       if (!optionsResult.response.ok) {
         return { ok: false, data: optionsResult.data };
       }
@@ -284,7 +284,7 @@ export const useAuthService = () => {
     let optionsResult = null;
 
     try {
-      optionsResult = await requestPasskeyPayload(optionsUrl);
+      optionsResult = await requestPasskeyPayload(optionsUrl, null, false, 'POST');
       if (!optionsResult.response.ok) {
         return { ok: false, data: optionsResult.data };
       }
