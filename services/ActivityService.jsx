@@ -1,33 +1,27 @@
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
+import debugLog from '../utils/debugLog';
 
 const makeRequest = async (url, method, token, body = null, config = {}) => {
   try {
-    if (config.params) {
-      const queryString = new URLSearchParams(config.params).toString();
-      url += `?${queryString}`;
-    }
+    const requestUrl = config.params
+      ? `${API_URL}${url}?${new URLSearchParams(config.params).toString()}`
+      : `${API_URL}${url}`;
 
-    const response = await fetch(`${API_URL}${url}`, {
-      method: method,
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
-        ...config.headers,
+    const { data } = await requestJson(
+      requestUrl,
+      {
+        method,
+        headers: {
+          ...buildJsonHeaders(token),
+          ...(config.headers || {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
       },
-      body: body ? JSON.stringify(body) : null,
-    });
+      'Request failed',
+    );
 
-    if (!response.ok) {
-      let message = 'Request failed';
-      let parsed = null;
-      try { parsed = await response.json(); } catch (_) { parsed = null; }
-      if (parsed?.message) message = parsed.message;
-      const err = new Error(message);
-      err.status = response.status;
-      throw err;
-    }
-
-    return method === 'GET' ? response.json() : true;
+    return method === 'GET' ? data : true;
   } catch (error) {
     console.error(`Error in ${method} request to ${url}:`, error);
     throw error;
@@ -45,7 +39,7 @@ export const uploadActivityDetailsImage = async (file, activityId, token) => {
     const fileName = `activity-${activityId}-${Date.now()}${file.name.match(/\.[0-9a-z]+$/i)[0]}`;
 
     // Get pre-signed URL from backend
-    console.log('Fetching pre-signed URL...');
+    debugLog('Fetching pre-signed URL for activity image upload');
     const { url: signedUrl } = await makeRequest('/api/upload/s3-url', 'GET', null, {
       params: {
         fileName,
@@ -66,7 +60,7 @@ export const uploadActivityDetailsImage = async (file, activityId, token) => {
       if (!response.ok) {
         throw new Error(`Failed to upload file to S3: ${response.statusText}`);
       }
-      console.log('File uploaded successfully to S3');
+      debugLog('File uploaded successfully to S3');
     });
 
     let imgUrl = signedUrl.split('?')[0];
@@ -108,7 +102,7 @@ export const leaveFacilitator = (activityId, userId, token) => makeRequest(`/api
 
 // Create a new activity
 export const createActivity = (activityData, token) => {
-  console.log('[ActivityService] createActivity payload:', activityData);
+  debugLog('[ActivityService] createActivity payload:', activityData);
   return makeRequest('/api/activities/create', 'POST', token, activityData);
 };
 
