@@ -452,7 +452,7 @@ export const useAuthService = () => {
 
   const deleteAccount = async (userId, userToken) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/delete-user/${userId}`, {
+      const response = await fetch(`${AUTH_BASE}/api/auth/delete-user/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
