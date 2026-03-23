@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 import debugLog from '../utils/debugLog';
 
 const getAuthToken = async () => {
@@ -13,17 +14,14 @@ const getAuthToken = async () => {
 export const fetchUser = async (userId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/users/getUser/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/users/getUser/${userId}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
+      'Error fetching user',
+    );
     return data;
   } catch (error) {
     throw new Error(`Fetch user error: ${error.message}`);
@@ -33,24 +31,19 @@ export const fetchUser = async (userId) => {
 export const discoverUsers = async () => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/users/discover`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { response, data } = await requestJson(
+      `${API_URL}/api/users/discover`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
+      'Error fetching users',
+    );
 
     debugLog('discoverUsers response meta', {
       status: response.status,
       ok: response.ok,
     });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Error fetching users');
-    }
 
     return data;
   } catch (error) {
@@ -63,23 +56,14 @@ export const discoverUsers = async () => {
 export const getMemberList = async (communityId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/users/getAllMembers/${communityId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/users/getAllMembers/${communityId}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    if (!response.ok) {
-      // Decode the error response if the server provides error details
-      const errorData = await response.json().catch(() => null);
-      const errorMessage = errorData?.message || 'Error fetching users';
-      throw new Error(errorMessage);
-    }
-
-    // Decode the successful JSON response
-    const data = await response.json();
+      'Error fetching users',
+    );
 
     return data; // This corresponds to `memberDetails` in your backend response
   } catch (error) {
@@ -92,18 +76,15 @@ export const getMemberList = async (communityId) => {
 export const helloUsers = async () => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/users/hello`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/users/hello`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-    const data = await response.json();
+      'Error fetching users',
+    );
     debugLog('helloUsers data:', data);
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
     return data;
   } catch (error) {
     throw new Error(`Fetch user error: ${error.message}`);
@@ -124,26 +105,14 @@ export const fetchUserById = async (userId, token) => {
       return userByIdCache.get(key);
     }
 
-    const response = await fetch(`${API_URL}/api/users/getUser/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/users/getUser/${userId}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (_) {
-      data = null;
-    }
-    if (!response.ok) {
-      // handle errors from API wrapper
-      const msg = data?.message || (data?.error && data.error.message) || 'Failed to fetch user';
-      const err = new Error(msg);
-      err.status = response.status;
-      throw err;
-    }
+      'Failed to fetch user',
+    );
 
     // API may return wrapper { data: user } or { user: {...} }
     if (key) {
@@ -160,28 +129,15 @@ export const fetchUserById = async (userId, token) => {
 
 export const fetchEntitiesBatch = async ({ users = [], members = [], guests = [] } = {}, token) => {
   try {
-    const response = await fetch(`${API_URL}/api/entities/batch`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/entities/batch`,
+      {
+        method: 'POST',
+        headers: buildJsonHeaders(token),
+        body: JSON.stringify({ users, members, guests }),
       },
-      body: JSON.stringify({ users, members, guests }),
-    });
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (_) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      const msg = data?.message || 'Failed to batch fetch entities';
-      const err = new Error(msg);
-      err.status = response.status;
-      throw err;
-    }
+      'Failed to batch fetch entities',
+    );
 
     return data;
   } catch (error) {
@@ -199,27 +155,14 @@ export const fetchMemberById = async (memberId, token) => {
       return memberByIdCache.get(key);
     }
 
-    const response = await fetch(`${API_URL}/api/members/${memberId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/members/${memberId}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    let data = null;
-    try {
-      data = await response.json();
-    } catch (_) {
-      data = null;
-    }
-
-    if (!response.ok) {
-      const msg = data?.message || (data?.error && data.error.message) || 'Failed to fetch member';
-      const err = new Error(msg);
-      err.status = response.status;
-      throw err;
-    }
+      'Failed to fetch member',
+    );
 
     if (key) {
       memberByIdCache.set(key, data);

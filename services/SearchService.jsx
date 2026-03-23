@@ -1,4 +1,5 @@
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 import debugLog from '../utils/debugLog';
 
 export const fetchSearchResults = async (query, token, communityId) => {
@@ -8,20 +9,13 @@ export const fetchSearchResults = async (query, token, communityId) => {
       url += `&communityId=${encodeURIComponent(communityId)}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
+    const { data: responseData } = await requestJson(
+      url,
+      {
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    // Debug: remove raw fetch response log; JSON will be logged after parsing
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch search results');
-    }
-
-    const responseData = await response.json();
+      'Failed to fetch search results',
+    );
     debugLog('Fetched search results:', responseData);
     return responseData;
   } catch (error) {
@@ -42,18 +36,13 @@ export const fetchSearchAutocomplete = async (query, token, communityId) => {
       url += `&communityId=${encodeURIComponent(communityId)}`;
     }
 
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
+    const { data: responseData } = await requestJson(
+      url,
+      {
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch autocomplete suggestions');
-    }
-
-    const responseData = await response.json();
+      'Failed to fetch autocomplete suggestions',
+    );
     debugLog('Fetched autocomplete suggestions:', responseData);
     return responseData;
   } catch (error) {

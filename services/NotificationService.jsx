@@ -1,4 +1,5 @@
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 import debugLog from '../utils/debugLog';
 
 const normalizeEntityId = (value) => {
@@ -54,27 +55,23 @@ const NotificationService = {
         throw new Error('Token not available');
       }
 
-      const response = await fetch(`${API_URL}/api/notifications/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      const { data } = await requestJson(
+        `${API_URL}/api/notifications/create`,
+        {
+          method: 'POST',
+          headers: buildJsonHeaders(token),
+          body: JSON.stringify({
+            type,
+            actor: actorId,
+            target: targetId,
+            targetType,
+            recipientCommunity,
+            additionalData,
+            scope,
+          }),
         },
-        body: JSON.stringify({
-          type,
-          actor: actorId,
-          target: targetId,
-          targetType,
-          recipientCommunity,
-          additionalData,
-          scope,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to send notification');
-      }
+        'Failed to send notification',
+      );
 
       return data;
     } catch (error) {
@@ -260,20 +257,15 @@ const NotificationService = {
     try {
       if (!token) throw new Error('Token not available');
 
-      const response = await fetch(`${API_URL}/api/notifications/${notificationId}/mark-as-read`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      const { data } = await requestJson(
+        `${API_URL}/api/notifications/${notificationId}/mark-as-read`,
+        {
+          method: 'PATCH',
+          headers: buildJsonHeaders(token),
         },
-      });
-
-      const data = await response.json();
+        'Failed to mark notification as read',
+      );
       debugLog('markNotificationAsRead response', data);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to mark notification as read');
-      }
 
       return data;
     } catch (error) {
@@ -286,19 +278,15 @@ const NotificationService = {
     try {
       if (!token) throw new Error('Token not available');
 
-      const response = await fetch(`${API_URL}/api/notifications/mark-as-read`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      const { data } = await requestJson(
+        `${API_URL}/api/notifications/mark-as-read`,
+        {
+          method: 'PATCH',
+          headers: buildJsonHeaders(token),
+          body: JSON.stringify({ userId }),
         },
-        body: JSON.stringify({ userId }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to mark all notifications as read');
-      }
+        'Failed to mark all notifications as read',
+      );
 
       return data;
     } catch (error) {
@@ -319,20 +307,14 @@ const NotificationService = {
         }
       });
 
-      // fetch expects a string URL; convert URL object to string
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+      const { data } = await requestJson(
+        url.toString(),
+        {
+          method: 'GET',
+          headers: buildJsonHeaders(token),
         },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        // throw server-provided message if available, else default
-        throw new Error(data.error || data.message || 'Failed to fetch notifications');
-      }
+        'Failed to fetch notifications',
+      );
 
       return data;
     } catch (error) {
