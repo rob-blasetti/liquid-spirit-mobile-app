@@ -23,9 +23,10 @@ import { getNextSessionDate } from '../../utils/activityDate';
 
 const ActivityCard = ({ activity, navigation, token, isTokenExpired }) => {
   const { nextSessionDate, venueLabel, isOnline } = useNextSessionVenue(activity);
+  const hasUpcomingSession = nextSessionDate instanceof Date;
 
   let sessionLabel = 'TBA';
-  if (nextSessionDate) {
+  if (hasUpcomingSession) {
     const datePart = nextSessionDate.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
@@ -129,20 +130,22 @@ const Activities = ({ navigation, route }) => {
   }, [activities, selectedType, sortOrder]);
 
   const filterAndSortActivities = () => {
-    // Only include activities with at least one future session
-    let filtered = activities.filter((activity) => getNextSessionDate(activity) !== null);
+    let filtered = activities.filter((activity) => activity?.status === 'Active');
 
     if (selectedType !== 'All') {
       filtered = filtered.filter((activity) => activity.activityType?.name === selectedType);
     }
 
-    // Sort by the next session date
+    // Sort by the next session date when available, otherwise keep items without
+    // an upcoming session at the end.
     filtered.sort((a, b) => {
-      const dateA = getNextSessionDate(a) || new Date(0);
-      const dateB = getNextSessionDate(b) || new Date(0);
+      const dateA = getNextSessionDate(a);
+      const dateB = getNextSessionDate(b);
+      const timeA = dateA instanceof Date ? dateA.getTime() : Number.POSITIVE_INFINITY;
+      const timeB = dateB instanceof Date ? dateB.getTime() : Number.POSITIVE_INFINITY;
       return sortOrder === 'asc'
-        ? dateA.getTime() - dateB.getTime()
-        : dateB.getTime() - dateA.getTime();
+        ? timeA - timeB
+        : timeB - timeA;
     });
 
     setFilteredActivities(filtered);

@@ -11,7 +11,9 @@ const coalesceString = (...values) => {
   return '';
 };
 
-const pickSessionAddress = (session = {}, activity = {}) => {
+const pickSessionAddress = (sessionInput = {}, activityInput = {}) => {
+  const session = sessionInput || {};
+  const activity = activityInput || {};
   const venueAddress = Array.isArray(session.venues)
     ? session.venues
         .map((venue) => venue?.address)
@@ -62,7 +64,9 @@ const pickNextSession = (activity = {}) => {
   return upcoming[0] || { session: null, date: null };
 };
 
-const isOnlineSession = (session = {}, activity = {}) => {
+const isOnlineSession = (sessionInput = {}, activityInput = {}) => {
+  const session = sessionInput || {};
+  const activity = activityInput || {};
   const mode = session.locationMode || activity.locationMode;
   return (
     mode === 'online' ||
