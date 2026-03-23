@@ -16,6 +16,7 @@ import { fetchChats } from '../services/ChatService';
 import useMountEffect from '../hooks/useMountEffect';
 
 const CHAT_BADGE_POLL_INTERVAL = 15000;
+const REFRESH_DEDUP_WINDOW_MS = 5000;
 
 const normalizeChatPayload = (payload) => {
   if (!payload) return [];
@@ -181,6 +182,10 @@ export const UserProvider = ({ children }) => {
   const biometricInFlightRef = useRef(false);
   const chatTabActiveRef = useRef(false);
   const chatPollingRef = useRef(null);
+  const chatBadgeRefreshInFlightRef = useRef(null);
+  const notificationRefreshInFlightRef = useRef(null);
+  const lastChatBadgeRefreshAtRef = useRef(0);
+  const lastNotificationRefreshAtRef = useRef(0);
   const chatServerUnreadRef = useRef({});
   const chatUnreadBaselineRef = useRef({});
 
@@ -491,40 +496,62 @@ export const UserProvider = ({ children }) => {
     }
   }, [token, refreshSession]);
 
-  const refreshChatBadgeFromServer = useCallback(async () => {
-    if (!token) return;
-    try {
-      const response = await fetchChats({ token });
-      syncChatBadgeFromPayload(response);
-    } catch (error) {
-      const message = error?.message || '';
-      const tokenExpired =
-        error?.status === 401 || /token has expired/i.test(message);
+  const refreshChatBadgeFromServer = useCallback(async ({ force = false } = {}) => {
+    if (!token) return null;
+    if (appStateRef.current !== 'active' && !force) return null;
 
-      if (tokenExpired) {
-        console.warn('[ChatBadge] Token expired while refreshing badge; refreshing session.');
-        const refreshed = await ensureValidSession();
-        if (refreshed) {
-          try {
-            const retryResponse = await fetchChats({ token: refreshed });
-            syncChatBadgeFromPayload(retryResponse);
-            return;
-          } catch (retryError) {
-            console.error(
-              'Error refreshing chat badge after refreshing session:',
-              retryError?.message || retryError,
-            );
-          }
-        }
-        return;
-      }
-
-      console.error('Error refreshing chat badge:', message || error);
+    const now = Date.now();
+    if (!force && chatBadgeRefreshInFlightRef.current) {
+      return chatBadgeRefreshInFlightRef.current;
     }
+    if (!force && now - lastChatBadgeRefreshAtRef.current < REFRESH_DEDUP_WINDOW_MS) {
+      return null;
+    }
+
+    const refreshPromise = (async () => {
+      try {
+        const response = await fetchChats({ token });
+        syncChatBadgeFromPayload(response);
+        lastChatBadgeRefreshAtRef.current = Date.now();
+        return response;
+      } catch (error) {
+        const message = error?.message || '';
+        const tokenExpired =
+          error?.status === 401 || /token has expired/i.test(message);
+
+        if (tokenExpired) {
+          console.warn('[ChatBadge] Token expired while refreshing badge; refreshing session.');
+          const refreshed = await ensureValidSession();
+          if (refreshed) {
+            try {
+              const retryResponse = await fetchChats({ token: refreshed });
+              syncChatBadgeFromPayload(retryResponse);
+              lastChatBadgeRefreshAtRef.current = Date.now();
+              return retryResponse;
+            } catch (retryError) {
+              console.error(
+                'Error refreshing chat badge after refreshing session:',
+                retryError?.message || retryError,
+              );
+            }
+          }
+          return null;
+        }
+
+        console.error('Error refreshing chat badge:', message || error);
+        return null;
+      } finally {
+        chatBadgeRefreshInFlightRef.current = null;
+      }
+    })();
+
+    chatBadgeRefreshInFlightRef.current = refreshPromise;
+    return refreshPromise;
   }, [token, syncChatBadgeFromPayload, ensureValidSession]);
 
   const ensureValidSessionRef = useRef(ensureValidSession);
   const refreshChatBadgeFromServerRef = useRef(refreshChatBadgeFromServer);
+  const refreshNotificationsFromServerRef = useRef(null);
   ensureValidSessionRef.current = ensureValidSession;
   refreshChatBadgeFromServerRef.current = refreshChatBadgeFromServer;
 
@@ -535,9 +562,23 @@ export const UserProvider = ({ children }) => {
       const wasBackground = appStateRef.current === 'background' || appStateRef.current === 'inactive';
       appStateRef.current = nextAppState;
 
+      if (nextAppState !== 'active' && chatPollingRef.current) {
+        clearInterval(chatPollingRef.current);
+        chatPollingRef.current = null;
+      }
+
       if (wasBackground && nextAppState === 'active') {
         ensureValidSessionRef.current();
-        refreshChatBadgeFromServerRef.current();
+        refreshChatBadgeFromServerRef.current({ force: true });
+        refreshNotificationsFromServerRef.current?.({ force: true });
+
+        if (token && !chatPollingRef.current) {
+          chatPollingRef.current = setInterval(() => {
+            if (appStateRef.current === 'active') {
+              refreshChatBadgeFromServerRef.current();
+            }
+          }, CHAT_BADGE_POLL_INTERVAL);
+        }
       }
     };
 
@@ -554,11 +595,20 @@ export const UserProvider = ({ children }) => {
   // Load notifications on token change
   const derivedUserId = user?.id || user?._id;
 
-  useEffect(() => {
-    if (!token || !derivedUserId) return;
-    // Defer to centralized refresh orchestration; skip if token expired
-    if (isTokenExpired(token)) return;
-    const loadNotifications = async () => {
+  const refreshNotificationsFromServer = useCallback(async ({ force = false } = {}) => {
+    if (!token || !derivedUserId) return null;
+    if (isTokenExpired(token)) return null;
+    if (appStateRef.current !== 'active' && !force) return null;
+
+    const now = Date.now();
+    if (!force && notificationRefreshInFlightRef.current) {
+      return notificationRefreshInFlightRef.current;
+    }
+    if (!force && now - lastNotificationRefreshAtRef.current < REFRESH_DEDUP_WINDOW_MS) {
+      return null;
+    }
+
+    const refreshPromise = (async () => {
       try {
         const resp = await NotificationService.getAllNotifications(token, { limit: 10, offset: 0 });
         const notifs = resp.data || [];
@@ -566,15 +616,28 @@ export const UserProvider = ({ children }) => {
         setUserNotifications(sanitized);
         const unread = sanitized.filter(n => !n.isRead).length;
         setUnreadCount(unread);
+        lastNotificationRefreshAtRef.current = Date.now();
+        return sanitized;
       } catch (error) {
         console.error('Error loading notifications:', error);
+        return null;
+      } finally {
+        notificationRefreshInFlightRef.current = null;
       }
-    };
-    loadNotifications();
+    })();
+
+    notificationRefreshInFlightRef.current = refreshPromise;
+    return refreshPromise;
   }, [token, derivedUserId]);
 
+  refreshNotificationsFromServerRef.current = refreshNotificationsFromServer;
+
   useEffect(() => {
-    if (!token) {
+    refreshNotificationsFromServer({ force: true });
+  }, [refreshNotificationsFromServer]);
+
+  useEffect(() => {
+    if (!token || appStateRef.current !== 'active') {
       if (chatPollingRef.current) {
         clearInterval(chatPollingRef.current);
         chatPollingRef.current = null;
@@ -582,11 +645,12 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
-    refreshChatBadgeFromServerRef.current();
-    chatPollingRef.current = setInterval(
-      () => refreshChatBadgeFromServerRef.current(),
-      CHAT_BADGE_POLL_INTERVAL,
-    );
+    refreshChatBadgeFromServerRef.current({ force: true });
+    chatPollingRef.current = setInterval(() => {
+      if (appStateRef.current === 'active') {
+        refreshChatBadgeFromServerRef.current();
+      }
+    }, CHAT_BADGE_POLL_INTERVAL);
 
     return () => {
       if (chatPollingRef.current) {
