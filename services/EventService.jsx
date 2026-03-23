@@ -1,27 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import NotificationService from '../services/NotificationService';
 import { getCurrentUserId } from './AuthService';
 
 import { API_URL } from '../config';
-import { UserContext } from '../contexts/UserContext';
-import { useContext } from 'react';
+import { buildJsonHeaders, parseJsonSafe, requestJson } from './http';
 
 export const fetchEvents = async (token) => {
-
   try {
-    const response = await fetch(`${API_URL}/api/events`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data: eventsData } = await requestJson(
+      `${API_URL}/api/events`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch events');
-    }
-
-    const eventsData = await response.json();
+      'Failed to fetch events',
+    );
     return eventsData.data;
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -31,23 +23,14 @@ export const fetchEvents = async (token) => {
 
 export const fetchEventsForAttendee = async (userId, token) => {
   try {
-    const response = await fetch(`${API_URL}/api/events/user/${userId}/attending`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/events/user/${userId}/attending`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    let data = null;
-    try { data = await response.json(); } catch (_) { data = null; }
-
-    if (!response.ok) {
-      const message = data?.message || 'Failed to load attendee events.';
-      const error = new Error(message);
-      error.status = response.status;
-      throw error;
-    }
+      'Failed to load attendee events.',
+    );
 
     if (!data) return [];
     if (Array.isArray(data)) return data;
@@ -70,19 +53,14 @@ export const joinEvent = async (eventId, token, eventName, user, communityId) =>
   const userId = user?._id || user?.id;
 
   try {
-    const response = await fetch(`${API_URL}/api/events/${eventId}/join`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { response } = await requestJson(
+      `${API_URL}/api/events/${eventId}/join`,
+      {
+        method: 'PUT',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    console.log('response: ', response);
-
-    if (!response.ok) {
-      throw new Error('Failed to join the event. Please try again.');
-    }
+      'Failed to join the event. Please try again.',
+    );
 
     try {
       await NotificationService.userJoinedEventNotification(
@@ -106,31 +84,16 @@ export const joinEvent = async (eventId, token, eventName, user, communityId) =>
 
 export const fetchEventDetails = async (eventId, token) => {
   try {
-    const response = await fetch(`${API_URL}/api/events/${eventId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/events/${eventId}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    if (!response.ok) {
-      let message = 'Failed to fetch event details. Please try again.';
-      try {
-        const errBody = await response.json();
-        if (errBody?.message) message = errBody.message;
-      } catch (_) {
-        // ignore JSON parse error
-      }
-      const err = new Error(message);
-      err.status = response.status;
-      throw err;
-    }
-
-    const data = await response.json();
+      'Failed to fetch event details. Please try again.',
+    );
     return data;
   } catch (error) {
-    // surface status if fetch threw a Response error above
     console.error('Error fetching event details:', error);
     throw error;
   }
@@ -138,21 +101,15 @@ export const fetchEventDetails = async (eventId, token) => {
 
 export const addEventHost = async (eventId, hosts, token) => {
   try {
-    const response = await fetch(`${API_URL}/api/events/${eventId}/hosts`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data: updatedEvent } = await requestJson(
+      `${API_URL}/api/events/${eventId}/hosts`,
+      {
+        method: 'PATCH',
+        headers: buildJsonHeaders(token),
+        body: JSON.stringify({ hosts }),
       },
-      body: JSON.stringify({ hosts }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to add event host(s).');
-    }
-
-    // Return the updated event data
-    const updatedEvent = await response.json();
+      'Failed to add event host(s).',
+    );
     return updatedEvent;
   } catch (error) {
     console.error('Error adding event host(s):', error);
@@ -164,27 +121,20 @@ export const addEventHostRequest = async (token, eventId) => {
   try {
     if (!token) throw new Error('User is not authenticated.');
 
-    // Extract user ID from token
     const userId = getCurrentUserId(token);
     if (!userId) throw new Error('User ID is missing. Cannot request host privileges.');
 
     const requestBody = { requester: { refId: userId, type: 'User' } };
 
-    const response = await fetch(`${API_URL}/api/events/${eventId}/hostRequests`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data: updatedEvent } = await requestJson(
+      `${API_URL}/api/events/${eventId}/hostRequests`,
+      {
+        method: 'PUT',
+        headers: buildJsonHeaders(token),
+        body: JSON.stringify(requestBody),
       },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Failed to submit host request: ${errText}`);
-    }
-
-    const updatedEvent = await response.json();
+      'Failed to submit host request.',
+    );
     return updatedEvent;
   } catch (error) {
     console.error('Error submitting host request:', error);
