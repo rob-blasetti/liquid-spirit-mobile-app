@@ -26,6 +26,36 @@ const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
 const resolveAccessToken = (payload) => payload?.token || payload?.accessToken || payload?.newAccessToken || null;
 const resolveTokenFromResult = (payload) => resolveAccessToken(payload) || resolveAccessToken(payload?.data) || null;
 
+const redactSensitiveValue = (key, value) => {
+  const normalizedKey = String(key || '').toLowerCase();
+  if (
+    normalizedKey.includes('password') ||
+    normalizedKey.includes('token') ||
+    normalizedKey.includes('secret') ||
+    normalizedKey.includes('authorization')
+  ) {
+    return '[redacted]';
+  }
+
+  return value;
+};
+
+const redactSensitiveObject = (value) => {
+  if (Array.isArray(value)) {
+    return value.map(item => redactSensitiveObject(item));
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.entries(value).reduce((acc, [key, nestedValue]) => {
+    const redactedValue = redactSensitiveValue(key, nestedValue);
+    acc[key] = redactedValue === nestedValue ? redactSensitiveObject(nestedValue) : redactedValue;
+    return acc;
+  }, {});
+};
+
 const resolveUserIdFromToken = (tokenValue) => {
   if (!tokenValue) return null;
   const decoded = decodeToken(tokenValue);
@@ -42,7 +72,17 @@ export const useAuthService = () => {
 
   const fetchJson = async (url, options = {}) => {
     const response = await fetch(url, options);
-    const data = await response.json();
+    const rawBody = await response.text();
+    let data = null;
+
+    if (rawBody) {
+      try {
+        data = JSON.parse(rawBody);
+      } catch {
+        data = rawBody;
+      }
+    }
+
     return { response, data };
   };
 
@@ -60,11 +100,27 @@ export const useAuthService = () => {
   };
 
   const signIn = async (email, password) => {
+    const url = `${AUTH_BASE}/api/auth/login`;
+    const requestBody = { email, password };
+
     try {
-      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/login`, {
+      console.log('[AuthService] login request', {
+        url,
+        method: 'POST',
+        body: redactSensitiveObject(requestBody),
+      });
+
+      const { response, data } = await fetchJson(url, {
         method: 'POST',
         headers: jsonHeaders(false),
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log('[AuthService] login response', {
+        url,
+        status: response.status,
+        ok: response.ok,
+        data: redactSensitiveObject(data),
       });
 
       if (response.ok) {
@@ -76,6 +132,10 @@ export const useAuthService = () => {
 
       return { ok: response.ok, data };
     } catch (error) {
+      console.error('[AuthService] login request failed', {
+        url,
+        message: error?.message || String(error),
+      });
       throw new Error(`Sign-in error: ${error.message}`);
     }
   };
@@ -180,6 +240,30 @@ export const useAuthService = () => {
       return { ok: response.ok, data };
     } catch (error) {
       throw new Error(`Sign-in error: ${error.message}`);
+    }
+  };
+
+  const fetchPasskeyCredentials = async () => {
+    try {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/passkey/credentials`, {
+        method: 'GET',
+        headers: jsonHeaders(true),
+      });
+      return { ok: response.ok, data };
+    } catch (error) {
+      throw new Error(`Fetch passkeys error: ${error.message}`);
+    }
+  };
+
+  const deletePasskeyCredential = async (credentialId) => {
+    try {
+      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/passkey/credentials/${credentialId}`, {
+        method: 'DELETE',
+        headers: jsonHeaders(true),
+      });
+      return { ok: response.ok, status: response.status, data };
+    } catch (error) {
+      throw new Error(`Delete passkey error: ${error.message}`);
     }
   };
 
@@ -400,6 +484,8 @@ export const useAuthService = () => {
     forgotPassword,
     forgotBahaiId,
     fetchMe,
+    fetchPasskeyCredentials,
+    deletePasskeyCredential,
     updateMe,
     getCurrentUserId,
     checkTokenExpiration,

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,12 +21,96 @@ import themeVariables from '../styles/theme';
 
 const Security = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
-  const { deleteAccount, createPasskey, isPasskeySupported } = useAuthService();
+  const { deleteAccount, createPasskey, isPasskeySupported, fetchPasskeyCredentials, deletePasskeyCredential } =
+    useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeys, setPasskeys] = useState([]);
+  const [passkeysLoading, setPasskeysLoading] = useState(false);
+  const [removingPasskeyId, setRemovingPasskeyId] = useState(null);
 
   const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
+
+  const extractPasskeyCredentials = (payload) => {
+    const candidates = [
+      payload,
+      payload?.data,
+      payload?.result,
+      payload?.credentials,
+      payload?.passkeys,
+      payload?.data?.credentials,
+      payload?.data?.passkeys,
+      payload?.result?.credentials,
+      payload?.result?.passkeys,
+      payload?.user?.credentials,
+      payload?.user?.passkeys,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate;
+      }
+    }
+
+    return [];
+  };
+
+  const normalizePasskey = (passkey, index) => {
+    const id =
+      passkey?._id ||
+      passkey?.id ||
+      passkey?.credentialId ||
+      passkey?.credentialID ||
+      passkey?.credential?.id;
+
+    const label =
+      passkey?.name ||
+      passkey?.label ||
+      passkey?.nickname ||
+      passkey?.friendlyName ||
+      passkey?.deviceName ||
+      passkey?.credentialName ||
+      `Passkey ${index + 1}`;
+
+    const createdAt = passkey?.createdAt || passkey?.created_at;
+
+    return {
+      id: id || `passkey-${index}`,
+      label,
+      createdAt,
+      raw: passkey,
+    };
+  };
+
+  const loadPasskeys = async () => {
+    if (!token) {
+      setPasskeys([]);
+      return;
+    }
+
+    setPasskeysLoading(true);
+    try {
+      const result = await fetchPasskeyCredentials();
+      if (!result?.ok) {
+        console.warn('Failed to fetch passkeys:', result?.data);
+        setPasskeys([]);
+        return;
+      }
+
+      const credentials = extractPasskeyCredentials(result.data);
+      setPasskeys(credentials.map(normalizePasskey).filter(passkey => Boolean(passkey.id)));
+    } catch (error) {
+      console.error('Error fetching passkeys:', error);
+      setPasskeys([]);
+    } finally {
+      setPasskeysLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPasskeys();
+  }, [token]);
 
   const getRootNavigation = () => {
     let currentNav = navigation;
@@ -62,6 +146,7 @@ const Security = ({ navigation }) => {
 
       const result = await createPasskey();
       if (result?.ok) {
+        await loadPasskeys();
         Alert.alert('Passkey Created', 'Your passkey was set up successfully.');
       } else {
         const stage = result?.data?.stage ? ` (${result.data.stage})` : '';
@@ -82,6 +167,46 @@ const Security = ({ navigation }) => {
     } finally {
       setPasskeyLoading(false);
     }
+  };
+
+  const handleDeletePasskey = async (passkey) => {
+    if (!passkey?.id) {
+      Alert.alert('Delete failed', 'This passkey is missing an identifier and cannot be removed.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete Passkey',
+      `Remove ${passkey.label} from your account?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setRemovingPasskeyId(passkey.id);
+            try {
+              const result = await deletePasskeyCredential(passkey.id);
+              if (!result?.ok) {
+                const nested = result?.data?.error || null;
+                const message =
+                  nested?.message || result?.data?.message || 'Could not delete this passkey.';
+                Alert.alert('Delete failed', message);
+                return;
+              }
+
+              await loadPasskeys();
+            } catch (error) {
+              console.error('Error deleting passkey:', error);
+              Alert.alert('Delete failed', error?.message || 'Could not delete this passkey.');
+            } finally {
+              setRemovingPasskeyId(null);
+            }
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   const handleLogout = async () => {
@@ -133,6 +258,36 @@ const Security = ({ navigation }) => {
           <Text style={styles.itemText}>Create Passkey</Text>
           {passkeyLoading ? <ActivityIndicator color={themeVariables.blackColor} size="small" /> : null}
         </TouchableOpacity>
+
+        <View style={styles.passkeySection}>
+          <Text style={styles.passkeySectionTitle}>Passkeys</Text>
+          {passkeysLoading ? (
+            <ActivityIndicator color={themeVariables.blackColor} size="small" style={styles.passkeyLoading} />
+          ) : passkeys.length > 0 ? (
+            <View style={styles.passkeyChips}>
+              {passkeys.map(passkey => (
+                <View key={passkey.id} style={styles.passkeyChip}>
+                  <Text style={styles.passkeyChipText} numberOfLines={1}>
+                    {passkey.label}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => handleDeletePasskey(passkey)}
+                    disabled={removingPasskeyId === passkey.id}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    {removingPasskeyId === passkey.id ? (
+                      <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+                    ) : (
+                      <Ionicons name="close-circle" size={18} color={themeVariables.primaryColor} />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.passkeyEmptyText}>No passkeys added yet.</Text>
+          )}
+        </View>
 
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color={themeVariables.blackColor} />
@@ -203,6 +358,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
     color: themeVariables.blackColor,
+  },
+  passkeySection: {
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: themeVariables.borderLightColor,
+  },
+  passkeySectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+    marginBottom: 10,
+  },
+  passkeyLoading: {
+    alignSelf: 'flex-start',
+  },
+  passkeyChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  passkeyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: themeVariables.lightGreyColor,
+    borderRadius: 999,
+    paddingLeft: 12,
+    paddingRight: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: themeVariables.borderColor,
+    maxWidth: '100%',
+  },
+  passkeyChipText: {
+    color: themeVariables.blackColor,
+    fontSize: 14,
+    marginRight: 8,
+    maxWidth: 220,
+  },
+  passkeyEmptyText: {
+    fontSize: 14,
+    color: '#666',
   },
   modalOverlay: {
     flex: 1,
