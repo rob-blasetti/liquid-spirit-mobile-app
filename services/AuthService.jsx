@@ -5,6 +5,8 @@ import jwtDecode from 'jwt-decode';
 import { Passkey } from 'react-native-passkey';
 
 import { API_URL, AUTH_API_URL } from '../config';
+import { isJwtExpired, resolveAccessToken } from '../utils/authTokens';
+import debugLog from '../utils/debugLog';
 
 const decodeToken = (token) => {
   if (!token) return null;
@@ -23,8 +25,7 @@ const extractUserId = (decodedToken) => {
 
 const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
 
-const resolveAccessToken = (payload) => payload?.token || payload?.accessToken || payload?.newAccessToken || null;
-const resolveTokenFromResult = (payload) => resolveAccessToken(payload) || resolveAccessToken(payload?.data) || null;
+const resolveTokenFromResult = payload => resolveAccessToken(payload);
 
 const redactSensitiveValue = (key, value) => {
   const normalizedKey = String(key || '').toLowerCase();
@@ -168,7 +169,7 @@ export const useAuthService = () => {
         headers: jsonHeaders(false),
         body: JSON.stringify({ bahaiId, verificationCode, password }),
       });
-      console.log('data: ', data);
+      debugLog('verify response', redactSensitiveObject(data));
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
@@ -298,7 +299,7 @@ export const useAuthService = () => {
     try {
       const decodedToken = decodeToken(token);
 
-      if (decodedToken.exp * 1000 < Date.now()) {
+      if (isJwtExpired(token)) {
         console.warn('Token has expired');
         return { isValid: false, reason: 'Token expired' };
       }

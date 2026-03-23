@@ -6,8 +6,8 @@ import { fetchActivities } from '../services/ActivityService.jsx';
 import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
 import { fetchUserById } from '../services/UserService.jsx';
-import { parseJwt } from '../utils/parseJwt';
 import debugLog from '../utils/debugLog';
+import { isJwtExpired, resolveAccessToken, resolveRefreshToken } from '../utils/authTokens';
 import { API_URL, AUTH_API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
@@ -402,18 +402,7 @@ export const UserProvider = ({ children }) => {
   }, [setCommunityId]);
 
   function isTokenExpired(jwtToken) {
-    try {
-      const { exp } = parseJwt(jwtToken);
-
-      // If 'exp' doesn't exist or decoding fails, treat token as invalid
-      if (!exp) return true;
-
-      // Check if the current time is past the token's expiration time
-      return Date.now() >= exp * 1000;
-    } catch (error) {
-      console.error('Error decoding JWT:', error);
-      return true; // Consider invalid if decode fails
-    }
+    return isJwtExpired(jwtToken);
   }
 
   const refreshSession = useCallback(async () => {
@@ -456,8 +445,15 @@ export const UserProvider = ({ children }) => {
           return null;
         }
 
-        const accessToken = data.accessToken || data.token || data.newAccessToken || null;
-        const newRefreshToken = data.newRefreshToken || data.refreshToken || null;
+        const accessToken = resolveAccessToken(data);
+        const newRefreshToken = resolveRefreshToken(data);
+
+        if (!accessToken) {
+          console.warn('Refresh response did not include a valid access token.');
+          await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
+          await logout();
+          return null;
+        }
 
         await AsyncStorage.multiSet([
           ['authToken', accessToken],
@@ -663,8 +659,8 @@ export const UserProvider = ({ children }) => {
         const data = await response.json();
 
         if (response.ok) {
-          const authToken = data.accessToken || data.token || data.newAccessToken;
-          const refreshToken = data.newRefreshToken || data.refreshToken;
+          const authToken = resolveAccessToken(data);
+          const refreshToken = resolveRefreshToken(data);
           await login(
             data.user,
             authToken,

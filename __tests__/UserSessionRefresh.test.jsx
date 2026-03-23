@@ -95,6 +95,27 @@ describe('User session refresh', () => {
     await AsyncStorage.clear();
   });
 
+  const renderSessionProbe = onSessionChecked => {
+    const setCommunityId = jest.fn();
+    const setHomeOverview = jest.fn();
+
+    return render(
+      <CommunityContext.Provider
+        value={{
+          communityId: null,
+          setCommunityId,
+          homeOverview: null,
+          setHomeOverview,
+          storageLoaded: true,
+        }}
+      >
+        <UserProvider>
+          <SessionProbe onSessionChecked={onSessionChecked} />
+        </UserProvider>
+      </CommunityContext.Provider>
+    );
+  };
+
   it('refreshes an expired token when the session is validated', async () => {
     const expiredToken = buildTokenWithExp(Math.floor(Date.now() / 1000) - 60);
     const refreshedToken = buildTokenWithExp(Math.floor(Date.now() / 1000) + 3600);
@@ -110,24 +131,7 @@ describe('User session refresh', () => {
     });
 
     const onSessionChecked = jest.fn();
-    const setCommunityId = jest.fn();
-    const setHomeOverview = jest.fn();
-
-    render(
-      <CommunityContext.Provider
-        value={{
-          communityId: null,
-          setCommunityId,
-          homeOverview: null,
-          setHomeOverview,
-          storageLoaded: true,
-        }}
-      >
-        <UserProvider>
-          <SessionProbe onSessionChecked={onSessionChecked} />
-        </UserProvider>
-      </CommunityContext.Provider>
-    );
+    renderSessionProbe(onSessionChecked);
 
     await waitFor(() => expect(onSessionChecked).toHaveBeenCalledWith(refreshedToken));
 
@@ -143,6 +147,28 @@ describe('User session refresh', () => {
         ['authToken', refreshedToken],
         ['refreshToken', 'next-refresh'],
       ])
+    );
+  });
+
+  it('logs out when refresh succeeds but does not return an access token', async () => {
+    const expiredToken = buildTokenWithExp(Math.floor(Date.now() / 1000) - 60);
+
+    await AsyncStorage.multiSet([
+      ['authToken', expiredToken],
+      ['refreshToken', 'stored-refresh'],
+    ]);
+
+    global.fetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ refreshToken: 'next-refresh' }),
+    });
+
+    const onSessionChecked = jest.fn();
+    renderSessionProbe(onSessionChecked);
+
+    await waitFor(() => expect(onSessionChecked).toHaveBeenCalledWith(null));
+    expect(AsyncStorage.multiRemove).toHaveBeenCalledWith(
+      expect.arrayContaining(['authToken', 'refreshToken'])
     );
   });
 });
