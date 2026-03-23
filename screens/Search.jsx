@@ -16,6 +16,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import debugLog from '../utils/debugLog';
 
 const placeholderImage = require('../assets/img/placeholder.png');
 
@@ -122,6 +123,11 @@ const Search = () => {
   const inputRef = useRef(null);
   const latestSearchIdRef = useRef(0);
   const latestAutocompleteIdRef = useRef(0);
+  const searchCacheRef = useRef(new Map());
+  const autocompleteCacheRef = useRef(new Map());
+  const searchInFlightRef = useRef(new Map());
+  const autocompleteInFlightRef = useRef(new Map());
+  const lastExecutedQueryRef = useRef(null);
   const initialQueryKeyRef = useRef(null);
   const didHydrateInitialStateRef = useRef(false);
 
@@ -229,33 +235,62 @@ const Search = () => {
     });
   }, []);
 
-  const executeSearch = useCallback(async (text) => {
-    const normalizedQuery = text ?? '';
+  const executeSearch = useCallback(async (text, { force = false } = {}) => {
+    const normalizedQuery = (text ?? '').trim();
+    const cacheKey = `${communityId || 'global'}::${normalizedQuery.toLowerCase()}`;
+
+    if (!force && lastExecutedQueryRef.current === cacheKey) {
+      return searchCacheRef.current.get(cacheKey) ?? null;
+    }
+
+    if (!force && searchCacheRef.current.has(cacheKey)) {
+      const cached = searchCacheRef.current.get(cacheKey) ?? [];
+      lastExecutedQueryRef.current = cacheKey;
+      setResults(Array.isArray(cached) ? cached : []);
+      return cached;
+    }
+
+    const existingRequest = !force ? searchInFlightRef.current.get(cacheKey) : null;
+    if (existingRequest) {
+      return existingRequest;
+    }
+
     const requestId = ++latestSearchIdRef.current;
     setIsLoading(true);
-    try {
-      const data = await fetchSearchResults(normalizedQuery, token, communityId);
-      console.log('Search results for query', normalizedQuery, data);
-      if (latestSearchIdRef.current !== requestId) return;
-      const nextResults = Array.isArray(data) ? data : [];
-      setResults(nextResults);
+
+    const searchPromise = (async () => {
       try {
-        await AsyncStorage.setItem('search_cache__query', normalizedQuery);
-        await AsyncStorage.setItem('search_cache__results', JSON.stringify(nextResults));
-      } catch (_) {}
-      if (normalizedQuery.trim().length > 0 && !isSearchFocused) {
-        updateRecentSearches(normalizedQuery);
+        const data = await fetchSearchResults(normalizedQuery, token, communityId);
+        debugLog('Search results for query', normalizedQuery, data);
+        if (latestSearchIdRef.current !== requestId) return null;
+        const nextResults = Array.isArray(data) ? data : [];
+        searchCacheRef.current.set(cacheKey, nextResults);
+        lastExecutedQueryRef.current = cacheKey;
+        setResults(nextResults);
+        try {
+          await AsyncStorage.setItem('search_cache__query', normalizedQuery);
+          await AsyncStorage.setItem('search_cache__results', JSON.stringify(nextResults));
+        } catch (_) {}
+        if (normalizedQuery.length > 0 && !isSearchFocused) {
+          updateRecentSearches(normalizedQuery);
+        }
+        return nextResults;
+      } catch (error) {
+        console.error('Search failed:', error);
+        if (latestSearchIdRef.current === requestId) {
+          setResults([]);
+        }
+        return null;
+      } finally {
+        searchInFlightRef.current.delete(cacheKey);
+        if (latestSearchIdRef.current === requestId) {
+          setIsLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('Search failed:', error);
-      if (latestSearchIdRef.current === requestId) {
-        setResults([]);
-      }
-    } finally {
-      if (latestSearchIdRef.current === requestId) {
-        setIsLoading(false);
-      }
-    }
+    })();
+
+    searchInFlightRef.current.set(cacheKey, searchPromise);
+    return searchPromise;
   }, [token, communityId, updateRecentSearches, isSearchFocused]);
 
   const executeSearchRef = useRef(executeSearch);
@@ -306,9 +341,14 @@ const Search = () => {
         const [q, r] = await AsyncStorage.multiGet(['search_cache__query', 'search_cache__results']);
         const cachedQuery = q?.[1] ?? '';
         const cachedResults = r?.[1] ? JSON.parse(r[1]) : [];
+        if (Array.isArray(cachedResults)) {
+          const cacheKey = `${communityId || 'global'}::${cachedQuery.trim().toLowerCase()}`;
+          searchCacheRef.current.set(cacheKey, cachedResults);
+        }
         if (Array.isArray(cachedResults) && cachedResults.length > 0) {
           setQuery(cachedQuery);
           setResults(cachedResults);
+          lastExecutedQueryRef.current = `${communityId || 'global'}::${cachedQuery.trim().toLowerCase()}`;
         } else {
           executeSearchRef.current('');
         }
@@ -352,32 +392,48 @@ const Search = () => {
       autocompleteDebounceRef.current = null;
     }
     const trimmed = text?.trim?.() ?? '';
+    const cacheKey = `${communityId || 'global'}::${trimmed.toLowerCase()}`;
     if (!trimmed) {
+      latestAutocompleteIdRef.current += 1;
       setAutocompleteSuggestions([]);
       setIsAutocompleteLoading(false);
       autocompleteDebounceRef.current = null;
       return;
     }
+
+    if (autocompleteCacheRef.current.has(cacheKey)) {
+      setAutocompleteSuggestions(autocompleteCacheRef.current.get(cacheKey) || []);
+      setIsAutocompleteLoading(false);
+      return;
+    }
+
     setIsAutocompleteLoading(true);
     autocompleteDebounceRef.current = setTimeout(async () => {
       const requestId = ++latestAutocompleteIdRef.current;
       autocompleteDebounceRef.current = null;
+      const existingRequest = autocompleteInFlightRef.current.get(cacheKey);
       try {
-        const suggestions = await fetchSearchAutocomplete(trimmed, token, communityId);
-        console.log('Autocomplete suggestions for query', trimmed, suggestions);
+        const suggestions = existingRequest || fetchSearchAutocomplete(trimmed, token, communityId);
+        if (!existingRequest) {
+          autocompleteInFlightRef.current.set(cacheKey, suggestions);
+        }
+        const resolvedSuggestions = await suggestions;
+        debugLog('Autocomplete suggestions for query', trimmed, resolvedSuggestions);
         if (latestAutocompleteIdRef.current !== requestId) return;
-        const sanitized = Array.isArray(suggestions)
-          ? suggestions.filter(item => {
+        const sanitized = Array.isArray(resolvedSuggestions)
+          ? resolvedSuggestions.filter(item => {
               const label = getSuggestionLabel(item);
               return typeof label === 'string' && label.trim().length > 0;
             })
           : [];
+        autocompleteCacheRef.current.set(cacheKey, sanitized);
         setAutocompleteSuggestions(sanitized);
       } catch (error) {
         if (latestAutocompleteIdRef.current !== requestId) return;
         console.error('Autocomplete failed:', error);
         setAutocompleteSuggestions([]);
       } finally {
+        autocompleteInFlightRef.current.delete(cacheKey);
         if (latestAutocompleteIdRef.current === requestId) {
           setIsAutocompleteLoading(false);
         }
@@ -617,6 +673,7 @@ const Search = () => {
     inputRef.current?.blur?.();
     setIsSearchFocused(false);
     cancelAutocomplete();
+    latestAutocompleteIdRef.current += 1;
     setAutocompleteSuggestions([]);
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
@@ -638,6 +695,15 @@ const Search = () => {
       }
     })();
   }, [cancelAutocomplete]);
+
+  useEffect(() => {
+    searchCacheRef.current.clear();
+    autocompleteCacheRef.current.clear();
+    searchInFlightRef.current.clear();
+    autocompleteInFlightRef.current.clear();
+    lastExecutedQueryRef.current = null;
+    setAutocompleteSuggestions([]);
+  }, [communityId, token]);
 
   return (
     <SafeAreaView style={styles.container}>
