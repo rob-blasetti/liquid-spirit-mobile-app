@@ -6,7 +6,7 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
-import s3 from '../awsConfig';
+import { API_URL } from '../config';
 import resolveImageSource from '../utils/imageSource';
 
 const ChangeableProfileImage = ({
@@ -16,7 +16,7 @@ const ChangeableProfileImage = ({
   setUserDetails: propSetUserDetails,
   showEditIndicator = false,
 }) => {
-  const { user, setUser } = useContext(UserContext);
+  const { user, setUser, token } = useContext(UserContext);
   const { updateMe } = useAuthService();
 
   // Defensive fallbacks
@@ -36,6 +36,44 @@ const ChangeableProfileImage = ({
       console.error('Error fetching image blob:', err);
       throw err;
     }
+  };
+
+  const sanitizeFileName = (name, fallbackExtension = 'jpg') => {
+    const trimmedName = String(name || '').trim();
+    const baseName = trimmedName
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^a-zA-Z0-9._-]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      || `profile-${Date.now()}`;
+    const rawExtension = trimmedName.includes('.')
+      ? trimmedName.split('.').pop()
+      : fallbackExtension;
+    const extension = String(rawExtension || fallbackExtension)
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase() || fallbackExtension;
+
+    return `${baseName}.${extension}`;
+  };
+
+  const getSignedUpload = async (fileName, fileType) => {
+    const query = new URLSearchParams({
+      fileName,
+      fileType,
+    }).toString();
+    const response = await fetch(`${API_URL}/api/upload/s3-url?${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error || 'Failed to get upload URL');
+    }
+
+    return response.json();
   };
 
   const handlePress = () => {
@@ -74,20 +112,28 @@ const ChangeableProfileImage = ({
 
       try {
         const imageBlob = await getBlob(uri);
-        const s3Key = `profile-images/${fileName || Date.now()}`;
-        const params = {
-          Bucket: 'liquid-spirit',
-          Key: s3Key,
-          Body: imageBlob,
-          ContentType: type || 'image/jpeg',
-        };
+        const contentType = type || 'image/jpeg';
+        const safeFileName = sanitizeFileName(fileName, contentType.split('/')[1] || 'jpg');
+        const { url } = await getSignedUpload(safeFileName, contentType);
 
-        const s3Upload = await s3.upload(params).promise();
-        console.log('S3 upload success =>', s3Upload.Location);
+        const uploadResponse = await fetch(url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': contentType,
+          },
+          body: imageBlob,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+
+        const uploadedImageUrl = url.split('?')[0];
+        console.log('S3 upload success =>', uploadedImageUrl);
 
         const updatedUserFields = {
           ...user,
-          profilePicture: s3Upload.Location,
+          profilePicture: uploadedImageUrl,
         };
 
         const { ok, data } = await updateMe(updatedUserFields);
@@ -109,7 +155,7 @@ const ChangeableProfileImage = ({
         if (typeof propSetUserDetails === 'function' && propUserDetails) {
           propSetUserDetails({
             ...propUserDetails,
-            profilePicture: s3Upload.Location,
+            profilePicture: uploadedImageUrl,
           });
         }
       } catch (err) {

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useContext, useMemo, useCallback, useLayoutEffect } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Animated, Text, TouchableOpacity, BackHandler } from 'react-native';
-import { Snackbar } from 'react-native-paper';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Button } from 'liquid-spirit-styleguide/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../../styles/theme';
+import AppSnackbar from '../../components/AppSnackbar';
 import LiquidGlassIconButton from '../../components/LiquidGlassIconButton';
 import TitleSection from './sections/TitleSection';
 import ActivityTypeSection from './sections/ActivityTypeSection';
@@ -701,13 +701,12 @@ export default function CreateActivity({ navigation, route }) {
           )}
         </View>
 
-        <Snackbar
+        <AppSnackbar
           visible={snackbar.visible}
           onDismiss={() => setSnackbar({ visible: false, message: '' })}
           duration={2000}
-        >
-          {snackbar.message}
-        </Snackbar>
+          message={snackbar.message}
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
