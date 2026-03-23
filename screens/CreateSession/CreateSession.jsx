@@ -200,7 +200,7 @@ const initialForm = {
 
 const CreateSession = ({ navigation, route }) => {
   const { bottom: bottomInset } = useSafeAreaInsets();
-  const { token } = useContext(UserContext);
+  const { token, user } = useContext(UserContext);
   const params = route?.params || {};
   const communityId = params.communityId || params.activity?.community || params.activityPreload?.community;
   const resolvedActivityId = useMemo(() => {
@@ -845,6 +845,9 @@ const CreateSession = ({ navigation, route }) => {
                   activityId: resolvedActivityId,
                   communityId,
                   token,
+                  facilitatorIds: form.facilitators,
+                  participantIds: form.participants,
+                  userId: user?.id || user?._id,
                   value: form.venueId,
                   onSelect: handleSelectVenue,
                   onLoadingChange: setVenuesLoading,

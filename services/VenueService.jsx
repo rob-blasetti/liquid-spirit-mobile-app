@@ -51,9 +51,25 @@ export const fetchEligibleVenuesForActivity = (activityId, token, options = {}) 
     options,
   );
 
+export const findVenuesForIds = (
+  facilitatorIds = [],
+  participantIds = [],
+  token,
+  options = {},
+) => {
+  const { signal, userId, ...restOptions } = options || {};
+  const payload = { facilitatorIds, participantIds };
+  if (userId) {
+    payload.userId = userId;
+  }
+  return makeRequest('/api/venues/find', 'POST', token, payload, {
+    ...restOptions,
+    signal,
+  });
+};
+
 // Back-compat: older callers used /api/activities/:id/venues.
 export const fetchAvailableVenuesForActivity = (activityId, token, options = {}) =>
   makeRequest(`/api/activities/${encodeURIComponent(activityId)}/venues`, 'GET', token, null, options);
 
 export const fetchVenuesForActivity = fetchAvailableVenuesForActivity;
-

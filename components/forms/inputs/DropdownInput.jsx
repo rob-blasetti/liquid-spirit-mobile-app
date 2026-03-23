@@ -19,12 +19,14 @@ const normalizeOption = option => {
   if (option && typeof option === 'object') {
     return {
       label: option.label ?? option.name ?? option.value ?? '',
+      title: option.title ?? option.name ?? option.label ?? option.value ?? '',
+      subtitle: option.subtitle ?? '',
       value: option.value ?? option.id ?? option.label ?? '',
       meta: option.meta ?? option,
     };
   }
   const label = String(option ?? '');
-  return { label, value: label, meta: option };
+  return { label, title: label, subtitle: '', value: label, meta: option };
 };
 
 const DropdownInput = ({
@@ -139,7 +141,14 @@ const DropdownInput = ({
                 ]}
                 onPress={() => handleSelect(option)}
               >
-                <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                {option.subtitle ? (
+                  <View>
+                    <Text style={styles.dropdownOptionTitle}>{option.title}</Text>
+                    <Text style={styles.dropdownOptionSubtitle}>{option.subtitle}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.dropdownOptionText}>{option.label}</Text>
+                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -247,6 +256,17 @@ const styles = StyleSheet.create({
   dropdownOptionText: {
     color: themeVariables.blackColor,
     fontSize: 15,
+  },
+  dropdownOptionTitle: {
+    color: themeVariables.blackColor,
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  dropdownOptionSubtitle: {
+    color: '#667085',
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 
