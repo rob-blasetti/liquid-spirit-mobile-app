@@ -1,30 +1,29 @@
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
+import debugLog from '../utils/debugLog';
 // Note: UserContext/useContext not needed here
 
 // Fetch the "Explore" feed; requires auth token
 export const fetchExploreFeed = async (token) => {
   try {
-      if (!token) {
-        throw new Error('No authentication token provided for explore feed');
-      }
-      const response = await fetch(`${API_URL}/api/posts/explore-feed`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch explore posts');
-      }
-
-      const responseData = await response.json();
-      return responseData.data;
-    } catch (error) {
-      console.error('Error fetching explore feed:', error);
-      throw new Error(`Fetch explore feed error: ${error.message}`);
+    if (!token) {
+      throw new Error('No authentication token provided for explore feed');
     }
-  };
+
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/explore-feed`,
+      {
+        headers: buildJsonHeaders(token),
+      },
+      'Failed to fetch explore posts',
+    );
+
+    return responseData.data;
+  } catch (error) {
+    console.error('Error fetching explore feed:', error);
+    throw new Error(`Fetch explore feed error: ${error.message}`);
+  }
+};
 
   // export const fetchForYouFeed = async (userCommunityId, token) => {
   //   try {
@@ -64,48 +63,31 @@ export const fetchForYouFeed = async () => [
   },
 ];
 
-  export const fetchRecentCommunityPosts = async (userCommunityId, token) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/community-feed/${userCommunityId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch posts');
-      }
-
-      const responseData = await response.json();
-      return responseData.data.slice(0, 5);
-    } catch (error) {
-      console.error('Error fetching recent posts:', error);
-      throw new Error(`Fetch recent community posts error: ${error.message}`);
-    }
-  };
+export const fetchRecentCommunityPosts = async (userCommunityId, token) => {
+  try {
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/community-feed/${userCommunityId}`,
+      {
+        headers: buildJsonHeaders(token),
+      },
+      'Failed to fetch posts',
+    );
+    return responseData.data.slice(0, 5);
+  } catch (error) {
+    console.error('Error fetching recent posts:', error);
+    throw new Error(`Fetch recent community posts error: ${error.message}`);
+  }
+};
 
 export const fetchPostDetails = async (postId, token) => {
   try {
-    const response = await fetch(`${API_URL}/api/posts/${postId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}/api/posts/${postId}`,
+      {
+        headers: buildJsonHeaders(token),
       },
-    });
-
-    if (!response.ok) {
-      let message = 'Failed to fetch post';
-      try {
-        const errBody = await response.json();
-        if (errBody?.message) message = errBody.message;
-      } catch (_) {}
-      const err = new Error(message);
-      err.status = response.status;
-      throw err;
-    }
-
-    const data = await response.json();
+      'Failed to fetch post',
+    );
     return data.data;
   } catch (err) {
     console.error('Error fetching post details:', err);
@@ -118,102 +100,53 @@ export const fetchPostDetails = async (postId, token) => {
 
 export const likePost = async (postId, token, { userId } = {}) => {
   try {
-      if (__DEV__) {
-        console.log('[PostService] likePost called', { postId, hasToken: Boolean(token), userId });
-      }
-      const config = {
+    debugLog('[PostService] likePost called', { postId, hasToken: Boolean(token), userId });
+
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/${postId}/like`,
+      {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      };
+        headers: buildJsonHeaders(token),
+        ...(userId ? { body: JSON.stringify({ userId }) } : {}),
+      },
+      'Failed to like the post',
+    );
 
-      if (userId) {
-        if (__DEV__) {
-          console.log('[PostService] sending userId in body');
-        }
-        config.body = JSON.stringify({ userId });
-      }
+    debugLog('[PostService] likePost response', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('[PostService] Error liking post:', error);
+    throw new Error(`Like post error: ${error.message}`);
+  }
+};
 
-      const response = await fetch(`${API_URL}/api/posts/${postId}/like`, config);
-
-      if (__DEV__) {
-        console.log('[PostService] likePost response', { status: response.status });
-      }
-
-      if (!response.ok) {
-        let errorMessage = 'Failed to like the post';
-        try {
-          const errorBody = await response.json();
-          if (errorBody?.message) {
-            errorMessage = errorBody.message;
-          }
-        } catch (_) {}
-
-        if (__DEV__) {
-          console.log('[PostService] likePost failed', { status: response.status, errorMessage });
-        }
-
-        throw new Error(errorMessage);
-      }
-
-      const responseData = await response.json();
-
-      if (__DEV__) {
-        console.log('likePost service call: ', responseData);
-      }
-
-      return responseData;
-    } catch (error) {
-      console.error('[PostService] Error liking post:', error);
-      throw new Error(`Like post error: ${error.message}`);
-    }
-  };
-
-  export const commentOnPost = async (postId, commentText, token) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/${postId}/comment`, {
+export const commentOnPost = async (postId, commentText, token) => {
+  try {
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/${postId}/comment`,
+      {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: buildJsonHeaders(token),
         body: JSON.stringify({ comment: commentText }),
-      });
+      },
+      'Failed to comment on the post',
+    );
 
-      // Try to parse JSON, but tolerate empty/no-JSON responses
-      let responseData = null;
-      try {
-        responseData = await response.json();
-      } catch (_) {
-        responseData = null;
-      }
+    return responseData?.data ?? responseData ?? null;
+  } catch (error) {
+    console.error('Error commenting on post:', error);
+    const msg = error?.message || 'Failed to comment on the post';
+    throw new Error(`Comment post error: ${msg}`);
+  }
+};
 
-      if (!response.ok) {
-        const msg = responseData?.message || 'Failed to comment on the post';
-        throw new Error(msg);
-      }
-
-      // Support various backend shapes: {data: ...} | [...] | single object | null
-      const data = responseData?.data ?? responseData ?? null;
-      return data;
-    } catch (error) {
-      console.error('Error commenting on post:', error);
-      // Normalize error message to avoid leaking parse errors
-      const msg = error?.message || 'Failed to comment on the post';
-      throw new Error(`Comment post error: ${msg}`);
-    }
-  };
-
-  export const createPost = async ({ title, content, mediaUrl, mediaThumbnailUrl, tags = [], user, userCommunityId, token }) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/create`, {
+export const createPost = async ({ title, content, mediaUrl, mediaThumbnailUrl, tags = [], user, userCommunityId, token }) => {
+  try {
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/create`,
+      {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: buildJsonHeaders(token),
         body: JSON.stringify({
           title,
           content,
@@ -223,20 +156,16 @@ export const likePost = async (postId, token, { userId } = {}) => {
           community: userCommunityId,
           tags,
         }),
-      });
+      },
+      'Failed to create post.',
+    );
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to create post.');
-      }
-
-      const responseData = await response.json();
-      return responseData.data;
-    } catch (error) {
-      console.error('Error creating post:', error);
-      throw new Error(`Create post error: ${error.message}`);
-    }
-  };
+    return responseData.data;
+  } catch (error) {
+    console.error('Error creating post:', error);
+    throw new Error(`Create post error: ${error.message}`);
+  }
+};
 
   export const uploadImageWithThumbnail = async (fileUri, fileType, token) => {
     try {
@@ -319,49 +248,37 @@ export const likePost = async (postId, token, { userId } = {}) => {
     }
   };
 
-  export const flagPost = async (postId, token) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/${postId}/flag`, {
+export const flagPost = async (postId, token) => {
+  try {
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/${postId}/flag`,
+      {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        headers: buildJsonHeaders(token),
+      },
+      'Failed to flag post.',
+    );
+    return responseData.data;
+  } catch (error) {
+    console.error('Error flagging post:', error);
+    throw new Error(`Flag post error: ${error.message}`);
+  }
+};
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to flag post.');
-      }
-
-      const responseData = await response.json();
-      return responseData.data;
-    } catch (error) {
-      console.error('Error flagging post:', error);
-      throw new Error(`Flag post error: ${error.message}`);
-    }
-  };
-
-  export const deletePost = async (postId, token) => {
-    try {
-      const response = await fetch(`${API_URL}/api/posts/${postId}`, {
+export const deletePost = async (postId, token) => {
+  try {
+    const { data: responseData } = await requestJson(
+      `${API_URL}/api/posts/${postId}`,
+      {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to delete post.');
-      }
-
-      const responseData = await response.json();
-      return responseData;
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      throw new Error(`Delete post error: ${error.message}`);
-    }
-  };
+        headers: buildJsonHeaders(token),
+      },
+      'Failed to delete post.',
+    );
+    return responseData;
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    throw new Error(`Delete post error: ${error.message}`);
+  }
+};
 
