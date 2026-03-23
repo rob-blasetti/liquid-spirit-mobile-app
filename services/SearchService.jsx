@@ -1,4 +1,5 @@
 import { API_URL } from '../config';
+import debugLog from '../utils/debugLog';
 
 export const fetchSearchResults = async (query, token, communityId) => {
   try {
@@ -21,7 +22,7 @@ export const fetchSearchResults = async (query, token, communityId) => {
     }
 
     const responseData = await response.json();
-    console.log('Fetched search results:', responseData);
+    debugLog('Fetched search results:', responseData);
     return responseData;
   } catch (error) {
     console.error('Error fetching search results:', error);
@@ -53,7 +54,7 @@ export const fetchSearchAutocomplete = async (query, token, communityId) => {
     }
 
     const responseData = await response.json();
-    console.log('Fetched autocomplete suggestions:', responseData);
+    debugLog('Fetched autocomplete suggestions:', responseData);
     return responseData;
   } catch (error) {
     console.error('Error fetching search autocomplete:', error);

@@ -1,4 +1,5 @@
 import { API_URL } from '../config';
+import debugLog from '../utils/debugLog';
 
 const normalizeEntityId = (value) => {
   if (!value) return null;
@@ -254,7 +255,7 @@ const NotificationService = {
   },
 
   async markNotificationAsRead(token, notificationId) {
-    console.log('TOKEN: ', token, 'notificationId: ', notificationId);
+    debugLog('markNotificationAsRead', { hasToken: Boolean(token), notificationId });
 
     try {
       if (!token) throw new Error('Token not available');
@@ -268,7 +269,7 @@ const NotificationService = {
       });
 
       const data = await response.json();
-      console.log(data);
+      debugLog('markNotificationAsRead response', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to mark notification as read');

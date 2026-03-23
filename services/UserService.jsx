@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+import debugLog from '../utils/debugLog';
 
 const getAuthToken = async () => {
   const token = await AsyncStorage.getItem('authToken');
@@ -40,9 +41,10 @@ export const discoverUsers = async () => {
       },
     });
 
-    // Log the response for debugging purposes
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
+    debugLog('discoverUsers response meta', {
+      status: response.status,
+      ok: response.ok,
+    });
 
     const data = await response.json();
 
@@ -98,7 +100,7 @@ export const helloUsers = async () => {
       },
     });
     const data = await response.json();
-    console.log('data: ', data);
+    debugLog('helloUsers data:', data);
     if (!response.ok) {
       throw new Error(data.message);
     }

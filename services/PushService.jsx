@@ -2,14 +2,16 @@ import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import { API_URL } from '../config';
 import { navigateWhenReady } from '../navigation/RootNavigation';
 import NotificationService from './NotificationService.jsx';
+import debugLog from '../utils/debugLog';
 
-const log = (...args) => console.log('[PushService]', ...args);
+const log = (...args) => debugLog('[PushService]', ...args);
 
 const emitter = Platform.OS === 'ios' && NativeModules.APNs
   ? new NativeEventEmitter(NativeModules.APNs)
   : null;
 
 let currentApnsToken = null;
+let currentAuthToken = null;
 let didHealthConfigCheck = false;
 let didConnectivityProbe = false;
 let listenersInitialized = false;
@@ -40,10 +42,15 @@ export async function registerDevice(authToken, apnsToken) {
   }
 }
 
+export function syncPushAuthToken(authToken) {
+  currentAuthToken = authToken || null;
+}
+
 export function initPushNotifications(authToken) {
+  syncPushAuthToken(authToken);
   if (Platform.OS !== 'ios' || !NativeModules.APNs) return;
   if (listenersInitialized && emitter) {
-    log('initPushNotifications: already initialized, skipping duplicate setup');
+    log('initPushNotifications: already initialized, refreshing auth token only');
     return () => {};
   }
 
@@ -65,9 +72,9 @@ export function initPushNotifications(authToken) {
   log('initPushNotifications: setting up listeners');
 
   // Health: one-time configuration check (no connectivity) on init
-  if (authToken && !didHealthConfigCheck) {
+  if (currentAuthToken && !didHealthConfigCheck) {
     didHealthConfigCheck = true;
-    getApnsHealth(authToken, { connectivity: false }).then(result => {
+    getApnsHealth(currentAuthToken, { connectivity: false }).then(result => {
       if (!result) return;
       const { ok, data } = result;
       log('APNs health (config)', { ok, data });
@@ -80,9 +87,9 @@ export function initPushNotifications(authToken) {
       hasToken: !!currentApnsToken,
       tokenLength: currentApnsToken ? currentApnsToken.length : 0,
     });
-    if (authToken && currentApnsToken) {
+    if (currentAuthToken && currentApnsToken) {
       try {
-        await registerDevice(authToken, currentApnsToken);
+        await registerDevice(currentAuthToken, currentApnsToken);
       } catch (e) {
         console.warn('[PushService] registerDevice failed', e);
       }
@@ -90,7 +97,7 @@ export function initPushNotifications(authToken) {
       // Health: one-time connectivity probe after we have a device token
       if (!didConnectivityProbe) {
         didConnectivityProbe = true;
-        getApnsHealth(authToken, { connectivity: true }).then(result => {
+        getApnsHealth(currentAuthToken, { connectivity: true }).then(result => {
           if (!result) return;
           const { ok, data } = result;
           log('APNs health (connectivity)', { ok, data });
@@ -105,9 +112,9 @@ export function initPushNotifications(authToken) {
     try {
       log('notificationOpened event received', { payload });
       // Mark as read if provided
-      if (payload?.notificationId && authToken) {
+      if (payload?.notificationId && currentAuthToken) {
         try {
-          await NotificationService.markNotificationAsRead(authToken, payload.notificationId);
+          await NotificationService.markNotificationAsRead(currentAuthToken, payload.notificationId);
         } catch (e) {
           console.warn('[PushService] markNotificationAsRead failed', e);
         }

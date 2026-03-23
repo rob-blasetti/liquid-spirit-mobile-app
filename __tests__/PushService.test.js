@@ -2,9 +2,9 @@ jest.mock('react-native-config', () => ({ PROD_API: 'https://api.test' }));
 jest.mock('../navigation/RootNavigation', () => ({ navigate: jest.fn() }));
 
 // Defer requiring the module until after mocks are set up
-let getApnsHealth, registerDevice, sendTestPush;
+let getApnsHealth, registerDevice, sendTestPush, syncPushAuthToken;
 beforeAll(() => {
-  ({ getApnsHealth, registerDevice, sendTestPush } = require('../services/PushService'));
+  ({ getApnsHealth, registerDevice, sendTestPush, syncPushAuthToken } = require('../services/PushService'));
 });
 
 describe('PushService helpers', () => {
@@ -13,6 +13,7 @@ describe('PushService helpers', () => {
   });
 
   afterEach(() => {
+    syncPushAuthToken(null);
     jest.resetAllMocks();
   });
 
@@ -47,6 +48,11 @@ describe('PushService helpers', () => {
       expect.objectContaining({ method: 'POST' })
     );
     expect(res.ok).toBe(true);
+  });
+
+  test('syncPushAuthToken is safe to call with null and token values', () => {
+    expect(() => syncPushAuthToken(null)).not.toThrow();
+    expect(() => syncPushAuthToken('auth-token')).not.toThrow();
   });
 
   test('sendTestPush posts expected body', async () => {

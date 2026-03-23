@@ -12,7 +12,8 @@ import useMountEffect from './hooks/useMountEffect';
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
 import { UserContext } from './contexts/UserContext';
-import { initPushNotifications, getCurrentApnsToken, registerDevice } from './services/PushService';
+import { initPushNotifications, syncPushAuthToken, getCurrentApnsToken, registerDevice } from './services/PushService';
+import debugLog from './utils/debugLog';
 
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
@@ -20,11 +21,11 @@ const MainApp = () => {
 
   useMountEffect(() => {
     Linking.getInitialURL().then(url => {
-      if (url) console.log('Initial URL:', url);
+      if (url) debugLog('Initial URL:', url);
     });
 
     const sub = Linking.addEventListener('url', ({ url }) => {
-      console.log('Received URL:', url);
+      debugLog('Received URL:', url);
     });
 
     return () => sub.remove();
@@ -36,8 +37,9 @@ const MainApp = () => {
     return cleanup;
   });
 
-  // When auth token becomes available later, register the device with backend
+  // Keep PushService auth-aware after login/logout transitions
   useEffect(() => {
+    syncPushAuthToken(token || null);
     if (!token) return;
     const apnsToken = getCurrentApnsToken?.();
     if (apnsToken) {

@@ -47,13 +47,10 @@ jest.mock('react-native/Libraries/AppState/AppState', () => ({
   addEventListener: jest.fn(() => ({ remove: jest.fn() })),
 }));
 
-const toBase64Url = value =>
-  Buffer.from(JSON.stringify(value))
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .split('/')
-    .join('_');
+const toBase64Url = value => {
+  const base64 = Buffer.from(JSON.stringify(value)).toString('base64');
+  return base64.replaceAll('=', '').replaceAll('+', '-').replaceAll('/', '_');
+};
 
 const buildTokenWithExp = exp => {
   const header = toBase64Url({ alg: 'HS256', typ: 'JWT' });

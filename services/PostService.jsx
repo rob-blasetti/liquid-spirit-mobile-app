@@ -352,8 +352,6 @@ export const likePost = async (postId, token, { userId } = {}) => {
         },
       });
 
-      console.log('response: ', response);
-
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || 'Failed to delete post.');

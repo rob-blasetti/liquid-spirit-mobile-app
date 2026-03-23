@@ -7,6 +7,7 @@ import { fetchEvents } from '../services/EventService.jsx';
 import { fetchExploreFeed } from '../services/PostService.jsx';
 import { fetchUserById } from '../services/UserService.jsx';
 import { parseJwt } from '../utils/parseJwt';
+import debugLog from '../utils/debugLog';
 import { API_URL, AUTH_API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
@@ -361,7 +362,7 @@ export const UserProvider = ({ children }) => {
         await Keychain.setGenericPassword(email, password, {
           accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         });
-        console.log('Credentials securely stored.');
+        debugLog('Credentials securely stored.');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -426,7 +427,7 @@ export const UserProvider = ({ children }) => {
 
     const refreshPromise = (async () => {
       const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
-      console.log('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
+      debugLog('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
 
       if (!storedRefreshToken) {
         console.warn('No stored refresh token.');
@@ -671,7 +672,7 @@ export const UserProvider = ({ children }) => {
             credentials.username,
             credentials.password
           );
-          console.log('Biometric login successful!');
+          debugLog('Biometric login successful!');
         } else {
           console.error('Login failed:', data.message);
         }
