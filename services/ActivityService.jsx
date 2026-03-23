@@ -36,34 +36,38 @@ export const fetchUserActivities = (userId, token) =>
 
 export const uploadActivityDetailsImage = async (file, activityId, token) => {
   try {
-    const fileName = `activity-${activityId}-${Date.now()}${file.name.match(/\.[0-9a-z]+$/i)[0]}`;
+    const extensionMatch = file?.name?.match(/\.[0-9a-z]+$/i);
+    const extension = extensionMatch?.[0] || '.jpg';
+    const fileName = `activity-${activityId}-${Date.now()}${extension}`;
 
-    // Get pre-signed URL from backend
     debugLog('Fetching pre-signed URL for activity image upload');
-    const { url: signedUrl } = await makeRequest('/api/upload/s3-url', 'GET', null, {
+    const signedUrlResponse = await makeRequest('/api/upload/s3-url', 'GET', null, {
       params: {
         fileName,
         fileType: file.type,
       },
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
+    const signedUrl = signedUrlResponse?.url;
+    if (!signedUrl) {
+      throw new Error('Failed to get signed URL for activity image');
+    }
 
-    await fetch(signedUrl, {
+    const uploadResponse = await fetch(signedUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
       },
       body: file,
-    }).then((response) => {
-      if (!response.ok) {
-        throw new Error(`Failed to upload file to S3: ${response.statusText}`);
-      }
-      debugLog('File uploaded successfully to S3');
     });
+    if (!uploadResponse.ok) {
+      throw new Error(`Failed to upload file to S3: ${uploadResponse.statusText || uploadResponse.status}`);
+    }
+    debugLog('File uploaded successfully to S3');
 
-    let imgUrl = signedUrl.split('?')[0];
+    const imgUrl = signedUrl.split('?')[0];
 
     await makeRequest(`/api/activities/${activityId}/image`, 'PATCH', token, {
       imageUrl: imgUrl,

@@ -144,11 +144,9 @@ export const addEventHostRequest = async (token, eventId) => {
 
 export const addEventMaterials = async (id, title, file, token) => {
   const formData = new FormData();
-  console.log(title, title.toString());
-  formData.append('eventId', id);  // Changed to match the backend's expected field name
+  formData.append('eventId', id);
   formData.append('title', title.toString());
   formData.append('file', file);
-  console.log(formData);
 
   try {
     const response = await fetch(`${API_URL}/api/upload/materials`, {
@@ -159,10 +157,14 @@ export const addEventMaterials = async (id, title, file, token) => {
       body: formData,
     });
 
-    const updatedEvent = await response.json();
+    const updatedEvent = await response.json().catch(() => null);
 
     if (!response.ok) {
-      throw new Error(updatedEvent.message || 'Failed to add event material(s).');
+      throw new Error(updatedEvent?.message || 'Failed to add event material(s).');
+    }
+
+    if (!updatedEvent) {
+      throw new Error('Event materials upload response was empty');
     }
 
     return updatedEvent;
