@@ -346,10 +346,15 @@ export const UserProvider = ({ children }) => {
 
       await AsyncStorage.multiSet([
         ['authToken', authToken],
-        ['refreshToken', newRefreshToken],
         ['user', JSON.stringify(userData)],
         ['communityId', userData.community?._id || ''],
       ]);
+
+      if (typeof newRefreshToken === 'string' && newRefreshToken.length > 0) {
+        await AsyncStorage.setItem('refreshToken', newRefreshToken);
+      } else {
+        await AsyncStorage.removeItem('refreshToken');
+      }
 
       if (email && password) {
         // Store credentials securely without prompting biometric on save (will prompt on retrieval)
