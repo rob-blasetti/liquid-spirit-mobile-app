@@ -7,6 +7,7 @@ import themeVariables from './styles/theme';
 
 import { UserProvider, CommunityProvider, ChatProvider, VenuesProvider } from './contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
+import useMountEffect from './hooks/useMountEffect';
 
 import { Splash } from './screens';
 import AppNavigator from './navigation/AppNavigator';
@@ -17,7 +18,7 @@ const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
   const { token } = useContext(UserContext);
 
-  useEffect(() => {
+  useMountEffect(() => {
     Linking.getInitialURL().then(url => {
       if (url) console.log('Initial URL:', url);
     });
@@ -27,13 +28,13 @@ const MainApp = () => {
     });
 
     return () => sub.remove();
-  }, []);
+  });
 
   // Initialize APNs listeners once on mount so cold-start taps are handled
-  useEffect(() => {
+  useMountEffect(() => {
     const cleanup = initPushNotifications(token || null);
     return cleanup;
-  }, []);
+  });
 
   // When auth token becomes available later, register the device with backend
   useEffect(() => {

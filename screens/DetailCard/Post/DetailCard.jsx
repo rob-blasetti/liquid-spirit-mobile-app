@@ -45,6 +45,7 @@ import {
 } from '../common/detailCardLayout';
 import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import useMountEffect from '../../../hooks/useMountEffect';
 
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
@@ -72,8 +73,9 @@ const PostDetailCard = ({ route }) => {
   // Redirect to feed if post not found or error occurs
   const [redirected, setRedirected] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
-  const [didRefresh, setDidRefresh] = useState(false);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
+  const didRefreshRef = useRef(false);
+  const refreshScopeRef = useRef(null);
   // Lightbox modal visibility
   const [modalVisible, setModalVisible] = useState(false);
   // Like and comment state
@@ -105,15 +107,6 @@ const PostDetailCard = ({ route }) => {
     () => ({ marginBottom: Math.max(8, bottomOffset / 4) }),
     [bottomOffset],
   );
-  useEffect(() => {
-    console.log('[PostDetailCard] route', { name: route?.name, params: route?.params });
-  }, [route]);
-
-  useEffect(() => {
-    if (post) {
-      console.log('[PostDetailCard] post', post);
-    }
-  }, [post]);
 
   const handleShare = useCallback(() => {
     const id = post?._id || postId;
@@ -252,9 +245,9 @@ const PostDetailCard = ({ route }) => {
     showShare: false,
   });
 
-  useEffect(() => {
+  useMountEffect(() => {
     Animated.timing(contentOpacity, { toValue: 1, duration: 220, useNativeDriver: true }).start();
-  }, [contentOpacity]);
+  });
 
   const normalizeId = (raw) => {
     const str = String(raw || '').trim();
@@ -285,10 +278,15 @@ const PostDetailCard = ({ route }) => {
         return;
       }
 
+      if (refreshScopeRef.current !== id) {
+        refreshScopeRef.current = id;
+        didRefreshRef.current = false;
+      }
+
       if (!storageLoaded) return;
       if (!token || isTokenExpired(token)) {
-        if (!didRefresh) {
-          setDidRefresh(true);
+        if (!didRefreshRef.current) {
+          didRefreshRef.current = true;
           try { await refreshSession(); } catch (_) {}
           return;
         } else {
@@ -316,8 +314,8 @@ const PostDetailCard = ({ route }) => {
         }
       } catch (err) {
         if (isActive) {
-          if (err?.status === 401 && !didRefresh) {
-            setDidRefresh(true);
+          if (err?.status === 401 && !didRefreshRef.current) {
+            didRefreshRef.current = true;
             try { await refreshSession(); } catch (_) {}
             return;
           }
@@ -335,7 +333,7 @@ const PostDetailCard = ({ route }) => {
     };
     load();
     return () => { isActive = false; };
-  }, [postId, postPreload, token, storageLoaded, didRefresh]);
+  }, [postId, postPreload, token, storageLoaded]);
 
   // Redirect when specific errors occur
   useEffect(() => {

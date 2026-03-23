@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -163,7 +163,8 @@ const EventDetailCard = ({ route }) => {
   const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
-  const [didRefresh, setDidRefresh] = useState(false);
+  const didRefreshRef = useRef(false);
+  const refreshScopeRef = useRef(null);
   const { startChat, startingChat } = useChatStarter({
     context: 'event',
     entity: event || eventPreload || {},
@@ -230,12 +231,17 @@ const EventDetailCard = ({ route }) => {
         return;
       }
 
+      if (refreshScopeRef.current !== id) {
+        refreshScopeRef.current = id;
+        didRefreshRef.current = false;
+      }
+
       if (!storageLoaded) return; // wait for token from storage
 
       // ensure we have a valid token, try a one-time refresh if needed
       if (!token || isTokenExpired(token)) {
-        if (!didRefresh) {
-          setDidRefresh(true);
+        if (!didRefreshRef.current) {
+          didRefreshRef.current = true;
           try { await refreshSession(); } catch (_) {}
           return; // wait for token update, effect will rerun
         } else {
@@ -266,8 +272,8 @@ const EventDetailCard = ({ route }) => {
         }
       } catch (err) {
         if (!isMounted) return;
-        if (err?.status === 401 && !didRefresh) {
-          setDidRefresh(true);
+        if (err?.status === 401 && !didRefreshRef.current) {
+          didRefreshRef.current = true;
           try { await refreshSession(); } catch (_) {}
           // will rerun with new token
           return;
@@ -284,7 +290,7 @@ const EventDetailCard = ({ route }) => {
 
     run();
     return () => { isMounted = false; };
-  }, [eventId, token, eventPreload, storageLoaded, didRefresh, didFinishEntryTransition]);
+  }, [eventId, token, eventPreload, storageLoaded, didFinishEntryTransition]);
   // Redirect unauthenticated or missing events to appropriate screens
   useEffect(() => {
     if (redirected || loading) return;
@@ -359,15 +365,9 @@ const EventCardBody = ({
   const { user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   // Local state to track if a host request has been sent
-  const [hostRequestSent, setHostRequestSent] = useState(false);
-  // On load, pre-check if user already requested hosting
-  useEffect(() => {
-    if (!hostRequestSent && event.hostRequests && Array.isArray(event.hostRequests) && userId) {
-      const requested = event.hostRequests.some(r => r.refId?.toString() === userId.toString());
-      if (requested) {
-        setHostRequestSent(true);
-      }
-    }
+  const hostRequestSent = useMemo(() => {
+    if (!userId || !Array.isArray(event.hostRequests)) return false;
+    return event.hostRequests.some(r => r.refId?.toString() === userId.toString());
   }, [event.hostRequests, userId]);
 
   // Admin: Add Host modal state and member search
@@ -484,6 +484,7 @@ const EventCardBody = ({
   const { openGoogleMaps } = useGoogleMaps();
   useEffect(() => {
     if (!mapQuery || mapQuery === 'No location') return;
+    let cancelled = false;
     const q = encodeURIComponent(mapQuery);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
       headers: {
@@ -492,6 +493,7 @@ const EventCardBody = ({
       },
     }).then(res => res.json())
       .then(results => {
+        if (cancelled) return;
         if (results && results.length > 0) {
           const { lat, lon } = results[0];
           setRegion({
@@ -503,6 +505,9 @@ const EventCardBody = ({
         }
       })
       .catch(err => console.warn('Geocode error', err));
+    return () => {
+      cancelled = true;
+    };
   }, [mapQuery]);
   // Determine join status based on raw attendees (before enrichment)
   const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
@@ -530,7 +535,6 @@ const EventCardBody = ({
       await addEventHostRequest(token, event._id);
       const updatedEvent = await fetchEventDetails(event._id, token || '');
       setEvent(updatedEvent);
-      setHostRequestSent(true);
       Alert.alert('Request submitted', 'Your request to become a host has been submitted.');
     } catch (err) {
       console.error('Host request failed:', err);

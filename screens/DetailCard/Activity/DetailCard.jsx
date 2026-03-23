@@ -132,19 +132,8 @@ const ActivityDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const safeAreaBottom = insets?.bottom || 0;
   const { initialSessionId } = route.params || {};
-  const [prefillActivity, setPrefillActivity] = useState(activityPreload || null);
   const [redirected, setRedirected] = useState(false);
   const prefillParamsSetRef = useRef(false);
-
-  useEffect(() => {
-    console.log('[ActivityDetailCard] route', { name: route?.name, params: route?.params });
-  }, [route]);
-
-  useEffect(() => {
-    if (activity) {
-      console.log('[ActivityDetailCard] activity', activity);
-    }
-  }, [activity]);
 
   const pickLatestSession = useCallback((sessions = []) => {
     if (!Array.isArray(sessions) || sessions.length === 0) return null;
@@ -158,24 +147,9 @@ const ActivityDetailCard = ({ route }) => {
     }, null)?.session;
   }, []);
 
-  useEffect(() => {
-    const detail = hydratedActivity || hydratedPrefillActivity || activityPreload || activity;
-    if (!detail) return;
-    console.log('[ActivityDetailCard] detail ready', {
-      id: detail._id || detail.id,
-      title: detail.title,
-      sessionsCount: Array.isArray(detail.sessions) ? detail.sessions.length : undefined,
-      activity: detail,
-    });
-  }, [hydratedActivity, hydratedPrefillActivity, activityPreload, activity]);
-
-  useEffect(() => {
-    setPrefillActivity(activityPreload || null);
-  }, [activityPreload]);
-
   const { hydratedActivity, hydratedPrefillActivity } = useHydrateMembers({
     activity,
-    prefillActivity,
+    prefillActivity: activityPreload,
     token,
   });
 

@@ -20,7 +20,7 @@ const toRegion = (value) => {
 };
 
 const useActivityLocation = ({ activity, nextSession }) => {
-  const [region, setRegion] = useState(null);
+  const [geocodedRegion, setGeocodedRegion] = useState(null);
 
   const sessionVenues = Array.isArray(nextSession?.normalizedVenues)
     ? nextSession.normalizedVenues
@@ -71,22 +71,13 @@ const useActivityLocation = ({ activity, nextSession }) => {
     : '';
 
   const showOnlineSection = resolvedOnlineLink.length > 0;
-  const hasPhysicalSessionLocation = Boolean(region || staticRegion) || mapAddress.length > 0;
+  const resolvedRegion = staticRegion || geocodedRegion;
+  const hasPhysicalSessionLocation = Boolean(resolvedRegion) || mapAddress.length > 0;
   const isHybridSession = showOnlineSection && hasPhysicalSessionLocation;
   const showMapSection = hasPhysicalSessionLocation;
 
   useEffect(() => {
-    if (!staticRegion) return;
-    setRegion(prev => {
-      if (prev && prev.latitude === staticRegion.latitude && prev.longitude === staticRegion.longitude) {
-        return prev;
-      }
-      return staticRegion;
-    });
-  }, [staticRegion]);
-
-  useEffect(() => {
-    if (region || mapAddress.length === 0) return;
+    if (staticRegion || geocodedRegion || mapAddress.length === 0) return;
     let cancelled = false;
     const q = encodeURIComponent(mapAddress);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
@@ -106,7 +97,7 @@ const useActivityLocation = ({ activity, nextSession }) => {
           };
           const nextRegion = toRegion(parsed);
           if (nextRegion) {
-            setRegion(nextRegion);
+            setGeocodedRegion(nextRegion);
           }
         }
       })
@@ -116,14 +107,14 @@ const useActivityLocation = ({ activity, nextSession }) => {
     return () => {
       cancelled = true;
     };
-  }, [region, mapAddress]);
+  }, [staticRegion, geocodedRegion, mapAddress]);
 
   return {
-    hasRegion: Boolean(region || staticRegion),
+    hasRegion: Boolean(resolvedRegion),
     mapAddress,
     mapDisplayName,
     mapDisplayAddress,
-    region: region || staticRegion,
+    region: resolvedRegion,
     resolvedOnlineLink,
     showOnlineSection,
     showMapSection,

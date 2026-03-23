@@ -1,7 +1,8 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserContext, CommunityContext } from '../contexts';
 import { fetchExploreFeed } from '../services';
+import useMountEffect from './useMountEffect';
 
 /**
  * Custom hook to initialize the app: session check, token refresh,
@@ -11,13 +12,19 @@ export const useAppInitialization = () => {
   const [appIsReady, setAppIsReady] = useState(false);
   const [initialPosts, setInitialPosts] = useState([]);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
 
   const { biometricLogin, isLoggedIn, storageLoaded, token, ensureValidSession } = useContext(UserContext);
   const { homeOverview } = useContext(CommunityContext);
+  const showSplash = checkingSession || !storageLoaded;
+  const biometricLoginRef = useRef(biometricLogin);
+  const ensureValidSessionRef = useRef(ensureValidSession);
+  const backgroundFeedTokenRef = useRef(null);
+
+  biometricLoginRef.current = biometricLogin;
+  ensureValidSessionRef.current = ensureValidSession;
 
   // Load cached posts for immediate display
-  useEffect(() => {
+  useMountEffect(() => {
     (async () => {
       try {
         const [postsPair] = await AsyncStorage.multiGet([
@@ -28,7 +35,7 @@ export const useAppInitialization = () => {
         console.warn('Failed to load cached data:', err);
       }
     })();
-  }, []);
+  });
 
   // Core initialization: biometric login, token refresh, and initial explore feed
   useEffect(() => {
@@ -38,7 +45,7 @@ export const useAppInitialization = () => {
       if (checkingSession) {
         try {
           if (!isLoggedIn) {
-            await biometricLogin();
+            await biometricLoginRef.current();
           }
         } catch (err) {
           console.error('Biometric login failed:', err);
@@ -52,7 +59,7 @@ export const useAppInitialization = () => {
 
       if (!appIsReady) {
         try {
-          const validToken = await ensureValidSession();
+          const validToken = await ensureValidSessionRef.current();
           if (!validToken) {
             return;
           }
@@ -72,35 +79,29 @@ export const useAppInitialization = () => {
     checkingSession,
     appIsReady,
     isLoggedIn,
-    token,
-    biometricLogin,
-    ensureValidSession,
   ]);
-
-
-  // Hide splash once minimal data is ready
-  useEffect(() => {
-    if (!checkingSession && storageLoaded) {
-      setShowSplash(false);
-    }
-  }, [checkingSession, storageLoaded]);
 
   // Background fetch explore feed after home is displayed
   useEffect(() => {
-    if (showSplash) return;
+    if (!appIsReady) return;
     if (!token) return;
+    if (backgroundFeedTokenRef.current === token) return;
+
+    backgroundFeedTokenRef.current = token;
+
     (async () => {
       try {
-        const validToken = await ensureValidSession();
+        const validToken = await ensureValidSessionRef.current();
         if (!validToken) return;
         const fetched = await fetchExploreFeed(validToken);
         setInitialPosts(fetched);
         await AsyncStorage.setItem('initialExploreFeed', JSON.stringify(fetched));
       } catch (error) {
+        backgroundFeedTokenRef.current = null;
         console.error('Error fetching explore feed in background:', error);
       }
     })();
-  }, [showSplash, token, ensureValidSession, fetchExploreFeed]);
+  }, [appIsReady, token]);
 
   return { initialPosts, homeOverview, showSplash };
 };

@@ -24,6 +24,13 @@ Examples:
 - Indentation: 2 spaces; no tabs.
 - Filenames: `PascalCase` for React components, `camelCase` for helpers, `snake_case` for assets.
 - Keep modules small and colocate styles next to components when practical.
+- React effects: treat `useEffect` as a last resort, not a default tool.
+- Prefer derived values over effect-driven state syncing. Do not write `useEffect(() => setX(...), [...])` when `x` can be computed during render.
+- Prefer event handlers for user actions. Do not use state flags purely to trigger an effect.
+- Prefer explicit data-loading boundaries and refresh functions over fetch-in-effect loops. Be especially careful with function/object dependencies that change every render.
+- Use mount-only effects only for true external synchronization such as subscriptions, timers, focus/scroll, or third-party/native integration. Keep them isolated and intention-revealing.
+- If a component should reset for a new entity or ID, prefer keyed remounts over dependency-array choreography.
+- When adding an effect, document the external system being synchronized and verify that a render loop cannot be created by the dependency list.
 
 ## Testing Guidelines
 - Framework: Jest with `@testing-library/react-native`.

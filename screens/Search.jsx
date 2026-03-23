@@ -6,6 +6,7 @@ import { UserContext } from '../contexts/UserContext';
 import { fetchSearchResults, fetchSearchAutocomplete } from '../services/SearchService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+import useMountEffect from '../hooks/useMountEffect';
 import localImages from '../utils/localImages';
 import SearchItem from '../components/SearchItem';
 import SearchBar from '../components/SearchBar';
@@ -110,7 +111,6 @@ const Search = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasPrefilled, setHasPrefilled] = useState(false);
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
   const { token, isTokenExpired } = useContext(UserContext);
@@ -121,7 +121,9 @@ const Search = () => {
   const autocompleteDebounceRef = useRef(null);
   const inputRef = useRef(null);
   const latestSearchIdRef = useRef(0);
+  const latestAutocompleteIdRef = useRef(0);
   const initialQueryKeyRef = useRef(null);
+  const didHydrateInitialStateRef = useRef(false);
 
   const cancelAutocomplete = useCallback(() => {
     if (autocompleteDebounceRef.current) {
@@ -256,7 +258,12 @@ const Search = () => {
     }
   }, [token, communityId, updateRecentSearches, isSearchFocused]);
 
-  useEffect(() => {
+  const executeSearchRef = useRef(executeSearch);
+  const updateRecentSearchesRef = useRef(updateRecentSearches);
+  executeSearchRef.current = executeSearch;
+  updateRecentSearchesRef.current = updateRecentSearches;
+
+  useMountEffect(() => {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem('search_cache__recent_queries');
@@ -276,52 +283,68 @@ const Search = () => {
         }
       } catch (_) {}
     })();
-  }, []);
+  });
 
-  // Fetch recent results on first mount, and handle initialQuery param once
-  const firstMountRef = React.useRef(true);
+  useMountEffect(() => {
+    const initialQuery = route.params?.initialQuery;
+    const initialQueryTs = route.params?.initialQueryTs;
+    const normalizedInitialQuery = typeof initialQuery === 'string' ? initialQuery.trim() : '';
+
+    (async () => {
+      if (normalizedInitialQuery) {
+        const key = `${normalizedInitialQuery}::${initialQueryTs ?? 'na'}`;
+        initialQueryKeyRef.current = key;
+        setQuery(normalizedInitialQuery);
+        updateRecentSearchesRef.current(normalizedInitialQuery);
+        executeSearchRef.current(normalizedInitialQuery);
+        navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
+        didHydrateInitialStateRef.current = true;
+        return;
+      }
+
+      try {
+        const [q, r] = await AsyncStorage.multiGet(['search_cache__query', 'search_cache__results']);
+        const cachedQuery = q?.[1] ?? '';
+        const cachedResults = r?.[1] ? JSON.parse(r[1]) : [];
+        if (Array.isArray(cachedResults) && cachedResults.length > 0) {
+          setQuery(cachedQuery);
+          setResults(cachedResults);
+        } else {
+          executeSearchRef.current('');
+        }
+      } catch (_) {
+        executeSearchRef.current('');
+      } finally {
+        didHydrateInitialStateRef.current = true;
+      }
+    })();
+  });
 
   useEffect(() => {
-    if (firstMountRef.current && !hasPrefilled) {
-      (async () => {
-        try {
-          const [q, r] = await AsyncStorage.multiGet(['search_cache__query', 'search_cache__results']);
-          const cachedQuery = q?.[1] ?? '';
-          const cachedResults = r?.[1] ? JSON.parse(r[1]) : [];
-          if (Array.isArray(cachedResults) && cachedResults.length > 0) {
-            setQuery(cachedQuery);
-            setResults(cachedResults);
-            setHasPrefilled(true);
-          }
-        } catch (_) {}
-      })();
-    }
+    if (!didHydrateInitialStateRef.current) return;
 
     const initialQuery = route.params?.initialQuery;
     const initialQueryTs = route.params?.initialQueryTs;
     const normalizedInitialQuery = typeof initialQuery === 'string' ? initialQuery.trim() : '';
-    if (normalizedInitialQuery) {
-      const key = `${normalizedInitialQuery}::${initialQueryTs ?? 'na'}`;
-      if (initialQueryKeyRef.current !== key) {
-        initialQueryKeyRef.current = key;
-        setQuery(normalizedInitialQuery);
-        updateRecentSearches(normalizedInitialQuery);
-        executeSearch(normalizedInitialQuery);
-      }
-      navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
-      firstMountRef.current = false;
-    } else if (firstMountRef.current) {
-      executeSearch('');
-      firstMountRef.current = false;
-    }
-  }, [route.params?.initialQuery, route.params?.initialQueryTs, navigation, executeSearch, hasPrefilled, updateRecentSearches]);
 
-  useEffect(() => {
+    if (!normalizedInitialQuery) return;
+
+    const key = `${normalizedInitialQuery}::${initialQueryTs ?? 'na'}`;
+    if (initialQueryKeyRef.current === key) return;
+
+    initialQueryKeyRef.current = key;
+    setQuery(normalizedInitialQuery);
+    updateRecentSearches(normalizedInitialQuery);
+    executeSearch(normalizedInitialQuery);
+    navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
+  }, [route.params?.initialQuery, route.params?.initialQueryTs, navigation, executeSearch, updateRecentSearches]);
+
+  useMountEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (autocompleteDebounceRef.current) clearTimeout(autocompleteDebounceRef.current);
     };
-  }, []);
+  });
 
   const handleAutocomplete = useCallback((text) => {
     if (autocompleteDebounceRef.current) {
@@ -337,10 +360,12 @@ const Search = () => {
     }
     setIsAutocompleteLoading(true);
     autocompleteDebounceRef.current = setTimeout(async () => {
+      const requestId = ++latestAutocompleteIdRef.current;
       autocompleteDebounceRef.current = null;
       try {
         const suggestions = await fetchSearchAutocomplete(trimmed, token, communityId);
         console.log('Autocomplete suggestions for query', trimmed, suggestions);
+        if (latestAutocompleteIdRef.current !== requestId) return;
         const sanitized = Array.isArray(suggestions)
           ? suggestions.filter(item => {
               const label = getSuggestionLabel(item);
@@ -349,10 +374,13 @@ const Search = () => {
           : [];
         setAutocompleteSuggestions(sanitized);
       } catch (error) {
+        if (latestAutocompleteIdRef.current !== requestId) return;
         console.error('Autocomplete failed:', error);
         setAutocompleteSuggestions([]);
       } finally {
-        setIsAutocompleteLoading(false);
+        if (latestAutocompleteIdRef.current === requestId) {
+          setIsAutocompleteLoading(false);
+        }
       }
     }, 200);
   }, [token, getSuggestionLabel, communityId]);

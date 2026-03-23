@@ -12,6 +12,7 @@ import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
 import { initializeSocket } from '../services/SocketService';
 import { fetchChats } from '../services/ChatService';
+import useMountEffect from '../hooks/useMountEffect';
 
 const CHAT_BADGE_POLL_INTERVAL = 15000;
 
@@ -171,7 +172,7 @@ export const UserProvider = ({ children }) => {
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [chatNotificationCount, setChatNotificationCount] = useState(0);
-  const [isChatTabActive, setIsChatTabActive] = useState(false);
+  const [isChatTabActive, setIsChatTabActiveState] = useState(false);
   // Detailed user info (including certifications) fetched on startup
   const [userDetails, setUserDetails] = useState(null);
   // Concurrency guards
@@ -182,9 +183,13 @@ export const UserProvider = ({ children }) => {
   const chatServerUnreadRef = useRef({});
   const chatUnreadBaselineRef = useRef({});
 
-  useEffect(() => {
-    chatTabActiveRef.current = isChatTabActive;
-  }, [isChatTabActive]);
+  const setIsChatTabActive = useCallback((value) => {
+    setIsChatTabActiveState(prev => {
+      const nextValue = typeof value === 'function' ? value(prev) : value;
+      chatTabActiveRef.current = nextValue;
+      return nextValue;
+    });
+  }, []);
 
   const syncChatBadgeFromPayload = useCallback(
     (payload) => {
@@ -248,7 +253,7 @@ export const UserProvider = ({ children }) => {
     [],
   );
 
-  useEffect(() => {
+  useMountEffect(() => {
     const loadCachedData = async () => {
       try {
         const keys = [
@@ -278,7 +283,7 @@ export const UserProvider = ({ children }) => {
     loadCachedData().finally(() => {
       setStorageLoaded(true);
     });
-  }, []);
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -516,16 +521,21 @@ export const UserProvider = ({ children }) => {
     }
   }, [token, syncChatBadgeFromPayload, ensureValidSession]);
 
+  const ensureValidSessionRef = useRef(ensureValidSession);
+  const refreshChatBadgeFromServerRef = useRef(refreshChatBadgeFromServer);
+  ensureValidSessionRef.current = ensureValidSession;
+  refreshChatBadgeFromServerRef.current = refreshChatBadgeFromServer;
+
   const appStateRef = useRef(AppState?.currentState || 'active');
 
-  useEffect(() => {
+  useMountEffect(() => {
     const handleAppStateChange = nextAppState => {
       const wasBackground = appStateRef.current === 'background' || appStateRef.current === 'inactive';
       appStateRef.current = nextAppState;
 
       if (wasBackground && nextAppState === 'active') {
-        ensureValidSession();
-        refreshChatBadgeFromServer();
+        ensureValidSessionRef.current();
+        refreshChatBadgeFromServerRef.current();
       }
     };
 
@@ -538,7 +548,7 @@ export const UserProvider = ({ children }) => {
     return () => {
       subscription?.remove?.();
     };
-  }, [ensureValidSession, refreshChatBadgeFromServer]);
+  });
   // Load notifications on token change
   const derivedUserId = user?.id || user?._id;
 
@@ -570,9 +580,9 @@ export const UserProvider = ({ children }) => {
       return;
     }
 
-    refreshChatBadgeFromServer();
+    refreshChatBadgeFromServerRef.current();
     chatPollingRef.current = setInterval(
-      refreshChatBadgeFromServer,
+      () => refreshChatBadgeFromServerRef.current(),
       CHAT_BADGE_POLL_INTERVAL,
     );
 
@@ -582,7 +592,7 @@ export const UserProvider = ({ children }) => {
         chatPollingRef.current = null;
       }
     };
-  }, [token, refreshChatBadgeFromServer]);
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -600,7 +610,7 @@ export const UserProvider = ({ children }) => {
     ];
 
     const handler = () => {
-      refreshChatBadgeFromServer();
+      refreshChatBadgeFromServerRef.current();
     };
 
     events.forEach((event) => {
@@ -611,7 +621,7 @@ export const UserProvider = ({ children }) => {
     return () => {
       events.forEach((event) => socket.off(event, handler));
     };
-  }, [token, refreshChatBadgeFromServer]);
+  }, [token]);
 
   useEffect(() => {
     if (token) return;
