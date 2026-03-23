@@ -31,6 +31,9 @@ const Security = ({ navigation }) => {
   const [removingPasskeyId, setRemovingPasskeyId] = useState(null);
 
   const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
+  const userFirstName = typeof user?.firstName === 'string' && user.firstName.trim().length > 0
+    ? user.firstName.trim()
+    : 'My';
 
   const extractPasskeyCredentials = (payload) => {
     const candidates = [
@@ -64,20 +67,11 @@ const Security = ({ navigation }) => {
       passkey?.credentialID ||
       passkey?.credential?.id;
 
-    const label =
-      passkey?.name ||
-      passkey?.label ||
-      passkey?.nickname ||
-      passkey?.friendlyName ||
-      passkey?.deviceName ||
-      passkey?.credentialName ||
-      `Passkey ${index + 1}`;
-
     const createdAt = passkey?.createdAt || passkey?.created_at;
 
     return {
       id: id || `passkey-${index}`,
-      label,
+      label: `${userFirstName} Passkey`,
       createdAt,
       raw: passkey,
     };
@@ -107,6 +101,8 @@ const Security = ({ navigation }) => {
       setPasskeysLoading(false);
     }
   };
+
+  const hasPasskeys = passkeys.length > 0;
 
   useEffect(() => {
     loadPasskeys();
@@ -253,14 +249,16 @@ const Security = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={handleCreatePasskey} disabled={passkeyLoading}>
-          <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Create Passkey</Text>
-          {passkeyLoading ? <ActivityIndicator color={themeVariables.blackColor} size="small" /> : null}
-        </TouchableOpacity>
+        {!hasPasskeys ? (
+          <TouchableOpacity style={styles.item} onPress={handleCreatePasskey} disabled={passkeyLoading}>
+            <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>Create Passkey</Text>
+            {passkeyLoading ? <ActivityIndicator color={themeVariables.blackColor} size="small" /> : null}
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.passkeySection}>
-          <Text style={styles.passkeySectionTitle}>Passkeys</Text>
+          <Text style={styles.passkeySectionTitle}>Passkey</Text>
           {passkeysLoading ? (
             <ActivityIndicator color={themeVariables.blackColor} size="small" style={styles.passkeyLoading} />
           ) : passkeys.length > 0 ? (
@@ -276,9 +274,9 @@ const Security = ({ navigation }) => {
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     {removingPasskeyId === passkey.id ? (
-                      <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+                      <ActivityIndicator size="small" color={themeVariables.whiteColor} />
                     ) : (
-                      <Ionicons name="close-circle" size={18} color={themeVariables.primaryColor} />
+                      <Ionicons name="close-circle" size={18} color={themeVariables.whiteColor} />
                     )}
                   </TouchableOpacity>
                 </View>
@@ -382,17 +380,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: themeVariables.lightGreyColor,
+    backgroundColor: themeVariables.primaryColor,
     borderRadius: 999,
     paddingLeft: 12,
     paddingRight: 8,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: themeVariables.borderColor,
+    borderColor: themeVariables.primaryColor,
     maxWidth: '100%',
   },
   passkeyChipText: {
-    color: themeVariables.blackColor,
+    color: themeVariables.whiteColor,
     fontSize: 14,
     marginRight: 8,
     maxWidth: 220,
