@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 
 const getAuthToken = async () => {
   const token = await AsyncStorage.getItem('authToken');
@@ -9,82 +10,31 @@ const getAuthToken = async () => {
   return token;
 };
 
-export const fetchCommunity = async (communityId) => {
+const fetchCommunityResource = async (path, fallbackLabel) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/community/${communityId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const { data } = await requestJson(
+      `${API_URL}${path}`,
+      {
+        method: 'GET',
+        headers: buildJsonHeaders(token),
       },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
+      fallbackLabel,
+    );
     return data;
   } catch (error) {
-    throw new Error(`Fetch community error: ${error.message}`);
+    throw new Error(`${fallbackLabel}: ${error.message}`);
   }
 };
 
-export const fetchFeastCommittee = async (communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/community/${communityId}/feastcommittee`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
-  } catch (error) {
-    throw new Error(`Fetch Feast Committee error: ${error.message}`);
-  }
-};
+export const fetchCommunity = async (communityId) =>
+  fetchCommunityResource(`/api/community/${communityId}`, 'Fetch community error');
 
-export const fetchHolyDaysCommittee = async (communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/community/${communityId}/holydayscommittee`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
-  } catch (error) {
-    throw new Error(`Fetch Holy Days Committee error: ${error.message}`);
-  }
-};
+export const fetchFeastCommittee = async (communityId) =>
+  fetchCommunityResource(`/api/community/${communityId}/feastcommittee`, 'Fetch Feast Committee error');
 
-export const fetchLocalSpiritualAssembly = async (communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/community/${communityId}/lsa`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message);
-    }
-    return data;
-  } catch (error) {
-    throw new Error(`Fetch Local Spirital Assembly error: ${error.message}`);
-  }
-};
+export const fetchHolyDaysCommittee = async (communityId) =>
+  fetchCommunityResource(`/api/community/${communityId}/holydayscommittee`, 'Fetch Holy Days Committee error');
+
+export const fetchLocalSpiritualAssembly = async (communityId) =>
+  fetchCommunityResource(`/api/community/${communityId}/lsa`, 'Fetch Local Spirital Assembly error');

@@ -1,33 +1,27 @@
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 
 const makeRequest = async (url, method, token, body = null, config = {}) => {
   try {
-    let requestUrl = url;
-    if (config.params) {
-      const queryString = new URLSearchParams(config.params).toString();
-      requestUrl += `?${queryString}`;
-    }
+    const requestUrl = config.params
+      ? `${API_URL}${url}?${new URLSearchParams(config.params).toString()}`
+      : `${API_URL}${url}`;
 
-    const response = await fetch(`${API_URL}${requestUrl}`, {
-      method,
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '',
-        'Content-Type': 'application/json',
-        ...(config.headers || {}),
+    const { data } = await requestJson(
+      requestUrl,
+      {
+        method,
+        headers: {
+          ...buildJsonHeaders(token),
+          ...(config.headers || {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+        signal: config.signal,
       },
-      body: body ? JSON.stringify(body) : null,
-      signal: config.signal,
-    });
+      `Error ${method} ${url}`,
+    );
 
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const message = json?.message || `Error ${method} ${requestUrl}`;
-      const err = new Error(message);
-      err.status = response.status;
-      throw err;
-    }
-
-    return json;
+    return data;
   } catch (error) {
     if (error?.name !== 'AbortError') {
       console.error(`Error in ${method} request to ${url}:`, error);
