@@ -798,20 +798,20 @@ const styles = StyleSheet.create({
   profileHeroColumns: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
+    gap: 18,
   },
   profileIdentityColumn: {
     width: '42%',
     alignItems: 'center',
     justifyContent: 'flex-start',
     alignSelf: 'flex-start',
+    paddingTop: 2,
   },
   profileStatsColumn: {
     flex: 1,
-    justifyContent: 'space-between',
-    alignSelf: 'stretch',
-    paddingTop: 2,
-    paddingBottom: 26,
+    alignSelf: 'flex-start',
+    paddingTop: 6,
+    paddingBottom: 8,
   },
   iconButton: {
     marginLeft: 8,
@@ -940,7 +940,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
-    marginTop: 4,
+    marginTop: 8,
     fontSize: 17,
     fontWeight: '700',
     color: themeVariables.blackColor,
@@ -991,12 +991,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 18,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 14,
   },
   statRowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: '#E8EAF1',
+    marginBottom: 10,
+    paddingBottom: 12,
   },
   statRowLabelWrap: {
     flexDirection: 'row',
