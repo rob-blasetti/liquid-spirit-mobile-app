@@ -117,22 +117,16 @@ const Badges = () => {
               { backgroundColor: badge.earned ? color : '#EEF2F7' },
             ]}
           >
+            <Ionicons
+              name={badge.icon}
+              size={badge.badgeNumber ? 20 : 22}
+              color={themeVariables.whiteColor}
+            />
             {badge.badgeNumber ? (
-              <View style={styles.ruhiBadgeInner}>
-                <Ionicons
-                  name={badge.icon}
-                  size={16}
-                  color={themeVariables.whiteColor}
-                />
+              <View style={styles.badgeNumberBubble}>
                 <Text style={styles.badgeNumberText}>{badge.badgeNumber}</Text>
               </View>
-            ) : (
-              <Ionicons
-                name={badge.icon}
-                size={22}
-                color={themeVariables.whiteColor}
-              />
-            )}
+            ) : null}
           </View>
           <View style={styles.badgeTextContainer}>
             <View style={styles.badgeTitleRow}>
@@ -310,11 +304,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  badgeNumberBubble: {
+    position: 'absolute',
+    bottom: -3,
+    right: -3,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: '#D7DDEA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badgeNumberText: {
-    marginTop: -1,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
-    color: themeVariables.whiteColor,
+    color: '#4A148C',
   },
   badgeTitleRow: {
     flexDirection: 'row',
