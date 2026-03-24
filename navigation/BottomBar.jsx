@@ -297,10 +297,12 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   }, [currentAction, iconScale, visibleAction]);
 
   const settingsRoutes = ['Settings', 'EditProfile', 'Security', 'NotificationSettings'];
+  const fabHiddenRoutes = ['Badges'];
   const hideFab =
     focusedRoute?.name === 'NewMessage' ||
     focusedRoute?.name === 'ChatDetail' ||
-    settingsRoutes.includes(focusedRoute?.name);
+    settingsRoutes.includes(focusedRoute?.name) ||
+    fabHiddenRoutes.includes(focusedRoute?.name);
 
   const handleFabPress = () => {
     if (!currentAction || currentAction.disabled) {
