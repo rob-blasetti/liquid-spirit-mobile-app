@@ -553,7 +553,7 @@ const renderScene = ({ route }) => {
             <View style={styles.profileIdentityColumn}>
               <ChangeableProfileImage
                 imageStyle={styles.profilePictureLarge}
-                avatarSize={92}
+                avatarSize={84}
                 userDetails={userDetails}
                 setUserDetails={setUserDetails}
                 showEditIndicator
