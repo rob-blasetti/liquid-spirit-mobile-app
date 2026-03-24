@@ -557,6 +557,7 @@ const renderScene = ({ route }) => {
                 userDetails={userDetails}
                 setUserDetails={setUserDetails}
                 showEditIndicator
+                containerStyle={styles.profileAvatarWrap}
               />
               <Text style={styles.nameCentered} numberOfLines={2}>
                 {user?.firstName} {user?.lastName}
@@ -916,6 +917,9 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     marginRight: 12,
+  },
+  profileAvatarWrap: {
+    alignSelf: 'center',
   },
   profilePictureLarge: {
     width: 72,

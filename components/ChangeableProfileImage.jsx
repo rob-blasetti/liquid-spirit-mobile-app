@@ -15,6 +15,7 @@ const ChangeableProfileImage = ({
   userDetails: propUserDetails,
   setUserDetails: propSetUserDetails,
   showEditIndicator = false,
+  containerStyle,
 }) => {
   const { user, setUser, token } = useContext(UserContext);
   const { updateMe } = useAuthService();
@@ -166,7 +167,7 @@ const ChangeableProfileImage = ({
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.8} style={styles.wrapper}>
+    <TouchableOpacity onPress={handlePress} activeOpacity={0.8} style={[styles.wrapper, containerStyle]}>
       {profilePictureUri ? (
         <FastImage
           source={resolveImageSource(profilePictureUri, { priority: 'normal' })}
