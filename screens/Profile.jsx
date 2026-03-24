@@ -75,7 +75,7 @@ const ProfileScreen = ({ navigation }) => {
       color: '#4A148C',
     })),
   ];
-  const recentBadges = certItems.slice(0, 3);
+  const recentBadges = certItems.slice(0, 4);
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'activities', title: 'Activities' },
@@ -837,31 +837,31 @@ const styles = StyleSheet.create({
   },
   badgePreviewItem: {
     flex: 1,
-    paddingHorizontal: 4,
-    maxWidth: '33.33%',
+    paddingHorizontal: 3,
+    maxWidth: '25%',
   },
   badgePreviewCard: {
-    minHeight: 112,
+    minHeight: 96,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingVertical: 14,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: '#fff',
   },
   badgePreviewIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   badgePreviewText: {
     marginTop: 'auto',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
