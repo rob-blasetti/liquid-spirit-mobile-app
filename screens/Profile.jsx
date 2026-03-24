@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ScrollView,
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
@@ -358,16 +357,24 @@ const renderList = (data, type) => {
     }
   }
   return (
-    <View style={[styles.sceneListWrap, { paddingBottom: contentPaddingBottom }]}> 
-      {listData.map((item, index) => (
+    <FlatList
+      data={listData}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom, backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent' }}
+      keyExtractor={(item, index) =>
+        item._id ? item._id.toString() : index.toString()
+      }
+      renderItem={({ item }) => (
         <ItemComponent
-          key={item._id ? item._id.toString() : `${type}-${index}`}
           item={item}
+          // Pass captured imageAspect for posts; undefined for others
           onPress={(imageAspect) => handleItemPress(type, item, imageAspect)}
           nextUp={item._id === nextUpId}
         />
-      ))}
-    </View>
+      )}
+    />
   );
 };
 
@@ -398,16 +405,23 @@ const renderRequests = () => {
     );
   }
   return (
-    <View style={[styles.sceneListWrap, { paddingBottom: contentPaddingBottom }]}> 
-      {pendingRequests.map((item, index) => (
+    <FlatList
+      data={pendingRequests}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom, backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent' }}
+      keyExtractor={(req, index) =>
+        `${req.activity._id}_${req.request._id}_${req.type}` || index.toString()
+      }
+      renderItem={({ item }) => (
         <RequestItem
-          key={`${item.activity._id}_${item.request._id}_${item.type}` || index.toString()}
           request={item}
           onAccept={handleApprove}
           onDecline={handleDeny}
         />
-      ))}
-    </View>
+      )}
+    />
   );
 };
 
@@ -512,10 +526,6 @@ const renderScene = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) }}
-        showsVerticalScrollIndicator={false}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.pageTitle}>Profile</Text>
         <View style={styles.headerActions}>
@@ -630,12 +640,10 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: themeVariables.whiteColor, minHeight: 320 }}
+        style={{ backgroundColor: themeVariables.whiteColor, flex: 1 }}
         sceneContainerStyle={{ backgroundColor: themeVariables.whiteColor }}
         pagerStyle={{ backgroundColor: themeVariables.whiteColor }}
-        swipeEnabled={false}
       />
-      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -730,10 +738,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
-  },
-  sceneListWrap: {
-    paddingHorizontal: 0,
-    backgroundColor: 'transparent',
   },
   listTitle: {
     fontSize: 16,
