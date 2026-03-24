@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
   statRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 18,
     paddingVertical: 4,
@@ -1023,13 +1023,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'left',
+    flexShrink: 1,
   },
   statRowValue: {
-    marginTop: 1,
     fontSize: 16,
     fontWeight: '700',
     color: themeVariables.blackColor,
-    textAlign: 'left',
+    textAlign: 'right',
+    marginLeft: 12,
   },
   pendingContainer: {
     paddingHorizontal: 16,
