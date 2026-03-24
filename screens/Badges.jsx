@@ -92,6 +92,7 @@ const Badges = () => {
           ? `Completed '${RUHI_BOOK_LABELS[badge]}'.`
           : 'Completed Ruhi book.',
         icon: 'book-outline',
+        badgeNumber: String(badge).replace(/^Book\s*/i, ''),
         color: '#4A148C',
         earned: true,
       }));
@@ -116,11 +117,15 @@ const Badges = () => {
               { backgroundColor: badge.earned ? color : '#EEF2F7' },
             ]}
           >
-            <Ionicons
-              name={badge.icon}
-              size={22}
-              color={themeVariables.whiteColor}
-            />
+            {badge.badgeNumber ? (
+              <Text style={styles.badgeNumberText}>{badge.badgeNumber}</Text>
+            ) : (
+              <Ionicons
+                name={badge.icon}
+                size={22}
+                color={themeVariables.whiteColor}
+              />
+            )}
           </View>
           <View style={styles.badgeTextContainer}>
             <View style={styles.badgeTitleRow}>
@@ -293,6 +298,11 @@ const styles = StyleSheet.create({
   badgeTextContainer: {
     flex: 1,
     justifyContent: 'center',
+  },
+  badgeNumberText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: themeVariables.whiteColor,
   },
   badgeTitleRow: {
     flexDirection: 'row',
