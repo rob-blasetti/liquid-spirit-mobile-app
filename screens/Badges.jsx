@@ -118,7 +118,14 @@ const Badges = () => {
             ]}
           >
             {badge.badgeNumber ? (
-              <Text style={styles.badgeNumberText}>{badge.badgeNumber}</Text>
+              <View style={styles.ruhiBadgeInner}>
+                <Ionicons
+                  name={badge.icon}
+                  size={16}
+                  color={themeVariables.whiteColor}
+                />
+                <Text style={styles.badgeNumberText}>{badge.badgeNumber}</Text>
+              </View>
             ) : (
               <Ionicons
                 name={badge.icon}
@@ -299,8 +306,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  ruhiBadgeInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badgeNumberText: {
-    fontSize: 18,
+    marginTop: -1,
+    fontSize: 12,
     fontWeight: '800',
     color: themeVariables.whiteColor,
   },
