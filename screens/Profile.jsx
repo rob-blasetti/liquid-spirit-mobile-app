@@ -597,7 +597,7 @@ const renderScene = ({ route }) => {
                 <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
                   <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
                 </View>
-                <Text style={styles.badgePreviewText} numberOfLines={2}>
+                <Text style={styles.badgePreviewText} numberOfLines={1} ellipsizeMode="tail">
                   {badge.label}
                 </Text>
               </View>
@@ -844,12 +844,11 @@ const styles = StyleSheet.create({
     minHeight: 112,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     paddingHorizontal: 10,
     paddingVertical: 14,
     borderRadius: 8,
     backgroundColor: '#fff',
-    borderWidth: 0,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -859,17 +858,19 @@ const styles = StyleSheet.create({
   badgePreviewIcon: {
     width: 42,
     height: 42,
-    borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
+    backgroundColor: 'transparent',
   },
   badgePreviewText: {
+    marginTop: 'auto',
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'center',
+    width: '100%',
   },
   badgesEmptyState: {
     flexDirection: 'row',
