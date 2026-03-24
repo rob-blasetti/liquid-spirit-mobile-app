@@ -592,9 +592,6 @@ const renderScene = ({ route }) => {
       <View style={styles.badgesHeadingRow}>
         <View>
           <Text style={styles.badgesLabel}>Recent Badges</Text>
-          <Text style={styles.badgesSummary}>
-            {certItems.length > 0 ? `${certItems.length} earned` : 'No badges yet'}
-          </Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>View all</Text>
@@ -630,7 +627,6 @@ const renderScene = ({ route }) => {
       <View style={styles.badgesHeadingRow}>
         <View>
           <Text style={styles.badgesLabel}>My Dashboard</Text>
-          <Text style={styles.badgesSummary}>Your posts, requests, events, and activity</Text>
         </View>
       </View>
 
