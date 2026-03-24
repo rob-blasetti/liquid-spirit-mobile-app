@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
   wrapper: {
     position: 'relative',
     alignSelf: 'flex-start',
+    flexShrink: 0,
   },
   editBadge: {
     position: 'absolute',

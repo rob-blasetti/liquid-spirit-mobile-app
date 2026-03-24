@@ -780,6 +780,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     width: '100%',
+    flexWrap: 'nowrap',
   },
   iconButton: {
     marginLeft: 8,
@@ -914,7 +915,10 @@ const styles = StyleSheet.create({
   },
   // Container for the user details next to avatar
   profileDetails: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    width: 0,
     minWidth: 0,
     flexDirection: 'column',
     justifyContent: 'center',
