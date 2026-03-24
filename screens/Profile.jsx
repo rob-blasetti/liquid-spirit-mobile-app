@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   nameSmall: {
     fontSize: 18,
