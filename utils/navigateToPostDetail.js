@@ -78,21 +78,13 @@ export const navigateToPostDetail = async ({
   }
 
   const resolveAspectAsync = () => {
-    if (aspect || !mediaUrl || !targetNavigation) return;
+    if (aspect || !mediaUrl) return;
     Image.getSize(
       mediaUrl,
       (width, height) => {
         if (!width || !height) return;
         const ratio = width / height;
         cachePostImageAspect(id, mediaUrl, ratio);
-        targetNavigation.navigate({
-          name: 'PostDetailCard',
-          params: {
-            imageAspect: ratio,
-            ...(resolvedPost ? { postPreload: { ...resolvedPost, imageAspect: ratio } } : {}),
-          },
-          merge: true,
-        });
       },
       () => {},
     );
@@ -110,15 +102,8 @@ export const navigateToPostDetail = async ({
 
   try {
     const detailed = await fetchPostDetails(id, token);
-    if (detailed) {
-      if ((aspectCache.has(id) || aspectCache.has(mediaUrl)) && !detailed.imageAspect) {
-        detailed.imageAspect = getPostImageAspect(id, mediaUrl);
-      }
-      targetNavigation.navigate({
-        name: 'PostDetailCard',
-        params: { postPreload: detailed },
-        merge: true,
-      });
+    if (detailed && (aspectCache.has(id) || aspectCache.has(mediaUrl)) && !detailed.imageAspect) {
+      detailed.imageAspect = getPostImageAspect(id, mediaUrl);
     }
   } catch (error) {
     if (__DEV__) {
