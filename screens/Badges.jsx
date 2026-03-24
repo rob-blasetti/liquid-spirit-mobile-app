@@ -87,10 +87,10 @@ const Badges = () => {
 
       return ruhiBadges.map((badge) => ({
         key: `ruhi:${badge}`,
-        label: `RUHI: ${badge}`,
+        label: `Ruhi ${badge}`,
         description: RUHI_BOOK_LABELS[badge]
           ? `Completed '${RUHI_BOOK_LABELS[badge]}'.`
-          : 'Completed RUHI book.',
+          : 'Completed Ruhi book.',
         icon: 'book-outline',
         color: '#4A148C',
         earned: true,
