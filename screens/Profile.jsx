@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
   },
   badgePreviewText: {
     minHeight: 28,
-    marginTop: 2,
+    marginTop: 5,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '600',
