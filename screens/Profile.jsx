@@ -801,11 +801,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 16,
-    minHeight: 122,
+    minHeight: 120,
   },
   profileIdentityColumn: {
     width: '42%',
-    minHeight: 122,
+    minHeight: 120,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'stretch',
