@@ -572,12 +572,9 @@ const renderScene = ({ route }) => {
             <View style={styles.profileStatsColumn}>
               {PROFILE_STAT_CARDS.map(card => (
                 <View key={card.key} style={styles.statRowCard}>
-                  <View style={styles.statRowLabelWrap}>
-                    <Ionicons name={card.icon} size={16} color={themeVariables.primaryColor} />
-                    <View style={styles.statRowTextBlock}>
-                      <Text style={styles.statRowLabel}>{card.label}</Text>
-                      <Text style={styles.statRowValue}>{stats[card.key]}</Text>
-                    </View>
+                  <View style={styles.statRowTextBlock}>
+                    <Text style={styles.statRowLabel}>{card.label}</Text>
+                    <Text style={styles.statRowValue}>{stats[card.key]}</Text>
                   </View>
                 </View>
               ))}
@@ -1010,7 +1007,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 18,
     fontWeight: '700',
-    color: themeVariables.primaryColor,
+    color: themeVariables.blackColor,
     textAlign: 'left',
   },
   pendingContainer: {
