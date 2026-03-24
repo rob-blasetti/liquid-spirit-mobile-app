@@ -801,11 +801,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: 16,
-    minHeight: 132,
+    minHeight: 122,
   },
   profileIdentityColumn: {
     width: '42%',
-    minHeight: 132,
+    minHeight: 122,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'stretch',
@@ -814,11 +814,11 @@ const styles = StyleSheet.create({
   },
   profileStatsColumn: {
     flex: 1,
-    minHeight: 126,
+    minHeight: 118,
     alignSelf: 'stretch',
     justifyContent: 'space-between',
     paddingTop: 0,
-    paddingBottom: 6,
+    paddingBottom: 4,
   },
   iconButton: {
     marginLeft: 8,
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 0,
     paddingHorizontal: 8,
-    flex: 0.92,
+    flex: 0.88,
   },
   statRowDivider: {
     borderBottomWidth: 1,
