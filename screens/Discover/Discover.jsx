@@ -12,6 +12,7 @@ import resolveImageSource from '../../utils/imageSource';
 import LiquidGlassButton from '../DetailCard/common/LiquidGlassButton';
 import LiquidGlassIconButton from '../../components/LiquidGlassIconButton';
 import DiscoverCard from './DiscoverCard';
+import SectionStateCard from '../../components/SectionStateCard';
 import useDiscoverData from './hooks/useDiscoverData';
 
 const TIMEFRAME_WINDOWS = {
@@ -76,15 +77,6 @@ const Discover = ({ navigation }) => {
   const [showActivitiesGrid, setShowActivitiesGrid] = useState(false);
   const [showEventsGrid, setShowEventsGrid] = useState(false);
 
-  useEffect(() => {
-    if (!activityPreview) return;
-    console.log('[Discover] activities preview', activityPreview.map(({ activity, nextDate, addressLabel }) => ({
-      id: activity?._id || activity?.id,
-      title: activity?.title,
-      nextDate,
-      addressLabel,
-    })));
-  }, [activityPreview]);
 
   const handleEventPress = useCallback(
     (event) => {
@@ -111,7 +103,11 @@ const Discover = ({ navigation }) => {
   if (userActivities === null || userEvents === null) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={themeVariables.primaryColor} />
+        <SectionStateCard
+          loading
+          title="Loading your discover feed"
+          message="Pulling in activities and events you can jump into next."
+        />
       </View>
     );
   }
@@ -212,9 +208,11 @@ const Discover = ({ navigation }) => {
           ) : null}
         </View>
         {filteredActivityPreview.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No upcoming activities this {TIMEFRAME_LABELS[timeframe].toLowerCase()}.
-          </Text>
+          <SectionStateCard
+            icon="calendar-clear-outline"
+            title="No activities lined up"
+            message={`No upcoming activities this ${TIMEFRAME_LABELS[timeframe].toLowerCase()}. Try another timeframe.`}
+          />
         ) : showActivitiesGrid ? (
           <View style={styles.gridList}>
             {filteredActivityPreview.map(({ activity, nextDate, addressLabel }) => {
@@ -295,9 +293,11 @@ const Discover = ({ navigation }) => {
           ) : null}
         </View>
         {filteredEventPreview.length === 0 ? (
-          <Text style={styles.emptyText}>
-            No upcoming events this {TIMEFRAME_LABELS[timeframe].toLowerCase()}.
-          </Text>
+          <SectionStateCard
+            icon="sparkles-outline"
+            title="No events on deck"
+            message={`No upcoming events this ${TIMEFRAME_LABELS[timeframe].toLowerCase()}. Try another timeframe.`}
+          />
         ) : showEventsGrid ? (
           <View style={styles.gridList}>
             {filteredEventPreview.map(({ event, when, addressLabel }) => {

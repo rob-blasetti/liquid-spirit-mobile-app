@@ -24,6 +24,7 @@ import Post from '../components/Post';
 import WelcomeModal from '../modal/WelcomeModal';
 import CommentModal from '../modal/CommentModal';
 import SkeletonPost from '../components/SkeletonPost';
+import SectionStateCard from '../components/SectionStateCard';
 import { prefetchImageSources } from '../utils/imageSource';
 
 const scheduleIdleCallback = (callback) => {
@@ -206,6 +207,23 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     />
   ), [handleLike, openCommentModal, handleFlag, handleBlock, handleMute, handleDelete]);
 
+  const renderEmptyState = useCallback(() => {
+    const isExplore = activeTab === 'explore';
+    return (
+      <View style={styles.emptyStateWrap}>
+        <SectionStateCard
+          icon={isExplore ? 'newspaper-outline' : 'heart-outline'}
+          title={isExplore ? 'Nothing in Explore yet' : 'Your For You feed is quiet'}
+          message={
+            isExplore
+              ? 'Pull to refresh or check back soon for new community posts.'
+              : 'As you interact more, this feed will get more personal.'
+          }
+        />
+      </View>
+    );
+  }, [activeTab]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     if (activeTab === 'explore') {
@@ -245,13 +263,6 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
       const updatedPostResponse = await likePost(postId, token, { userId });
       const updatedPost = updatedPostResponse.data;
 
-      if (__DEV__) {
-        console.log('[SocialMedia] like response received', {
-          postId,
-          userId,
-          likeCount: Array.isArray(updatedPost?.likes) ? updatedPost.likes.length : undefined,
-        });
-      }
 
       setExplorePosts((prev) =>
         prev.map((p) => (p._id === postId ? updatedPost : p))
@@ -411,13 +422,13 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
               maxToRenderPerBatch={4}
               windowSize={9}
               updateCellsBatchingPeriod={40}
-              ListEmptyComponent={() => (
+              ListEmptyComponent={loadingExplore ? (
                 <View style={{ paddingTop: 12 }}>
                   {[0,1,2].map(i => (
                     <SkeletonPost key={`skeleton-explore-${i}`} />
                   ))}
                 </View>
-              )}
+              ) : renderEmptyState}
               onScrollToIndexFailed={({ index, averageItemLength }) => {
                 flatListExploreRef.current?.scrollToOffset({ offset: index * averageItemLength, animated: true });
               }}
@@ -437,13 +448,13 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
               maxToRenderPerBatch={4}
               windowSize={9}
               updateCellsBatchingPeriod={40}
-              ListEmptyComponent={() => (
+              ListEmptyComponent={loadingForYou ? (
                 <View style={{ paddingTop: 12 }}>
                   {[0,1,2].map(i => (
                     <SkeletonPost key={`skeleton-foryou-${i}`} />
                   ))}
                 </View>
-              )}
+              ) : renderEmptyState}
               onScrollToIndexFailed={({ index, averageItemLength }) => {
                 flatListForYouRef.current?.scrollToOffset({ offset: index * averageItemLength, animated: true });
               }}
