@@ -597,7 +597,7 @@ const renderScene = ({ route }) => {
                 <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
                   <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
                 </View>
-                <Text style={styles.badgePreviewText} numberOfLines={1} ellipsizeMode="tail">
+                <Text style={styles.badgePreviewText} numberOfLines={2} ellipsizeMode="tail">
                   {badge.label}
                 </Text>
               </View>
@@ -840,7 +840,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgePreviewCard: {
-    minHeight: 98,
+    minHeight: 108,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   badgePreviewText: {
-    minHeight: 16,
+    minHeight: 28,
     marginTop: 8,
     fontSize: 11,
     lineHeight: 14,
