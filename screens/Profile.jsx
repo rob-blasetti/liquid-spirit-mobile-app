@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
     width: 92,
     height: 92,
     borderRadius: 46,
-    marginBottom: 10,
+    marginBottom: 6,
   },
   nameSmall: {
     fontSize: 18,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
-    marginTop: 2,
+    marginTop: 8,
     fontSize: 16,
     fontWeight: '700',
     color: themeVariables.blackColor,
