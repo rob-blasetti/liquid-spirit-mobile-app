@@ -23,6 +23,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
+import SectionStateCard from '../components/SectionStateCard';
 import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { shareContent } from '../utils/shareContent';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
@@ -40,6 +41,12 @@ const normalizeRuhiBadges = (value) => {
 };
 
 const TAB_BAR_HEIGHT = 80;
+
+const PROFILE_STAT_CARDS = [
+  { key: 'activities', label: 'Activities', icon: 'layers-outline' },
+  { key: 'events', label: 'Events', icon: 'calendar-outline' },
+  { key: 'posts', label: 'Posts', icon: 'document-text-outline' },
+];
 
 const ProfileScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -261,7 +268,15 @@ const filterUserActivities = (allActivities, userId) => {
 const renderList = (data, type) => {
   const contentPaddingBottom = Math.max(insets.bottom, 0);
   if (isLoading) {
-    return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
+    return (
+      <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
+        <SectionStateCard
+          loading
+          title="Loading your dashboard"
+          message="Pulling together your posts, activities, and events."
+        />
+      </View>
+    );
   }
   if (!data.length) {
     let icon;
@@ -284,16 +299,12 @@ const renderList = (data, type) => {
         message = `No ${type} at the moment`;
     }
     return (
-      <View style={[styles.noDataContainer, { paddingBottom: contentPaddingBottom }]}>
-        <Text style={styles.noDataText}>{message}</Text>
-        {icon && (
-          <Ionicons
-            name={icon}
-            size={40}
-            color="#999"
-            style={styles.noDataIcon}
-          />
-        )}
+      <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}>
+        <SectionStateCard
+          icon={icon || 'sparkles-outline'}
+          title={message}
+          message="New activity will show up here once you join in or create something."
+        />
       </View>
     );
   }
@@ -372,17 +383,23 @@ const renderList = (data, type) => {
 const renderRequests = () => {
   const contentPaddingBottom = Math.max(insets.bottom, 0);
   if (isLoading) {
-    return <ActivityIndicator size="large" color={themeVariables.primaryColor} />;
+    return (
+      <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
+        <SectionStateCard
+          loading
+          title="Loading requests"
+          message="Checking if anyone needs your approval."
+        />
+      </View>
+    );
   }
   if (!pendingRequests.length) {
     return (
-      <View style={[styles.noDataContainer, { paddingBottom: contentPaddingBottom }]}>
-        <Text style={styles.noDataText}>No requests at the moment</Text>
-        <Ionicons
-          name="person-add-outline"
-          size={40}
-          color="#999"
-          style={styles.noDataIcon}
+      <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
+        <SectionStateCard
+          icon="person-add-outline"
+          title="No requests right now"
+          message="Approvals and join requests will appear here when they come in."
         />
       </View>
     );
@@ -500,6 +517,13 @@ const renderScene = ({ route }) => {
     posts: posts.length,
   };
 
+  const joinedLabel = userDetails?.createdAt
+    ? `Member since ${new Date(userDetails.createdAt).toLocaleDateString(undefined, {
+        month: 'short',
+        year: 'numeric',
+      })}`
+    : 'Your community dashboard';
+
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
@@ -524,21 +548,28 @@ const renderScene = ({ route }) => {
       </View>
       {/* Header Section */}
       <View style={styles.headerContainer}>
-        <View style={styles.headerProfileInfo}>
-          <ChangeableProfileImage
-            imageStyle={styles.profilePictureSmall}
-            avatarSize={44}
-            userDetails={userDetails}
-            setUserDetails={setUserDetails}
-            showEditIndicator
-          />
-          <View style={styles.profileDetails}>
-            <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
-            <View style={styles.statsRow}>
-              <Text style={styles.statsItem}>Activities: {stats.activities}</Text>
-              <Text style={styles.statsItem}>Events: {stats.events}</Text>
-              <Text style={styles.statsItem}>Posts: {stats.posts}</Text>
+        <View style={styles.profileHeroCard}>
+          <View style={styles.headerProfileInfo}>
+            <ChangeableProfileImage
+              imageStyle={styles.profilePictureSmall}
+              avatarSize={52}
+              userDetails={userDetails}
+              setUserDetails={setUserDetails}
+              showEditIndicator
+            />
+            <View style={styles.profileDetails}>
+              <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
+              <Text style={styles.memberSinceText}>{joinedLabel}</Text>
             </View>
+          </View>
+          <View style={styles.statsCardRow}>
+            {PROFILE_STAT_CARDS.map(card => (
+              <View key={card.key} style={styles.statsCard}>
+                <Ionicons name={card.icon} size={18} color={themeVariables.primaryColor} />
+                <Text style={styles.statsCardValue}>{stats[card.key]}</Text>
+                <Text style={styles.statsCardLabel}>{card.label}</Text>
+              </View>
+            ))}
           </View>
         </View>
       </View>
@@ -657,6 +688,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stateWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 24,
   },
   placeholderText: { textAlign: 'center', padding: 20, fontSize: 16, color: '#999' },
   noDataText: {
@@ -871,8 +908,42 @@ const styles = StyleSheet.create({
   },
   // Container for the user details next to avatar
   profileDetails: {
+    flex: 1,
     flexDirection: 'column',
     justifyContent: 'flex-start',
+    marginLeft: 0,
+  },
+  memberSinceText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#6B6780',
+  },
+  statsCardRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  statsCard: {
+    flex: 1,
+    backgroundColor: themeVariables.whiteColor,
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ECE7FF',
+  },
+  statsCardValue: {
+    marginTop: 8,
+    fontSize: 18,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+  },
+  statsCardLabel: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#6B6780',
   },
   pendingContainer: {
     paddingHorizontal: 16,
