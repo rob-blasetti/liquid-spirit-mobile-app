@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   badgeNumberBubble: {
     position: 'absolute',
-    bottom: -3,
+    bottom: -5,
     alignSelf: 'center',
     minWidth: 18,
     height: 18,
