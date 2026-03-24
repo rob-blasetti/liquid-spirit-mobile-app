@@ -883,7 +883,7 @@ const styles = StyleSheet.create({
     minHeight: 108,
     width: '100%',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingHorizontal: 6,
     paddingVertical: 10,
     borderRadius: 8,
@@ -899,7 +899,7 @@ const styles = StyleSheet.create({
   },
   badgePreviewText: {
     minHeight: 28,
-    marginTop: 0,
+    marginTop: 2,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '600',
