@@ -527,7 +527,7 @@ const renderScene = ({ route }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.pageTitle}>My Dashboard</Text>
+        <Text style={styles.pageTitle}>Profile</Text>
         <View style={styles.headerActions}>
           <LiquidGlassIconButton
             iconName="share-social-outline"
@@ -615,7 +615,12 @@ const renderScene = ({ route }) => {
         </View>
       )}
 
-
+      <View style={styles.badgesHeadingRow}>
+        <View>
+          <Text style={styles.badgesLabel}>My Dashboard</Text>
+          <Text style={styles.badgesSummary}>Your posts, requests, events, and activity</Text>
+        </View>
+      </View>
 
       <TabView
         navigationState={{ index, routes }}
