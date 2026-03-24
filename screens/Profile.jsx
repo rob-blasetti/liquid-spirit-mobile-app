@@ -751,9 +751,7 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    width: '100%',
     paddingHorizontal: 20,
     marginTop: 8,
     marginBottom: 12,
