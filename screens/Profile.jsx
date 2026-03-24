@@ -895,11 +895,11 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 0,
   },
   badgePreviewText: {
     minHeight: 28,
-    marginTop: 2,
+    marginTop: 0,
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '600',
