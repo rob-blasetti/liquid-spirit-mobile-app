@@ -558,8 +558,12 @@ const renderScene = ({ route }) => {
               showEditIndicator
             />
             <View style={styles.profileDetails}>
-              <Text style={styles.nameSmall}>{user?.firstName} {user?.lastName}</Text>
-              <Text style={styles.memberSinceText}>{joinedLabel}</Text>
+              <Text style={styles.nameSmall} numberOfLines={2}>
+                {user?.firstName} {user?.lastName}
+              </Text>
+              <Text style={styles.memberSinceText} numberOfLines={2}>
+                {joinedLabel}
+              </Text>
             </View>
           </View>
           <View style={styles.statsCardRow}>
@@ -773,8 +777,9 @@ const styles = StyleSheet.create({
   },
   headerProfileInfo: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
+    width: '100%',
   },
   iconButton: {
     marginLeft: 8,
@@ -886,15 +891,16 @@ const styles = StyleSheet.create({
     color: '#6C7690',
   },
   profilePictureSmall: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     marginRight: 12,
   },
   nameSmall: {
     fontSize: 18,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
+    flexShrink: 1,
   },
   statsRow: {
     flexDirection: 'row',
@@ -909,14 +915,17 @@ const styles = StyleSheet.create({
   // Container for the user details next to avatar
   profileDetails: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'column',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     marginLeft: 0,
+    paddingRight: 4,
   },
   memberSinceText: {
     marginTop: 4,
     fontSize: 13,
     color: '#6B6780',
+    flexShrink: 1,
   },
   statsCardRow: {
     flexDirection: 'row',
