@@ -577,10 +577,12 @@ const renderScene = ({ route }) => {
                     styles.statRowCard,
                     index < PROFILE_STAT_CARDS.length - 1 && styles.statRowDivider,
                   ]}>
-                  <View style={styles.statRowTextBlock}>
-                    <Text style={styles.statRowLabel}>{card.label}</Text>
-                    <Text style={styles.statRowValue}>{stats[card.key]}</Text>
-                  </View>
+                  <Text style={styles.statRowLabel} numberOfLines={1}>
+                    {card.label}
+                  </Text>
+                  <Text style={styles.statRowValue} numberOfLines={1}>
+                    {stats[card.key]}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -1023,14 +1025,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'left',
-    flexShrink: 1,
+    flex: 1,
+    marginRight: 12,
   },
   statRowValue: {
     fontSize: 16,
     fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'right',
-    marginLeft: 12,
+    minWidth: 24,
   },
   pendingContainer: {
     paddingHorizontal: 16,
