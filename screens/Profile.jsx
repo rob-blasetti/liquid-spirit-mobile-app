@@ -70,7 +70,7 @@ const ProfileScreen = ({ navigation }) => {
       .map((b) => ({ label: b.label, icon: b.icon, color: b.color })),
     ...ruhiBadges.map((badge) => ({
       key: `ruhi:${badge}`,
-      label: `RUHI: ${badge}`,
+      label: `Ruhi ${badge}`,
       icon: 'book-outline',
       color: '#4A148C',
     })),
