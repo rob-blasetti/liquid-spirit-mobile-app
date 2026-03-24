@@ -1,4 +1,6 @@
 import { API_URL as MOBILE_API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
+import debugLog from '../utils/debugLog';
 
 const API_URL = MOBILE_API_URL || '';
 const SESSIONS_BASE = '/api/sessions';
@@ -41,36 +43,29 @@ const makeRequest = async (path, method = 'GET', body = null, config = {}) => {
   }
 
   const token = overrideToken ?? resolveToken();
+  const requestUrl = `${API_URL}${url}`;
 
-  // Lightweight logging for debugging
-  console.log('[SessionService] request', {
-    url: `${API_URL}${url}`,
+  debugLog('[SessionService] request', {
+    url: requestUrl,
     method,
     hasToken: Boolean(token),
     params,
     body: body ? { ...body } : null,
   });
 
-  const response = await fetch(`${API_URL}${url}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...headers,
+  const { data } = await requestJson(
+    requestUrl,
+    {
+      method,
+      headers: {
+        ...buildJsonHeaders(token),
+        ...headers,
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      signal,
     },
-    body: body ? JSON.stringify(body) : null,
-    signal,
-  });
-
-  let data = null;
-  if (returnJson || !response.ok) {
-    data = await response.json().catch(() => null);
-  }
-
-  if (!response.ok) {
-    const message = data?.message || `Error ${method} ${url}`;
-    throw new Error(message);
-  }
+    `Error ${method} ${url}`,
+  );
 
   return returnJson ? data : true;
 };
