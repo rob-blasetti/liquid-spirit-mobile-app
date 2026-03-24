@@ -118,7 +118,7 @@ const Security = ({ navigation }) => {
 
   const openPasskeyFallback = async () => {
     try {
-      const url = `${baseWebSettingsUrl}?from=mobile&jwt=${encodeURIComponent(token || '')}`;
+      const url = `${baseWebSettingsUrl}?from=mobile`;
       await Linking.openURL(url);
     } catch (error) {
       console.error('Error opening passkey setup:', error);
@@ -136,7 +136,14 @@ const Security = ({ navigation }) => {
     try {
       const supported = await isPasskeySupported();
       if (!supported) {
-        await openPasskeyFallback();
+        Alert.alert(
+          'Continue in browser',
+          'This device does not support native passkey setup. You can continue in the browser and sign in there normally.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Browser', onPress: () => { void openPasskeyFallback(); } },
+          ],
+        );
         return;
       }
 
@@ -159,7 +166,14 @@ const Security = ({ navigation }) => {
       }
     } catch (error) {
       console.error('Error during passkey setup:', error);
-      await openPasskeyFallback();
+      Alert.alert(
+        'Continue in browser',
+        'Native passkey setup failed on this device. You can continue in the browser and sign in there normally.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Browser', onPress: () => { void openPasskeyFallback(); } },
+        ],
+      );
     } finally {
       setPasskeyLoading(false);
     }
