@@ -932,10 +932,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   profilePictureLarge: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    marginBottom: 8,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    marginBottom: 4,
   },
   nameSmall: {
     fontSize: 18,
@@ -944,9 +944,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
-    marginTop: 18,
-    fontSize: 20,
-    fontWeight: '400',
+    marginTop: 6,
+    fontSize: 16,
+    fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
     width: '100%',
