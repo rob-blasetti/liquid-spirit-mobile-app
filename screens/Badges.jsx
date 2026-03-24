@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: 14,
   },
   badgeIconWrap: {
@@ -290,9 +290,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    alignSelf: 'center',
   },
   badgeTextContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
   badgeTitleRow: {
     flexDirection: 'row',
