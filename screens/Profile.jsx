@@ -549,31 +549,34 @@ const renderScene = ({ route }) => {
       {/* Header Section */}
       <View style={styles.headerContainer}>
         <View style={styles.profileHeroCard}>
-          <View style={styles.headerProfileInfo}>
-            <ChangeableProfileImage
-              imageStyle={styles.profilePictureSmall}
-              avatarSize={52}
-              userDetails={userDetails}
-              setUserDetails={setUserDetails}
-              showEditIndicator
-            />
-            <View style={styles.profileDetails}>
-              <Text style={styles.nameSmall} numberOfLines={2}>
+          <View style={styles.profileHeroColumns}>
+            <View style={styles.profileIdentityColumn}>
+              <ChangeableProfileImage
+                imageStyle={styles.profilePictureLarge}
+                avatarSize={72}
+                userDetails={userDetails}
+                setUserDetails={setUserDetails}
+                showEditIndicator
+              />
+              <Text style={styles.nameCentered} numberOfLines={2}>
                 {user?.firstName} {user?.lastName}
               </Text>
-              <Text style={styles.memberSinceText} numberOfLines={2}>
+              <Text style={styles.memberSinceCentered} numberOfLines={2}>
                 {joinedLabel}
               </Text>
             </View>
-          </View>
-          <View style={styles.statsCardRow}>
-            {PROFILE_STAT_CARDS.map(card => (
-              <View key={card.key} style={styles.statsCard}>
-                <Ionicons name={card.icon} size={18} color={themeVariables.primaryColor} />
-                <Text style={styles.statsCardValue}>{stats[card.key]}</Text>
-                <Text style={styles.statsCardLabel}>{card.label}</Text>
-              </View>
-            ))}
+
+            <View style={styles.profileStatsColumn}>
+              {PROFILE_STAT_CARDS.map(card => (
+                <View key={card.key} style={styles.statRowCard}>
+                  <View style={styles.statRowLabelWrap}>
+                    <Ionicons name={card.icon} size={16} color={themeVariables.primaryColor} />
+                    <Text style={styles.statRowLabel}>{card.label}</Text>
+                  </View>
+                  <Text style={styles.statRowValue}>{stats[card.key]}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       </View>
@@ -785,6 +788,21 @@ const styles = StyleSheet.create({
     width: '100%',
     flexWrap: 'nowrap',
   },
+  profileHeroColumns: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 14,
+  },
+  profileIdentityColumn: {
+    width: '42%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  profileStatsColumn: {
+    flex: 1,
+    justifyContent: 'space-between',
+    gap: 10,
+  },
   iconButton: {
     marginLeft: 8,
   },
@@ -896,11 +914,23 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     marginRight: 12,
   },
+  profilePictureLarge: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    marginBottom: 10,
+  },
   nameSmall: {
     fontSize: 18,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
     flexShrink: 1,
+  },
+  nameCentered: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    textAlign: 'center',
   },
   statsRow: {
     flexDirection: 'row',
@@ -930,32 +960,44 @@ const styles = StyleSheet.create({
     color: '#6B6780',
     flexShrink: 1,
   },
+  memberSinceCentered: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#6B6780',
+    textAlign: 'center',
+  },
   statsCardRow: {
     flexDirection: 'row',
     gap: 10,
     marginTop: 16,
   },
-  statsCard: {
-    flex: 1,
-    backgroundColor: themeVariables.whiteColor,
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
+  statRowCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: themeVariables.whiteColor,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: '#ECE7FF',
   },
-  statsCardValue: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '700',
+  statRowLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+  },
+  statRowLabel: {
+    fontSize: 14,
+    fontWeight: '600',
     color: themeVariables.blackColor,
   },
-  statsCardLabel: {
-    marginTop: 2,
-    fontSize: 12,
-    color: '#6B6780',
+  statRowValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: themeVariables.primaryColor,
+    marginLeft: 12,
   },
   pendingContainer: {
     paddingHorizontal: 16,
