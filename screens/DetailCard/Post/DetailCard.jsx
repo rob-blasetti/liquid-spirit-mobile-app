@@ -559,9 +559,9 @@ const PostDetailCard = ({ route }) => {
                   key={idx}
                   style={styles.tagChipDetail}
                   onPress={() =>
-                    navigation.navigate('Main', {
-                      screen: 'Search',
-                      params: { initialQuery: tag, initialQueryTs: Date.now() },
+                    navigation.navigate('Search', {
+                      initialQuery: tag,
+                      initialQueryTs: Date.now(),
                     })
                   }
                 >
