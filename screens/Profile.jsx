@@ -947,9 +947,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
-    marginTop: 8,
-    fontSize: 16,
-    fontWeight: '700',
+    marginTop: 18,
+    fontSize: 20,
+    fontWeight: '400',
     color: themeVariables.blackColor,
     textAlign: 'center',
     width: '100%',
