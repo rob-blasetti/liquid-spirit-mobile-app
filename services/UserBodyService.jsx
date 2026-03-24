@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
+import { buildJsonHeaders, requestJson } from './http';
 
 const AUTH_ERROR_MESSAGE = 'User is not authenticated.';
 
@@ -11,269 +12,152 @@ const getAuthToken = async () => {
   return token;
 };
 
-/**
- * Fetch Local Spiritual Assembly members.
- * @param {string} token - Bearer token for authorization.
- */
-export const fetchLocalSpiritualAssembly = async (token) => {
-    if (!token) {
-        console.warn('No token found, returning empty array.');
-        return [];
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/local-spiritual-assembly`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
-            return [];
-        }
-
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error('Error fetching Local Spiritual Assembly:', error);
-        return [];
-    }
-};
-
-/**
- * Fetch Feast Committee members.
- * @param {string} token - Bearer token for authorization.
- */
-export const fetchFeastCommittee = async (token) => {
-    if (!token) {
-        console.warn('No token found, returning empty array.');
-        return [];
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/feast-committee`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
-            return [];
-        }
-
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error('Error fetching Feast Committee:', error);
-        return [];
-    }
-};
-
-/**
- * Fetch Holy Days Committee members.
- * @param {string} token - Bearer token for authorization.
- */
-export const fetchHolyDaysCommittee = async (token) => {
-    if (!token) {
-        console.warn('No token found, returning empty array.');
-        return [];
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/api/bodies/holy-days-committee`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        if (!response.ok) {
-            console.error(`Failed to fetch: ${response.status} - ${response.statusText}`);
-            return [];
-        }
-
-        const data = await response.json();
-        return Array.isArray(data) ? data : [];
-    } catch (error) {
-        console.error('Error fetching Holy Days Committee:', error);
-        return [];
-    }
-};
-
-export const createUserBody = async (userBodyData) => {
+const withAuthFallback = async (work, { onAuthMessage, onErrorMessage, fallbackValue = null }) => {
   try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(userBodyData),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create User-Body relationship');
-    }
-    return await response.json();
+    return await work();
   } catch (error) {
     if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('createUserBody aborted: user not authenticated.');
-      return null;
+      console.warn(onAuthMessage);
+      return fallbackValue;
     }
-    console.error('Error creating User-Body:', error);
-    return null;
+    console.error(onErrorMessage, error);
+    return fallbackValue;
   }
 };
 
-/**
- * Updates a User-Body relationship.
- */
-export const updateUserBody = async (userBodyData) => {
+const fetchBodyMembers = async (path, token, errorLabel) => {
+  if (!token) {
+    console.warn('No token found, returning empty array.');
+    return [];
+  }
+
   try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+    const { data } = await requestJson(
+      `${API_URL}${path}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-      body: JSON.stringify(userBodyData),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to update User-Body relationship');
-    }
-    return await response.json();
+      errorLabel,
+    );
+    return Array.isArray(data) ? data : [];
   } catch (error) {
-    if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('updateUserBody aborted: user not authenticated.');
-      return null;
-    }
-    console.error('Error updating User-Body:', error);
-    return null;
+    console.error(errorLabel, error);
+    return [];
   }
 };
 
-/**
- * Deletes a User-Body relationship.
- */
-export const deleteUserBody = async (userId, bodyId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies/${userId}/${bodyId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to delete User-Body relationship');
-    }
-    return await response.json();
-  } catch (error) {
-    if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('deleteUserBody aborted: user not authenticated.');
-      return null;
-    }
-    console.error('Error deleting User-Body:', error);
-    return null;
-  }
+const authedJsonRequest = async (path, method, fallbackMessage, body = null) => {
+  const token = await getAuthToken();
+  const { data } = await requestJson(
+    `${API_URL}${path}`,
+    {
+      method,
+      headers: buildJsonHeaders(token),
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    },
+    fallbackMessage,
+  );
+  return data;
 };
 
-export const fetchIsMemberOfFeastCommittee = async (userId, communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies/feast-committee/${communityId}/${userId}/is-member`, {
+const authedGetRequest = async (path, fallbackMessage) => {
+  const token = await getAuthToken();
+  const { data } = await requestJson(
+    `${API_URL}${path}`,
+    {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch is member of Feast Committee');
-    }
-    return await response.json();
-  } catch (error) {
-    if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('fetchIsMemberOfFeastCommittee aborted: user not authenticated.');
-      return null;
-    }
-    console.error('Error fetching is member of Feast Committee:', error);
-    return null;
-  }
+    },
+    fallbackMessage,
+  );
+  return data;
 };
 
-export const fetchIsMemberOfHolyDaysCommittee = async (userId, communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies/holy-days-committee/${communityId}/${userId}/is-member`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch is member of Holy Days Committee');
-    }
-    return await response.json();
-  } catch (error) {
-    if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('fetchIsMemberOfHolyDaysCommittee aborted: user not authenticated.');
-      return null;
-    }
-    console.error('Error fetching is member of Holy Days Committee:', error);
-    return null;
-  }
-};
+export const fetchLocalSpiritualAssembly = async (token) =>
+  fetchBodyMembers('/api/bodies/local-spiritual-assembly', token, 'Error fetching Local Spiritual Assembly:');
 
-export const fetchIsMemberOfLocalSpiritualAssembly = async (userId, communityId) => {
-  try {
-    const token = await getAuthToken();
-    const response = await fetch(`${API_URL}/api/bodies/local-spiritual-assembly/${communityId}/${userId}/is-member`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error('Failed to fetch is member of Local Spiritual Assembly');
-    }
-    return await response.json();
-  } catch (error) {
-    if (error.message === AUTH_ERROR_MESSAGE) {
-      console.warn('fetchIsMemberOfLocalSpiritualAssembly aborted: user not authenticated.');
-      return null;
-    }
-    console.error('Error fetching is member of Local Spiritual Assembly:', error);
-    return null;
-  }
-};
-/**
- * Fetch the appropriate user body members based on the event type.
- * @param {string} eventType - The type of the event (e.g., 'Feast', 'Holy Day', or other).
- * @returns {Promise<Array>} - Array of users in the appropriate committee or assembly.
- */
-/**
- * Fetch the appropriate user body members based on the event type.
- * @param {string} eventType - The type of the event (e.g., 'Feast', 'Holy Day', else LSA).
- * @param {string} token - Bearer token for authorization.
- * @returns {Promise<Array>} Array of users in the selected body.
- */
+export const fetchFeastCommittee = async (token) =>
+  fetchBodyMembers('/api/bodies/feast-committee', token, 'Error fetching Feast Committee:');
+
+export const fetchHolyDaysCommittee = async (token) =>
+  fetchBodyMembers('/api/bodies/holy-days-committee', token, 'Error fetching Holy Days Committee:');
+
+export const createUserBody = async (userBodyData) =>
+  withAuthFallback(
+    () => authedJsonRequest('/api/bodies', 'POST', 'Failed to create User-Body relationship', userBodyData),
+    {
+      onAuthMessage: 'createUserBody aborted: user not authenticated.',
+      onErrorMessage: 'Error creating User-Body:',
+      fallbackValue: null,
+    },
+  );
+
+export const updateUserBody = async (userBodyData) =>
+  withAuthFallback(
+    () => authedJsonRequest('/api/bodies', 'PUT', 'Failed to update User-Body relationship', userBodyData),
+    {
+      onAuthMessage: 'updateUserBody aborted: user not authenticated.',
+      onErrorMessage: 'Error updating User-Body:',
+      fallbackValue: null,
+    },
+  );
+
+export const deleteUserBody = async (userId, bodyId) =>
+  withAuthFallback(
+    () => authedJsonRequest(`/api/bodies/${userId}/${bodyId}`, 'DELETE', 'Failed to delete User-Body relationship'),
+    {
+      onAuthMessage: 'deleteUserBody aborted: user not authenticated.',
+      onErrorMessage: 'Error deleting User-Body:',
+      fallbackValue: null,
+    },
+  );
+
+export const fetchIsMemberOfFeastCommittee = async (userId, communityId) =>
+  withAuthFallback(
+    () => authedGetRequest(`/api/bodies/feast-committee/${communityId}/${userId}/is-member`, 'Failed to fetch is member of Feast Committee'),
+    {
+      onAuthMessage: 'fetchIsMemberOfFeastCommittee aborted: user not authenticated.',
+      onErrorMessage: 'Error fetching is member of Feast Committee:',
+      fallbackValue: null,
+    },
+  );
+
+export const fetchIsMemberOfHolyDaysCommittee = async (userId, communityId) =>
+  withAuthFallback(
+    () => authedGetRequest(`/api/bodies/holy-days-committee/${communityId}/${userId}/is-member`, 'Failed to fetch is member of Holy Days Committee'),
+    {
+      onAuthMessage: 'fetchIsMemberOfHolyDaysCommittee aborted: user not authenticated.',
+      onErrorMessage: 'Error fetching is member of Holy Days Committee:',
+      fallbackValue: null,
+    },
+  );
+
+export const fetchIsMemberOfLocalSpiritualAssembly = async (userId, communityId) =>
+  withAuthFallback(
+    () => authedGetRequest(`/api/bodies/local-spiritual-assembly/${communityId}/${userId}/is-member`, 'Failed to fetch is member of Local Spiritual Assembly'),
+    {
+      onAuthMessage: 'fetchIsMemberOfLocalSpiritualAssembly aborted: user not authenticated.',
+      onErrorMessage: 'Error fetching is member of Local Spiritual Assembly:',
+      fallbackValue: null,
+    },
+  );
+
 export const fetchUserBodyByEventType = async (eventType, token) => {
   const type = (eventType || '').toLowerCase();
-    try {
-      if (type.includes('feast')) {
-        return await fetchFeastCommittee(token);
-      } else if (type.includes('holy')) {
-        return await fetchHolyDaysCommittee(token);
-      } else {
-        return await fetchLocalSpiritualAssembly(token);
-      }
-    } catch (error) {
-      console.error('Error fetching user body for event type:', eventType, error);
-      return [];
+  try {
+    if (type.includes('feast')) {
+      return await fetchFeastCommittee(token);
+    } else if (type.includes('holy')) {
+      return await fetchHolyDaysCommittee(token);
     }
+    return await fetchLocalSpiritualAssembly(token);
+  } catch (error) {
+    console.error('Error fetching user body for event type:', eventType, error);
+    return [];
+  }
 };
