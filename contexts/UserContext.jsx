@@ -8,6 +8,14 @@ import { fetchExploreFeed } from '../services/PostService.jsx';
 import { fetchUserById } from '../services/UserService.jsx';
 import debugLog from '../utils/debugLog';
 import { isJwtExpired, resolveAccessToken, resolveRefreshToken } from '../utils/authTokens';
+import {
+  clearSessionTokens,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  loadSessionTokens,
+  saveSessionTokens,
+  setAccessTokenMemory,
+} from '../utils/authTokenStorage';
 import { API_URL, AUTH_API_URL } from '../config';
 import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
@@ -262,25 +270,25 @@ export const UserProvider = ({ children }) => {
   useMountEffect(() => {
     const loadCachedData = async () => {
       try {
-        const keys = [
-          'authToken',
-          'refreshToken',
-          'user',
-          'userActivities',
-          'userEvents',
-          'userPosts',
-          'userDetails',
-        ];
-        const stores = await AsyncStorage.multiGet(keys);
-        const map = Object.fromEntries(stores);
+        const [{ accessToken }, storedUser, storedUserActivities, storedUserEvents, storedUserPosts, storedUserDetails] = await Promise.all([
+          loadSessionTokens(),
+          AsyncStorage.getItem('user'),
+          AsyncStorage.getItem('userActivities'),
+          AsyncStorage.getItem('userEvents'),
+          AsyncStorage.getItem('userPosts'),
+          AsyncStorage.getItem('userDetails'),
+        ]);
 
-        if (map.authToken) setToken(map.authToken);
-        if (map.user) setUser(JSON.parse(map.user));
+        if (accessToken) {
+          setAccessTokenMemory(accessToken);
+          setToken(accessToken);
+        }
+        if (storedUser) setUser(JSON.parse(storedUser));
 
-        if (map.userActivities) setUserActivities(JSON.parse(map.userActivities));
-        if (map.userEvents) setUserEvents(JSON.parse(map.userEvents));
-        if (map.userPosts) setUserPosts(JSON.parse(map.userPosts));
-        if (map.userDetails) setUserDetails(JSON.parse(map.userDetails));
+        if (storedUserActivities) setUserActivities(JSON.parse(storedUserActivities));
+        if (storedUserEvents) setUserEvents(JSON.parse(storedUserEvents));
+        if (storedUserPosts) setUserPosts(JSON.parse(storedUserPosts));
+        if (storedUserDetails) setUserDetails(JSON.parse(storedUserDetails));
       } catch (error) {
         console.error('Error loading cached data:', error);
       }
@@ -351,16 +359,14 @@ export const UserProvider = ({ children }) => {
       setCommunityId(userData.community?._id);
 
       await AsyncStorage.multiSet([
-        ['authToken', authToken],
         ['user', JSON.stringify(userData)],
         ['communityId', userData.community?._id || ''],
       ]);
 
-      if (typeof newRefreshToken === 'string' && newRefreshToken.length > 0) {
-        await AsyncStorage.setItem('refreshToken', newRefreshToken);
-      } else {
-        await AsyncStorage.removeItem('refreshToken');
-      }
+      await saveSessionTokens({
+        accessToken: authToken,
+        refreshToken: typeof newRefreshToken === 'string' && newRefreshToken.length > 0 ? newRefreshToken : null,
+      });
 
       if (email && password) {
         // Store credentials securely without prompting biometric on save (will prompt on retrieval)
@@ -393,7 +399,6 @@ export const UserProvider = ({ children }) => {
       }
 
       await AsyncStorage.multiRemove([
-        'authToken',
         'user',
         'communityId',
         'userActivities',
@@ -401,6 +406,7 @@ export const UserProvider = ({ children }) => {
         'userPosts',
         'userDetails',
       ]);
+      await clearSessionTokens();
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -420,7 +426,7 @@ export const UserProvider = ({ children }) => {
     }
 
     const refreshPromise = (async () => {
-      const storedRefreshToken = await AsyncStorage.getItem('refreshToken');
+      const storedRefreshToken = await getStoredRefreshToken();
       debugLog('Retrieved refresh token from storage:', storedRefreshToken ? '[redacted]' : null);
 
       if (!storedRefreshToken) {
@@ -440,7 +446,7 @@ export const UserProvider = ({ children }) => {
 
         if (!response.ok) {
           console.warn('Invalid refresh token, attempting re-login with stored credentials...');
-          await AsyncStorage.removeItem('refreshToken');
+          await saveSessionTokens({ accessToken: null, refreshToken: null });
           try {
             await biometricLogin();
           } catch (err) {
@@ -455,16 +461,17 @@ export const UserProvider = ({ children }) => {
 
         if (!accessToken) {
           console.warn('Refresh response did not include a valid access token.');
-          await AsyncStorage.multiRemove(['authToken', 'refreshToken']);
+          await clearSessionTokens();
           await logout();
           return null;
         }
 
-        await AsyncStorage.multiSet([
-          ['authToken', accessToken],
-          ['refreshToken', newRefreshToken || storedRefreshToken],
-        ]);
+        await saveSessionTokens({
+          accessToken,
+          refreshToken: newRefreshToken || storedRefreshToken,
+        });
 
+        setAccessTokenMemory(accessToken);
         setToken(accessToken);
         return accessToken;
       } catch (error) {

@@ -1,25 +1,12 @@
 import { API_URL as MOBILE_API_URL } from '../config';
 import { buildJsonHeaders, requestJson } from './http';
 import debugLog from '../utils/debugLog';
+import { getAccessTokenMemory, getStoredAccessToken } from '../utils/authTokenStorage';
 
 const API_URL = MOBILE_API_URL || '';
 const SESSIONS_BASE = '/api/sessions';
 
-const resolveToken = () => {
-  const storage = typeof global !== 'undefined' ? global.localStorage : null;
-  if (!storage) return null;
-  const direct = storage.getItem('token');
-  if (direct) return direct;
-  try {
-    const stored = JSON.parse(storage.getItem('authToken') || 'null');
-    if (!stored) return null;
-    if (typeof stored === 'string') return stored;
-    if (typeof stored === 'object' && stored.token) return stored.token;
-    return null;
-  } catch (_) {
-    return null;
-  }
-};
+const resolveToken = async () => getAccessTokenMemory() || await getStoredAccessToken();
 
 const buildQueryString = (params = {}) => {
   const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null);
@@ -42,7 +29,7 @@ const makeRequest = async (path, method = 'GET', body = null, config = {}) => {
     url += buildQueryString(params);
   }
 
-  const token = overrideToken ?? resolveToken();
+  const token = overrideToken ?? await resolveToken();
   const requestUrl = `${API_URL}${url}`;
 
   debugLog('[SessionService] request', {

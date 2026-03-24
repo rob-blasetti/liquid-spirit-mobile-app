@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getStoredAccessToken } from '../utils/authTokenStorage';
 import { API_URL } from '../config';
 
 const CHATS_BASE = '/api/chat';
@@ -210,7 +210,7 @@ export const deriveChatTitleFromChat = (chat, fallback = 'Chat') => {
 
 const getAuthToken = async (providedToken) => {
   if (providedToken) return providedToken;
-  const storedToken = await AsyncStorage.getItem('authToken');
+  const storedToken = await getStoredAccessToken();
   if (!storedToken) {
     throw new Error('User is not authenticated.');
   }

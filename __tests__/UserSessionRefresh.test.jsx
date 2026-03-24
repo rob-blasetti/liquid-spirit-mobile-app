@@ -2,8 +2,10 @@ import React, { useContext, useEffect } from 'react';
 import { Buffer } from 'buffer';
 import { render, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import { UserProvider } from '../contexts/UserContext.jsx';
 import { UserContext, CommunityContext } from '../contexts';
+import { clearSessionTokens } from '../utils/authTokenStorage';
 
 jest.mock('@react-native-async-storage/async-storage');
 jest.mock('../services/ActivityService.jsx', () => ({
@@ -36,8 +38,12 @@ jest.mock('../services/SocketService', () => ({
   })),
 }));
 jest.mock('react-native-keychain', () => ({
+  ACCESSIBLE: {
+    WHEN_UNLOCKED_THIS_DEVICE_ONLY: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
+  },
   setGenericPassword: jest.fn(() => Promise.resolve()),
-  getGenericPassword: jest.fn(() => Promise.resolve(null)),
+  getGenericPassword: jest.fn(() => Promise.resolve(false)),
+  resetGenericPassword: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('../config', () => ({
   API_URL: 'https://api.example.com',
@@ -93,6 +99,7 @@ describe('User session refresh', () => {
       });
     }
     await AsyncStorage.clear();
+    await clearSessionTokens();
   });
 
   const renderSessionProbe = onSessionChecked => {
@@ -142,11 +149,10 @@ describe('User session refresh', () => {
         body: JSON.stringify({ refreshToken: 'stored-refresh' }),
       })
     );
-    expect(AsyncStorage.multiSet).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        ['authToken', refreshedToken],
-        ['refreshToken', 'next-refresh'],
-      ])
+    expect(Keychain.setGenericPassword).toHaveBeenCalledWith(
+      'session',
+      JSON.stringify({ accessToken: refreshedToken, refreshToken: 'next-refresh' }),
+      expect.any(Object)
     );
   });
 
@@ -167,8 +173,6 @@ describe('User session refresh', () => {
     renderSessionProbe(onSessionChecked);
 
     await waitFor(() => expect(onSessionChecked).toHaveBeenCalledWith(null));
-    expect(AsyncStorage.multiRemove).toHaveBeenCalledWith(
-      expect.arrayContaining(['authToken', 'refreshToken'])
-    );
+    expect(Keychain.resetGenericPassword).toHaveBeenCalled();
   });
 });

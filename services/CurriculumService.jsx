@@ -1,16 +1,10 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL as CONFIG_API_URL } from '../config';
+import { getAuthTokenOrNull } from './getAuthToken';
 
 // Metro/Hermes doesn't support import.meta; rely on RN config for the API URL
 const API_URL = CONFIG_API_URL;
 
-const getToken = async () => {
-  try {
-    return await AsyncStorage.getItem('authToken');
-  } catch {
-    return null;
-  }
-};
+const getToken = async () => getAuthTokenOrNull();
 
 /**
  * Fetch Children's Class curriculum by identifier or grade via `/api/curriculum/:id`.

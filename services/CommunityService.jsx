@@ -1,9 +1,9 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
 import { buildJsonHeaders, requestJson } from './http';
+import { getAuthTokenOrThrow } from './getAuthToken';
 
 const getAuthToken = async () => {
-  const token = await AsyncStorage.getItem('authToken');
+  const token = await getAuthTokenOrThrow();
   if (!token) {
     throw new Error('User is not authenticated.');
   }
