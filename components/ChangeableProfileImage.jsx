@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   editBadge: {
     position: 'absolute',
-    bottom: 2,
+    bottom: 4,
     right: 4,
     width: 22,
     height: 22,
