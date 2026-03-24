@@ -598,7 +598,7 @@ const renderScene = ({ route }) => {
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
           <Text style={styles.seeAllText}>View all</Text>
-          <Ionicons name="chevron-forward" size={16} color={themeVariables.primaryColor} />
+          <Ionicons name="chevron-forward" size={14} color={themeVariables.primaryColor} />
         </TouchableOpacity>
       </View>
       {recentBadges.length > 0 ? (
@@ -843,8 +843,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   seeAllButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
@@ -854,8 +854,8 @@ const styles = StyleSheet.create({
     borderColor: themeVariables.primaryColor,
   },
   seeAllText: {
-    marginRight: 4,
-    fontSize: 13,
+    marginRight: 3,
+    fontSize: 12,
     fontWeight: '700',
     color: themeVariables.primaryColor,
   },
