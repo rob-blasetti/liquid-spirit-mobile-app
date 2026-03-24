@@ -570,8 +570,13 @@ const renderScene = ({ route }) => {
             </View>
 
             <View style={styles.profileStatsColumn}>
-              {PROFILE_STAT_CARDS.map(card => (
-                <View key={card.key} style={styles.statRowCard}>
+              {PROFILE_STAT_CARDS.map((card, index) => (
+                <View
+                  key={card.key}
+                  style={[
+                    styles.statRowCard,
+                    index < PROFILE_STAT_CARDS.length - 1 && styles.statRowDivider,
+                  ]}>
                   <View style={styles.statRowTextBlock}>
                     <Text style={styles.statRowLabel}>{card.label}</Text>
                     <Text style={styles.statRowValue}>{stats[card.key]}</Text>
@@ -986,6 +991,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 10,
     paddingHorizontal: 14,
+  },
+  statRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8EAF1',
   },
   statRowLabelWrap: {
     flexDirection: 'row',
