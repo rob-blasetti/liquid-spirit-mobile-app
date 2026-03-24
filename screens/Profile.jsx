@@ -43,9 +43,9 @@ const normalizeRuhiBadges = (value) => {
 const TAB_BAR_HEIGHT = 80;
 
 const PROFILE_STAT_CARDS = [
-  { key: 'activities', label: 'Activities', icon: 'layers-outline' },
-  { key: 'events', label: 'Events', icon: 'calendar-outline' },
-  { key: 'posts', label: 'Posts', icon: 'document-text-outline' },
+  { key: 'activities', label: 'Current Activities', icon: 'layers-outline' },
+  { key: 'events', label: 'Upcoming Events', icon: 'calendar-outline' },
+  { key: 'posts', label: 'Total Posts', icon: 'document-text-outline' },
 ];
 
 const ProfileScreen = ({ navigation }) => {
