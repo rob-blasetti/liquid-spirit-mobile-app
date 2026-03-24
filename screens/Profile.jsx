@@ -852,6 +852,7 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.whiteColor,
     borderWidth: 1,
     borderColor: themeVariables.primaryColor,
+    marginTop: -2,
   },
   seeAllText: {
     marginRight: 3,
