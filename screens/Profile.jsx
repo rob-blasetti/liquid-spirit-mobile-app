@@ -514,7 +514,7 @@ const renderScene = ({ route }) => {
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) }}
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom + 140, 180) }}
         showsVerticalScrollIndicator={false}>
       <View style={[styles.pageHeader, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.pageTitle}>Profile</Text>
@@ -630,7 +630,7 @@ const renderScene = ({ route }) => {
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get('window').width }}
         renderTabBar={renderTabBarCustom}
-        style={{ backgroundColor: themeVariables.whiteColor, minHeight: 320 }}
+        style={{ backgroundColor: themeVariables.whiteColor, minHeight: 520 }}
         sceneContainerStyle={{ backgroundColor: themeVariables.whiteColor }}
         pagerStyle={{ backgroundColor: themeVariables.whiteColor }}
         swipeEnabled={false}

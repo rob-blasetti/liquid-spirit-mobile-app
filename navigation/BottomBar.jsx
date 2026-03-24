@@ -297,7 +297,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   }, [currentAction, iconScale, visibleAction]);
 
   const settingsRoutes = ['Settings', 'EditProfile', 'Security', 'NotificationSettings'];
-  const fabHiddenRoutes = ['Badges'];
+  const fabHiddenRoutes = ['Badges', 'Profile'];
   const hideFab =
     focusedRoute?.name === 'NewMessage' ||
     focusedRoute?.name === 'ChatDetail' ||
