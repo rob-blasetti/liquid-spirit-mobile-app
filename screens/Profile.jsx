@@ -574,9 +574,11 @@ const renderScene = ({ route }) => {
                 <View key={card.key} style={styles.statRowCard}>
                   <View style={styles.statRowLabelWrap}>
                     <Ionicons name={card.icon} size={16} color={themeVariables.primaryColor} />
-                    <Text style={styles.statRowLabel}>{card.label}</Text>
+                    <View style={styles.statRowTextBlock}>
+                      <Text style={styles.statRowLabel}>{card.label}</Text>
+                      <Text style={styles.statRowValue}>{stats[card.key]}</Text>
+                    </View>
                   </View>
-                  <Text style={styles.statRowValue}>{stats[card.key]}</Text>
                 </View>
               ))}
             </View>
@@ -983,30 +985,33 @@ const styles = StyleSheet.create({
   statRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 18,
-    paddingVertical: 14,
+    paddingVertical: 10,
     paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#ECE7FF',
   },
   statRowLabelWrap: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
     flexShrink: 1,
+  },
+  statRowTextBlock: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   statRowLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
+    textAlign: 'left',
   },
   statRowValue: {
+    marginTop: 2,
     fontSize: 18,
     fontWeight: '700',
     color: themeVariables.primaryColor,
-    marginLeft: 12,
+    textAlign: 'left',
   },
   pendingContainer: {
     paddingHorizontal: 16,
