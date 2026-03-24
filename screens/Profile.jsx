@@ -553,7 +553,7 @@ const renderScene = ({ route }) => {
             <View style={styles.profileIdentityColumn}>
               <ChangeableProfileImage
                 imageStyle={styles.profilePictureLarge}
-                avatarSize={84}
+                avatarSize={80}
                 userDetails={userDetails}
                 setUserDetails={setUserDetails}
                 showEditIndicator
@@ -932,10 +932,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   profilePictureLarge: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    marginBottom: 4,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 3,
   },
   nameSmall: {
     fontSize: 18,
@@ -944,8 +944,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
-    marginTop: 6,
-    fontSize: 16,
+    marginTop: 4,
+    fontSize: 15,
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
