@@ -303,13 +303,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   badgeTitle: {
-    fontSize: 16,
+    fontSize: 15,
+    lineHeight: 19,
     fontWeight: '700',
     paddingRight: 8,
   },
   badgeDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#667085',
   },
   statusChip: {
