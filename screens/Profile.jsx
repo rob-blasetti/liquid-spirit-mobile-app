@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
   statRowCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 18,
     paddingVertical: 4,
@@ -1016,6 +1016,7 @@ const styles = StyleSheet.create({
   statRowTextBlock: {
     alignItems: 'flex-start',
     justifyContent: 'center',
+    width: '100%',
   },
   statRowLabel: {
     fontSize: 12,
