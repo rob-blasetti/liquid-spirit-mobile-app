@@ -522,7 +522,7 @@ const renderScene = ({ route }) => {
         month: 'short',
         year: 'numeric',
       })}`
-    : 'Your community dashboard';
+    : '';
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -561,9 +561,11 @@ const renderScene = ({ route }) => {
               <Text style={styles.nameCentered} numberOfLines={2}>
                 {user?.firstName} {user?.lastName}
               </Text>
-              <Text style={styles.memberSinceCentered} numberOfLines={2}>
-                {joinedLabel}
-              </Text>
+              {joinedLabel ? (
+                <Text style={styles.memberSinceCentered} numberOfLines={2}>
+                  {joinedLabel}
+                </Text>
+              ) : null}
             </View>
 
             <View style={styles.profileStatsColumn}>
@@ -797,6 +799,7 @@ const styles = StyleSheet.create({
     width: '42%',
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
   },
   profileStatsColumn: {
     flex: 1,
@@ -927,10 +930,12 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   nameCentered: {
+    marginTop: 2,
     fontSize: 17,
     fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'center',
+    width: '100%',
   },
   statsRow: {
     flexDirection: 'row',

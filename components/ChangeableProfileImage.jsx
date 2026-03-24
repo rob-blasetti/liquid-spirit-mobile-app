@@ -183,7 +183,7 @@ const ChangeableProfileImage = ({
       )}
       {showEditIndicator && (
         <View style={styles.editBadge}>
-          <Ionicons name="camera" size={14} color="#312783" />
+          <Ionicons name="camera" size={14} color="#000000" />
         </View>
       )}
     </TouchableOpacity>
