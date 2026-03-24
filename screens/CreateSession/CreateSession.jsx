@@ -14,6 +14,7 @@ import ScheduleSection from './sections/ScheduleSection';
 import LocationSection from '../CreateActivity/sections/LocationSection';
 import AttendeesSection from './sections/AttendeesSection';
 import CurriculumSection from './sections/CurriculumSection';
+import debugLog from '../../utils/debugLog';
 
 const formatDateOnly = (value) => {
   if (!(value instanceof Date)) return '';
@@ -280,6 +281,21 @@ const CreateSession = ({ navigation, route }) => {
   const [curriculumError, setCurriculumError] = useState('');
   const progressAnim = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
   const [venuesLoading, setVenuesLoading] = useState(true);
+
+  useEffect(() => {
+    debugLog('[CreateSession] prefilled attendees input', {
+      activityId: resolvedActivityId,
+      prefilledFacilitators: params.prefilledFacilitators || params.activity?.facilitators || params.activityPreload?.facilitators || [],
+      prefilledParticipants: params.prefilledParticipants || params.activity?.participants || params.activityPreload?.participants || [],
+    });
+  }, [params, resolvedActivityId]);
+
+  useEffect(() => {
+    debugLog('[CreateSession] normalized attendees state', {
+      facilitators: form.facilitators,
+      participants: form.participants,
+    });
+  }, [form.facilitators, form.participants]);
 
   useEffect(() => {
     const grade = form.curriculumLesson.grade;
