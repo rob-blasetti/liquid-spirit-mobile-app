@@ -814,11 +814,11 @@ const styles = StyleSheet.create({
   },
   profileStatsColumn: {
     flex: 1,
-    minHeight: 132,
+    minHeight: 126,
     alignSelf: 'stretch',
     justifyContent: 'space-between',
     paddingTop: 0,
-    paddingBottom: 0,
+    paddingBottom: 6,
   },
   iconButton: {
     marginLeft: 8,
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 0,
     paddingHorizontal: 8,
-    flex: 1,
+    flex: 0.92,
   },
   statRowDivider: {
     borderBottomWidth: 1,
