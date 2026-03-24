@@ -262,8 +262,6 @@ const styles = StyleSheet.create({
   },
   badgesCard: {
     backgroundColor: themeVariables.whiteColor,
-    borderWidth: 1,
-    borderColor: '#E3E8F2',
     borderRadius: 24,
     paddingVertical: 8,
     paddingHorizontal: 14,
