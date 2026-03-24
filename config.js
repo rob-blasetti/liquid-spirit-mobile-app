@@ -25,10 +25,5 @@ export const AUTH_API_URL =
 export const PASSKEY_WEBSITE_PATH = '/settings/security';
 export const WEB_APP_URL = Config.WEB_APP_URL || 'https://www.liquidspirit.org';
 
-
-export const AWS_ID = Config.AWS_ACCESS_KEY_ID;
-export const AWS_Secret = Config.AWS_SECRET_ACCESS_KEY;
-export const AWS_Region = Config.AWS_REGION;
-
 // Toggle password validation globally (set true to re-enable client checks)
 export const ENABLE_PASSWORD_VALIDATION = false;
