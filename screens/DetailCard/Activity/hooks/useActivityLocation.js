@@ -8,6 +8,7 @@ import {
   normalizeAddress,
 } from '../utils/locationUtils';
 import { buildMapRegion, normalizeMapRegion } from '../../common/mapRegion';
+import debugLog from '../../../../utils/debugLog';
 
 const toRegion = (value) => {
   const point = resolveCoordinates(value);
@@ -75,9 +76,45 @@ const useActivityLocation = ({ activity, nextSession }) => {
   const showMapSection = hasPhysicalSessionLocation;
 
   useEffect(() => {
+    debugLog('[ActivityDetailMap] location inputs', {
+      activityId: activity?._id || activity?.id || null,
+      nextSessionId: nextSession?._id || nextSession?.id || null,
+      mapAddress,
+      mapDisplayName,
+      mapDisplayAddress,
+      staticRegion,
+      geocodedRegion,
+      resolvedRegion,
+      hasPhysicalSessionLocation,
+      showMapSection,
+      showOnlineSection,
+      isHybridSession,
+    });
+  }, [
+    activity?._id,
+    activity?.id,
+    geocodedRegion,
+    hasPhysicalSessionLocation,
+    isHybridSession,
+    mapAddress,
+    mapDisplayAddress,
+    mapDisplayName,
+    nextSession?._id,
+    nextSession?.id,
+    resolvedRegion,
+    showMapSection,
+    showOnlineSection,
+    staticRegion,
+  ]);
+
+  useEffect(() => {
     if (staticRegion || geocodedRegion || mapAddress.length === 0) return;
     let cancelled = false;
     const q = encodeURIComponent(mapAddress);
+    debugLog('[ActivityDetailMap] geocode start', {
+      mapAddress,
+      query: q,
+    });
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
       headers: {
         'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
@@ -87,6 +124,11 @@ const useActivityLocation = ({ activity, nextSession }) => {
       .then(res => res.json())
       .then(results => {
         if (cancelled) return;
+        debugLog('[ActivityDetailMap] geocode results', {
+          mapAddress,
+          resultCount: Array.isArray(results) ? results.length : 0,
+          firstResult: Array.isArray(results) ? results[0] : null,
+        });
         if (results && results.length > 0) {
           const { lat, lon } = results[0] || {};
           const nextRegion = buildMapRegion({
@@ -94,15 +136,27 @@ const useActivityLocation = ({ activity, nextSession }) => {
             longitude: parseFloat(lon),
           });
           if (nextRegion) {
+            debugLog('[ActivityDetailMap] geocode resolved region', {
+              mapAddress,
+              nextRegion,
+            });
             setGeocodedRegion(nextRegion);
           }
         }
       })
       .catch(err => {
+        debugLog('[ActivityDetailMap] geocode failed', {
+          mapAddress,
+          message: err?.message,
+          name: err?.name,
+        });
         if (__DEV__) console.warn('Activity map geocode failed', err);
       });
     return () => {
       cancelled = true;
+      debugLog('[ActivityDetailMap] geocode cancelled', {
+        mapAddress,
+      });
     };
   }, [staticRegion, geocodedRegion, mapAddress]);
 

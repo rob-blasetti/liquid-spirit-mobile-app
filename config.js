@@ -19,6 +19,12 @@ export const AUTH_API_URL =
     ? Config.AUTH_API_URL
     : API_URL;
 
+export const MAPS_API_KEY = typeof Config.MAPS_API_KEY === 'string'
+  ? Config.MAPS_API_KEY.trim()
+  : '';
+
+export const HAS_NATIVE_GOOGLE_MAPS = MAPS_API_KEY.length > 0;
+
 // Removed debug log to prevent console output during tests
 // console.log(API_URL);
 

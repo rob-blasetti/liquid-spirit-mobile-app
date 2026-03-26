@@ -1,14 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import SectionTitle from '../../common/SectionTitle';
 import themeVariables from '../../../../styles/theme';
 import { getMarkerCoordinate, normalizeMapRegion } from '../../common/mapRegion';
+import StaticMapPreview from '../../common/StaticMapPreview';
+import debugLog from '../../../../utils/debugLog';
+import { HAS_NATIVE_GOOGLE_MAPS } from '../../../../config';
 
 const HostLocationSection = ({ region, fullAddress, styles, onOpenMaps }) => {
   const normalizedRegion = normalizeMapRegion(region);
   const markerCoordinate = getMarkerCoordinate(region);
-  const showLiveMap = normalizedRegion && markerCoordinate;
+  const canUseNativeMap = Platform.OS !== 'android' || HAS_NATIVE_GOOGLE_MAPS;
+  const showLiveMap = normalizedRegion && markerCoordinate && canUseNativeMap;
+  const showStaticMap = normalizedRegion && markerCoordinate && !canUseNativeMap;
+  const provider = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+
+  useEffect(() => {
+    debugLog('[EventDetailMap] render state', {
+      fullAddress,
+      region,
+      normalizedRegion,
+      markerCoordinate,
+      showLiveMap: Boolean(showLiveMap),
+      provider,
+      canUseNativeMap,
+      showStaticMap: Boolean(showStaticMap),
+    });
+  }, [canUseNativeMap, fullAddress, markerCoordinate, normalizedRegion, provider, region, showLiveMap, showStaticMap]);
+
+  useEffect(() => {
+    if (!showLiveMap) return undefined;
+
+    debugLog('[EventDetailMap] mounting MapView', {
+      provider,
+      normalizedRegion,
+      markerCoordinate,
+    });
+
+    return () => {
+      debugLog('[EventDetailMap] unmounting MapView', {
+        provider,
+      });
+    };
+  }, [markerCoordinate, normalizedRegion, provider, showLiveMap]);
 
   return (
     <>
@@ -16,18 +51,34 @@ const HostLocationSection = ({ region, fullAddress, styles, onOpenMaps }) => {
       <View style={styles.mapWrapper}>
         {showLiveMap ? (
           <MapView
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+            provider={provider}
             style={styles.map}
             initialRegion={normalizedRegion}
+            onMapReady={() => {
+              debugLog('[EventDetailMap] onMapReady', {
+                provider,
+                normalizedRegion,
+                markerCoordinate,
+              });
+            }}
+            onLayout={(event) => {
+              debugLog('[EventDetailMap] onLayout', {
+                layout: event?.nativeEvent?.layout,
+              });
+            }}
           >
             <Marker coordinate={markerCoordinate} />
           </MapView>
+        ) : showStaticMap ? (
+          <StaticMapPreview
+            region={normalizedRegion}
+            styles={styles}
+            fallbackSubtitle={fullAddress ? 'Tap the address to open in Maps' : ''}
+          />
         ) : (
-          <View style={styles.mapLoader}>
+          <View style={[styles.mapLoader, styles.mapFallback]}>
             <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-            <Text style={[styles.headerInfoText, { marginTop: 8, textAlign: 'center' }]}>
-              Map preview unavailable
-            </Text>
+            <Text style={styles.mapFallbackText}>Map preview unavailable</Text>
           </View>
         )}
       </View>

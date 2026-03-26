@@ -70,6 +70,7 @@ import {
 import { getDisplayAddress } from '../Activity/utils/locationUtils';
 import useChatStarter from '../common/useChatStarter';
 import { buildMapRegion } from '../common/mapRegion';
+import debugLog from '../../../utils/debugLog';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
 
@@ -483,8 +484,23 @@ const EventCardBody = ({
   // Map region state for location map
   const [region, setRegion] = useState(null);
   const { openGoogleMaps } = useGoogleMaps();
+
+  useEffect(() => {
+    debugLog('[EventDetailMap] location inputs', {
+      eventId: event?._id || event?.id || null,
+      venueName,
+      addressText,
+      fullAddr,
+      mapQuery,
+      region,
+    });
+  }, [addressText, event?._id, event?.id, fullAddr, mapQuery, region, venueName]);
+
   useEffect(() => {
     if (!mapQuery || mapQuery === 'No location') {
+      debugLog('[EventDetailMap] skipping geocode', {
+        mapQuery,
+      });
       setRegion(null);
       return;
     }
@@ -492,6 +508,10 @@ const EventCardBody = ({
     setRegion(null);
     let cancelled = false;
     const q = encodeURIComponent(mapQuery);
+    debugLog('[EventDetailMap] geocode start', {
+      mapQuery,
+      query: q,
+    });
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
       headers: {
         'User-Agent': 'LiquidSpiritApp/1.0 (info@liquidspirit.org)',
@@ -500,6 +520,11 @@ const EventCardBody = ({
     }).then(res => res.json())
       .then(results => {
         if (cancelled) return;
+        debugLog('[EventDetailMap] geocode results', {
+          mapQuery,
+          resultCount: Array.isArray(results) ? results.length : 0,
+          firstResult: Array.isArray(results) ? results[0] : null,
+        });
         if (results && results.length > 0) {
           const { lat, lon } = results[0];
           const nextRegion = buildMapRegion({
@@ -507,19 +532,39 @@ const EventCardBody = ({
             longitude: parseFloat(lon),
           });
           if (nextRegion) {
+            debugLog('[EventDetailMap] geocode resolved region', {
+              mapQuery,
+              nextRegion,
+            });
             setRegion(nextRegion);
           }
         }
       })
-      .catch(err => console.warn('Geocode error', err));
+      .catch(err => {
+        debugLog('[EventDetailMap] geocode failed', {
+          mapQuery,
+          message: err?.message,
+          name: err?.name,
+        });
+        console.warn('Geocode error', err);
+      });
     return () => {
       cancelled = true;
+      debugLog('[EventDetailMap] geocode cancelled', {
+        mapQuery,
+      });
     };
   }, [mapQuery]);
   // Determine join status based on raw attendees (before enrichment)
   const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
 
-  const openMaps = useCallback(() => openGoogleMaps(mapQuery), [openGoogleMaps, mapQuery]);
+  const openMaps = useCallback(() => {
+    debugLog('[EventDetailMap] open maps press', {
+      mapQuery,
+      fullAddr,
+    });
+    openGoogleMaps(mapQuery);
+  }, [fullAddr, openGoogleMaps, mapQuery]);
   const handleJoin = async () => {
     setOptimisticJoin(true);
     try {
@@ -1103,6 +1148,26 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  mapFallback: {
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f6f6f8',
+    paddingHorizontal: 16,
+  },
+  mapFallbackText: {
+    marginTop: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.textColor || '#555',
+    textAlign: 'center',
+  },
+  mapFallbackSubtext: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#777',
+    textAlign: 'center',
   },
   cardTitleText: { ...detailCardTitle },
   cardSubtitleText: { ...detailCardSubtitle },

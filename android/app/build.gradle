@@ -84,6 +84,7 @@ if (envFile.exists()) {
         envProperties.load(reader)
     }
 }
+def mapsApiKey = project.env.get("MAPS_API_KEY") ?: envProperties.getProperty('MAPS_API_KEY', '')
 
 project.ext.react = [
     enableHermes: true,  // explicitly enable Hermes
@@ -170,8 +171,8 @@ android {
         buildConfigField "String", "AWS_ACCESS_KEY_ID", "\"${envProperties.getProperty('AWS_ACCESS_KEY_ID', '')}\""
         buildConfigField "String", "AWS_SECRET_ACCESS_KEY", "\"${envProperties.getProperty('AWS_SECRET_ACCESS_KEY', '')}\""
         buildConfigField "String", "AWS_REGION", "\"${envProperties.getProperty('AWS_REGION', '')}\""
-        buildConfigField "String", "MAPS_API_KEY", "\"${envProperties.getProperty('MAPS_API_KEY', '')}\""
-        manifestPlaceholders = [ MAPS_API_KEY: envProperties.getProperty('MAPS_API_KEY', '') ]
+        buildConfigField "String", "MAPS_API_KEY", "\"${mapsApiKey}\""
+        manifestPlaceholders = [ MAPS_API_KEY: mapsApiKey ]
     }
     signingConfigs {
         debug {

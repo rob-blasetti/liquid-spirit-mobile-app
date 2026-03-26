@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Linking, Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import SectionTitle from '../../common/SectionTitle';
 import themeVariables from '../../../../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { getMarkerCoordinate, normalizeMapRegion } from '../../common/mapRegion';
+import StaticMapPreview from '../../common/StaticMapPreview';
+import debugLog from '../../../../utils/debugLog';
+import { HAS_NATIVE_GOOGLE_MAPS } from '../../../../config';
 
 const LocationSection = ({
   showMapSection,
@@ -21,7 +24,60 @@ const LocationSection = ({
 }) => {
   const normalizedRegion = normalizeMapRegion(region);
   const markerCoordinate = getMarkerCoordinate(region);
-  const showLiveMap = hasRegion && normalizedRegion && markerCoordinate;
+  const canUseNativeMap = Platform.OS !== 'android' || HAS_NATIVE_GOOGLE_MAPS;
+  const showLiveMap = hasRegion && normalizedRegion && markerCoordinate && canUseNativeMap;
+  const showStaticMap = hasRegion && normalizedRegion && markerCoordinate && !canUseNativeMap;
+  const provider = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+
+  useEffect(() => {
+    debugLog('[ActivityDetailMap] render state', {
+      showMapSection,
+      showOnlineSection,
+      isHybridSession,
+      hasRegion,
+      showLiveMap: Boolean(showLiveMap),
+      mapAddress,
+      mapDisplayName,
+      mapDisplayAddress,
+      region,
+      normalizedRegion,
+      markerCoordinate,
+      provider,
+      canUseNativeMap,
+      showStaticMap,
+    });
+  }, [
+    canUseNativeMap,
+    hasRegion,
+    isHybridSession,
+    mapAddress,
+    mapDisplayAddress,
+    mapDisplayName,
+    markerCoordinate,
+    normalizedRegion,
+    provider,
+    region,
+    showLiveMap,
+    showStaticMap,
+    showMapSection,
+    showOnlineSection,
+  ]);
+
+  useEffect(() => {
+    if (!showLiveMap) return undefined;
+
+    debugLog('[ActivityDetailMap] mounting MapView', {
+      provider,
+      normalizedRegion,
+      markerCoordinate,
+    });
+
+    return () => {
+      debugLog('[ActivityDetailMap] unmounting MapView', {
+        provider,
+      });
+    };
+  }, [markerCoordinate, normalizedRegion, provider, showLiveMap]);
 
   return (
     <>
@@ -35,12 +91,30 @@ const LocationSection = ({
           <View style={styles.mapWrapper}>
             {showLiveMap ? (
               <MapView
-                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
+                provider={provider}
                 style={styles.map}
                 initialRegion={normalizedRegion}
+                onMapReady={() => {
+                  debugLog('[ActivityDetailMap] onMapReady', {
+                    provider,
+                    normalizedRegion,
+                    markerCoordinate,
+                  });
+                }}
+                onLayout={(event) => {
+                  debugLog('[ActivityDetailMap] onLayout', {
+                    layout: event?.nativeEvent?.layout,
+                  });
+                }}
               >
                 <Marker coordinate={markerCoordinate} />
               </MapView>
+            ) : showStaticMap ? (
+              <StaticMapPreview
+                region={normalizedRegion}
+                styles={styles}
+                fallbackSubtitle={mapAddress ? 'Tap the address to open in Maps' : ''}
+              />
             ) : (
               <View style={[styles.mapLoader, styles.mapFallback]}>
                 <Ionicons
