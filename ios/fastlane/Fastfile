@@ -1,14 +1,13 @@
 default_platform(:ios)
 
 require 'dotenv' # ✅ Require the dotenv gem
+require 'fileutils'
 Dotenv.load(File.expand_path('.env.beta', __dir__))
 
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    # Print environment variables to verify they load correctly
-    UI.message "🚀 Using API_URL: #{ENV['API_URL']}"
-    UI.message "🔑 ASC_KEY_FILE: #{ENV['ASC_KEY_FILE']}"
+    UI.message 'Using configured Fastlane environment variables'
 
     asc_api_key = app_store_connect_api_key(
       key_id: ENV['ASC_KEY_ID'],
@@ -16,8 +15,7 @@ platform :ios do
       key_filepath: ENV['ASC_KEY_FILE']
     )
 
-    sh "mkdir -p ios"
-    sh "touch ios/Config.xcconfig"
+    FileUtils.mkdir_p('ios')
     
     # 1. Pull down/update provisioning profiles & certificates from your signing repo
     match(
@@ -33,10 +31,13 @@ platform :ios do
     )
 
     # 3. Inject Environment Variables into Xcode
-    sh "echo 'API_URL=#{ENV['API_URL']}' > ios/Config.xcconfig"
-    sh "echo 'AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']}' >> ios/Config.xcconfig"
-    sh "echo 'AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']}' >> ios/Config.xcconfig"
-    sh "echo 'AWS_REGION=#{ENV['AWS_REGION']}' >> ios/Config.xcconfig"
+    config_xcconfig = <<~CONFIG
+      API_URL=#{ENV['API_URL']}
+      AWS_ACCESS_KEY_ID=#{ENV['AWS_ACCESS_KEY_ID']}
+      AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']}
+      AWS_REGION=#{ENV['AWS_REGION']}
+    CONFIG
+    File.write('ios/Config.xcconfig', config_xcconfig)
 
     # 4. Build the app
     build_app(
