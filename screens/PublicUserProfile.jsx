@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, D
 import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { TabView, TabBar } from 'react-native-tab-view';
+import { TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
 import { fetchUserById } from '../services/UserService';
 import { fetchUserActivities } from '../services/ActivityService';
@@ -11,6 +11,7 @@ import { fetchEventsForAttendee } from '../services/EventService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import PostGallery from '../components/PostGallery';
+import TabViewCompat from '../components/TabViewCompat';
 import resolveImageSource from '../utils/imageSource';
 import themeVariables from '../styles/theme';
 
@@ -495,7 +496,7 @@ const PublicUserProfile = () => {
         </View>
       )}
       </View>
-      <TabView
+      <TabViewCompat
         navigationState={{ index: tabIndex, routes }}
         renderScene={renderScene}
         renderTabBar={renderTabBarCustom}

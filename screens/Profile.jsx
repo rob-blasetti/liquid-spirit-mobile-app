@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
-import { TabView } from 'react-native-tab-view';
+import TabViewCompat from '../components/TabViewCompat';
 import { UserContext } from '../contexts/UserContext';
 import PostItem from '../components/PostItem';
 import ActivityItem from '../components/ActivityItem';
@@ -630,7 +630,7 @@ const renderScene = ({ route }) => {
         </View>
       </View>
 
-      <TabView
+      <TabViewCompat
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}

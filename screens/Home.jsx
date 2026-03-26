@@ -13,7 +13,6 @@ import {
   StatusBar,
   Easing,
 } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
@@ -35,9 +34,10 @@ import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import LiquidGlassButton from './DetailCard/common/LiquidGlassButton';
 import ImageBanner, { IMAGE_BANNER_HEIGHT } from '../components/ImageBanner';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
+import BlurViewCompat from '../components/BlurViewCompat';
 import resolveImageSource, { prefetchImageSources } from '../utils/imageSource';
 
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+const AnimatedBlurView = Animated.createAnimatedComponent(BlurViewCompat);
 
 // Constants for bottom squares layout
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

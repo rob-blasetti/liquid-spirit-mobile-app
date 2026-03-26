@@ -239,27 +239,31 @@ const Login = ({ navigation, route }) => {
           </TouchableOpacity>
         )}
 
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
-        </View>
+        {Platform.OS !== 'android' ? (
+          <>
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-        {passkeyLoading ? (
-          <View style={styles.passkeyButtonContainer}>
-            <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.passkeyButton}
-            activeOpacity={0.85}
-            onPress={handlePasskeyLogin}
-            disabled={passkeyLoading}
-          >
-            <Ionicons name="finger-print" size={18} color="#fff" />
-            <Text style={styles.passkeyButtonText}>Continue with Passkey</Text>
-          </TouchableOpacity>
-        )}
+            {passkeyLoading ? (
+              <View style={styles.passkeyButtonContainer}>
+                <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.passkeyButton}
+                activeOpacity={0.85}
+                onPress={handlePasskeyLogin}
+                disabled={passkeyLoading}
+              >
+                <Ionicons name="finger-print" size={18} color="#fff" />
+                <Text style={styles.passkeyButtonText}>Continue with Passkey</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : null}
 
         <TouchableOpacity
           onPress={() => navigation.navigate('Register')}

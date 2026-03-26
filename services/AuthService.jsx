@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { Platform } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import jwtDecode from 'jwt-decode';
-import { Passkey } from 'react-native-passkey';
+import { Passkey } from './passkeyCompat';
 
 import { API_URL, AUTH_API_URL } from '../config';
 import { isJwtExpired, resolveAccessToken } from '../utils/authTokens';
