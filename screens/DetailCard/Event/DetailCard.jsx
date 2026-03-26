@@ -69,6 +69,7 @@ import {
 } from '../common/detailCardLayout';
 import { getDisplayAddress } from '../Activity/utils/locationUtils';
 import useChatStarter from '../common/useChatStarter';
+import { buildMapRegion } from '../common/mapRegion';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
 
@@ -483,7 +484,12 @@ const EventCardBody = ({
   const [region, setRegion] = useState(null);
   const { openGoogleMaps } = useGoogleMaps();
   useEffect(() => {
-    if (!mapQuery || mapQuery === 'No location') return;
+    if (!mapQuery || mapQuery === 'No location') {
+      setRegion(null);
+      return;
+    }
+
+    setRegion(null);
     let cancelled = false;
     const q = encodeURIComponent(mapQuery);
     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
@@ -496,12 +502,13 @@ const EventCardBody = ({
         if (cancelled) return;
         if (results && results.length > 0) {
           const { lat, lon } = results[0];
-          setRegion({
+          const nextRegion = buildMapRegion({
             latitude: parseFloat(lat),
             longitude: parseFloat(lon),
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
           });
+          if (nextRegion) {
+            setRegion(nextRegion);
+          }
         }
       })
       .catch(err => console.warn('Geocode error', err));

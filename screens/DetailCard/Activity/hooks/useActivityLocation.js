@@ -7,16 +7,12 @@ import {
   resolveCoordinates,
   normalizeAddress,
 } from '../utils/locationUtils';
+import { buildMapRegion, normalizeMapRegion } from '../../common/mapRegion';
 
 const toRegion = (value) => {
   const point = resolveCoordinates(value);
   if (!point) return null;
-  return {
-    latitude: point.latitude,
-    longitude: point.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
+  return buildMapRegion(point);
 };
 
 const useActivityLocation = ({ activity, nextSession }) => {
@@ -54,13 +50,15 @@ const useActivityLocation = ({ activity, nextSession }) => {
   );
 
   const staticRegion = useMemo(() => (
-    getRegionForMap(mapAddressSource) ||
-    getRegionForMap(primaryVenue) ||
-    (venueWithCoords ? getRegionForMap(venueWithCoords) : null) ||
-    toRegion(nextSession?.coordinates) ||
-    toRegion(activity?.addressCoordinates) ||
-    toRegion(activity?.address) ||
-    null
+    normalizeMapRegion(
+      getRegionForMap(mapAddressSource) ||
+      getRegionForMap(primaryVenue) ||
+      (venueWithCoords ? getRegionForMap(venueWithCoords) : null) ||
+      toRegion(nextSession?.coordinates) ||
+      toRegion(activity?.addressCoordinates) ||
+      toRegion(activity?.address) ||
+      null
+    )
   ), [activity?.address, activity?.addressCoordinates, mapAddressSource, nextSession?.coordinates, primaryVenue, venueWithCoords]);
 
   const sessionOnlineLink = normalizeString(nextSession?.onlineLink || activity?.onlineLink);
@@ -91,11 +89,10 @@ const useActivityLocation = ({ activity, nextSession }) => {
         if (cancelled) return;
         if (results && results.length > 0) {
           const { lat, lon } = results[0] || {};
-          const parsed = {
+          const nextRegion = buildMapRegion({
             latitude: parseFloat(lat),
             longitude: parseFloat(lon),
-          };
-          const nextRegion = toRegion(parsed);
+          });
           if (nextRegion) {
             setGeocodedRegion(nextRegion);
           }

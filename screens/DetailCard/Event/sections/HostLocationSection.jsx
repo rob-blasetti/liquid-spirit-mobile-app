@@ -1,48 +1,33 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
 import SectionTitle from '../../common/SectionTitle';
 import themeVariables from '../../../../styles/theme';
-
-const isFiniteNumber = (n) => typeof n === 'number' && Number.isFinite(n);
+import { getMarkerCoordinate, normalizeMapRegion } from '../../common/mapRegion';
 
 const HostLocationSection = ({ region, fullAddress, styles, onOpenMaps }) => {
-  const normalized = useMemo(() => {
-    if (!region || typeof region !== 'object') return null;
-    const lat = Number(region.latitude);
-    const lng = Number(region.longitude);
-    const latDelta = Number(region.latitudeDelta);
-    const lngDelta = Number(region.longitudeDelta);
-
-    if (!isFiniteNumber(lat) || !isFiniteNumber(lng)) return null;
-
-    return {
-      mapRegion: {
-        latitude: lat,
-        longitude: lng,
-        // Keep deltas if valid, otherwise use safe defaults.
-        latitudeDelta: isFiniteNumber(latDelta) ? latDelta : 0.01,
-        longitudeDelta: isFiniteNumber(lngDelta) ? lngDelta : 0.01,
-      },
-      markerCoord: { latitude: lat, longitude: lng },
-    };
-  }, [region]);
+  const normalizedRegion = normalizeMapRegion(region);
+  const markerCoordinate = getMarkerCoordinate(region);
+  const showLiveMap = normalizedRegion && markerCoordinate;
 
   return (
     <>
       <SectionTitle title="Where is it?" showTooltip={false} titleStyle={styles.mapTitle} />
       <View style={styles.mapWrapper}>
-        {normalized ? (
+        {showLiveMap ? (
           <MapView
             provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
             style={styles.map}
-            initialRegion={normalized.mapRegion}
+            initialRegion={normalizedRegion}
           >
-            <Marker coordinate={normalized.markerCoord} />
+            <Marker coordinate={markerCoordinate} />
           </MapView>
         ) : (
           <View style={styles.mapLoader}>
             <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+            <Text style={[styles.headerInfoText, { marginTop: 8, textAlign: 'center' }]}>
+              Map preview unavailable
+            </Text>
           </View>
         )}
       </View>
