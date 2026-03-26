@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
+import BlurViewCompat from '../../../components/BlurViewCompat';
 
 const LiquidGlassButton = ({
   title,
@@ -36,7 +36,7 @@ const LiquidGlassButton = ({
       testID={testID}
     >
       <View style={[styles.container, { borderRadius }, containerStyle]}>
-        <BlurView
+        <BlurViewCompat
           style={styles.blur}
           blurType="light"
           blurAmount={intensity}

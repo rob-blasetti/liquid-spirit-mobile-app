@@ -8,13 +8,18 @@ import { detailCardOverlay, detailCardTitle, detailCardSubtitle, detailCardConte
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    backgroundColor: 'red',
+    backgroundColor: '#E6E8EC',
     elevation: 0,
     margin: 0,
     borderRadius: 16,
     overflow: 'hidden',
   },
-  banner: { width: '100%', height: IMAGE_BANNER_HEIGHT, borderRadius: 0 },
+  banner: {
+    width: '100%',
+    height: IMAGE_BANNER_HEIGHT,
+    borderRadius: 0,
+    backgroundColor: '#E6E8EC',
+  },
   overlayCard: {
     ...detailCardOverlay,
   },
