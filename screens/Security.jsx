@@ -141,7 +141,14 @@ const Security = ({ navigation }) => {
           'This device does not support native passkey setup. You can continue in the browser and sign in there normally.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Browser', onPress: () => { void openPasskeyFallback(); } },
+            {
+              text: 'Open Browser',
+              onPress: () => {
+                openPasskeyFallback().catch((fallbackError) => {
+                  console.error('Failed to open passkey fallback:', fallbackError);
+                });
+              },
+            },
           ],
         );
         return;
@@ -171,7 +178,14 @@ const Security = ({ navigation }) => {
         'Native passkey setup failed on this device. You can continue in the browser and sign in there normally.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Browser', onPress: () => { void openPasskeyFallback(); } },
+          {
+            text: 'Open Browser',
+            onPress: () => {
+              openPasskeyFallback().catch((fallbackError) => {
+                console.error('Failed to open passkey fallback:', fallbackError);
+              });
+            },
+          },
         ],
       );
     } finally {

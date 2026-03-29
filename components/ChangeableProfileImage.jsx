@@ -8,6 +8,7 @@ import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
 import { API_URL } from '../config';
 import resolveImageSource from '../utils/imageSource';
+import { resolveProfileImageUploadAsset } from '../utils/profileImageUpload';
 
 const ChangeableProfileImage = ({
   imageStyle,
@@ -39,24 +40,6 @@ const ChangeableProfileImage = ({
     }
   };
 
-  const sanitizeFileName = (name, fallbackExtension = 'jpg') => {
-    const trimmedName = String(name || '').trim();
-    const baseName = trimmedName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^a-zA-Z0-9._-]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      || `profile-${Date.now()}`;
-    const rawExtension = trimmedName.includes('.')
-      ? trimmedName.split('.').pop()
-      : fallbackExtension;
-    const extension = String(rawExtension || fallbackExtension)
-      .replace(/[^a-zA-Z0-9]/g, '')
-      .toLowerCase() || fallbackExtension;
-
-    return `${baseName}.${extension}`;
-  };
-
   const getSignedUpload = async (fileName, fileType) => {
     const query = new URLSearchParams({
       fileName,
@@ -83,6 +66,7 @@ const ChangeableProfileImage = ({
       maxWidth: 1024,
       maxHeight: 1024,
       quality: 0.8,
+      assetRepresentationMode: 'compatible',
     };
 
     launchImageLibrary(options, async (response) => {
@@ -113,8 +97,10 @@ const ChangeableProfileImage = ({
 
       try {
         const imageBlob = await getBlob(uri);
-        const contentType = type || 'image/jpeg';
-        const safeFileName = sanitizeFileName(fileName, contentType.split('/')[1] || 'jpg');
+        const { contentType, fileName: safeFileName } = resolveProfileImageUploadAsset({
+          asset,
+          blob: imageBlob,
+        });
         const { url } = await getSignedUpload(safeFileName, contentType);
 
         const uploadResponse = await fetch(url, {
@@ -161,7 +147,7 @@ const ChangeableProfileImage = ({
         }
       } catch (err) {
         console.error('Error uploading to S3 =>', err);
-        Alert.alert('Upload Failed', 'Could not upload image. Please try again.');
+        Alert.alert('Upload Failed', err?.message || 'Could not upload image. Please try again.');
       }
     });
   };
