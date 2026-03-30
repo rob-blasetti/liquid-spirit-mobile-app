@@ -1,40 +1,51 @@
 import {
   buildUploadFileName,
-  isHeicLikeImage,
   resolveProfileImageUploadAsset,
 } from '../utils/profileImageUpload';
 
 describe('profileImageUpload', () => {
-  it('detects HEIC images by mime type', () => {
-    expect(isHeicLikeImage({ type: 'image/heic', fileName: 'avatar.jpg' })).toBe(true);
-  });
-
-  it('detects HEIF images by file extension', () => {
-    expect(isHeicLikeImage({ fileName: 'avatar.HEIF', type: '' })).toBe(true);
+  it('preserves HEIC uploads for backend normalization', () => {
+    expect(
+      resolveProfileImageUploadAsset({
+        uri: 'file:///tmp/avatar.heic',
+        fileName: 'avatar.heic',
+        type: 'image/heic',
+      }),
+    ).toEqual({
+      uri: 'file:///tmp/avatar.heic',
+      type: 'image/heic',
+      name: 'avatar.heic',
+    });
   });
 
   it('renames converted jpeg uploads to jpg', () => {
     expect(buildUploadFileName('My Pic.heic', 'image/jpeg')).toBe('My-Pic.jpg');
   });
 
-  it('prefers the fetched blob mime type when building the upload payload', () => {
+  it('builds a safe multipart payload from the selected asset', () => {
     expect(
       resolveProfileImageUploadAsset({
-        asset: { fileName: 'avatar.heic', type: 'image/heic' },
-        blob: { type: 'image/jpeg' },
+        uri: 'content://photos/avatar.jpeg',
+        fileName: 'My Photo.jpeg',
+        type: 'image/jpeg',
       }),
     ).toEqual({
-      contentType: 'image/jpeg',
-      fileName: 'avatar.jpg',
+      uri: 'content://photos/avatar.jpeg',
+      type: 'image/jpeg',
+      name: 'My-Photo.jpg',
     });
   });
 
-  it('rejects HEIC assets that remain HEIC after selection', () => {
+  it('falls back to the original extension when the mime type is missing', () => {
+    expect(buildUploadFileName('portrait.heif', '')).toBe('portrait.heif');
+  });
+
+  it('throws when the selected asset has no uri', () => {
     expect(() =>
       resolveProfileImageUploadAsset({
-        asset: { fileName: 'avatar.heic', type: 'image/heic' },
-        blob: { type: 'image/heic' },
+        fileName: 'avatar.heic',
+        type: 'image/heic',
       }),
-    ).toThrow('This HEIC image could not be converted to a compatible upload format.');
+    ).toThrow('No valid image URI found.');
   });
 });

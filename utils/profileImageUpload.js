@@ -1,31 +1,18 @@
-const HEIC_MIME_TYPES = new Set([
-  'image/heic',
-  'image/heic-sequence',
-  'image/heif',
-  'image/heif-sequence',
-]);
-
-const HEIC_FILE_EXTENSION_PATTERN = /\.(heic|heif)$/i;
-
 const MIME_EXTENSION_MAP = {
   'image/jpeg': 'jpg',
   'image/jpg': 'jpg',
   'image/png': 'png',
   'image/gif': 'gif',
   'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
+  'image/heic-sequence': 'heic',
+  'image/heif-sequence': 'heif',
 };
 
 const inferExtensionFromPath = value => {
   const match = String(value || '').match(/\.([a-zA-Z0-9]+)(?:$|[?#])/);
   return match ? match[1].toLowerCase() : '';
-};
-
-export const isHeicLikeImage = ({ fileName, type, uri } = {}) => {
-  const normalizedType = String(type || '').trim().toLowerCase();
-  if (HEIC_MIME_TYPES.has(normalizedType)) return true;
-
-  const extension = inferExtensionFromPath(fileName) || inferExtensionFromPath(uri);
-  return extension === 'heic' || extension === 'heif';
 };
 
 export const buildUploadFileName = (fileName, contentType) => {
@@ -48,17 +35,17 @@ export const buildUploadFileName = (fileName, contentType) => {
   return `${baseName}.${fallbackExtension}`;
 };
 
-export const resolveProfileImageUploadAsset = ({ asset, blob }) => {
-  const blobType = String(blob?.type || '').trim().toLowerCase();
-  const assetType = String(asset?.type || '').trim().toLowerCase();
-  const contentType = blobType || assetType || 'image/jpeg';
-
-  if (isHeicLikeImage(asset) && HEIC_MIME_TYPES.has(contentType)) {
-    throw new Error('This HEIC image could not be converted to a compatible upload format.');
+export const resolveProfileImageUploadAsset = asset => {
+  const uri = String(asset?.uri || '').trim();
+  if (!uri) {
+    throw new Error('No valid image URI found.');
   }
 
+  const contentType = String(asset?.type || '').trim().toLowerCase() || 'image/jpeg';
+
   return {
-    contentType,
-    fileName: buildUploadFileName(asset?.fileName, contentType),
+    uri,
+    type: contentType,
+    name: buildUploadFileName(asset?.fileName, contentType),
   };
 };

@@ -30,34 +30,25 @@ const ChangeableProfileImage = ({
     user?.firstName ||
     'Anonymous';
 
-  const getBlob = async (uri) => {
-    try {
-      const response = await fetch(uri);
-      return await response.blob();
-    } catch (err) {
-      console.error('Error fetching image blob:', err);
-      throw err;
-    }
-  };
+  const uploadProfileImage = async (asset) => {
+    const uploadAsset = resolveProfileImageUploadAsset(asset);
+    const formData = new FormData();
+    formData.append('file', uploadAsset);
 
-  const getSignedUpload = async (fileName, fileType) => {
-    const query = new URLSearchParams({
-      fileName,
-      fileType,
-    }).toString();
-    const response = await fetch(`${API_URL}/api/upload/s3-url?${query}`, {
-      method: 'GET',
+    const response = await fetch(`${API_URL}/api/upload/profile-image`, {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      body: formData,
     });
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      throw new Error(data?.error || 'Failed to get upload URL');
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload?.imageUrl) {
+      throw new Error(payload?.error || 'Failed to upload image');
     }
 
-    return response.json();
+    return payload.imageUrl;
   };
 
   const handlePress = () => {
@@ -66,7 +57,7 @@ const ChangeableProfileImage = ({
       maxWidth: 1024,
       maxHeight: 1024,
       quality: 0.8,
-      assetRepresentationMode: 'compatible',
+      assetRepresentationMode: 'current',
     };
 
     launchImageLibrary(options, async (response) => {
@@ -87,7 +78,7 @@ const ChangeableProfileImage = ({
       }
 
       const asset = response.assets[0];
-      const { uri, fileName, type } = asset;
+      const { uri } = asset;
 
       if (!uri) {
         console.error('Selected asset has no URI');
@@ -96,27 +87,8 @@ const ChangeableProfileImage = ({
       }
 
       try {
-        const imageBlob = await getBlob(uri);
-        const { contentType, fileName: safeFileName } = resolveProfileImageUploadAsset({
-          asset,
-          blob: imageBlob,
-        });
-        const { url } = await getSignedUpload(safeFileName, contentType);
-
-        const uploadResponse = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': contentType,
-          },
-          body: imageBlob,
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload image');
-        }
-
-        const uploadedImageUrl = url.split('?')[0];
-        console.log('S3 upload success =>', uploadedImageUrl);
+        const uploadedImageUrl = await uploadProfileImage(asset);
+        console.log('Profile image upload success =>', uploadedImageUrl);
 
         const updatedUserFields = {
           ...user,
@@ -146,7 +118,7 @@ const ChangeableProfileImage = ({
           });
         }
       } catch (err) {
-        console.error('Error uploading to S3 =>', err);
+        console.error('Error uploading profile image =>', err);
         Alert.alert('Upload Failed', err?.message || 'Could not upload image. Please try again.');
       }
     });
