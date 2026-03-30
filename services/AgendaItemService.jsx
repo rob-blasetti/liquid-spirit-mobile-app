@@ -22,7 +22,7 @@ export const createAgendaItem = async ({ token, title, description }) => {
     descriptionLength: payload.description.length,
   });
 
-  const response = await fetch(`${API_URL}/api/guardian/agenda-items/community`, {
+  const response = await fetch(`${API_URL}/api/assembly-agenda-items/propose`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
