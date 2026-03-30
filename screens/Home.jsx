@@ -18,7 +18,6 @@ import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import { UserContext } from '../contexts/UserContext';
-import { CommunityContext } from '../contexts/CommunityContext';
 import { useIsFocused } from '@react-navigation/native';
 import { getBadiDate } from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
@@ -79,10 +78,8 @@ const Home = ({ navigation, homeOverview, route }) => {
     userPosts,
     token,
     isTokenExpired,
-    refreshSession,
     unreadCount,
   } = useContext(UserContext);
-  const { communityId } = useContext(CommunityContext);
   const isFocused = useIsFocused();
   const bannerData = useMemo(() => {
     const bi = user?.community?.bannerImage;

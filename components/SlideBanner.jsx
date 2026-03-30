@@ -37,7 +37,7 @@ const SlideBanner = ({ message, onClose, duration = 4000, slideTo = 0 }) => {
     // auto-hide
     timerRef.current = setTimeout(() => hide(), duration);
     return () => clearTimeout(timerRef.current);
-  }, [bannerAnim, hide, duration]);
+  }, [bannerAnim, hide, duration, slideTo]);
 
   return (
     <Animated.View

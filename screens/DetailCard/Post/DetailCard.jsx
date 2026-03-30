@@ -10,7 +10,6 @@ import {
   Dimensions,
   Alert,
   Modal,
-  TextInput,
   Image as RNImage,
   Animated,
   Platform,
@@ -73,7 +72,6 @@ const PostDetailCard = ({ route }) => {
   // Redirect to feed if post not found or error occurs
   const [redirected, setRedirected] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
-  const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const didRefreshRef = useRef(false);
   const refreshScopeRef = useRef(null);
   // Lightbox modal visibility
@@ -81,12 +79,11 @@ const PostDetailCard = ({ route }) => {
   // Like and comment state
   const [isLiked, setIsLiked] = useState(false);
   const [likeCountState, setLikeCountState] = useState(post?.likes?.length || 0);
-  const [commentCountState, setCommentCountState] = useState(post?.comments?.length || 0);
+  const [, setCommentCountState] = useState(post?.comments?.length || 0);
   // Comment input visibility (shown by default) and text
   const [showCommentBox, setShowCommentBox] = useState(true);
   const [commentText, setCommentText] = useState('');
   const normalizedCommentText = commentText ?? '';
-  const isPostButtonDisabled = normalizedCommentText.trim().length === 0;
   // Related posts state
   const [relatedPosts, setRelatedPosts] = useState([]);
   // Ref for comment TextInput to focus when tapping comment icon
@@ -303,7 +300,6 @@ const PostDetailCard = ({ route }) => {
       if (useFullScreenSpinner) {
         setLoading(true);
       } else {
-        setBackgroundRefreshing(true);
       }
       try {
         const data = await fetchPostDetails(id, token);
@@ -327,13 +323,12 @@ const PostDetailCard = ({ route }) => {
         if (useFullScreenSpinner) {
           setLoading(false);
         } else {
-          setBackgroundRefreshing(false);
         }
       }
     };
     load();
     return () => { isActive = false; };
-  }, [postId, postPreload, token, storageLoaded]);
+  }, [isTokenExpired, postId, postPreload, refreshSession, storageLoaded, token]);
 
   // Redirect when specific errors occur
   useEffect(() => {
@@ -441,9 +436,6 @@ const PostDetailCard = ({ route }) => {
   const authorName = `${post.author?.firstName || 'Unknown'} ${post.author?.lastName || ''}`.trim();
   const authorCommunity = post.community?.name || '';
   const profilePic = post.author?.profilePicture?.trim();
-  const likeCount = post.likes?.length || 0;
-  const commentCount = post.comments?.length || 0;
-
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <SwipeToCloseScrollView

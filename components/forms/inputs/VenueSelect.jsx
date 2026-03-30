@@ -67,7 +67,7 @@ const VenueSelect = ({
   helperText = 'Choose a venue for the in-person session.',
   inputProps,
   style,
-  helperSpacing = 0,
+  helperSpacing: _helperSpacing = 0,
   facilitatorIds = [],
   participantIds = [],
   userId,

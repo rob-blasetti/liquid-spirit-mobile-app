@@ -1,14 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { getPushPreferences, updatePushPreferences } from '../services/PushPreferencesService.jsx';
 
 const NotificationSettings = () => {
-  const nav = useNavigation();
   const { user, token } = useContext(UserContext);
   const insets = useSafeAreaInsets();
 

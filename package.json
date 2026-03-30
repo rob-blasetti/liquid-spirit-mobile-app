@@ -8,7 +8,7 @@
     "ios": "ENVFILE=.env react-native run-ios",
     "staging": "ENVFILE=.env.staging react-native run-ios",
     "production": "ENVFILE=.env.production react-native run-ios",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint App.jsx index.js components contexts hooks navigation screens services utils __tests__ __mocks__ .eslintrc.js babel.config.js jest.config.js metro.config.js react-native.config.js --ext .js,.jsx,.ts,.tsx --report-unused-disable-directives",
     "test": "jest"
   },
   "dependencies": {

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   ActivityIndicator,
   Dimensions,
   Modal,
@@ -15,10 +14,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CardTitle, CardContent } from '../../../components/Card';
-import FastImage from 'react-native-fast-image';
+import { CardTitle } from '../../../components/Card';
 import CardContainer from '../common/CardContainer';
-import SectionTitle from '../common/SectionTitle';
 import sectionBaseStyles from '../common/sectionBaseStyles';
 import BadgeModal from '../common/BadgeModal';
 import HostLocationSection from './sections/HostLocationSection';
@@ -28,7 +25,6 @@ import MaterialsSection from './sections/MaterialsSection';
 
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
 import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
-import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -49,9 +45,7 @@ const allowedMaterialTypes = [
   documentTypes.plainText,
 ];
 import resolveImageSource from '../../../utils/imageSource';
-import UserBadge from '../../../components/UserBadge';
 import UserCell from '../../../components/UserCell';
-import MaterialsItemTile from '../../../components/MaterialsItemTile';
 import { fetchUserBodyByEventType } from '../../../services/UserBodyService';
 import { UserContext } from '../../../contexts/UserContext';
 import { CommunityContext } from '../../../contexts/CommunityContext';
@@ -65,7 +59,6 @@ import {
   detailCardTitle,
   detailCardSubtitle,
   detailCardContent,
-  detailCardHorizontalPadding,
 } from '../common/detailCardLayout';
 import { getDisplayAddress } from '../Activity/utils/locationUtils';
 import useChatStarter from '../common/useChatStarter';
@@ -78,7 +71,6 @@ const { height: windowHeight } = Dimensions.get('window');
 
 // Get abbreviated weekday name, e.g. "Wed"
 const getDayName = d => d.toLocaleDateString(undefined, { weekday: 'short' });
-const getDayMonth = d => d.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
 // Format day and month with full month name, e.g. "30 July"
 const getDayMonthName = d => d.toLocaleDateString(undefined, { day: 'numeric', month: 'long' });
 // Parse time strings (ISO datetime or HH:mm) into a localized time string
@@ -162,7 +154,6 @@ const EventDetailCard = ({ route }) => {
     });
   }, [event, eventId]);
   const { user, token, isTokenExpired, refreshSession, storageLoaded } = useContext(UserContext);
-  const { communityId } = useContext(CommunityContext);
   const [optimisticJoin, setOptimisticJoin] = useState(false);
   const [errorStatus, setErrorStatus] = useState(null);
   const didRefreshRef = useRef(false);
@@ -292,7 +283,7 @@ const EventDetailCard = ({ route }) => {
 
     run();
     return () => { isMounted = false; };
-  }, [eventId, token, eventPreload, storageLoaded, didFinishEntryTransition]);
+  }, [didFinishEntryTransition, eventId, eventPreload, isTokenExpired, refreshSession, storageLoaded, token]);
   // Redirect unauthenticated or missing events to appropriate screens
   useEffect(() => {
     if (redirected || loading) return;
@@ -395,7 +386,7 @@ const EventCardBody = ({
         })
         .finally(() => setMemberLoading(false));
     }
-  }, [addHostModalVisible]);
+  }, [addHostModalVisible, communityId]);
 
   // Filter member list based on search query
   const onMemberSearch = text => {
@@ -442,7 +433,6 @@ const EventCardBody = ({
   const isAdmin = Object.values(userBodyMembership).some(v => v === true);
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
-  const dateSub = getDayMonth(dateObj);
   // Full month name, e.g. "30 July"
   const dateSubName = getDayMonthName(dateObj);
   const timeMain = startTime ? parseTime(startTime) : 'N/A';
@@ -594,25 +584,9 @@ const EventCardBody = ({
     }
   };
   // Handle direct host addition by admin
-  const handleAddHost = async () => {
-    try {
-      const newHost = { refId: userId, type: 'User' };
-      // add host(s) then re-fetch full event details for consistent data shape
-      await addEventHost(event._id, [newHost], token || '');
-      const updatedEvent = await fetchEventDetails(event._id, token || '');
-      setEvent(updatedEvent);
-      Alert.alert('Host added', 'Host successfully added.');
-    } catch (err) {
-      console.error('Add host failed:', err);
-      Alert.alert('Error', err.message || 'Failed to add host. Please try again.');
-    }
-  };
-  // Track hosts being removed
-  const [removingHosts, setRemovingHosts] = useState([]);
   // Handle removing a host by admin
   const handleRemoveHost = async host => {
     const hostId = host.refId || host._id;
-    setRemovingHosts(prev => [...prev, hostId]);
     try {
       // Filter out the removed host and update server
       const remaining = hosts.filter(hh => (hh.refId || hh._id) !== hostId);
@@ -624,8 +598,6 @@ const EventCardBody = ({
     } catch (err) {
       console.error('Remove host failed:', err);
       Alert.alert('Error', err.message || 'Failed to remove host.');
-    } finally {
-      setRemovingHosts(prev => prev.filter(id => id !== hostId));
     }
   };
   // Material picker
@@ -691,7 +663,7 @@ const EventCardBody = ({
   const [attendeesModalVisible, setAttendeesModalVisible] = useState(false);
   const [oversightModalVisible, setOversightModalVisible] = useState(false);
   // State for enriched attendees: load full user data for each attendee
-  const [enrichedAttendees, setEnrichedAttendees] = useState(null);
+  const [enrichedAttendees] = useState(null);
 
   // State for oversight body members; initialize name based on eventType to avoid empty jump
   const defaultOversightName = (eventType || '').toLowerCase().includes('feast')
@@ -740,7 +712,7 @@ const EventCardBody = ({
     };
     loadBody();
     return () => { isMounted = false; };
-  }, [eventType, oversightMembersPreload]);
+  }, [eventType, oversightMembersPreload, token]);
 
   const attendees = enrichedAttendees ?? rawAttendees;
   // Material upload modal state
@@ -976,74 +948,6 @@ const EventCardBody = ({
   );
 };
 
-const Fact = ({ icon, label, value, onPress, link }) => (
-  <TouchableOpacity
-    style={styles.factBox}
-    disabled={!onPress}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <Ionicons name={icon} size={18} color="#312783" />
-    <Text style={styles.factLabel}>{label}</Text>
-    <Text style={[styles.factValue, link && styles.linkText]} numberOfLines={1}>
-      {value}
-    </Text>
-  </TouchableOpacity>
-);
-const DetailCell = ({ icon, label, main, sub, onPress, isLink, style: cellStyle, labelStyle, mainStyle, subStyle }) => (
-  <TouchableOpacity
-    style={[styles.detailCell, cellStyle]}
-    onPress={onPress}
-    disabled={!onPress}
-    activeOpacity={0.8}
-  >
-    <Ionicons name={icon} size={18} color="#312783" style={styles.detailIcon} />
-    <Text style={[styles.detailLabel, labelStyle]}>{label}</Text>
-    <Text style={[styles.detailValue, isLink && styles.linkText, mainStyle]}>{main}</Text>
-    {sub ? <Text style={[styles.detailSub, subStyle]}>{sub}</Text> : null}
-  </TouchableOpacity>
-);
-const OverlappingAvatars = ({ list }) => {
-  const maxDisplay = 2;
-  const extraCount = list.length - maxDisplay;
-  const displayList = list.slice(0, maxDisplay);
-  const navigation = useNavigation();
-  return (
-    <View style={styles.avatarsContainer}>
-      {displayList.map((item, idx) => {
-        const key = item.details?._id || idx;
-        const user = item.details || {};
-        const avatarUri = user.profilePicture;
-        const imageStyle = [styles.avatar, idx > 0 && { marginLeft: -15 }];
-        return (
-          <TouchableOpacity
-            key={key}
-            style={imageStyle}
-            activeOpacity={0.8}
-            onPress={() => navigation.navigate('PublicUserProfile', { userId: user._id })}
-          >
-            {avatarUri ? (
-              <FastImage source={resolveImageSource(avatarUri, { priority: 'normal' })} style={imageStyle} />
-            ) : (
-              <Avatar
-                size={styles.avatar.width}
-                name={`${user.firstName || ''} ${user.lastName || ''}`.trim()}
-                variant="beam"
-                colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-                style={imageStyle}
-              />
-            )}
-          </TouchableOpacity>
-        );
-      })}
-      {extraCount > 0 && (
-        <View key="extra" style={[styles.avatar, styles.extraCount, { marginLeft: -15 }]}>
-          <Text style={styles.extraCountText}>+{extraCount}</Text>
-        </View>
-      )}
-    </View>
-  );
-};
 const styles = StyleSheet.create({
   // Modal for adding host
   modalCenterContainer: {

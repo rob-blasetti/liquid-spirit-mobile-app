@@ -111,7 +111,7 @@ const BottomBar = ({ initialPosts, homeOverview }) => {
   );
   const contentBottomInset = useMemo(
     () => (isLiquidGlassNavSupported ? Math.max(insets.bottom, 10) + TAB_BAR_HEIGHT + 12 : 0),
-    [insets.bottom],
+    [insets.bottom, isLiquidGlassNavSupported],
   );
 
   const handleCreateActivity = useCallback(() => {

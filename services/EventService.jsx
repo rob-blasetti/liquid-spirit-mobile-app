@@ -2,7 +2,7 @@ import NotificationService from '../services/NotificationService';
 import { getCurrentUserId } from './AuthService';
 
 import { API_URL } from '../config';
-import { buildJsonHeaders, parseJsonSafe, requestJson } from './http';
+import { buildJsonHeaders, requestJson } from './http';
 
 export const fetchEvents = async (token) => {
   try {

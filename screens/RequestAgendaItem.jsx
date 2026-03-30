@@ -15,7 +15,7 @@ import { Button } from 'liquid-spirit-styleguide/native';
 import TitleSection from './CreateActivity/sections/TitleSection';
 import DescriptionSection from './CreateActivity/sections/DescriptionSection';
 
-export default function RequestAgendaItem({ navigation, route }) {
+export default function RequestAgendaItem({ navigation, route: _route }) {
   const { token } = useContext(UserContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

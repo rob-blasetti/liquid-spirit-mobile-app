@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,9 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { UserContext } from '../contexts/UserContext';
-import { useAuthService } from '../services/AuthService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const ChangePassword = ({ navigation }) => {
-  const { token } = useContext(UserContext);
-  const { updateMe } = useAuthService();
-
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

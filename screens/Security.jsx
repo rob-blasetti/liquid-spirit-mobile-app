@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -59,7 +59,7 @@ const Security = ({ navigation }) => {
     return [];
   };
 
-  const normalizePasskey = (passkey, index) => {
+  const normalizePasskey = useCallback((passkey, index) => {
     const id =
       passkey?._id ||
       passkey?.id ||
@@ -75,9 +75,9 @@ const Security = ({ navigation }) => {
       createdAt,
       raw: passkey,
     };
-  };
+  }, [userFirstName]);
 
-  const loadPasskeys = async () => {
+  const loadPasskeys = useCallback(async () => {
     if (!token) {
       setPasskeys([]);
       return;
@@ -100,13 +100,13 @@ const Security = ({ navigation }) => {
     } finally {
       setPasskeysLoading(false);
     }
-  };
+  }, [fetchPasskeyCredentials, normalizePasskey, token]);
 
   const hasPasskeys = passkeys.length > 0;
 
   useEffect(() => {
     loadPasskeys();
-  }, [token]);
+  }, [loadPasskeys]);
 
   const getRootNavigation = () => {
     let currentNav = navigation;

@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Platform, Alert, Animated } from 'react-native';
+import { View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Alert, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
@@ -100,6 +100,35 @@ const extractActivityAndSessionIds = (notification) => {
   );
 
   return { activityId, sessionId };
+};
+
+const TYPE_CATEGORY_MAP = {
+  post_media: 'post',
+  post_created: 'post',
+  new_activity: 'activity',
+  join_activity: 'activity',
+  activity_updated: 'activity',
+  activity_canceled: 'activity',
+  activity_cancelled: 'activity',
+  join_event: 'event',
+  event_reminder: 'event',
+  signup: 'announcement',
+  session: 'activity',
+  session_created: 'activity',
+  session_updated: 'activity',
+  session_reminder: 'activity',
+  session_cancelled: 'activity',
+  session_canceled: 'activity',
+};
+
+const mapNotificationType = (typeName = '') => {
+  const key = typeName.toLowerCase();
+  if (TYPE_CATEGORY_MAP[key]) return TYPE_CATEGORY_MAP[key];
+  if (key.includes('session')) return 'activity';
+  if (key.includes('activity')) return 'activity';
+  if (key.includes('event')) return 'event';
+  if (key.includes('post')) return 'post';
+  return 'general';
 };
 
 export default function Notifications() {
@@ -349,7 +378,7 @@ export default function Notifications() {
     // Update unread count badge
     const unread = formatted.filter((n) => !n.read).length;
     setUnreadCount(unread);
-  }, [userNotifications]);
+  }, [setUnreadCount, userNotifications]);
 
   useEffect(() => {
     if (!flatNotifications.length) return;
@@ -402,7 +431,7 @@ export default function Notifications() {
       await NotificationService.markNotificationAsRead(token, id);
       setGroupedNotifList((prev) => {
         const updated = {};
-        for (let [section, items] of Object.entries(prev)) {
+        for (const [section, items] of Object.entries(prev)) {
           updated[section] = items.map((n) => (n.id === id ? { ...n, read: true } : n));
         }
         return updated;
@@ -569,35 +598,6 @@ export default function Notifications() {
       scopedItems.forEach((item) => filteredNotifList.push(item));
     }
   });
-
-  const typeCategoryMap = {
-    post_media: 'post',
-    post_created: 'post',
-    new_activity: 'activity',
-    join_activity: 'activity',
-    activity_updated: 'activity',
-    activity_canceled: 'activity',
-    activity_cancelled: 'activity',
-    join_event: 'event',
-    event_reminder: 'event',
-    signup: 'announcement',
-    session: 'activity',
-    session_created: 'activity',
-    session_updated: 'activity',
-    session_reminder: 'activity',
-    session_cancelled: 'activity',
-    session_canceled: 'activity',
-  };
-
-  const mapNotificationType = (typeName = '') => {
-    const key = typeName.toLowerCase();
-    if (typeCategoryMap[key]) return typeCategoryMap[key];
-    if (key.includes('session')) return 'activity';
-    if (key.includes('activity')) return 'activity';
-    if (key.includes('event')) return 'event';
-    if (key.includes('post')) return 'post';
-    return 'general';
-  };
 
   const formatTime = (timestamp) => {
     const diff = Date.now() - new Date(timestamp).getTime();

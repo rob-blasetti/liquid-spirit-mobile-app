@@ -20,9 +20,9 @@ const UserBadge = ({ user, userCertifications, type = 'user' }) => {
     return <View style={[styles.container, styles.errorContainer]}><Text>Error</Text></View>;
   }
 
-  let displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-  let avatarUri = user.profilePicture || null;
-  let certifications = [];
+  const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  const avatarUri = user.profilePicture || null;
+  const certifications = [];
   const verifiedIcon = 'checkmark-circle';
   const protectionIcon = 'shield-checkmark';
   const lsaIcon = 'star';

@@ -1,8 +1,7 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Platform } from 'react-native';
 
 import { UserContext } from '../../contexts/UserContext';
 import themeVariables from '../../styles/theme';
@@ -92,13 +91,6 @@ const Discover = ({ navigation }) => {
     [navigation, token, isTokenExpired],
   );
 
-  const handleViewAllActivities = useCallback(() => {
-    navigation.navigate('Activities');
-  }, [navigation]);
-
-  const handleViewAllEvents = useCallback(() => {
-    navigation.navigate('Events');
-  }, [navigation]);
 
   if (userActivities === null || userEvents === null) {
     return (

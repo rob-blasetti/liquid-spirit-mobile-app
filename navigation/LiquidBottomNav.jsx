@@ -49,7 +49,7 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [state.index, tabLayouts, layoutReady]);
+  }, [state.index, tabLayouts, layoutReady, indicatorWidth, indicatorX]);
 
   const labelForRoute = (route, options) => {
     if (options?.tabBarLabel !== undefined) {

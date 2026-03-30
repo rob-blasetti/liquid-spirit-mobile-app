@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,16 +10,16 @@ import {
   Platform,
   Keyboard,
   StatusBar,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as Progress from 'react-native-progress';
 import Video from 'react-native-video';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import { UserContext } from '../contexts/UserContext';
 import { CommunityContext } from '../contexts/CommunityContext';
-import { TouchableWithoutFeedback } from 'react-native';
 import { createPost, uploadImageWithThumbnail, uploadVideoWithThumbnail } from '../services/PostService';
 import themeVariables from '../styles/theme';
 import FastImage from 'react-native-fast-image';
@@ -32,7 +32,7 @@ export default function CreatePost({ onPostCreated, onClose }) {
   const [mediaType, setMediaType] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState('');
-  const { token, user, userActivities, userEvents } = useContext(UserContext);
+  const { token, user } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [tags, setTags] = useState([]);
@@ -53,19 +53,6 @@ export default function CreatePost({ onPostCreated, onClose }) {
     'Holy Day',
     'Admin',
   ];
-  const openCamera = async () => {
-    const options = { mediaType: 'mixed', quality: 0.7 };
-    launchCamera(options, (response) => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        Alert.alert('Camera Error', response.errorMessage || 'Unknown error');
-      } else if (response.assets && response.assets.length > 0) {
-        const asset = response.assets[0];
-        setMediaUri(asset.uri);
-        setMediaType(asset.type);
-      }
-    });
-  };
 
   const openLibrary = async () => {
     const options = { mediaType: 'mixed', quality: 0.7 };

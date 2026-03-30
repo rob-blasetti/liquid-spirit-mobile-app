@@ -1,4 +1,4 @@
-import { coalesceString, normalizeString } from './activityHelpers';
+import { coalesceString } from './activityHelpers';
 
 const resolveEntryDetails = (entry) => {
   if (!entry || typeof entry === 'string' || typeof entry === 'number') return null;

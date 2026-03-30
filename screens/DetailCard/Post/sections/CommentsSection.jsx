@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../../../../styles/theme';
 import { timeSince } from '../../../../utils/timeSince';
@@ -22,7 +21,6 @@ const CommentsSection = ({
     ? [...comments].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     : [];
   const visible = showAll ? sorted : sorted.slice(0, 2);
-  const hasMore = !showAll && sorted.length > 2;
 
   return (
     <View style={[styles.container, commentBoxContainerStyle]}>

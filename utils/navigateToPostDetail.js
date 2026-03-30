@@ -37,7 +37,7 @@ export const navigateToPostDetail = async ({
 
   const mediaUrl = resolveMediaUrl(post);
 
-  let aspect = imageAspect || post?.imageAspect || getPostImageAspect(id, mediaUrl);
+  const aspect = imageAspect || post?.imageAspect || getPostImageAspect(id, mediaUrl);
 
   const resolvedPost = post ? { ...post } : undefined;
   if (resolvedPost && aspect) {

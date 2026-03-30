@@ -13,7 +13,7 @@ const DropdownMenu = ({ onFlag, onBlock, onMute, onDelete, onClose, isOwnPost })
       Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
       Animated.timing(translateY, { toValue: -190, duration: 250, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [opacity, translateY]);
 
   return (
     <View style={styles.overlayContainer}>

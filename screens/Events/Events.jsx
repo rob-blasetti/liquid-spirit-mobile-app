@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   TouchableOpacity,
   Animated,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // navigation prop is provided by the navigator, no need for useNavigation()
@@ -73,7 +73,7 @@ const Events = ({ navigation, route }) => {
     }
   }, [route?.params?.bannerMessage, navigation]);
   const [events, setEvents] = useState(userEvents || []);
-  const [loading, setLoading] = useState(userEvents ? false : true);
+  const [loading] = useState(userEvents ? false : true);
 
   // Sorting & Filtering
   const [sortOrder, setSortOrder] = useState('asc');
@@ -108,10 +108,10 @@ const Events = ({ navigation, route }) => {
 
   const formatDate = (dateString, timeString) => {
     if (!dateString) return 'N/A';
-    let date = new Date(dateString);
-    let formattedTime = 'No Time';
-    if (timeString) {
-      let timeDate = new Date(timeString);
+      const date = new Date(dateString);
+      let formattedTime = 'No Time';
+      if (timeString) {
+      const timeDate = new Date(timeString);
       if (!isNaN(timeDate.getTime())) {
         date.setHours(timeDate.getHours(), timeDate.getMinutes());
         formattedTime = date.toLocaleTimeString('en-US', {

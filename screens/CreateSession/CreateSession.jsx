@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, BackHandler, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from 'liquid-spirit-styleguide/native';
 
@@ -201,7 +201,7 @@ const initialForm = {
 const CreateSession = ({ navigation, route }) => {
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { token, user } = useContext(UserContext);
-  const params = route?.params || {};
+  const params = useMemo(() => route?.params || {}, [route?.params]);
   const communityId = params.communityId || params.activity?.community || params.activityPreload?.community;
   const resolvedActivityId = useMemo(() => {
     const candidates = [
@@ -697,10 +697,6 @@ const CreateSession = ({ navigation, route }) => {
     }
   }, [validateStep]);
 
-  const onBackStep = useCallback(() => {
-    setStep((prev) => Math.max(prev - 1, 1));
-  }, []);
-
   const handleSubmit = useCallback(async () => {
     if (!token) {
       Alert.alert('Not signed in', 'Please log in to create a new session.');
@@ -751,7 +747,7 @@ const CreateSession = ({ navigation, route }) => {
     } finally {
       setSubmitting(false);
     }
-  }, [form, navigation, resolvedActivityId, token, validate]);
+  }, [activityType, form, navigation, resolvedActivityId, token, validate]);
 
   const handleNavBack = useCallback(() => {
     if (step > 1) {

@@ -10,7 +10,6 @@ import debugLog from '../utils/debugLog';
 import { isJwtExpired, resolveAccessToken, resolveRefreshToken } from '../utils/authTokens';
 import {
   clearSessionTokens,
-  getStoredAccessToken,
   getStoredRefreshToken,
   loadSessionTokens,
   saveSessionTokens,
@@ -182,12 +181,13 @@ export const UserProvider = ({ children }) => {
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [chatNotificationCount, setChatNotificationCount] = useState(0);
-  const [isChatTabActive, setIsChatTabActiveState] = useState(false);
+  const [, setIsChatTabActiveState] = useState(false);
   // Detailed user info (including certifications) fetched on startup
   const [userDetails, setUserDetails] = useState(null);
   // Concurrency guards
   const refreshInFlightRef = useRef(null);
   const biometricInFlightRef = useRef(false);
+  const biometricLoginRef = useRef(null);
   const chatTabActiveRef = useRef(false);
   const chatPollingRef = useRef(null);
   const chatBadgeRefreshInFlightRef = useRef(null);
@@ -209,7 +209,7 @@ export const UserProvider = ({ children }) => {
     (payload) => {
       const { chats } = computeUnreadSummary(payload);
       let total = 0;
-      const breakdown = chats.map((chat) => {
+      chats.forEach((chat) => {
         const chatId = chat?._id || chat?.id;
         const serverCount = deriveChatUnreadCount(chat);
         let baseline = 0;
@@ -226,12 +226,6 @@ export const UserProvider = ({ children }) => {
         }
 
         total += effective;
-        return {
-          id: chatId || 'unknown',
-          serverCount,
-          baseline,
-          effective,
-        };
       });
 
       setChatNotificationCount(total);
@@ -330,7 +324,7 @@ export const UserProvider = ({ children }) => {
     };
 
     loadUserData();
-  }, [token]);
+  }, [isTokenExpired, refreshSession, token]);
 
   // Fetch full user details (including certifications) and sync profile picture on startup
   useEffect(() => {
@@ -410,11 +404,9 @@ export const UserProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     }
-  }, [setCommunityId]);
+  }, [setCommunityId, setIsChatTabActive]);
 
-  function isTokenExpired(jwtToken) {
-    return isJwtExpired(jwtToken);
-  }
+  const isTokenExpired = useCallback((jwtToken) => isJwtExpired(jwtToken), []);
 
   const refreshSession = useCallback(async () => {
     if (refreshInFlightRef.current) {
@@ -448,7 +440,7 @@ export const UserProvider = ({ children }) => {
           console.warn('Invalid refresh token, attempting re-login with stored credentials...');
           await saveSessionTokens({ accessToken: null, refreshToken: null });
           try {
-            await biometricLogin();
+            await biometricLoginRef.current?.();
           } catch (err) {
             console.error('Re-login failed:', err);
             await logout();
@@ -485,7 +477,7 @@ export const UserProvider = ({ children }) => {
 
     refreshInFlightRef.current = refreshPromise;
     return refreshPromise;
-  }, [biometricLogin, logout]);
+  }, [authBase, logout]);
 
   const ensureValidSession = useCallback(async () => {
     if (!token) return null;
@@ -501,7 +493,7 @@ export const UserProvider = ({ children }) => {
       console.error('Failed to ensure valid session:', error);
       return null;
     }
-  }, [token, refreshSession]);
+  }, [isTokenExpired, token, refreshSession]);
 
   const refreshChatBadgeFromServer = useCallback(async ({ force = false } = {}) => {
     if (!token) return null;
@@ -635,7 +627,7 @@ export const UserProvider = ({ children }) => {
 
     notificationRefreshInFlightRef.current = refreshPromise;
     return refreshPromise;
-  }, [token, derivedUserId]);
+  }, [derivedUserId, isTokenExpired, token]);
 
   refreshNotificationsFromServerRef.current = refreshNotificationsFromServer;
 
@@ -703,7 +695,7 @@ export const UserProvider = ({ children }) => {
     setIsChatTabActive(false);
     chatServerUnreadRef.current = {};
     chatUnreadBaselineRef.current = {};
-  }, [token]);
+  }, [setIsChatTabActive, token]);
 
   const biometricLogin = async () => {
     // Prevent parallel biometric prompts/logins
@@ -752,6 +744,7 @@ export const UserProvider = ({ children }) => {
       biometricInFlightRef.current = false;
     }
   };
+  biometricLoginRef.current = biometricLogin;
 
   return (
     <UserContext.Provider

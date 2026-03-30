@@ -58,7 +58,10 @@ const Badges = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const routeCertifications = route.params?.certifications;
   const profileName = route.params?.profileName || 'My';
-  const certData = routeCertifications || userDetails?.certifications || {};
+  const certData = useMemo(
+    () => routeCertifications || userDetails?.certifications || {},
+    [routeCertifications, userDetails?.certifications],
+  );
   const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
 
   const badgeItems = useMemo(

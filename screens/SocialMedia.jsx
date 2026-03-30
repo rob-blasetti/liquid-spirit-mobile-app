@@ -4,7 +4,6 @@ import {
   FlatList,
   StyleSheet,
   RefreshControl,
-  TouchableOpacity,
   Alert,
   Text,
   Pressable,
@@ -37,7 +36,7 @@ const scheduleIdleCallback = (callback) => {
 const waitForIdle = () => new Promise(resolve => scheduleIdleCallback(resolve));
 
 const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
-  const { token, isTokenExpired, refreshSession, user } = useContext(UserContext);
+  const { token, isTokenExpired, refreshSession } = useContext(UserContext);
   const { communityId } = useContext(CommunityContext);
   // Debug logs removed
   const [activeTab, setActiveTab] = useState('explore');
@@ -60,7 +59,6 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
   const [welcomeModalVisible, setWelcomeModalVisible] = useState(false);
   const flatListExploreRef = useRef(null);
   const flatListForYouRef = useRef(null);
-  const pendingScrollIndexRef = useRef(null);
   // Slide transitions between tabs/content
   const screenWidth = Dimensions.get('window').width;
   const slideX = useRef(new Animated.Value(0)).current; // 0 = explore, -screenWidth = foryou
@@ -102,7 +100,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
         }, 500);
       });
     }
-  }, [route?.params?.post, route?.params?.postId, explorePosts, forYouPosts, activeTab]);
+  }, [route?.params?.post, route?.params?.postId, explorePosts, forYouPosts, activeTab, navigation]);
 
   // Load Explore tab posts, include auth token
   const fetchExplorePosts = useCallback(async () => {
@@ -253,7 +251,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     }
   };
 
-  const handleLike = async (postId, userId) => {
+  const handleLike = useCallback(async (postId, userId) => {
     if (!token) {
       setWelcomeModalVisible(true);
       return;
@@ -278,9 +276,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
       Alert.alert('Error', 'An error occurred while liking the post');
       return null;
     }
-  };
+  }, [hasUserLiked, token]);
 
-  const openCommentModal = (postId) => {
+  const openCommentModal = useCallback((postId) => {
     if (!token) {
       setWelcomeModalVisible(true);
       return;
@@ -288,7 +286,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     setCurrentPostId(postId);
     setCommentText('');
     setCommentModalVisible(true);
-  };
+  }, [token]);
 
   const submitComment = async () => {
     if (!commentText.trim()) {
@@ -305,7 +303,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     }
   };
 
-  const handleFlag = async (postId) => {
+  const handleFlag = useCallback(async (postId) => {
     try {
       // Example: call an API to flag the post
       await flagPost(postId, token);
@@ -313,9 +311,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'An error occurred while reporting the post');
     }
-  };
+  }, [token]);
 
-  const handleBlock = async (userId) => {
+  const handleBlock = useCallback(async (userId) => {
     try {
       // Example: call an API to block the user
       await blockUser(userId, token);
@@ -326,9 +324,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'An error occurred while blocking the user');
     }
-  };
+  }, [token]);
 
-  const handleMute = async (userId) => {
+  const handleMute = useCallback(async (userId) => {
     try {
       await muteUser(userId, token);
       Alert.alert('Mute', 'User has been muted.');
@@ -338,9 +336,9 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'An error occurred while muting the user');
     }
-  };
+  }, [token]);
 
-  const handleDelete = async (postId) => {
+  const handleDelete = useCallback(async (postId) => {
     try {
       await deletePost(postId, token);
       Alert.alert('Delete Post', 'Post has been deleted.');
@@ -351,7 +349,7 @@ const SocialMedia = ({ initialPosts, scrollToTop, route, navigation }) => {
     } catch (error) {
       Alert.alert('Error', 'An error occurred while deleting the post.');
     }
-  };
+  }, [token]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

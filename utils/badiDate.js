@@ -1,5 +1,4 @@
 // Badi calendar constants
-const BADI_EPOCH = new Date(Date.UTC(1844, 2, 21)); // March 21, 1844
 // English-transliterated Badi month names (ASCII, no diacritics)
 // English translations of the 20 Badi month names (in calendar order)
 const BADI_MONTHS = [
@@ -49,7 +48,7 @@ function getBadiDate(date) {
   }
 
   const daysSinceNawRuz = Math.floor((utcDate - nawRuzThisYear) / (1000 * 60 * 60 * 24));
-  let dayOfYear = daysSinceNawRuz + 1;
+  const dayOfYear = daysSinceNawRuz + 1;
 
   let badiMonth, badiDay;
 

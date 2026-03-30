@@ -15,6 +15,12 @@ const buildKey = (items) => {
 
 const usePrefetchImages = (sources, options = {}) => {
   const lastKeyRef = useRef(null);
+  const {
+    baseUrl,
+    cache,
+    priority,
+    headers,
+  } = options;
 
   useEffect(() => {
     if (!sources) return;
@@ -25,8 +31,8 @@ const usePrefetchImages = (sources, options = {}) => {
     if (currentKey === lastKeyRef.current) return;
     lastKeyRef.current = currentKey;
 
-    prefetchImageSources(list, options);
-  }, [sources, options.baseUrl, options.cache, options.priority, options.headers]);
+    prefetchImageSources(list, { baseUrl, cache, priority, headers });
+  }, [sources, baseUrl, cache, priority, headers]);
 };
 
 export default usePrefetchImages;

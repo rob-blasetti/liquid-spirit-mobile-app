@@ -297,7 +297,7 @@ export const useAuthService = () => {
     }
 
     try {
-      const decodedToken = decodeToken(token);
+      decodeToken(token);
 
       if (isJwtExpired(token)) {
         console.warn('Token has expired');

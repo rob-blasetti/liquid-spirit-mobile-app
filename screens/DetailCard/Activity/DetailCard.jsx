@@ -161,7 +161,10 @@ const ActivityDetailCard = ({ route }) => {
     [safeAreaBottom],
   );
 
-  const latestActivityForChat = hydratedActivity || hydratedPrefillActivity || activityPreload || {};
+  const latestActivityForChat = useMemo(
+    () => hydratedActivity || hydratedPrefillActivity || activityPreload || {},
+    [activityPreload, hydratedActivity, hydratedPrefillActivity],
+  );
   const chatParticipantProfiles = useMemo(
     () => getActivityChatParticipantProfiles(latestActivityForChat),
     [latestActivityForChat],

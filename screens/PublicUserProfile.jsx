@@ -172,7 +172,7 @@ const PublicUserProfile = () => {
     return () => {
       isActive = false;
     };
-  }, [normalizedRouteUserId, token, storageLoaded, didRefresh]);
+  }, [didRefresh, isTokenExpired, normalizedRouteUserId, refreshSession, storageLoaded, token]);
 
   const handleRefreshActivities = useCallback(async () => {
     if (!normalizedRouteUserId) return;

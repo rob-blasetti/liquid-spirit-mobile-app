@@ -1,4 +1,4 @@
-import { coalesceString, normalizeString } from './activityHelpers';
+import { normalizeString } from './activityHelpers';
 import {
   getDisplayAddress as getDisplayAddressFromLocation,
   getStreetAndSuburb as getStreetAndSuburbFromLocation,

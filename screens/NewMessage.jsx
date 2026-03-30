@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
@@ -451,13 +450,6 @@ const NewMessage = () => {
     handleStartActivityChat,
     activityChatBusyId,
   ]);
-
-  const renderHeader = useMemo(
-    () => (
-      <Text style={styles.sectionTitle}>Community members</Text>
-    ),
-    [],
-  );
 
   return (
     <SafeAreaView style={styles.safeArea}>

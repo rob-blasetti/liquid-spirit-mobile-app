@@ -8,13 +8,13 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import * as Keychain from 'react-native-keychain';
-import { Linking } from 'react-native';
-import { AUTH_API_URL, API_URL, PASSKEY_WEBSITE_PATH, WEB_APP_URL } from '../config';
+import { PASSKEY_WEBSITE_PATH, WEB_APP_URL } from '../config';
 import { isValidEmail, isValidPassword } from '../utils/validation';
 import { useAuthService, getCurrentUserId } from '../services/AuthService';
 import SlideBanner from '../components/SlideBanner';
@@ -22,7 +22,6 @@ import PasswordField from '../components/forms/inputs/PasswordField';
 import FormTextInput from '../components/forms/inputs/FormTextInput';
 
 const Login = ({ navigation, route }) => {
-  const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

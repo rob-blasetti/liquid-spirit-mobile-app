@@ -1,5 +1,5 @@
 import React, { useLayoutEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Text, ScrollView, StyleSheet } from 'react-native';
 import themeVariables from '../styles/theme';
 
 export default function CurriculumDetailScreen({ route, navigation }) {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import splashLogo from '../assets/img/LS_Splash.png';
 
 const Splash = () => {
@@ -39,4 +39,3 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
-

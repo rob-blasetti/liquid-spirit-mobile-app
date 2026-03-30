@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
-  ActivityIndicator,
   TouchableOpacity,
   Platform,
 } from 'react-native';
@@ -16,7 +15,7 @@ import { UserContext } from '../contexts/UserContext';
 import PostItem from '../components/PostItem';
 import ActivityItem from '../components/ActivityItem';
 import EventItem from '../components/EventItem';
-import { fetchActivities } from '../services/ActivityService';
+import { fetchActivities, approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -24,7 +23,6 @@ import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 import SectionStateCard from '../components/SectionStateCard';
-import { approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { shareContent } from '../utils/shareContent';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
@@ -39,8 +37,6 @@ const normalizeRuhiBadges = (value) => {
 
   return Array.from(new Set(parsed));
 };
-
-const TAB_BAR_HEIGHT = 80;
 
 const PROFILE_STAT_CARDS = [
   { key: 'activities', label: 'Current Activities', icon: 'layers-outline' },
@@ -314,7 +310,7 @@ const renderList = (data, type) => {
 
   // Sort items chronologically and identify the next upcoming item
   const now = Date.now();
-  let listData = [...data];
+  const listData = [...data];
   if (type === 'activities') {
     listData.sort((a, b) => {
       const nextTime = sess => {

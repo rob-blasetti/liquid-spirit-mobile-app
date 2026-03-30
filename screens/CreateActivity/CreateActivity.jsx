@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useContext, useMemo, useCallback, useLayoutEffect } from 'react';
-import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Animated, Text, TouchableOpacity, BackHandler } from 'react-native';
+import { View, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Animated, Text, BackHandler } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Button } from 'liquid-spirit-styleguide/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +34,6 @@ const ACTIVITY_TYPES = [
 ];
 const WEEK_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const FREQUENCY_OPTIONS = ['Weekly', 'Bi-Weekly', 'Monthly', 'One-Off'];
-const AU_STATES = ['VIC', 'QLD', 'NSW', 'ACT', 'NT', 'TAS', 'WA', 'SA'];
 const formatMembersForPayload = (list = []) =>
   list
     .map(member => {
@@ -311,14 +310,6 @@ export default function CreateActivity({ navigation, route }) {
     }));
   }, []);
 
-  const handleSelectState = useCallback(value => {
-    setForm(prev => ({
-      ...prev,
-      address: { ...prev.address, state: value },
-    }));
-    setErrors(prev => ({ ...prev, state: undefined }));
-  }, []);
-
   const handleChangeTitle = useCallback(text => {
     setForm(prev => ({ ...prev, title: text }));
     setErrors(prev => ({ ...prev, title: undefined }));
@@ -331,16 +322,6 @@ export default function CreateActivity({ navigation, route }) {
   const handleChangeOnlineLink = useCallback(text => {
     setForm(prev => ({ ...prev, onlineLink: text }));
     setErrors(prev => ({ ...prev, onlineLink: undefined }));
-  }, []);
-
-  const handleChangeAddressField = useCallback((field, value) => {
-    setForm(prev => ({
-      ...prev,
-      address: { ...prev.address, [field]: value },
-    }));
-    if (field === 'streetAddress' || field === 'city' || field === 'state') {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
   }, []);
 
   const handleSelectTime = useCallback(time => {
@@ -439,8 +420,6 @@ export default function CreateActivity({ navigation, route }) {
       setStep((s) => Math.min(s + 1, TOTAL_STEPS));
     }
   };
-  const onBack = () => setStep((s) => Math.max(s - 1, 1));
-
   const handleNavBack = useCallback(() => {
     if (step > 1) {
       setStep(prev => Math.max(prev - 1, 1));

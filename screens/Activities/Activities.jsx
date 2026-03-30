@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useCallback, useEffect, useState, useContext, useMemo } from 'react';
 import {
   View,
   Text,
@@ -125,11 +125,7 @@ const Activities = ({ navigation, route }) => {
     }
   }, [userActivities]);
 
-  useEffect(() => {
-    filterAndSortActivities();
-  }, [activities, selectedType, sortOrder]);
-
-  const filterAndSortActivities = () => {
+  const filterAndSortActivities = useCallback(() => {
     let filtered = activities.filter((activity) => activity?.status === 'Active');
 
     if (selectedType !== 'All') {
@@ -149,7 +145,11 @@ const Activities = ({ navigation, route }) => {
     });
 
     setFilteredActivities(filtered);
-  };
+  }, [activities, selectedType, sortOrder]);
+
+  useEffect(() => {
+    filterAndSortActivities();
+  }, [filterAndSortActivities]);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);

@@ -428,7 +428,10 @@ const ChatDetail = () => {
   const chatFromParams = routeParams?.chatRecord;
   const routeChatTitle = routeParams?.chatTitle;
   const routeChatImage = routeParams?.chatImage;
-  const routeChatMessages = Array.isArray(routeParams?.chatMessages) ? routeParams.chatMessages : [];
+  const routeChatMessages = useMemo(
+    () => (Array.isArray(routeParams?.chatMessages) ? routeParams.chatMessages : []),
+    [routeParams?.chatMessages],
+  );
   const contextChat = useMemo(
     () => (chatId ? getChatById?.(chatId) : null),
     [chatId, getChatById],
@@ -451,7 +454,10 @@ const ChatDetail = () => {
     return fromChat;
   }, [routeChatImage, hydratedChat]);
   const conversationEntry = chatId ? getChatMessages?.(chatId) : null;
-  const prefetchedMessages = conversationEntry?.messages || [];
+  const prefetchedMessages = useMemo(
+    () => conversationEntry?.messages || [],
+    [conversationEntry?.messages],
+  );
   const currentUserId = useMemo(
     () => user?._id || user?.id || user?.userId || null,
     [user],

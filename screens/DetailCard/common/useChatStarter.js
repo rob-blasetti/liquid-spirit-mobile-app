@@ -116,7 +116,10 @@ const useChatStarter = ({
 }) => {
   const [startingChat, setStartingChat] = useState(false);
   const latestActivity = useMemo(() => activity || {}, [activity]);
-  const contextEntity = entity || latestActivity || {};
+  const contextEntity = useMemo(
+    () => entity || latestActivity || {},
+    [entity, latestActivity],
+  );
 
   const normalizedContextId = useMemo(() => {
     const sourceId =
@@ -143,7 +146,7 @@ const useChatStarter = ({
     if (context === 'event') return contextEntity?.bannerImage || contextEntity?.imageUrl || '';
     if (context === 'post') return contextEntity?.imageUrl || '';
     return '';
-  }, [context, contextEntity, latestActivity]);
+  }, [context, contextEntity?.bannerImage, contextEntity?.imageUrl, latestActivity]);
 
   const participants = useMemo(() => {
     if (Array.isArray(chatParticipantProfiles) && chatParticipantProfiles.length) {
