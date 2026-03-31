@@ -549,7 +549,7 @@ const renderScene = ({ route }) => {
             <View style={styles.profileIdentityColumn}>
               <ChangeableProfileImage
                 imageStyle={styles.profilePictureLarge}
-                avatarSize={76}
+                avatarSize={68}
                 userDetails={userDetails}
                 setUserDetails={setUserDetails}
                 showEditIndicator
@@ -594,31 +594,31 @@ const renderScene = ({ route }) => {
           <Ionicons name="chevron-forward" size={14} color={themeVariables.primaryColor} />
         </TouchableOpacity>
       </View>
-      {recentBadges.length > 0 ? (
-        <View style={styles.badgesPreviewRow}>
-          {recentBadges.map((badge, index) => (
-            <View key={`${badge.label}-${index}`} style={styles.badgePreviewItem}>
-              <View style={styles.badgePreviewCard}>
-                <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
-                  <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
+      <View style={styles.badgesContainer}>
+        {recentBadges.length > 0 ? (
+          <View style={styles.badgesPreviewRow}>
+            {recentBadges.map((badge, index) => (
+              <View key={`${badge.label}-${index}`} style={styles.badgePreviewItem}>
+                <View style={styles.badgePreviewCard}>
+                  <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
+                    <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
+                  </View>
+                  <Text style={styles.badgePreviewText} numberOfLines={2} ellipsizeMode="tail">
+                    {badge.label}
+                  </Text>
                 </View>
-                <Text style={styles.badgePreviewText} numberOfLines={2} ellipsizeMode="tail">
-                  {badge.label}
-                </Text>
               </View>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.badgesContainer}>
+            ))}
+          </View>
+        ) : (
           <View style={styles.badgesEmptyState}>
             <View style={styles.badgesEmptyIcon}>
               <Ionicons name="ribbon-outline" size={18} color={themeVariables.primaryColor} />
             </View>
             <Text style={styles.badgesEmptyText}>Earn badges and they will show up here.</Text>
           </View>
-        </View>
-      )}
+        )}
+      </View>
 
       <View style={styles.badgesHeadingRow}>
         <View>
@@ -762,9 +762,23 @@ const styles = StyleSheet.create({
   headerContainer: {
     width: '100%',
     paddingHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 6,
+    marginBottom: 10,
     backgroundColor: 'transparent',
+  },
+  profileHeroCard: {
+    width: '100%',
+    backgroundColor: themeVariables.whiteColor,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E6EBF5',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   headerActions: {
     flexDirection: 'row',
@@ -792,25 +806,23 @@ const styles = StyleSheet.create({
   profileHeroColumns: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: 16,
-    minHeight: 120,
+    gap: 12,
+    minHeight: 118,
   },
   profileIdentityColumn: {
     width: '42%',
-    minHeight: 120,
+    minHeight: 118,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'stretch',
-    paddingTop: 0,
-    paddingBottom: 0,
+    paddingVertical: 2,
   },
   profileStatsColumn: {
     flex: 1,
-    minHeight: 118,
+    minHeight: 112,
     alignSelf: 'stretch',
     justifyContent: 'space-between',
-    paddingTop: 0,
-    paddingBottom: 4,
+    paddingVertical: 0,
   },
   iconButton: {
     marginLeft: 8,
@@ -830,7 +842,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 6,
     paddingHorizontal: 0,
     backgroundColor: 'transparent',
   },
@@ -853,32 +865,36 @@ const styles = StyleSheet.create({
     color: themeVariables.primaryColor,
   },
   badgesContainer: {
-    marginHorizontal: 16,
-    backgroundColor: '#F8FAFF',
-    marginBottom: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 22,
+    marginHorizontal: 20,
+    backgroundColor: themeVariables.whiteColor,
+    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F4',
+    borderColor: '#E6EBF5',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
   },
   badgesPreviewRow: {
     flexDirection: 'row',
     flexWrap: 'nowrap',
-    marginHorizontal: 16,
-    marginBottom: 6,
+    marginBottom: 0,
   },
   badgePreviewItem: {
     width: '25%',
-    paddingHorizontal: 4,
+    paddingHorizontal: 3,
   },
   badgePreviewCard: {
-    minHeight: 96,
+    minHeight: 84,
     width: '100%',
     alignItems: 'center',
     justifyContent: 'flex-start',
     paddingHorizontal: 6,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: '#fff',
   },
@@ -928,10 +944,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   profilePictureLarge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    marginBottom: 3,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    marginBottom: 4,
   },
   nameSmall: {
     fontSize: 18,
@@ -941,8 +957,8 @@ const styles = StyleSheet.create({
   },
   nameCentered: {
     marginTop: 4,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'center',
     width: '100%',
@@ -976,9 +992,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   memberSinceCentered: {
-    marginTop: 1,
+    marginTop: 2,
     fontSize: 11,
-    color: '#6B6780',
+    color: '#6C7690',
     textAlign: 'center',
   },
   statsCardRow: {

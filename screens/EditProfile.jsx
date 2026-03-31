@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#162033',
+    color: themeVariables.blackColor,
     marginBottom: 4,
   },
   heroSubtitle: {
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#162033',
+    color: themeVariables.blackColor,
   },
   sectionSubtitle: {
     fontSize: 13,
