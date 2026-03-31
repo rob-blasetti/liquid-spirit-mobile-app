@@ -21,6 +21,34 @@ import { isValidPassword } from '../utils/validation';
 const PASSWORD_REQUIREMENTS =
   'Password must be at least 8 characters and include a number and a letter. Special characters are allowed.';
 
+const getChangePasswordErrors = ({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+}) => {
+  const nextErrors = {};
+
+  if (!currentPassword) {
+    nextErrors.currentPassword = 'Current password is required.';
+  }
+
+  if (!newPassword) {
+    nextErrors.newPassword = 'New password is required.';
+  } else if (!isValidPassword(newPassword)) {
+    nextErrors.newPassword = PASSWORD_REQUIREMENTS;
+  } else if (currentPassword && currentPassword === newPassword) {
+    nextErrors.newPassword = 'Your new password must be different from your current password.';
+  }
+
+  if (!confirmPassword) {
+    nextErrors.confirmPassword = 'Please confirm your new password.';
+  } else if (newPassword !== confirmPassword) {
+    nextErrors.confirmPassword = 'New passwords do not match.';
+  }
+
+  return nextErrors;
+};
+
 const ChangePassword = ({ navigation }) => {
   const { user } = useContext(UserContext);
   const { changePassword } = useAuthService();
@@ -29,6 +57,54 @@ const ChangePassword = ({ navigation }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const clearFieldError = (field) =>
+    setErrors(prev => {
+      if (!prev[field] && !prev.general) {
+        return prev;
+      }
+
+      const nextErrors = { ...prev };
+      delete nextErrors[field];
+      delete nextErrors.general;
+      return nextErrors;
+    });
+
+  const validateField = (field, nextValue) => {
+    const values = {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+      [field]: nextValue,
+    };
+    const nextErrors = getChangePasswordErrors(values);
+
+    setErrors(prev => {
+      const mergedErrors = { ...prev };
+      delete mergedErrors.general;
+
+      if (nextErrors.currentPassword) {
+        mergedErrors.currentPassword = nextErrors.currentPassword;
+      } else {
+        delete mergedErrors.currentPassword;
+      }
+
+      if (nextErrors.newPassword) {
+        mergedErrors.newPassword = nextErrors.newPassword;
+      } else {
+        delete mergedErrors.newPassword;
+      }
+
+      if (nextErrors.confirmPassword) {
+        mergedErrors.confirmPassword = nextErrors.confirmPassword;
+      } else {
+        delete mergedErrors.confirmPassword;
+      }
+
+      return mergedErrors;
+    });
+  };
 
   const persistUpdatedPassword = async () => {
     let username = typeof user?.email === 'string' ? user.email.trim() : '';
@@ -54,23 +130,14 @@ const ChangePassword = ({ navigation }) => {
   };
 
   const handleSubmit = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'All fields are required.');
-      return;
-    }
+    const nextErrors = getChangePasswordErrors({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
 
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match.');
-      return;
-    }
-
-    if (currentPassword === newPassword) {
-      Alert.alert('Error', 'Your new password must be different from your current password.');
-      return;
-    }
-
-    if (!isValidPassword(newPassword)) {
-      Alert.alert('Error', PASSWORD_REQUIREMENTS);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
       return;
     }
 
@@ -80,7 +147,7 @@ const ChangePassword = ({ navigation }) => {
       const { ok, data } = await changePassword(currentPassword, newPassword);
 
       if (!ok) {
-        Alert.alert('Error', data?.message || 'Failed to update password.');
+        setErrors({ general: data?.message || 'Failed to update password.' });
         return;
       }
 
@@ -88,6 +155,7 @@ const ChangePassword = ({ navigation }) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setErrors({});
 
       Alert.alert('Success', data?.message || 'Password updated successfully.', [
         {
@@ -97,7 +165,7 @@ const ChangePassword = ({ navigation }) => {
       ]);
     } catch (error) {
       console.error('Error changing password:', error);
-      Alert.alert('Error', error?.message || 'Failed to update password.');
+      setErrors({ general: error?.message || 'Failed to update password.' });
     } finally {
       setLoading(false);
     }
@@ -125,31 +193,52 @@ const ChangePassword = ({ navigation }) => {
           <Text style={styles.label}>Current Password</Text>
           <PasswordField
             value={currentPassword}
-            onChangeText={setCurrentPassword}
+            onChangeText={(text) => {
+              clearFieldError('currentPassword');
+              setCurrentPassword(text);
+            }}
             placeholder="Enter your current password"
             textContentType="password"
             autoComplete="password"
+            inputStyle={errors.currentPassword ? styles.inputError : null}
+            onBlur={() => validateField('currentPassword', currentPassword)}
           />
+          {!!errors.currentPassword && <Text style={styles.errorText}>{errors.currentPassword}</Text>}
 
           <Text style={styles.label}>New Password</Text>
           <PasswordField
             value={newPassword}
-            onChangeText={setNewPassword}
+            onChangeText={(text) => {
+              clearFieldError('newPassword');
+              clearFieldError('confirmPassword');
+              setNewPassword(text);
+            }}
             placeholder="Enter a new password"
             textContentType="newPassword"
             autoComplete="password-new"
+            inputStyle={errors.newPassword ? styles.inputError : null}
+            onBlur={() => validateField('newPassword', newPassword)}
           />
+          {!!errors.newPassword && <Text style={styles.errorText}>{errors.newPassword}</Text>}
 
           <Text style={styles.requirements}>{PASSWORD_REQUIREMENTS}</Text>
 
           <Text style={styles.label}>Confirm New Password</Text>
           <PasswordField
             value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            onChangeText={(text) => {
+              clearFieldError('confirmPassword');
+              setConfirmPassword(text);
+            }}
             placeholder="Re-enter your new password"
             textContentType="newPassword"
             autoComplete="password-new"
+            inputStyle={errors.confirmPassword ? styles.inputError : null}
+            onBlur={() => validateField('confirmPassword', confirmPassword)}
           />
+          {!!errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+
+          {!!errors.general && <Text style={styles.errorText}>{errors.general}</Text>}
 
           <TouchableOpacity style={styles.button} onPress={handleSubmit} disabled={loading} activeOpacity={0.85}>
             {loading ? (
@@ -215,6 +304,15 @@ const styles = StyleSheet.create({
     color: 'rgba(0, 0, 0, 0.6)',
     marginTop: -4,
     marginBottom: 16,
+  },
+  inputError: {
+    borderColor: '#d32f2f',
+  },
+  errorText: {
+    color: '#d32f2f',
+    marginTop: -8,
+    marginBottom: 12,
+    fontSize: 13,
   },
   button: {
     minHeight: 52,

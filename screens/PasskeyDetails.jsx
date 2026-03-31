@@ -2,12 +2,14 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { useAuthService } from '../services/AuthService';
@@ -33,6 +35,7 @@ const formatCreatedAt = (value) => {
 const PasskeyDetails = ({ navigation, route }) => {
   const { deletePasskeyCredential } = useAuthService();
   const [deleting, setDeleting] = useState(false);
+  const tabBarHeight = useBottomTabBarHeight();
 
   const passkey = route?.params?.passkey || null;
   const passkeyId = passkey?.id || passkey?.credentialId || passkey?.raw?.credentialId || '';
@@ -87,23 +90,24 @@ const PasskeyDetails = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
-      <View style={styles.content}>
-        <View style={styles.centerBlock}>
-          <View style={styles.heroCard}>
-            <View style={styles.iconWrap}>
-              <Ionicons name="key-outline" size={30} color={themeVariables.primaryColor} />
-            </View>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.heroCard}>
+          <View style={styles.iconWrap}>
+            <Ionicons name="key-outline" size={30} color={themeVariables.primaryColor} />
+          </View>
 
-            <Text style={styles.title}>Passkey Details</Text>
-            <Text style={styles.subtitle}>Use this passkey to sign in securely on this device.</Text>
+          <Text style={styles.title}>Passkey Details</Text>
+          <Text style={styles.subtitle}>Use this passkey to sign in securely on this device.</Text>
 
-            <View style={styles.credentialCard}>
-              <Text style={styles.cardLabel}>Credential ID</Text>
-              <Text style={styles.cardValue} selectable>
-                {formattedPasskeyId}
-              </Text>
-              {createdAtLabel ? <Text style={styles.cardMeta}>Created {createdAtLabel}</Text> : null}
-            </View>
+          <View style={styles.credentialCard}>
+            <Text style={styles.cardLabel}>Credential ID</Text>
+            <Text style={styles.cardValue} selectable>
+              {formattedPasskeyId}
+            </Text>
+            {createdAtLabel ? <Text style={styles.cardMeta}>Created {createdAtLabel}</Text> : null}
           </View>
         </View>
 
@@ -122,7 +126,7 @@ const PasskeyDetails = ({ navigation, route }) => {
             </>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -133,17 +137,9 @@ const styles = StyleSheet.create({
     backgroundColor: themeVariables.screenBackgroundColor,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 24,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  centerBlock: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
     alignItems: 'center',
   },
   heroCard: {
@@ -159,6 +155,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+    marginBottom: 24,
   },
   iconWrap: {
     width: 76,
@@ -233,6 +230,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 14,
     elevation: 8,
+    alignSelf: 'center',
   },
   deleteButtonDisabled: {
     opacity: 0.7,

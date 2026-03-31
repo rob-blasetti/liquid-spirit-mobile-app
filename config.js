@@ -31,5 +31,5 @@ export const HAS_NATIVE_GOOGLE_MAPS = MAPS_API_KEY.length > 0;
 export const PASSKEY_WEBSITE_PATH = '/settings/security';
 export const WEB_APP_URL = Config.WEB_APP_URL || 'https://www.liquidspirit.org';
 
-// Toggle password validation globally (set true to re-enable client checks)
-export const ENABLE_PASSWORD_VALIDATION = false;
+// Enforce password validation by default. This can still be disabled explicitly via env if needed.
+export const ENABLE_PASSWORD_VALIDATION = resolveBoolean(Config.ENABLE_PASSWORD_VALIDATION, true);
