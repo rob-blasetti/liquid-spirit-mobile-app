@@ -13,15 +13,9 @@ const Settings = ({ navigation }) => {
       <View style={styles.section}>
         <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
           <Ionicons name="person-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Personal Information</Text>
+          <Text style={styles.itemText}>My Account</Text>
           <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
         </TouchableOpacity>
-{/*
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
-          <Ionicons name="lock-closed-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Change Password</Text>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-        </TouchableOpacity> */}
 
         {/* <View style={styles.item}>
           <Ionicons name="notifications-outline" size={20} color="#312783" />

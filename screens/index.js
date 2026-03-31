@@ -16,6 +16,7 @@ export { default as Home } from './Home';
 export { default as Login } from './Login';
 export { default as Notifications } from './Notifications';
 export { default as NotificationSettings } from './NotificationSettings';
+export { default as PasskeyDetails } from './PasskeyDetails';
 export { default as PushDiagnostics } from './PushDiagnostics';
 export { default as NewMessage } from './NewMessage';
 export { default as CreateSession } from './CreateSession/CreateSession';

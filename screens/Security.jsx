@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { CommonActions } from '@react-navigation/native';
+import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
 import { useAuthService } from '../services/AuthService';
@@ -21,21 +21,25 @@ import themeVariables from '../styles/theme';
 
 const Security = ({ navigation }) => {
   const { user, token, logout } = useContext(UserContext);
-  const { deleteAccount, createPasskey, isPasskeySupported, fetchPasskeyCredentials, deletePasskeyCredential } =
+  const { deleteAccount, createPasskey, isPasskeySupported, fetchPasskeyCredentials } =
     useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [passkeys, setPasskeys] = useState([]);
   const [passkeysLoading, setPasskeysLoading] = useState(false);
-  const [removingPasskeyId, setRemovingPasskeyId] = useState(null);
+  const fetchPasskeyCredentialsRef = useRef(fetchPasskeyCredentials);
 
   const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
   const userFirstName = typeof user?.firstName === 'string' && user.firstName.trim().length > 0
     ? user.firstName.trim()
     : 'My';
 
-  const extractPasskeyCredentials = (payload) => {
+  useEffect(() => {
+    fetchPasskeyCredentialsRef.current = fetchPasskeyCredentials;
+  }, [fetchPasskeyCredentials]);
+
+  const extractPasskeyCredentials = useCallback((payload) => {
     const candidates = [
       payload,
       payload?.data,
@@ -57,7 +61,7 @@ const Security = ({ navigation }) => {
     }
 
     return [];
-  };
+  }, []);
 
   const normalizePasskey = useCallback((passkey, index) => {
     const id =
@@ -85,8 +89,17 @@ const Security = ({ navigation }) => {
 
     setPasskeysLoading(true);
     try {
-      const result = await fetchPasskeyCredentials();
+      const result = await fetchPasskeyCredentialsRef.current();
       if (!result?.ok) {
+        const errorMessage =
+          result?.data?.error?.message || result?.data?.message || 'Failed to fetch passkeys.';
+        const isRateLimited = result?.status === 429 || /too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          console.warn('Passkey fetch rate limited. Keeping current list.');
+          return;
+        }
+
         console.warn('Failed to fetch passkeys:', result?.data);
         setPasskeys([]);
         return;
@@ -100,13 +113,14 @@ const Security = ({ navigation }) => {
     } finally {
       setPasskeysLoading(false);
     }
-  }, [fetchPasskeyCredentials, normalizePasskey, token]);
+  }, [extractPasskeyCredentials, normalizePasskey, token]);
 
   const hasPasskeys = passkeys.length > 0;
+  const primaryPasskey = hasPasskeys ? passkeys[0] : null;
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     loadPasskeys();
-  }, [loadPasskeys]);
+  }, [loadPasskeys]));
 
   const getRootNavigation = () => {
     let currentNav = navigation;
@@ -193,45 +207,13 @@ const Security = ({ navigation }) => {
     }
   };
 
-  const handleDeletePasskey = async (passkey) => {
-    if (!passkey?.id) {
-      Alert.alert('Delete failed', 'This passkey is missing an identifier and cannot be removed.');
+  const handleViewPasskey = useCallback(() => {
+    if (!primaryPasskey) {
       return;
     }
 
-    Alert.alert(
-      'Delete Passkey',
-      `Remove ${passkey.label} from your account?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setRemovingPasskeyId(passkey.id);
-            try {
-              const result = await deletePasskeyCredential(passkey.id);
-              if (!result?.ok) {
-                const nested = result?.data?.error || null;
-                const message =
-                  nested?.message || result?.data?.message || 'Could not delete this passkey.';
-                Alert.alert('Delete failed', message);
-                return;
-              }
-
-              await loadPasskeys();
-            } catch (error) {
-              console.error('Error deleting passkey:', error);
-              Alert.alert('Delete failed', error?.message || 'Could not delete this passkey.');
-            } finally {
-              setRemovingPasskeyId(null);
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
-  };
+    navigation.navigate('PasskeyDetails', { passkey: primaryPasskey });
+  }, [navigation, primaryPasskey]);
 
   const handleLogout = async () => {
     await logout();
@@ -277,43 +259,25 @@ const Security = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.section}>
-        {!hasPasskeys ? (
-          <TouchableOpacity style={styles.item} onPress={handleCreatePasskey} disabled={passkeyLoading}>
-            <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
-            <Text style={styles.itemText}>Create Passkey</Text>
-            {passkeyLoading ? <ActivityIndicator color={themeVariables.blackColor} size="small" /> : null}
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
+          <Ionicons name="lock-closed-outline" size={20} color={themeVariables.blackColor} />
+          <Text style={styles.itemText}>Update Password</Text>
+          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+        </TouchableOpacity>
 
-        <View style={styles.passkeySection}>
-          <Text style={styles.passkeySectionTitle}>Passkey</Text>
-          {passkeysLoading ? (
-            <ActivityIndicator color={themeVariables.blackColor} size="small" style={styles.passkeyLoading} />
-          ) : passkeys.length > 0 ? (
-            <View style={styles.passkeyChips}>
-              {passkeys.map(passkey => (
-                <View key={passkey.id} style={styles.passkeyChip}>
-                  <Text style={styles.passkeyChipText} numberOfLines={1}>
-                    {passkey.label}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => handleDeletePasskey(passkey)}
-                    disabled={removingPasskeyId === passkey.id}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    {removingPasskeyId === passkey.id ? (
-                      <ActivityIndicator size="small" color={themeVariables.whiteColor} />
-                    ) : (
-                      <Ionicons name="close-circle" size={18} color={themeVariables.whiteColor} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={hasPasskeys ? handleViewPasskey : handleCreatePasskey}
+          disabled={passkeyLoading || passkeysLoading}
+        >
+          <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
+          <Text style={styles.itemText}>{hasPasskeys ? 'View Passkey' : 'Create Passkey'}</Text>
+          {passkeyLoading || passkeysLoading ? (
+            <ActivityIndicator color={themeVariables.blackColor} size="small" />
           ) : (
-            <Text style={styles.passkeyEmptyText}>No passkeys added yet.</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
           )}
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color={themeVariables.blackColor} />
@@ -321,8 +285,8 @@ const Security = ({ navigation }) => {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.item} onPress={openModal}>
-          <Ionicons name="trash-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Delete Account</Text>
+          <Ionicons name="trash-outline" size={20} color={themeVariables.redColor} />
+          <Text style={[styles.itemText, styles.destructiveItemText]}>Delete My Account</Text>
         </TouchableOpacity>
       </View>
 
@@ -385,47 +349,8 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     color: themeVariables.blackColor,
   },
-  passkeySection: {
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: themeVariables.borderLightColor,
-  },
-  passkeySectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: themeVariables.blackColor,
-    marginBottom: 10,
-  },
-  passkeyLoading: {
-    alignSelf: 'flex-start',
-  },
-  passkeyChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  passkeyChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: themeVariables.primaryColor,
-    borderRadius: 999,
-    paddingLeft: 12,
-    paddingRight: 8,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: themeVariables.primaryColor,
-    maxWidth: '100%',
-  },
-  passkeyChipText: {
-    color: themeVariables.whiteColor,
-    fontSize: 14,
-    marginRight: 8,
-    maxWidth: 220,
-  },
-  passkeyEmptyText: {
-    fontSize: 14,
-    color: '#666',
+  destructiveItemText: {
+    color: themeVariables.redColor,
   },
   modalOverlay: {
     flex: 1,

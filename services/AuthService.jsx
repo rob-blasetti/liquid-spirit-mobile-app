@@ -219,6 +219,69 @@ export const useAuthService = () => {
     }
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    const candidates = [
+      {
+        url: `${AUTH_BASE}/api/auth/change-password`,
+        body: { currentPassword, newPassword },
+      },
+      {
+        url: `${AUTH_BASE}/api/auth/update-password`,
+        body: { currentPassword, newPassword },
+      },
+      {
+        url: `${AUTH_BASE}/api/auth/changePassword`,
+        body: { currentPassword, newPassword },
+      },
+      {
+        url: `${AUTH_BASE}/api/auth/change-password`,
+        body: { oldPassword: currentPassword, newPassword },
+      },
+      {
+        url: `${AUTH_BASE}/api/auth/update-password`,
+        body: { oldPassword: currentPassword, newPassword },
+      },
+    ];
+
+    let lastResult = null;
+
+    try {
+      for (const candidate of candidates) {
+        const { response, data } = await fetchJson(candidate.url, {
+          method: 'POST',
+          headers: jsonHeaders(true),
+          body: JSON.stringify(candidate.body),
+        });
+
+        if (response.ok) {
+          const resolvedToken = resolveAccessToken(data);
+          if (resolvedToken) {
+            setToken(resolvedToken);
+          }
+
+          return { ok: true, status: response.status, data };
+        }
+
+        lastResult = { ok: false, status: response.status, data };
+
+        // Only fall through to the next candidate when the route shape is clearly unsupported.
+        if (response.status !== 404 && response.status !== 405) {
+          return lastResult;
+        }
+      }
+
+      return (
+        lastResult || {
+          ok: false,
+          status: 404,
+          data: { message: 'Password update is not available for this account.' },
+        }
+      );
+    } catch (error) {
+      throw new Error(`Change password error: ${error.message}`);
+    }
+  };
+
   const fetchHomeOverview = async (communityId) => {
     try {
       const { response, data } = await fetchJson(`${API_URL}/api/auth/homeOverview/${communityId}`, {
@@ -250,7 +313,7 @@ export const useAuthService = () => {
         method: 'GET',
         headers: jsonHeaders(true),
       });
-      return { ok: response.ok, data };
+      return { ok: response.ok, status: response.status, data };
     } catch (error) {
       throw new Error(`Fetch passkeys error: ${error.message}`);
     }
@@ -484,6 +547,7 @@ export const useAuthService = () => {
     verify,
     forgotPassword,
     forgotBahaiId,
+    changePassword,
     fetchMe,
     fetchPasskeyCredentials,
     deletePasskeyCredential,
