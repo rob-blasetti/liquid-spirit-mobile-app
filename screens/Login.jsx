@@ -10,6 +10,7 @@ import {
   ScrollView,
   Linking,
 } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
@@ -30,6 +31,15 @@ const Login = ({ navigation, route }) => {
 
   const { login } = useContext(UserContext);
   const { signIn, authenticateWithPasskey, isPasskeySupported, fetchMe } = useAuthService();
+
+  const resetToMain = () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Main', params: { screen: 'Home' } }],
+      }),
+    );
+  };
 
   useEffect(() => {
     const loadCredentials = async () => {
@@ -88,7 +98,7 @@ const Login = ({ navigation, route }) => {
         await Keychain.setGenericPassword(email, password, {
           accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
         });
-        navigation.navigate('Main', { screen: 'Home' });
+        resetToMain();
       } else {
         Alert.alert('Error', response.data.message || 'Login failed.');
       }
@@ -176,7 +186,7 @@ const Login = ({ navigation, route }) => {
       }
 
       await login(user, authToken, null, null, null);
-      navigation.navigate('Main', { screen: 'Home' });
+      resetToMain();
     } catch (error) {
       console.error('Passkey login error:', error);
       Alert.alert('Passkey Sign In Error', error?.message || 'Unable to sign in with passkey.');
