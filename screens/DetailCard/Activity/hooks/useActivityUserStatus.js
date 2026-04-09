@@ -45,6 +45,10 @@ const useActivityUserStatus = ({
     hasParticipantSpace,
     hasRequestedFacilitator,
     hasRequestedParticipant,
+    facilitatorCount: facilitators.length,
+    participantCount: participants.length,
+    facilitatorLimit,
+    participantLimit,
   };
 }, [
   activity?.facilitators,

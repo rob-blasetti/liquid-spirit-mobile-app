@@ -8,6 +8,9 @@ import FormsSection from './sections/FormsSection';
 import LocationSection from './sections/LocationSection';
 import GuidelinesSection from './sections/GuidelinesSection';
 import OverviewSection from './sections/OverviewSection';
+import ParticipationStatusSection, { buildParticipationDisplay } from './sections/ParticipationStatusSection';
+import SessionSummarySection from './sections/SessionSummarySection';
+import ActivityFactsSection from './sections/ActivityFactsSection';
 import FooterBrand from '../common/FooterBrand';
 import resolveImageSource from '../../../utils/imageSource';
 import { formatTime } from './utils/activityHelpers';
@@ -40,18 +43,26 @@ const ActivityCardBody = ({
     description,
     guidelines,
     forms,
+    community,
+    curriculum,
   } = safeActivity;
 
   const dayOfWeek = groupDetails?.day ?? 'N/A';
   const timeMain = formatTime(groupDetails?.time);
   const safeActivityTypeName = activityType?.name || activityType || 'Unknown';
 
-  const { orderedUpcomingSessions, nextSession, curriculumLesson } = useActivitySessions(
+  const { allSessions, orderedUpcomingSessions, nextSession, curriculumLesson } = useActivitySessions(
     safeActivity,
     initialSessionId
   );
   const curriculumDetails = useCurriculumDetails(curriculumLesson);
   const location = useActivityLocation({ activity: safeActivity, nextSession });
+  const communityName = community?.name || '';
+  const frequency = groupDetails?.frequency || '';
+  const gradeLabel = safeActivity?.grade || '';
+  const curriculumName = curriculum?.name || curriculum?.title || '';
+  const locationLabel = location.mapDisplayAddress || location.mapAddress || '';
+  const onlineLabel = location.resolvedOnlineLink ? 'Available online' : '';
   const {
     isUserFacilitator,
     isUserParticipant,
@@ -59,6 +70,10 @@ const ActivityCardBody = ({
     hasParticipantSpace,
     hasRequestedFacilitator,
     hasRequestedParticipant,
+    facilitatorCount,
+    participantCount,
+    facilitatorLimit,
+    participantLimit,
   } = useActivityUserStatus({
     activity: safeActivity,
     userId,
@@ -77,6 +92,19 @@ const ActivityCardBody = ({
   const imageSource = imageUrl
     ? resolveImageSource(imageUrl, { priority: 'high', fallback: '/img/events/Event_Placeholder.png' })
     : null;
+
+  const participationDisplay = buildParticipationDisplay({
+    isUserFacilitator,
+    isUserParticipant,
+    hasRequestedFacilitator,
+    hasRequestedParticipant,
+    hasFacilitatorSpace,
+    hasParticipantSpace,
+    facilitatorCount,
+    participantCount,
+    facilitatorLimit,
+    participantLimit,
+  });
 
   if (!activity) return null;
 
@@ -99,6 +127,35 @@ const ActivityCardBody = ({
             <Text style={styles.headerInfoText}>{dayOfWeek} ‧ {timeMain}</Text>
           </View>
           <View style={styles.divider} />
+          <ParticipationStatusSection
+            styles={styles}
+            statusLabel={participationDisplay.statusLabel}
+            statusTone={participationDisplay.statusTone}
+            statusMessage={participationDisplay.statusMessage}
+            facilitatorSummary={participationDisplay.facilitatorSummary}
+            participantSummary={participationDisplay.participantSummary}
+            canRequestFacilitator={participationDisplay.canRequestFacilitator}
+            canRequestParticipant={participationDisplay.canRequestParticipant}
+            hasRequestedFacilitator={hasRequestedFacilitator}
+            hasRequestedParticipant={hasRequestedParticipant}
+            onRequestFacilitator={handleFacilitatorRequest}
+            onRequestParticipant={handleParticipantRequest}
+          />
+          <SessionSummarySection
+            styles={styles}
+            totalSessions={allSessions.length}
+            upcomingCount={orderedUpcomingSessions.length}
+            nextSession={nextSession}
+          />
+          <ActivityFactsSection
+            styles={styles}
+            communityName={communityName}
+            dayOfWeek={dayOfWeek}
+            timeMain={timeMain}
+            frequency={frequency}
+            gradeLabel={gradeLabel}
+            curriculumName={curriculumName}
+          />
           <OverviewSection
             description={description}
             orderedUpcomingSessions={orderedUpcomingSessions}

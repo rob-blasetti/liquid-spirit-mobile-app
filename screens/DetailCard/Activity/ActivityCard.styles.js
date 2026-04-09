@@ -366,6 +366,211 @@ const styles = StyleSheet.create({
     color: themeVariables.whiteColor,
     marginLeft: 6,
   },
+  participationCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  participationHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  participationBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  participationBadge_success: {
+    backgroundColor: '#E6F6EC',
+  },
+  participationBadge_warning: {
+    backgroundColor: '#FFF4D6',
+  },
+  participationBadge_neutral: {
+    backgroundColor: '#ECECFF',
+  },
+  participationBadge_muted: {
+    backgroundColor: '#EEEEEE',
+  },
+  participationBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  participationBadgeText_success: {
+    color: '#18794E',
+  },
+  participationBadgeText_warning: {
+    color: '#9A6700',
+  },
+  participationBadgeText_neutral: {
+    color: '#312783',
+  },
+  participationBadgeText_muted: {
+    color: '#666666',
+  },
+  participationMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: themeVariables.textColor || '#444',
+    marginBottom: 6,
+  },
+  participationHelper: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#666',
+    marginBottom: 14,
+  },
+  participationCapacityRow: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 14,
+    backgroundColor: themeVariables.whiteColor,
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  participationCapacityBox: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+  participationCapacityDivider: {
+    width: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  participationCapacityLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  participationCapacityValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    textAlign: 'center',
+  },
+  participationActions: {
+    gap: 10,
+  },
+  participationAction: {
+    minHeight: 44,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  participationActionPrimary: {
+    backgroundColor: themeVariables.primaryColor,
+  },
+  participationActionSecondary: {
+    backgroundColor: '#EDE9FF',
+  },
+  participationActionMuted: {
+    backgroundColor: '#ECECEC',
+  },
+  participationActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  participationActionTextPrimary: {
+    color: themeVariables.whiteColor,
+  },
+  participationActionTextSecondary: {
+    color: '#312783',
+  },
+  participationActionTextMuted: {
+    color: '#777',
+  },
+  sessionSummaryCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  sessionSummaryTopRow: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 14,
+    backgroundColor: themeVariables.whiteColor,
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  sessionSummaryMetric: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+  sessionSummaryMetricDivider: {
+    width: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  sessionSummaryMetricValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  sessionSummaryMetricLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  sessionSummaryNextBlock: {
+    borderRadius: 14,
+    backgroundColor: themeVariables.whiteColor,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  sessionSummaryNextLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  sessionSummaryNextDate: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  sessionSummaryNextMeta: {
+    fontSize: 13,
+    color: themeVariables.textColor || '#555',
+    marginTop: 2,
+  },
+  activityFactsCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  activityFactItem: {
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E0E0E0',
+  },
+  activityFactLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  activityFactValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+  },
   guidelinesText: {
     fontSize: 14,
     color: '#666',
