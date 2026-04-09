@@ -21,6 +21,9 @@ import BadgeModal from '../common/BadgeModal';
 import HostLocationSection from './sections/HostLocationSection';
 import HostsSection from './sections/HostsSection';
 import AttendanceSection from './sections/AttendanceSection';
+import EventAttendanceStatusSection from './sections/EventAttendanceStatusSection';
+import EventLogisticsSection from './sections/EventLogisticsSection';
+import EventOverviewSection from './sections/EventOverviewSection';
 import MaterialsSection from './sections/MaterialsSection';
 
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
@@ -427,7 +430,7 @@ const EventCardBody = ({
   };
   // Destructure raw attendees from event; we'll enrich with full user data below
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
-    attendees: rawAttendees = [], hosts = [], materials = [] } = event;
+    attendees: rawAttendees = [], hosts = [], materials = [], description, summary } = event;
   // Check if current user is admin in any oversight body membership
   const userBodyMembership = event.userBodyMembership || {};
   const isAdmin = Object.values(userBodyMembership).some(v => v === true);
@@ -471,6 +474,35 @@ const EventCardBody = ({
       ? `${venueName} - ${addressText}`
       : venueName || addressText || 'No location';
   const mapQuery = addressText || venueName || fullAddr;
+  const attendanceMode = event?.onlineLink ? 'Online available' : (fullAddr && fullAddr !== 'No location' ? 'In person' : 'Location to be confirmed');
+  const timeRange = `${timeMain}${timeSub ? ` ${timeSub}` : ''}`.trim();
+  const attendeeLimit = typeof event?.attendeeLimit === 'number' ? event.attendeeLimit : null;
+  const eventStatus = String(event?.status || '').trim();
+  const isEventCancelled = /cancelled|canceled/i.test(eventStatus);
+  const isEventCompleted = /completed|complete|past/i.test(eventStatus);
+  const isEventFull = attendeeLimit != null && rawAttendees.length >= attendeeLimit;
+  const lifecycleLabel = isEventCancelled
+    ? 'Cancelled'
+    : isEventCompleted
+      ? 'Completed'
+      : isEventFull
+        ? 'Full'
+        : 'Open';
+  const lifecycleTone = isEventCancelled
+    ? 'muted'
+    : isEventCompleted
+      ? 'muted'
+      : isEventFull
+        ? 'warning'
+        : 'success';
+  const lifecycleMessage = isEventCancelled
+    ? 'This event has been cancelled.'
+    : isEventCompleted
+      ? 'This event has already taken place.'
+      : isEventFull
+        ? 'Attendee capacity has been reached.'
+        : 'Spots are currently available.';
+  const capacitySummary = attendeeLimit != null ? `${rawAttendees.length}/${attendeeLimit} attending` : null;
   // Map region state for location map
   const [region, setRegion] = useState(null);
   const { openGoogleMaps } = useGoogleMaps();
@@ -760,6 +792,19 @@ const EventCardBody = ({
         </View>
         <View style={styles.divider} />
 
+        <EventLogisticsSection
+          styles={styles}
+          venueName={venueName}
+          addressText={addressText}
+          attendanceMode={attendanceMode}
+          timeRange={timeRange}
+        />
+        <EventOverviewSection
+          styles={styles}
+          title={title}
+          eventType={eventType || ''}
+          summary={description || summary || ''}
+        />
         <HostLocationSection
           region={region}
           fullAddress={fullAddr}
@@ -815,6 +860,17 @@ const EventCardBody = ({
           <Text style={styles.headerInfoText}>No oversight available</Text>
         )}
         <View style={styles.divider} />
+        <EventAttendanceStatusSection
+          styles={styles}
+          hasJoined={hasJoined}
+          attendeeCount={attendees.length}
+          canJoin={!hasJoined && !isEventCancelled && !isEventCompleted && !isEventFull}
+          onJoin={handleJoin}
+          lifecycleLabel={lifecycleLabel}
+          lifecycleTone={lifecycleTone}
+          lifecycleMessage={lifecycleMessage}
+          capacitySummary={capacitySummary}
+        />
         <AttendanceSection
           attendees={attendees}
           styles={styles}
@@ -1176,6 +1232,202 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.whiteColor,
     marginLeft: 6,
+  },
+  eventAttendanceCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  eventAttendanceBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  eventAttendanceBadge_success: {
+    backgroundColor: '#E6F6EC',
+  },
+  eventAttendanceBadge_neutral: {
+    backgroundColor: '#ECECFF',
+  },
+  eventAttendanceBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventAttendanceBadgeText_success: {
+    color: '#18794E',
+  },
+  eventAttendanceBadgeText_neutral: {
+    color: '#312783',
+  },
+  eventAttendanceMessage: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: themeVariables.textColor || '#444',
+    marginBottom: 14,
+  },
+  eventAttendanceDualRow: {
+    gap: 12,
+    marginBottom: 14,
+  },
+  eventAttendanceCountBox: {
+    borderRadius: 14,
+    backgroundColor: themeVariables.whiteColor,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  eventAttendanceLifecycleBox: {
+    borderRadius: 14,
+    backgroundColor: themeVariables.whiteColor,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  eventAttendanceMiniBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 8,
+  },
+  eventAttendanceMiniBadge_success: {
+    backgroundColor: '#E6F6EC',
+  },
+  eventAttendanceMiniBadge_warning: {
+    backgroundColor: '#FFF4D6',
+  },
+  eventAttendanceMiniBadge_muted: {
+    backgroundColor: '#EEEEEE',
+  },
+  eventAttendanceMiniBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  eventAttendanceMiniBadgeText_success: {
+    color: '#18794E',
+  },
+  eventAttendanceMiniBadgeText_warning: {
+    color: '#9A6700',
+  },
+  eventAttendanceMiniBadgeText_muted: {
+    color: '#666666',
+  },
+  eventAttendanceCountValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  eventAttendanceCountLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+  eventAttendanceLifecycleMessage: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: themeVariables.textColor || '#444',
+  },
+  eventAttendanceLifecycleCapacity: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 6,
+  },
+  eventAttendanceAction: {
+    minHeight: 44,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  eventAttendanceActionPrimary: {
+    backgroundColor: themeVariables.primaryColor,
+  },
+  eventAttendanceActionMuted: {
+    backgroundColor: '#ECECEC',
+  },
+  eventAttendanceActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  eventAttendanceActionTextPrimary: {
+    color: themeVariables.whiteColor,
+  },
+  eventAttendanceActionTextMuted: {
+    color: '#777',
+  },
+  eventLogisticsCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  eventLogisticsRow: {
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E0E0E0',
+  },
+  eventLogisticsLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  eventLogisticsValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+  },
+  eventOverviewCard: {
+    width: '100%',
+    borderRadius: 16,
+    backgroundColor: '#F6F7FB',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  eventOverviewTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  eventOverviewSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.primaryColor,
+    marginBottom: 8,
+  },
+  eventOverviewMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  eventOverviewMetaText: {
+    fontSize: 13,
+    color: '#666',
+  },
+  eventOverviewMetaDot: {
+    fontSize: 13,
+    color: '#666',
+    marginHorizontal: 6,
+  },
+  eventOverviewSummary: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: themeVariables.textColor || '#444',
+  },
+  eventOverviewPlaceholder: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#777',
   },
   seeMoreButton: {
     alignSelf: 'center',
