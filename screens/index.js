@@ -14,6 +14,7 @@ export { default as ForgotBahaiId } from './ForgotBahaiId';
 export { default as ForgotPassword } from './ForgotPassword';
 export { default as Home } from './Home';
 export { default as Login } from './Login';
+export { default as MapPreviewScreen } from './MapPreviewScreen';
 export { default as Notifications } from './Notifications';
 export { default as NotificationSettings } from './NotificationSettings';
 export { default as PasskeyDetails } from './PasskeyDetails';

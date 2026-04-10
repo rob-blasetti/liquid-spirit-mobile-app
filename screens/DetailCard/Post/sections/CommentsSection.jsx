@@ -4,7 +4,7 @@ import FastImage from 'react-native-fast-image';
 import { useNavigation } from '@react-navigation/native';
 import themeVariables from '../../../../styles/theme';
 import { timeSince } from '../../../../utils/timeSince';
-import sectionBaseStyles from '../../common/sectionBaseStyles';
+import DetailSection from '../../common/DetailSection';
 
 const CommentsSection = ({
   showCommentBox,
@@ -23,16 +23,19 @@ const CommentsSection = ({
   const visible = showAll ? sorted : sorted.slice(0, 2);
 
   return (
-    <View style={[styles.container, commentBoxContainerStyle]}>
-      <View style={styles.divider} />
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Comments</Text>
-        {sorted.length > 2 && (
+    <DetailSection
+      title="Comments"
+      rightContent={
+        sorted.length > 2 ? (
           <TouchableOpacity onPress={() => setShowAll(prev => !prev)}>
             <Text style={styles.seeMoreText}>{showAll ? 'See less' : 'See more'}</Text>
           </TouchableOpacity>
-        )}
-      </View>
+        ) : null
+      }
+      wrapperStyle={[styles.container, commentBoxContainerStyle]}
+      topDivider
+      bottomDivider={false}
+      bodyBottomSpacing={0}>
       <View style={[styles.commentsList, { marginTop: 4 }]}>
         {visible.length > 0 ? (
           visible.map((c, idx) => {
@@ -103,7 +106,7 @@ const CommentsSection = ({
           </View>
         </>
       )}
-    </View>
+    </DetailSection>
   );
 };
 
@@ -112,19 +115,8 @@ const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 8,
-    paddingTop: 10,
     paddingHorizontal: 16,
     paddingBottom: 10,
-  },
-  divider: {
-    ...sectionBaseStyles.sectionDivider,
-    marginBottom: 10,
-  },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sectionTitle: {
-    ...sectionBaseStyles.sectionTitle,
-    marginTop: 0,
-    marginBottom: 8,
   },
   commentRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 4, gap: 8 },
   commentInput: {

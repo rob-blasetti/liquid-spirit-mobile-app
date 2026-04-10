@@ -47,6 +47,7 @@ import {
   Notifications as NotificationScreen,
   PushDiagnostics,
   Badges,
+  MapPreviewScreen,
 } from '../screens';
 import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
@@ -155,6 +156,15 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
       <Stack.Screen
         name="CreatePostModal"
         component={PostModal}
+        options={{
+          presentation: 'fullScreenModal',
+          headerShown: false,
+          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="MapPreviewScreen"
+        component={MapPreviewScreen}
         options={{
           presentation: 'fullScreenModal',
           headerShown: false,

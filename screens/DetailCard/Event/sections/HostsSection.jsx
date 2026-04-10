@@ -3,19 +3,18 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserBadge from '../../../../components/UserBadge';
 import themeVariables from '../../../../styles/theme';
+import DetailSection from '../../common/DetailSection';
 
 const HostsSection = ({ hosts, isAdmin, onAddHost, onRemoveHost, styles }) => (
-  <>
-    <View style={styles.sectionHeaderRow}>
-      <Text style={[styles.mapTitle, { marginTop: 0, marginBottom: 0 }]}>
-        {hosts.length === 1 ? 'Host' : 'Hosts'}
-      </Text>
-      {isAdmin && (
+  <DetailSection
+    title={hosts.length === 1 ? 'Host' : 'Hosts'}
+    titleStyle={styles.mapTitle}
+    rightContent={
+      isAdmin ? (
         <TouchableOpacity
           style={styles.requestButton}
           onPress={onAddHost}
-          activeOpacity={0.8}
-        >
+          activeOpacity={0.8}>
           <Ionicons
             name="add-circle-outline"
             size={18}
@@ -23,21 +22,22 @@ const HostsSection = ({ hosts, isAdmin, onAddHost, onRemoveHost, styles }) => (
           />
           <Text style={styles.requestButtonText}>Add Host</Text>
         </TouchableOpacity>
-      )}
-    </View>
-
+      ) : null
+    }>
     {hosts.length > 0 ? (
       <View style={styles.userListContainer}>
         {hosts.map((h, idx) => {
           const hostUser = h.details || h;
           const key = h._id || (hostUser && hostUser._id) || idx;
           return (
-            <View key={key} style={{ position: 'relative', marginRight: 12, marginBottom: 12 }}>
+            <View
+              key={key}
+              style={{ position: 'relative', marginRight: 12, marginBottom: 12 }}>
               <UserBadge
                 user={hostUser}
                 userCertifications={h.certifications}
               />
-              {isAdmin && (
+              {isAdmin ? (
                 <TouchableOpacity
                   onPress={() => onRemoveHost(h)}
                   style={{
@@ -48,22 +48,30 @@ const HostsSection = ({ hosts, isAdmin, onAddHost, onRemoveHost, styles }) => (
                     borderRadius: 12,
                     padding: 2,
                   }}
-                  activeOpacity={0.7}
-                >
+                  activeOpacity={0.7}>
                   <Ionicons name="close-circle" size={18} color="red" />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
           );
         })}
       </View>
     ) : (
-      <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
-        No hosts yet.
-      </Text>
+      <View style={styles.emptyStateCard}>
+        <View style={styles.emptyStateIconWrap}>
+          <Ionicons
+            name="people-outline"
+            size={22}
+            color={themeVariables.primaryColor}
+          />
+        </View>
+        <Text style={styles.emptyStateTitle}>No hosts yet</Text>
+        <Text style={styles.emptyStateSubtitle}>
+          Hosts will appear here once someone is assigned.
+        </Text>
+      </View>
     )}
-    <View style={styles.divider} />
-  </>
+  </DetailSection>
 );
 
 export default HostsSection;

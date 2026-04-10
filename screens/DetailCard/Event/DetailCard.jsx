@@ -17,14 +17,13 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { CardTitle } from '../../../components/Card';
 import CardContainer from '../common/CardContainer';
 import sectionBaseStyles from '../common/sectionBaseStyles';
-import BadgeModal from '../common/BadgeModal';
+import EventAttendeesModal from './components/EventAttendeesModal';
+import EventOversightBodyModal from './components/EventOversightBodyModal';
 import HostLocationSection from './sections/HostLocationSection';
 import HostsSection from './sections/HostsSection';
 import AttendanceSection from './sections/AttendanceSection';
-import EventAttendanceStatusSection from './sections/EventAttendanceStatusSection';
-import EventLogisticsSection from './sections/EventLogisticsSection';
-import EventOverviewSection from './sections/EventOverviewSection';
 import MaterialsSection from './sections/MaterialsSection';
+import DetailSection from '../common/DetailSection';
 
 import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
 import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
@@ -54,7 +53,6 @@ import { UserContext } from '../../../contexts/UserContext';
 import { CommunityContext } from '../../../contexts/CommunityContext';
 import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
-import { Button } from 'liquid-spirit-styleguide/native';
 import useGoogleMaps from '../../../hooks/useGoogleMaps';
 import useDetailCardHeader from '../common/useDetailCardHeader';
 import {
@@ -122,6 +120,20 @@ const formatEventAddress = address => {
     address.address,
     address.formatted,
     address.formattedAddress,
+  );
+};
+
+const normalizeEntityId = value =>
+  value === undefined || value === null ? '' : String(value).trim();
+
+const resolveAttendeeId = attendee => {
+  const details = attendee?.details || attendee?.user || attendee;
+  return (
+    normalizeEntityId(attendee?.refId) ||
+    normalizeEntityId(attendee?._id) ||
+    normalizeEntityId(attendee?.id) ||
+    normalizeEntityId(details?._id) ||
+    normalizeEntityId(details?.id)
   );
 };
 
@@ -357,9 +369,12 @@ const EventCardBody = ({
   oversightMembersPreload,
   onUpdateCommitteeMembers,
 }) => {
+  const navigation = useNavigation();
+  const rootNavigation =
+    navigation.getParent?.()?.getParent?.() || navigation.getParent?.() || navigation;
   // Access current user and community from context for joining
   const { user } = useContext(UserContext);
-  const { communityId } = useContext(CommunityContext);
+  const { communityId, homeOverview } = useContext(CommunityContext);
   // Local state to track if a host request has been sent
   const hostRequestSent = useMemo(() => {
     if (!userId || !Array.isArray(event.hostRequests)) return false;
@@ -430,7 +445,7 @@ const EventCardBody = ({
   };
   // Destructure raw attendees from event; we'll enrich with full user data below
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
-    attendees: rawAttendees = [], hosts = [], materials = [], description, summary } = event;
+    attendees: rawAttendees = [], hosts = [], materials = [] } = event;
   // Check if current user is admin in any oversight body membership
   const userBodyMembership = event.userBodyMembership || {};
   const isAdmin = Object.values(userBodyMembership).some(v => v === true);
@@ -474,35 +489,6 @@ const EventCardBody = ({
       ? `${venueName} - ${addressText}`
       : venueName || addressText || 'No location';
   const mapQuery = addressText || venueName || fullAddr;
-  const attendanceMode = event?.onlineLink ? 'Online available' : (fullAddr && fullAddr !== 'No location' ? 'In person' : 'Location to be confirmed');
-  const timeRange = `${timeMain}${timeSub ? ` ${timeSub}` : ''}`.trim();
-  const attendeeLimit = typeof event?.attendeeLimit === 'number' ? event.attendeeLimit : null;
-  const eventStatus = String(event?.status || '').trim();
-  const isEventCancelled = /cancelled|canceled/i.test(eventStatus);
-  const isEventCompleted = /completed|complete|past/i.test(eventStatus);
-  const isEventFull = attendeeLimit != null && rawAttendees.length >= attendeeLimit;
-  const lifecycleLabel = isEventCancelled
-    ? 'Cancelled'
-    : isEventCompleted
-      ? 'Completed'
-      : isEventFull
-        ? 'Full'
-        : 'Open';
-  const lifecycleTone = isEventCancelled
-    ? 'muted'
-    : isEventCompleted
-      ? 'muted'
-      : isEventFull
-        ? 'warning'
-        : 'success';
-  const lifecycleMessage = isEventCancelled
-    ? 'This event has been cancelled.'
-    : isEventCompleted
-      ? 'This event has already taken place.'
-      : isEventFull
-        ? 'Attendee capacity has been reached.'
-        : 'Spots are currently available.';
-  const capacitySummary = attendeeLimit != null ? `${rawAttendees.length}/${attendeeLimit} attending` : null;
   // Map region state for location map
   const [region, setRegion] = useState(null);
   const { openGoogleMaps } = useGoogleMaps();
@@ -577,8 +563,34 @@ const EventCardBody = ({
       });
     };
   }, [mapQuery]);
-  // Determine join status based on raw attendees (before enrichment)
-  const hasJoined = optimisticJoin || rawAttendees.some(a => a.refId?.toString() === userId?.toString());
+  const normalizedUserId = normalizeEntityId(userId);
+  const baseAttendees = enrichedAttendees ?? rawAttendees;
+  const userAlreadyInAttendees = baseAttendees.some(
+    attendee => resolveAttendeeId(attendee) === normalizedUserId,
+  );
+  const optimisticAttendee = useMemo(() => {
+    if (!normalizedUserId || !user) return null;
+
+    return {
+      _id: normalizedUserId,
+      refId: normalizedUserId,
+      type: user?.type || 'User',
+      details: {
+        ...user,
+        _id: user?._id || normalizedUserId,
+        id: user?.id || normalizedUserId,
+      },
+      certifications: user?.certifications,
+    };
+  }, [normalizedUserId, user]);
+  const attendees = useMemo(() => {
+    if (optimisticJoin && optimisticAttendee && !userAlreadyInAttendees) {
+      return [optimisticAttendee, ...baseAttendees];
+    }
+
+    return baseAttendees;
+  }, [baseAttendees, optimisticAttendee, optimisticJoin, userAlreadyInAttendees]);
+  const hasJoined = optimisticJoin || userAlreadyInAttendees;
 
   const openMaps = useCallback(() => {
     debugLog('[EventDetailMap] open maps press', {
@@ -587,6 +599,16 @@ const EventCardBody = ({
     });
     openGoogleMaps(mapQuery);
   }, [fullAddr, openGoogleMaps, mapQuery]);
+
+  const openExpandedMap = useCallback(() => {
+    if (!region) return;
+    rootNavigation.navigate('MapPreviewScreen', {
+      title: 'Host Address',
+      fullAddress: fullAddr,
+      region,
+    });
+  }, [fullAddr, region, rootNavigation]);
+
   const handleJoin = async () => {
     setOptimisticJoin(true);
     try {
@@ -706,6 +728,65 @@ const EventCardBody = ({
   // Initialize with preloaded members if available to avoid loading jump
   const [oversightBody, setOversightBody] = useState({ name: defaultOversightName, members: oversightMembersPreload || [] });
   const [oversightLoading, setOversightLoading] = useState(!oversightMembersPreload);
+  const communityName = useMemo(
+    () =>
+      user?.community?.name?.trim?.() ||
+      homeOverview?.community?.name?.trim?.() ||
+      (typeof event?.community === 'string' ? event.community.trim() : event?.community?.name?.trim?.()) ||
+      '',
+    [event?.community, homeOverview?.community?.name, user?.community?.name],
+  );
+  const oversightBodyDisplayName = useMemo(() => {
+    const normalizedName = String(oversightBody.name || '')
+      .trim()
+      .toLowerCase();
+
+    if (
+      normalizedName === 'local spiritual assembly' &&
+      communityName
+    ) {
+      return `The Local Spiritual Assembly of ${communityName}`;
+    }
+
+    return oversightBody.name;
+  }, [communityName, oversightBody.name]);
+  const isLocalSpiritualAssemblyOversight = useMemo(
+    () =>
+      String(oversightBody.name || '')
+        .trim()
+        .toLowerCase() === 'local spiritual assembly',
+    [oversightBody.name],
+  );
+  const oversightModalMembers = useMemo(() => {
+    if (
+      isLocalSpiritualAssemblyOversight &&
+      Array.isArray(homeOverview?.localSpiritualAssembly) &&
+      homeOverview.localSpiritualAssembly.length > 0
+    ) {
+      return homeOverview.localSpiritualAssembly;
+    }
+
+    return oversightBody.members;
+  }, [
+    homeOverview?.localSpiritualAssembly,
+    isLocalSpiritualAssemblyOversight,
+    oversightBody.members,
+  ]);
+  const oversightModalTitle = isLocalSpiritualAssemblyOversight
+    ? 'Your Local Spiritual Assembly'
+    : oversightBodyDisplayName;
+  const oversightModalHeaderContent = communityName ? (
+    <View style={styles.communityChip}>
+      <Ionicons
+        name="leaf-outline"
+        size={12}
+        style={styles.communityChipIcon}
+      />
+      <Text style={styles.communityChipText} numberOfLines={1}>
+        {communityName}
+      </Text>
+    </View>
+  ) : null;
 
   useEffect(() => {
     if (typeof onUpdateCommitteeMembers === 'function') {
@@ -746,7 +827,6 @@ const EventCardBody = ({
     return () => { isMounted = false; };
   }, [eventType, oversightMembersPreload, token]);
 
-  const attendees = enrichedAttendees ?? rawAttendees;
   // Material upload modal state
   const [materialModalVisible, setMaterialModalVisible] = useState(false);
   const [newMaterialTitle, setNewMaterialTitle] = useState('');
@@ -792,24 +872,14 @@ const EventCardBody = ({
         </View>
         <View style={styles.divider} />
 
-        <EventLogisticsSection
-          styles={styles}
-          venueName={venueName}
-          addressText={addressText}
-          attendanceMode={attendanceMode}
-          timeRange={timeRange}
-        />
-        <EventOverviewSection
-          styles={styles}
-          title={title}
-          eventType={eventType || ''}
-          summary={description || summary || ''}
-        />
         <HostLocationSection
           region={region}
           fullAddress={fullAddr}
+          venueName={venueName}
+          addressText={addressText}
           styles={styles}
           onOpenMaps={openMaps}
+          onExpandMap={openExpandedMap}
         />
 
         {/* Host Section */}
@@ -828,67 +898,71 @@ const EventCardBody = ({
           onAddMaterial={false ? () => setMaterialModalVisible(true) : undefined}
           styles={styles}
         />
-        {/* Oversight Body */}
-        <Text style={styles.mapTitle}>Oversight Body</Text>
-        {/* Show committee name */}
-        <Text style={[styles.headerInfoText, { marginBottom: 8, alignSelf: 'flex-start' }]}>
-          {oversightBody.name}
-        </Text>
-        {oversightLoading ? (
-          <ActivityIndicator size="small" color={themeVariables.primaryColor} />
-        ) : oversightBody.members.length > 0 ? (
-          <>
-            <View style={styles.userListContainer}>
-              {oversightBody.members.slice(0, 4).map((member, idx) => (
-                <View key={member._id || idx} style={styles.userListItem}>
-                  <UserBadgeCell user={member} type={member.type} />
-                </View>
-              ))}
-            </View>
-            {oversightBody.members.length > 4 && (
-              <Button
-                secondary
-                size="small"
-                label="See More"
+        <DetailSection
+          title="Oversight Body"
+          titleStyle={styles.mapTitle}
+          bodyStyle={styles.oversightCard}>
+          <Text style={styles.oversightBodyName}>
+            {oversightBodyDisplayName}
+          </Text>
+          {oversightLoading ? (
+            <ActivityIndicator size="small" color={themeVariables.primaryColor} />
+          ) : oversightBody.members.length > 0 ? (
+            <>
+              <View style={styles.userListContainer}>
+                {oversightBody.members.slice(0, 4).map((member, idx) => {
+                  const badgeUser = member.details || member.user || member;
+                  return (
+                    <View
+                      key={member._id || member.id || badgeUser?._id || badgeUser?.id || idx}
+                      style={styles.userListItem}
+                    >
+                      <UserBadgeCell
+                        user={badgeUser}
+                        type={badgeUser?.type || member.type}
+                        userCertifications={member.certifications || badgeUser?.certifications}
+                        contained
+                      />
+                    </View>
+                  );
+                })}
+              </View>
+              <TouchableOpacity
+                style={styles.seeMoreTrigger}
                 onPress={() => setOversightModalVisible(true)}
-                style={styles.seeMoreButton}
-                textStyle={styles.seeMoreButtonText}
-              />
-            )}
-          </>
-        ) : (
-          <Text style={styles.headerInfoText}>No oversight available</Text>
-        )}
-        <View style={styles.divider} />
-        <EventAttendanceStatusSection
-          styles={styles}
-          hasJoined={hasJoined}
-          attendeeCount={attendees.length}
-          canJoin={!hasJoined && !isEventCancelled && !isEventCompleted && !isEventFull}
-          onJoin={handleJoin}
-          lifecycleLabel={lifecycleLabel}
-          lifecycleTone={lifecycleTone}
-          lifecycleMessage={lifecycleMessage}
-          capacitySummary={capacitySummary}
-        />
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name="ellipsis-horizontal-circle-outline"
+                  size={18}
+                  style={styles.seeMoreTriggerIcon}
+                />
+                <Text style={styles.seeMoreTriggerText}>See more</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Text style={styles.headerInfoText}>No oversight available</Text>
+          )}
+        </DetailSection>
         <AttendanceSection
           attendees={attendees}
           styles={styles}
           hasJoined={hasJoined}
           onJoin={handleJoin}
+          onShowAll={() => setAttendeesModalVisible(true)}
         />
       </View>
-      <BadgeModal
+      <EventAttendeesModal
         visible={attendeesModalVisible}
         onClose={() => setAttendeesModalVisible(false)}
-        list={attendees.map(a => ({ details: a.details || a.user || a, certifications: a.certifications }))}
-        title="Attendees"
+        attendees={attendees}
       />
-      <BadgeModal
+      <EventOversightBodyModal
         visible={oversightModalVisible}
         onClose={() => setOversightModalVisible(false)}
-        list={oversightBody.members}
-        title={oversightBody.name}
+        title={oversightModalTitle}
+        members={oversightModalMembers}
+        headerContent={oversightModalHeaderContent}
       />
       {/* Add Material Modal */}
       <Modal
@@ -1109,6 +1183,91 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  hostAddressContainer: {
+    alignSelf: 'flex-start',
+    marginVertical: 12,
+  },
+  hostAddressTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 4,
+  },
+  hostAddressSubtitle: {
+    fontSize: 14,
+    color: themeVariables.textColor || '#555',
+  },
+  oversightCard: {
+    width: '100%',
+    borderRadius: 22,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: '#E8EBF0',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  oversightBodyName: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    marginBottom: 12,
+  },
+  communityChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF7F0',
+    borderWidth: 1,
+    borderColor: '#D6EBD9',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    maxWidth: '100%',
+  },
+  communityChipIcon: {
+    color: '#2F7A46',
+    marginRight: 6,
+  },
+  communityChipText: {
+    color: '#2F7A46',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  emptyStateCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 22,
+    marginVertical: 12,
+    borderRadius: 22,
+    backgroundColor: '#F7F7FA',
+    borderWidth: 1,
+    borderColor: '#E6E7EE',
+  },
+  emptyStateIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF0FF',
+    marginBottom: 10,
+  },
+  emptyStateTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
   mapFallback: {
     flexDirection: 'column',
     justifyContent: 'center',
@@ -1181,15 +1340,15 @@ const styles = StyleSheet.create({
     width: Platform.select({ android: 140 }),
   },
   detailSub: { fontSize: 12, color: '#666', textAlign: 'center' },
-  sectionHeaderRow: {
-    ...sectionBaseStyles.sectionHeaderRow,
-  },
   avatarsContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  userListContainer: { flexDirection: 'row', flexWrap: 'wrap' },
+  userListContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
   userListItem: {
-    width: '50%',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    width: '48%',
+    marginBottom: 12,
   },
   avatar: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: '#fff' },
   extraCount: { backgroundColor: '#666', justifyContent: 'center', alignItems: 'center' },
@@ -1232,6 +1391,54 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.whiteColor,
     marginLeft: 6,
+  },
+  attendeesCard: {
+    width: '100%',
+    borderRadius: 22,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: '#E8EBF0',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  attendeesHeaderBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  attendeesHeaderBadgeJoined: {
+    backgroundColor: '#E6F6EC',
+  },
+  attendeesHeaderBadgeOpen: {
+    backgroundColor: '#ECECFF',
+  },
+  attendeesHeaderBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  attendeesHeaderBadgeTextJoined: {
+    color: '#18794E',
+  },
+  attendeesHeaderBadgeTextOpen: {
+    color: themeVariables.primaryColor,
+  },
+  attendeesSummaryText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: themeVariables.textColor || '#444',
+    marginBottom: 14,
+  },
+  attendeeList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  attendeeItem: {
+    width: '48%',
+    marginBottom: 12,
   },
   eventAttendanceCard: {
     width: '100%',
@@ -1429,14 +1636,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#777',
   },
-  seeMoreButton: {
+  seeMoreTrigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'center',
-    marginVertical: 8,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 8,
   },
-  seeMoreButtonText: {
+  seeMoreTriggerIcon: {
+    color: themeVariables.primaryColor,
+    marginRight: 6,
+  },
+  seeMoreTriggerText: {
+    color: themeVariables.primaryColor,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   addMaterialButton: {
     flexDirection: 'row',

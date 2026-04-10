@@ -22,7 +22,7 @@ import SwipeToCloseScrollView from '../../../components/SwipeToCloseScrollView';
 import { CardContent } from '../../../components/Card';
 import CardContainer from '../common/CardContainer';
 import useDetailCardHeader from '../common/useDetailCardHeader';
-import sectionBaseStyles from '../common/sectionBaseStyles';
+import DetailSection from '../common/DetailSection';
 import MediaSection from './sections/MediaSection';
 import CommentsSection from './sections/CommentsSection';
 import FastImage from 'react-native-fast-image';
@@ -537,9 +537,12 @@ const PostDetailCard = ({ route }) => {
         />
         {/* Tags Section */}
         {Array.isArray(post.tags) && post.tags.length > 0 && (
-          <View style={styles.tagsSection}>
-            <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>Tags</Text>
+          <DetailSection
+            title="Tags"
+            wrapperStyle={styles.tagsSection}
+            topDivider
+            bottomDivider={false}
+            bodyBottomSpacing={0}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -561,13 +564,16 @@ const PostDetailCard = ({ route }) => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </DetailSection>
         )}
         {/* Related Posts */}
         {relatedPosts?.length > 0 && (
-          <View style={styles.relatedSection}>
-            <View style={styles.divider} />
-            <Text style={styles.sectionTitle}>Related Posts</Text>
+          <DetailSection
+            title="Related Posts"
+            wrapperStyle={styles.relatedSection}
+            topDivider
+            bottomDivider={false}
+            bodyBottomSpacing={0}>
             <FlatList
               horizontal
               data={relatedPosts.filter(p => p._id !== post._id)}
@@ -594,7 +600,7 @@ const PostDetailCard = ({ route }) => {
                 </TouchableOpacity>
               )}
             />
-          </View>
+          </DetailSection>
         )}
         <FooterBrand containerStyle={footerContainerStyle} />
         </View>
@@ -741,22 +747,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flexShrink: 0,
   },
-  // Divider before sections
-  divider: {
-    ...sectionBaseStyles.sectionDivider,
-  },
-  // Section container (bordered)
-  sectionContainer: {
-    ...sectionBaseStyles.sectionContainer,
-  },
   tagsSection: {
     marginTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 10,
     backgroundColor: themeVariables.whiteColor,
-  },
-  sectionTitle: {
-    ...sectionBaseStyles.sectionTitle,
   },
   // Related posts section
   relatedSection: {
