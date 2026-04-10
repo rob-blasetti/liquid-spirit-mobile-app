@@ -48,7 +48,7 @@ const allowedMaterialTypes = [
   documentTypes.plainText,
 ];
 import resolveImageSource from '../../../utils/imageSource';
-import UserCell from '../../../components/UserCell';
+import UserBadgeCell from '../../../components/UserBadgeCell';
 import { fetchUserBodyByEventType } from '../../../services/UserBodyService';
 import { UserContext } from '../../../contexts/UserContext';
 import { CommunityContext } from '../../../contexts/CommunityContext';
@@ -841,7 +841,7 @@ const EventCardBody = ({
             <View style={styles.userListContainer}>
               {oversightBody.members.slice(0, 4).map((member, idx) => (
                 <View key={member._id || idx} style={styles.userListItem}>
-                  <UserCell user={member} type={member.type} />
+                  <UserBadgeCell user={member} type={member.type} />
                 </View>
               ))}
             </View>

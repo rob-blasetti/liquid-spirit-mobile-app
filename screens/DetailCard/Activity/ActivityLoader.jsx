@@ -1,10 +1,16 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
 
 import themeVariables from '../../../styles/theme';
 import ActivityLayout from './ActivityLayout';
 
-const { height: windowHeight } = Dimensions.get('window');
+const {height: windowHeight} = Dimensions.get('window');
 
 const ActivityLoader = ({
   loading,
@@ -12,6 +18,7 @@ const ActivityLoader = ({
   hydratedActivity,
   hydratedPrefillActivity,
   scrollContentStyle,
+  scrollRef,
   children,
 }) => {
   if (error) {
@@ -24,7 +31,9 @@ const ActivityLoader = ({
 
   if (loading && hydratedPrefillActivity) {
     return (
-      <ActivityLayout scrollContentStyle={scrollContentStyle}>
+      <ActivityLayout
+        scrollContentStyle={scrollContentStyle}
+        scrollRef={scrollRef}>
         {children(hydratedPrefillActivity)}
       </ActivityLayout>
     );
@@ -42,7 +51,9 @@ const ActivityLoader = ({
   }
 
   return (
-    <ActivityLayout scrollContentStyle={scrollContentStyle}>
+    <ActivityLayout
+      scrollContentStyle={scrollContentStyle}
+      scrollRef={scrollRef}>
       {children(hydratedActivity)}
     </ActivityLayout>
   );
@@ -61,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: themeVariables.textColor || '#555',
   },
-  errorText: { color: 'red', fontSize: 16 },
+  errorText: {color: 'red', fontSize: 16},
 });
 
 export default ActivityLoader;

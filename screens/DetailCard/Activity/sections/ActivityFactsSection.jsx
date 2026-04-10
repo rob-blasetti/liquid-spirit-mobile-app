@@ -1,52 +1,92 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import {View, Text, TouchableOpacity} from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {formatLongSessionDate} from '../utils/activityHelpers';
 
-const FactItem = ({ styles, label, value }) => {
-  if (!value) return null;
-  return (
-    <View style={styles.activityFactItem}>
-      <Text style={styles.activityFactLabel}>{label}</Text>
-      <Text style={styles.activityFactValue}>{value}</Text>
-    </View>
-  );
+const DETAIL_ITEMS = [
+  {
+    key: 'day',
+    label: 'Day',
+    icon: 'calendar-outline',
+  },
+  {
+    key: 'time',
+    label: 'Time',
+    icon: 'time-outline',
+  },
+  {
+    key: 'frequency',
+    label: 'Frequency',
+    icon: 'repeat-outline',
+  },
+];
+
+const formatSessionDate = session => {
+  const value =
+    session?.dateObj || (session?.date ? new Date(session.date) : null);
+  if (!value || Number.isNaN(value.getTime?.())) return '';
+  return formatLongSessionDate(value);
 };
 
 const ActivityFactsSection = ({
   styles,
-  communityName,
   dayOfWeek,
   timeMain,
   frequency,
-  gradeLabel,
-  curriculumName,
-  locationLabel,
-  onlineLabel,
+  nextSession,
+  onPressNextSession,
 }) => {
-  const hasAnyFact = [
-    communityName,
-    dayOfWeek,
-    timeMain,
-    frequency,
-    gradeLabel,
-    curriculumName,
-    locationLabel,
-    onlineLabel,
-  ].some(Boolean);
-
-  if (!hasAnyFact) return null;
+  const values = {
+    day: dayOfWeek || 'N/A',
+    time: timeMain || 'N/A',
+    frequency: frequency || 'N/A',
+  };
+  const nextSessionDate = formatSessionDate(nextSession);
+  const canJumpToSession = Boolean(nextSessionDate && onPressNextSession);
 
   return (
     <>
       <Text style={styles.mapTitle}>Activity Details</Text>
       <View style={styles.activityFactsCard}>
-        <FactItem styles={styles} label="Community" value={communityName} />
-        <FactItem styles={styles} label="Day" value={dayOfWeek} />
-        <FactItem styles={styles} label="Time" value={timeMain} />
-        <FactItem styles={styles} label="Frequency" value={frequency} />
-        <FactItem styles={styles} label="Grade" value={gradeLabel} />
-        <FactItem styles={styles} label="Curriculum" value={curriculumName} />
-        <FactItem styles={styles} label="Location" value={locationLabel} />
-        <FactItem styles={styles} label="Online" value={onlineLabel} />
+        <View style={styles.activityFactsTopRow}>
+          {DETAIL_ITEMS.map((item, index) => (
+            <React.Fragment key={item.key}>
+              <View style={styles.activityFactItem}>
+                <View style={styles.activityFactIconWrap}>
+                  <Ionicons
+                    name={item.icon}
+                    size={16}
+                    style={styles.activityFactIcon}
+                  />
+                </View>
+                <View style={styles.activityFactContent}>
+                  <Text style={styles.activityFactLabel}>{item.label}</Text>
+                  <Text style={styles.activityFactValue}>{values[item.key]}</Text>
+                </View>
+              </View>
+              {index < DETAIL_ITEMS.length - 1 ? (
+                <View style={styles.activityFactDivider} />
+              ) : null}
+            </React.Fragment>
+          ))}
+        </View>
+        {nextSessionDate ? (
+          <TouchableOpacity
+            style={styles.nextSessionRow}
+            activeOpacity={canJumpToSession ? 0.8 : 1}
+            onPress={canJumpToSession ? onPressNextSession : undefined}
+            disabled={!canJumpToSession}>
+            <View style={styles.nextSessionContent}>
+              <Text style={styles.nextSessionLabel}>Next Upcoming Session</Text>
+              <Text style={styles.nextSessionValue}>{nextSessionDate}</Text>
+            </View>
+            <Ionicons
+              name="chevron-down-outline"
+              size={18}
+              style={styles.nextSessionIcon}
+            />
+          </TouchableOpacity>
+        ) : null}
       </View>
       <View style={styles.divider} />
     </>

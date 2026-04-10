@@ -1,6 +1,7 @@
-import React, { useCallback } from 'react';
-import { View, Text, Dimensions } from 'react-native';
-import { CardTitle, CardContent } from '../../../components/Card';
+import React, {useCallback} from 'react';
+import {View, Text, Dimensions} from 'react-native';
+import {CardTitle, CardContent} from '../../../components/Card';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import CardContainer from '../common/CardContainer';
 import CurriculumSection from './sections/CurriculumSection';
@@ -8,19 +9,19 @@ import FormsSection from './sections/FormsSection';
 import LocationSection from './sections/LocationSection';
 import GuidelinesSection from './sections/GuidelinesSection';
 import OverviewSection from './sections/OverviewSection';
-import ParticipationStatusSection, { buildParticipationDisplay } from './sections/ParticipationStatusSection';
-import SessionSummarySection from './sections/SessionSummarySection';
 import ActivityFactsSection from './sections/ActivityFactsSection';
 import FooterBrand from '../common/FooterBrand';
 import resolveImageSource from '../../../utils/imageSource';
-import { formatTime } from './utils/activityHelpers';
+import {formatTime} from './utils/activityHelpers';
 import useActivitySessions from './hooks/useActivitySessions';
 import useCurriculumDetails from './hooks/useCurriculumDetails';
 import useActivityLocation from './hooks/useActivityLocation';
 import useActivityUserStatus from './hooks/useActivityUserStatus';
 import styles from './ActivityCard.styles';
 
-const { width: screenWidth } = Dimensions.get('window');
+const {width: screenWidth} = Dimensions.get('window');
+const normalizeId = value =>
+  value === undefined || value === null ? '' : String(value).trim();
 
 const ActivityCardBody = ({
   activity,
@@ -32,6 +33,8 @@ const ActivityCardBody = ({
   onRequestParticipant,
   optimisticFacilitatorRequest,
   optimisticParticipantRequest,
+  onPressNextSession,
+  onSessionsLayout,
 }) => {
   const safeActivity = activity || {};
 
@@ -44,25 +47,21 @@ const ActivityCardBody = ({
     guidelines,
     forms,
     community,
-    curriculum,
+    createdBy,
   } = safeActivity;
 
   const dayOfWeek = groupDetails?.day ?? 'N/A';
   const timeMain = formatTime(groupDetails?.time);
   const safeActivityTypeName = activityType?.name || activityType || 'Unknown';
 
-  const { allSessions, orderedUpcomingSessions, nextSession, curriculumLesson } = useActivitySessions(
-    safeActivity,
-    initialSessionId
-  );
+  const {orderedUpcomingSessions, nextSession, curriculumLesson} =
+    useActivitySessions(safeActivity, initialSessionId);
   const curriculumDetails = useCurriculumDetails(curriculumLesson);
-  const location = useActivityLocation({ activity: safeActivity, nextSession });
-  const communityName = community?.name || '';
+  const location = useActivityLocation({activity: safeActivity, nextSession});
   const frequency = groupDetails?.frequency || '';
-  const gradeLabel = safeActivity?.grade || '';
-  const curriculumName = curriculum?.name || curriculum?.title || '';
-  const locationLabel = location.mapDisplayAddress || location.mapAddress || '';
-  const onlineLabel = location.resolvedOnlineLink ? 'Available online' : '';
+  const communityName =
+    (typeof community === 'string' ? community : community?.name) || '';
+  const isAdmin = normalizeId(createdBy) === normalizeId(userId);
   const {
     isUserFacilitator,
     isUserParticipant,
@@ -70,8 +69,6 @@ const ActivityCardBody = ({
     hasParticipantSpace,
     hasRequestedFacilitator,
     hasRequestedParticipant,
-    facilitatorCount,
-    participantCount,
     facilitatorLimit,
     participantLimit,
   } = useActivityUserStatus({
@@ -80,6 +77,56 @@ const ActivityCardBody = ({
     optimisticFacilitatorRequest,
     optimisticParticipantRequest,
   });
+  const topBadges = [
+    communityName
+      ? {
+          key: 'community',
+          label: communityName,
+          icon: 'leaf-outline',
+          tone: 'community',
+        }
+      : null,
+    isAdmin
+      ? {
+          key: 'admin',
+          label: 'Admin',
+          icon: 'shield-checkmark-outline',
+          tone: 'admin',
+        }
+      : null,
+    isUserFacilitator
+      ? {
+          key: 'facilitator',
+          label: 'Facilitator',
+          icon: 'people-outline',
+          tone: 'success',
+        }
+      : null,
+    isUserParticipant
+      ? {
+          key: 'participant',
+          label: 'Participant',
+          icon: 'person-outline',
+          tone: 'success',
+        }
+      : null,
+    hasRequestedFacilitator
+      ? {
+          key: 'pending-facilitator',
+          label: 'Pending Facilitator',
+          icon: 'hourglass-outline',
+          tone: 'warning',
+        }
+      : null,
+    hasRequestedParticipant
+      ? {
+          key: 'pending-participant',
+          label: 'Pending Participant',
+          icon: 'time-outline',
+          tone: 'warning',
+        }
+      : null,
+  ].filter(Boolean);
 
   const handleFacilitatorRequest = useCallback(() => {
     onRequestFacilitator?.(userId);
@@ -90,21 +137,11 @@ const ActivityCardBody = ({
   }, [onRequestParticipant, userId]);
 
   const imageSource = imageUrl
-    ? resolveImageSource(imageUrl, { priority: 'high', fallback: '/img/events/Event_Placeholder.png' })
+    ? resolveImageSource(imageUrl, {
+        priority: 'high',
+        fallback: '/img/events/Event_Placeholder.png',
+      })
     : null;
-
-  const participationDisplay = buildParticipationDisplay({
-    isUserFacilitator,
-    isUserParticipant,
-    hasRequestedFacilitator,
-    hasRequestedParticipant,
-    hasFacilitatorSpace,
-    hasParticipantSpace,
-    facilitatorCount,
-    participantCount,
-    facilitatorLimit,
-    participantLimit,
-  });
 
   if (!activity) return null;
 
@@ -113,8 +150,7 @@ const ActivityCardBody = ({
       <CardContainer
         imageUrl={imageSource}
         cardStyle={styles.card}
-        bannerStyle={styles.banner}
-      >
+        bannerStyle={styles.banner}>
         <View style={styles.overlayCard} key="card-body">
           <CardTitle
             title={title}
@@ -123,38 +159,39 @@ const ActivityCardBody = ({
             titleStyle={styles.cardTitleText}
             subtitleStyle={styles.cardSubtitleText}
           />
-          <View style={styles.headerInfoContainer}>
-            <Text style={styles.headerInfoText}>{dayOfWeek} ‧ {timeMain}</Text>
-          </View>
+          {topBadges.length > 0 ? (
+            <View style={styles.topBadgeRow}>
+              {topBadges.map(badge => (
+                <View
+                  key={badge.key}
+                  style={[styles.topBadge, styles[`topBadge_${badge.tone}`]]}>
+                  <Ionicons
+                    name={badge.icon}
+                    size={12}
+                    style={[
+                      styles.topBadgeIcon,
+                      styles[`topBadgeIcon_${badge.tone}`],
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.topBadgeText,
+                      styles[`topBadgeText_${badge.tone}`],
+                    ]}>
+                    {badge.label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
           <View style={styles.divider} />
-          <ParticipationStatusSection
-            styles={styles}
-            statusLabel={participationDisplay.statusLabel}
-            statusTone={participationDisplay.statusTone}
-            statusMessage={participationDisplay.statusMessage}
-            facilitatorSummary={participationDisplay.facilitatorSummary}
-            participantSummary={participationDisplay.participantSummary}
-            canRequestFacilitator={participationDisplay.canRequestFacilitator}
-            canRequestParticipant={participationDisplay.canRequestParticipant}
-            hasRequestedFacilitator={hasRequestedFacilitator}
-            hasRequestedParticipant={hasRequestedParticipant}
-            onRequestFacilitator={handleFacilitatorRequest}
-            onRequestParticipant={handleParticipantRequest}
-          />
-          <SessionSummarySection
-            styles={styles}
-            totalSessions={allSessions.length}
-            upcomingCount={orderedUpcomingSessions.length}
-            nextSession={nextSession}
-          />
           <ActivityFactsSection
             styles={styles}
-            communityName={communityName}
             dayOfWeek={dayOfWeek}
             timeMain={timeMain}
             frequency={frequency}
-            gradeLabel={gradeLabel}
-            curriculumName={curriculumName}
+            nextSession={nextSession}
+            onPressNextSession={onPressNextSession}
           />
           <OverviewSection
             description={description}
@@ -167,12 +204,37 @@ const ActivityCardBody = ({
             isUserParticipant={isUserParticipant}
             hasRequestedFacilitator={hasRequestedFacilitator}
             hasRequestedParticipant={hasRequestedParticipant}
+            facilitatorLimit={facilitatorLimit}
+            participantLimit={participantLimit}
             handleFacilitatorRequest={handleFacilitatorRequest}
             handleParticipantRequest={handleParticipantRequest}
             screenWidth={screenWidth}
+            showSessions={false}
+          />
+          <OverviewSection
+            description={description}
+            orderedUpcomingSessions={orderedUpcomingSessions}
+            styles={styles}
+            detailsLoaded={detailsLoaded}
+            hasFacilitatorSpace={hasFacilitatorSpace}
+            hasParticipantSpace={hasParticipantSpace}
+            isUserFacilitator={isUserFacilitator}
+            isUserParticipant={isUserParticipant}
+            hasRequestedFacilitator={hasRequestedFacilitator}
+            hasRequestedParticipant={hasRequestedParticipant}
+            facilitatorLimit={facilitatorLimit}
+            participantLimit={participantLimit}
+            handleFacilitatorRequest={handleFacilitatorRequest}
+            handleParticipantRequest={handleParticipantRequest}
+            screenWidth={screenWidth}
+            showDescription={false}
+            onSessionsLayout={onSessionsLayout}
           />
 
-          <CurriculumSection curriculumDetails={curriculumDetails} styles={styles} />
+          <CurriculumSection
+            curriculumDetails={curriculumDetails}
+            styles={styles}
+          />
 
           <LocationSection
             showMapSection={location.showMapSection}

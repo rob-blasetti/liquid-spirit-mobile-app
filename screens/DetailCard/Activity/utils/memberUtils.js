@@ -9,6 +9,28 @@ const resolveEntryDetails = (entry) => {
   return typeof entry === 'object' ? entry : null;
 };
 
+const resolveEntryType = (entry = {}) => {
+  const details = resolveEntryDetails(entry);
+  const candidates = [
+    entry?.type,
+    entry?.memberType,
+    entry?.refType,
+    entry?.referenceType,
+    entry?.entityType,
+    details?.type,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'string') continue;
+    const normalized = candidate.trim().toLowerCase();
+    if (normalized.length) return normalized;
+  }
+
+  return '';
+};
+
+const isMemberEntry = entry => resolveEntryType(entry) === 'member';
+
 export const resolveEntryId = (entry) => {
   if (!entry) return '';
   if (typeof entry === 'string' || typeof entry === 'number') {
@@ -68,6 +90,16 @@ const entryHasCompleteProfile = (entry) => {
     details.avatarUrl ||
     details.photo ||
     details.image;
+  const memberStatus = coalesceString(
+    details.status,
+    entry?.status,
+    entry?.memberStatus,
+  );
+
+  if (isMemberEntry(entry)) {
+    return Boolean((name || avatar) && memberStatus);
+  }
+
   return Boolean(name || avatar);
 };
 
@@ -148,14 +180,23 @@ export const applyHydratedMembers = (activity, profileMap = {}) => {
         details.avatarUrl ||
         details.photo ||
         details.image;
-      if (hasName && hasAvatar) {
+      const hasMemberStatus = coalesceString(
+        details.status,
+        entry?.status,
+        normalizedProfile?.status,
+      ).length > 0;
+      if (
+        hasName &&
+        hasAvatar &&
+        (!isMemberEntry(entry) || hasMemberStatus)
+      ) {
         return entry;
       }
     }
     if (typeof entry === 'object') {
       return {
         ...entry,
-        details: { ...(normalizedProfile || {}) },
+        details: { ...(details || {}), ...(normalizedProfile || {}) },
       };
     }
     return {

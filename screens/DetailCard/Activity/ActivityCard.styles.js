@@ -1,9 +1,14 @@
-import { StyleSheet, Platform } from 'react-native';
-import { IMAGE_BANNER_HEIGHT } from '../../../components/ImageBanner';
+import {StyleSheet, Platform} from 'react-native';
+import {IMAGE_BANNER_HEIGHT} from '../../../components/ImageBanner';
 
 import themeVariables from '../../../styles/theme';
 import sectionBaseStyles from '../common/sectionBaseStyles';
-import { detailCardOverlay, detailCardTitle, detailCardSubtitle, detailCardContent } from '../common/detailCardLayout';
+import {
+  detailCardOverlay,
+  detailCardTitle,
+  detailCardSubtitle,
+  detailCardContent,
+} from '../common/detailCardLayout';
 
 const styles = StyleSheet.create({
   card: {
@@ -23,7 +28,7 @@ const styles = StyleSheet.create({
   overlayCard: {
     ...detailCardOverlay,
   },
-  titleBlock: { fontWeight: 'bold', alignItems: 'center' },
+  titleBlock: {fontWeight: 'bold', alignItems: 'center'},
   cardTitleText: {
     ...detailCardTitle,
   },
@@ -41,6 +46,69 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
+  topBadgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  topBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+  },
+  topBadge_community: {
+    backgroundColor: '#EEF7F0',
+    borderColor: '#D6EBD9',
+  },
+  topBadge_admin: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#D9E0FF',
+  },
+  topBadge_success: {
+    backgroundColor: '#EEF7F0',
+    borderColor: '#D6EBD9',
+  },
+  topBadge_warning: {
+    backgroundColor: '#FFF6E7',
+    borderColor: '#F2DFC0',
+  },
+  topBadgeIcon: {
+    marginRight: 6,
+  },
+  topBadgeIcon_community: {
+    color: '#2F7A46',
+  },
+  topBadgeIcon_admin: {
+    color: themeVariables.primaryColor,
+  },
+  topBadgeIcon_success: {
+    color: '#2F7A46',
+  },
+  topBadgeIcon_warning: {
+    color: '#B26A00',
+  },
+  topBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  topBadgeText_community: {
+    color: '#2F7A46',
+  },
+  topBadgeText_admin: {
+    color: themeVariables.primaryColor,
+  },
+  topBadgeText_success: {
+    color: '#2F7A46',
+  },
+  topBadgeText_warning: {
+    color: '#B26A00',
+  },
   divider: {
     ...sectionBaseStyles.sectionDivider,
   },
@@ -48,7 +116,7 @@ const styles = StyleSheet.create({
     ...sectionBaseStyles.sectionTitle,
   },
   carouselContent: {
-    paddingLeft: 4,
+    paddingRight: 4,
   },
   carouselTitle: {
     color: themeVariables.blackColor,
@@ -136,14 +204,20 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 14,
   },
-  factBox: { flex: 1, alignItems: 'center' },
-  factLabel: { fontSize: 11, color: '#666', marginTop: 4, textAlign: 'center', width: Platform.select({ android: 150 })},
+  factBox: {flex: 1, alignItems: 'center'},
+  factLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
+    width: Platform.select({android: 150}),
+  },
   factValue: {
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
     textAlign: 'center',
-    width: Platform.select({ android: 150 }),
+    width: Platform.select({android: 150}),
   },
   linkText: {
     color: themeVariables.primaryColor,
@@ -164,13 +238,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
   },
-  detailIcon: { marginBottom: 6 },
+  detailIcon: {marginBottom: 6},
   detailLabel: {
     fontSize: 11,
     color: '#666',
     marginBottom: 4,
     textAlign: 'center',
-    width: Platform.select({ android: 65 }),
+    width: Platform.select({android: 65}),
   },
   detailValue: {
     fontSize: 14,
@@ -178,7 +252,7 @@ const styles = StyleSheet.create({
     color: '#312783',
     marginBottom: 4,
     textAlign: 'center',
-    width: Platform.select({ android: 65 }),
+    width: Platform.select({android: 65}),
   },
   detailSub: {
     fontSize: 12,
@@ -330,7 +404,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
-    width: Platform.select({ android: 40 }),
+    width: Platform.select({android: 40}),
   },
   modalList: {
     flexDirection: 'row',
@@ -350,7 +424,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginTop: 6,
   },
-  ctaText: { fontSize: 14, fontWeight: '600' },
+  ctaText: {fontSize: 14, fontWeight: '600'},
   requestButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -552,24 +626,84 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 16,
     backgroundColor: '#F6F7FB',
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     marginTop: 8,
+    marginBottom: 12,
+  },
+  activityFactsTopRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
   },
   activityFactItem: {
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E0E0E0',
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  activityFactIconWrap: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#EDE9FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  activityFactIcon: {
+    color: themeVariables.primaryColor,
+  },
+  activityFactContent: {
+    flex: 1,
+    alignItems: 'flex-start',
   },
   activityFactLabel: {
-    fontSize: 12,
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'left',
+  },
+  activityFactValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+    textAlign: 'left',
+  },
+  activityFactDivider: {
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: '#D8DCE3',
+    marginVertical: 6,
+  },
+  nextSessionRow: {
+    width: '100%',
+    marginTop: 10,
+    paddingTop: 12,
+    paddingBottom: 6,
+    paddingHorizontal: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#D8DCE3',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  nextSessionContent: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  nextSessionLabel: {
+    fontSize: 11,
     color: '#666',
     marginBottom: 4,
   },
-  activityFactValue: {
-    fontSize: 15,
+  nextSessionValue: {
+    fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
+  },
+  nextSessionIcon: {
+    color: themeVariables.primaryColor,
   },
   guidelinesText: {
     fontSize: 14,
@@ -640,7 +774,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    width: Platform.select({ android: 100 }),
+    width: Platform.select({android: 100}),
   },
 });
 

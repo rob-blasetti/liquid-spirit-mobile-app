@@ -1,5 +1,14 @@
 import { useMemo } from 'react';
 
+const normalizeLimit = value => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
 const useActivityUserStatus = ({
   activity,
   userId,
@@ -8,8 +17,8 @@ const useActivityUserStatus = ({
 }) => useMemo(() => {
   const facilitators = activity?.facilitators || [];
   const participants = activity?.participants || [];
-  const facilitatorLimit = activity?.facilitatorLimit;
-  const participantLimit = activity?.participantLimit;
+  const facilitatorLimit = normalizeLimit(activity?.facilitatorLimit);
+  const participantLimit = normalizeLimit(activity?.participantLimit);
 
   const isUserFacilitator = facilitators.some(
     (f) => f.details?._id === userId

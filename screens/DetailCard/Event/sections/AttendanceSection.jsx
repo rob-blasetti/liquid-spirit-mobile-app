@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import UserCell from '../../../../components/UserCell';
+import UserBadgeCell from '../../../../components/UserBadgeCell';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../../../../styles/theme';
 
@@ -18,7 +18,7 @@ const AttendanceSection = ({ attendees = [], styles, onJoin, hasJoined }) => (
     <View style={styles.attendeeList}>
       {Array.isArray(attendees) && attendees.length > 0 ? (
         attendees.map((a, idx) => (
-          <UserCell
+          <UserBadgeCell
             key={a._id || idx}
             user={a.details || a}
             hideRole

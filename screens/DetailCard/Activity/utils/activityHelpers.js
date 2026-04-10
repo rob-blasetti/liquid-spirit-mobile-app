@@ -18,6 +18,19 @@ export const formatTime = (timeValue) => {
   return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 };
 
+export const formatLongSessionDate = dateValue => {
+  if (!(dateValue instanceof Date) || Number.isNaN(dateValue.getTime?.())) {
+    return '';
+  }
+
+  return `${dateValue.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })}, ${dateValue.toLocaleDateString(undefined, {
+    year: 'numeric',
+  })}`;
+};
+
 export const resolveActivityImage = (activity = {}) =>
   activity.imageUrl ||
   activity.imageURL ||

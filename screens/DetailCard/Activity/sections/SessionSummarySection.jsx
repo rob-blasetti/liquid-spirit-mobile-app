@@ -1,14 +1,11 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import {formatLongSessionDate} from '../utils/activityHelpers';
 
 const formatSessionDate = (session) => {
   const value = session?.dateObj || (session?.date ? new Date(session.date) : null);
   if (!value || Number.isNaN(value.getTime?.())) return 'Date to be confirmed';
-  return value.toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
+  return formatLongSessionDate(value);
 };
 
 const formatSessionTime = (session) => {
@@ -47,7 +44,7 @@ const SessionSummarySection = ({
         </View>
 
         <View style={styles.sessionSummaryNextBlock}>
-          <Text style={styles.sessionSummaryNextLabel}>Next session</Text>
+          <Text style={styles.sessionSummaryNextLabel}>Next Upcoming Session</Text>
           <Text style={styles.sessionSummaryNextDate}>{nextDate}</Text>
           {nextTime ? <Text style={styles.sessionSummaryNextMeta}>{nextTime}</Text> : null}
           {nextStatus ? <Text style={styles.sessionSummaryNextMeta}>Status: {nextStatus}</Text> : null}

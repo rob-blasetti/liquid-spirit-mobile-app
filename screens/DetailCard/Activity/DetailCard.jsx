@@ -1,22 +1,10 @@
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  UIManager,
-  Platform,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, {useEffect, useMemo, useState, useRef, useCallback} from 'react';
+import {View, Text, StyleSheet, UIManager, Platform} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 import themeVariables from '../../../styles/theme';
 import useActivityDetail from './hooks/useActivityDetail';
-import { getActivityChatParticipantProfiles } from '../../../services/ChatService';
+import {getActivityChatParticipantProfiles} from '../../../services/ChatService';
 import useChatStarter from '../common/useChatStarter';
 import useHydrateMembers from './hooks/useHydrateMembers';
 import ActivityCardBody from './ActivityCardBody';
@@ -50,7 +38,7 @@ const extractMemberType = (entry = {}) => {
   return '';
 };
 
-const isUserMemberEntry = (entry) => {
+const isUserMemberEntry = entry => {
   if (!entry || typeof entry !== 'object') return false;
   const memberType = extractMemberType(entry);
   if (!memberType) return false;
@@ -85,7 +73,9 @@ const resolveMemberName = (entry = {}) => {
   const candidates = [
     entry.name,
     entry.fullName,
-    entry.firstName && entry.lastName ? `${entry.firstName} ${entry.lastName}` : '',
+    entry.firstName && entry.lastName
+      ? `${entry.firstName} ${entry.lastName}`
+      : '',
     entry.firstName,
     entry.lastName,
     entry.username,
@@ -110,7 +100,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const ActivityDetailCard = ({ route }) => {
+const ActivityDetailCard = ({route}) => {
   const {
     activity,
     activityPreload,
@@ -127,27 +117,30 @@ const ActivityDetailCard = ({ route }) => {
     insets,
     user,
     token,
-  } = useActivityDetail({ route });
+  } = useActivityDetail({route});
 
   const navigation = useNavigation();
   const safeAreaBottom = insets?.bottom || 0;
-  const { initialSessionId } = route.params || {};
+  const {initialSessionId} = route.params || {};
   const [redirected, setRedirected] = useState(false);
   const prefillParamsSetRef = useRef(false);
+  const scrollRef = useRef(null);
+  const sessionsSectionYRef = useRef(0);
 
   const pickLatestSession = useCallback((sessions = []) => {
     if (!Array.isArray(sessions) || sessions.length === 0) return null;
     return sessions.reduce((latest, session) => {
-      const dateValue = session?.date || session?.createdAt || session?.updatedAt;
+      const dateValue =
+        session?.date || session?.createdAt || session?.updatedAt;
       const time = dateValue ? new Date(dateValue).getTime() : 0;
       if (!latest || time > latest.time) {
-        return { session, time };
+        return {session, time};
       }
       return latest;
     }, null)?.session;
   }, []);
 
-  const { hydratedActivity, hydratedPrefillActivity } = useHydrateMembers({
+  const {hydratedActivity, hydratedPrefillActivity} = useHydrateMembers({
     activity,
     prefillActivity: activityPreload,
     token,
@@ -170,7 +163,7 @@ const ActivityDetailCard = ({ route }) => {
     [latestActivityForChat],
   );
 
-  const { startChat, startingChat } = useChatStarter({
+  const {startChat, startingChat} = useChatStarter({
     activity: latestActivityForChat,
     activityId,
     context: 'activity',
@@ -180,7 +173,17 @@ const ActivityDetailCard = ({ route }) => {
     chatParticipantProfiles,
   });
 
-  const { openGoogleMaps } = useGoogleMaps();
+  const {openGoogleMaps} = useGoogleMaps();
+  const handleSessionsLayout = useCallback((y = 0) => {
+    sessionsSectionYRef.current = y;
+  }, []);
+  const handleScrollToSessions = useCallback(() => {
+    const targetY = Math.max(0, sessionsSectionYRef.current - 16);
+    scrollRef.current?.scrollTo?.({
+      y: targetY,
+      animated: true,
+    });
+  }, []);
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -191,15 +194,23 @@ const ActivityDetailCard = ({ route }) => {
 
   useEffect(() => {
     if (prefillParamsSetRef.current) return;
-    const detail = hydratedActivity || hydratedPrefillActivity || activityPreload || activity;
+    const detail =
+      hydratedActivity ||
+      hydratedPrefillActivity ||
+      activityPreload ||
+      activity;
     if (!detail) return;
     const latestSession = pickLatestSession(detail.sessions || []);
     const prefillFacilitators =
-      (latestSession?.facilitators && latestSession.facilitators.length > 0 && latestSession.facilitators) ||
+      (latestSession?.facilitators &&
+        latestSession.facilitators.length > 0 &&
+        latestSession.facilitators) ||
       detail.facilitators ||
       [];
     const prefillParticipants =
-      (latestSession?.participants && latestSession.participants.length > 0 && latestSession.participants) ||
+      (latestSession?.participants &&
+        latestSession.participants.length > 0 &&
+        latestSession.participants) ||
       detail.participants ||
       [];
     navigation.setParams({
@@ -208,10 +219,20 @@ const ActivityDetailCard = ({ route }) => {
       prefilledParticipants: prefillParticipants,
     });
     prefillParamsSetRef.current = true;
-  }, [activity, activityPreload, hydratedActivity, hydratedPrefillActivity, navigation, pickLatestSession]);
+  }, [
+    activity,
+    activityPreload,
+    hydratedActivity,
+    hydratedPrefillActivity,
+    navigation,
+    pickLatestSession,
+  ]);
 
   const chatEligibleMemberCount = useMemo(() => {
-    const memberLists = [latestActivityForChat?.participants, latestActivityForChat?.facilitators];
+    const memberLists = [
+      latestActivityForChat?.participants,
+      latestActivityForChat?.facilitators,
+    ];
     const keys = new Set();
 
     memberLists.forEach((list, listIndex) => {
@@ -243,13 +264,19 @@ const ActivityDetailCard = ({ route }) => {
   useEffect(() => {
     if (redirected || loading) return;
     if (errorStatus === 404) {
-      navigation.replace('Activities', { bannerMessage: 'Sorry, that activity no longer exists.' });
+      navigation.replace('Activities', {
+        bannerMessage: 'Sorry, that activity no longer exists.',
+      });
       setRedirected(true);
     } else if (errorStatus === 401) {
-      navigation.replace('Activities', { bannerMessage: 'Please log in to view this activity.' });
+      navigation.replace('Activities', {
+        bannerMessage: 'Please log in to view this activity.',
+      });
       setRedirected(true);
     } else if (errorStatus === 'invalid_id') {
-      navigation.replace('Activities', { bannerMessage: 'Invalid activity link.' });
+      navigation.replace('Activities', {
+        bannerMessage: 'Invalid activity link.',
+      });
       setRedirected(true);
     }
   }, [errorStatus, redirected, loading, navigation]);
@@ -269,8 +296,8 @@ const ActivityDetailCard = ({ route }) => {
       hydratedActivity={hydratedActivity}
       hydratedPrefillActivity={hydratedPrefillActivity}
       scrollContentStyle={scrollContentStyle}
-    >
-      {(activityToRender) => (
+      scrollRef={scrollRef}>
+      {activityToRender => (
         <ActivityCardBody
           activity={activityToRender}
           openGoogleMaps={openGoogleMaps}
@@ -281,6 +308,8 @@ const ActivityDetailCard = ({ route }) => {
           onRequestParticipant={handleParticipantRequest}
           optimisticFacilitatorRequest={optimisticFacilitatorRequest}
           optimisticParticipantRequest={optimisticParticipantRequest}
+          onPressNextSession={handleScrollToSessions}
+          onSessionsLayout={handleSessionsLayout}
         />
       )}
     </ActivityLoader>
@@ -296,5 +325,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: themeVariables.whiteColor,
   },
-  noActivityText: { color: '#666', fontSize: 18 },
+  noActivityText: {color: '#666', fontSize: 18},
 });
