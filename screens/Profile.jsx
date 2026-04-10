@@ -18,11 +18,12 @@ import EventItem from '../components/EventItem';
 import { fetchActivities, approveFacilitator, denyFacilitatorRequest, approveParticipation, denyParticipationRequest } from '../services/ActivityService';
 import { fetchEvents } from '../services/EventService';
 import { fetchExploreFeed } from '../services/PostService';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import RequestItem from '../components/RequestItem';
 import ChangeableProfileImage from '../components/ChangeableProfileImage';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 import SectionStateCard from '../components/SectionStateCard';
+import ProfileHeroCard from '../components/ProfileHeroCard';
+import RecentBadgesSection from '../components/RecentBadgesSection';
 import { shareContent } from '../utils/shareContent';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
@@ -37,12 +38,6 @@ const normalizeRuhiBadges = (value) => {
 
   return Array.from(new Set(parsed));
 };
-
-const PROFILE_STAT_CARDS = [
-  { key: 'activities', label: 'Current Activities', icon: 'layers-outline' },
-  { key: 'events', label: 'Upcoming Events', icon: 'calendar-outline' },
-  { key: 'posts', label: 'Total Posts', icon: 'document-text-outline' },
-];
 
 const ProfileScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -512,6 +507,7 @@ const renderScene = ({ route }) => {
     events: events.length,
     posts: posts.length,
   };
+  const profileName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Member';
 
   const joinedLabel = userDetails?.createdAt
     ? `Member since ${new Date(userDetails.createdAt).toLocaleDateString(undefined, {
@@ -544,81 +540,27 @@ const renderScene = ({ route }) => {
       </View>
       {/* Header Section */}
       <View style={styles.headerContainer}>
-        <View style={styles.profileHeroCard}>
-          <View style={styles.profileHeroColumns}>
-            <View style={styles.profileIdentityColumn}>
-              <ChangeableProfileImage
-                imageStyle={styles.profilePictureLarge}
-                avatarSize={68}
-                userDetails={userDetails}
-                setUserDetails={setUserDetails}
-                showEditIndicator
-                containerStyle={styles.profileAvatarWrap}
-              />
-              <Text style={styles.nameCentered} numberOfLines={2}>
-                {user?.firstName} {user?.lastName}
-              </Text>
-              {joinedLabel ? (
-                <Text style={styles.memberSinceCentered} numberOfLines={2}>
-                  {joinedLabel}
-                </Text>
-              ) : null}
-            </View>
-
-            <View style={styles.profileStatsColumn}>
-              {PROFILE_STAT_CARDS.map((card, index) => (
-                <View
-                  key={card.key}
-                  style={[
-                    styles.statRowCard,
-                    index < PROFILE_STAT_CARDS.length - 1 && styles.statRowDivider,
-                  ]}>
-                  <Text style={styles.statRowLabel} numberOfLines={1}>
-                    {card.label}
-                  </Text>
-                  <Text style={styles.statRowValue} numberOfLines={1}>
-                    {stats[card.key]}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
+        <ProfileHeroCard
+          name={profileName}
+          joinedLabel={joinedLabel}
+          stats={stats}
+          renderAvatar={({imageStyle, avatarSize, containerStyle}) => (
+            <ChangeableProfileImage
+              imageStyle={imageStyle}
+              avatarSize={avatarSize}
+              userDetails={userDetails}
+              setUserDetails={setUserDetails}
+              showEditIndicator
+              containerStyle={containerStyle}
+            />
+          )}
+        />
       </View>
-      <View style={styles.badgesHeadingRow}>
-        <View>
-          <Text style={styles.badgesLabel}>Recent Badges</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Badges')} style={styles.seeAllButton}>
-          <Text style={styles.seeAllText}>View all</Text>
-          <Ionicons name="chevron-forward" size={14} color={themeVariables.primaryColor} />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.badgesContainer}>
-        {recentBadges.length > 0 ? (
-          <View style={styles.badgesPreviewRow}>
-            {recentBadges.map((badge, index) => (
-              <View key={`${badge.label}-${index}`} style={styles.badgePreviewItem}>
-                <View style={styles.badgePreviewCard}>
-                  <View style={[styles.badgePreviewIcon, { backgroundColor: badge.color }]}>
-                    <Ionicons name={badge.icon} size={18} color={themeVariables.whiteColor} />
-                  </View>
-                  <Text style={styles.badgePreviewText} numberOfLines={2} ellipsizeMode="tail">
-                    {badge.label}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.badgesEmptyState}>
-            <View style={styles.badgesEmptyIcon}>
-              <Ionicons name="ribbon-outline" size={18} color={themeVariables.primaryColor} />
-            </View>
-            <Text style={styles.badgesEmptyText}>Earn badges and they will show up here.</Text>
-          </View>
-        )}
-      </View>
+      <RecentBadgesSection
+        badges={recentBadges}
+        onPressViewAll={() => navigation.navigate('Badges')}
+        viewAllAccessibilityLabel="View all recent badges"
+      />
 
       <View style={styles.badgesHeadingRow}>
         <View>

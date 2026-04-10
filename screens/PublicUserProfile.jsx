@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useContext, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Linking, Dimensions } from 'react-native';
-import FastImage from 'react-native-fast-image';
-import Avatar from '@liquidspirit/react-native-boring-avatars';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { TabBar } from 'react-native-tab-view';
 import { UserContext } from '../contexts/UserContext';
@@ -12,7 +10,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import PostGallery from '../components/PostGallery';
 import TabViewCompat from '../components/TabViewCompat';
-import resolveImageSource from '../utils/imageSource';
+import ProfileHeroCard from '../components/ProfileHeroCard';
+import RecentBadgesSection from '../components/RecentBadgesSection';
 import themeVariables from '../styles/theme';
 
 const normalizeId = (raw) => {
@@ -339,7 +338,6 @@ const PublicUserProfile = () => {
   }
 
   const { firstName, lastName, profilePicture, bio } = userData.user;
-  const communityName = userData.user.community?.name;
   const social = userData.user.socialMedia || userData.user.social || {};
   const certData = userData.certifications || {};
   const ruhiBadges = normalizeRuhiBadges(certData.ruhiBadges);
@@ -359,112 +357,50 @@ const PublicUserProfile = () => {
     })),
     ...ruhiBadges.map(badge => ({
       key: `ruhi:${badge}`,
-      label: `RUHI: ${badge}`,
+      label: `Ruhi ${badge}`,
       icon: 'book-outline',
       color: '#4A148C',
     })),
   ];
-  const badgeSummaryItems = earnedBadges.slice(0, 3);
-  const badgeCount = earnedBadges.length;
+  const recentBadges = earnedBadges.slice(0, 4);
   const stats = {
     activities: filteredActivities.length,
     events: filteredEvents.length,
     posts: sortedPosts.length,
   };
+  const profileName = `${firstName || ''} ${lastName || ''}`.trim() || 'Member';
+  const joinedLabel = userData.user?.createdAt || userData.createdAt
+    ? `Member since ${new Date(
+        userData.user?.createdAt || userData.createdAt,
+      ).toLocaleDateString(undefined, {
+        month: 'short',
+        year: 'numeric',
+      })}`
+    : '';
   return (
     <View style={styles.flexContainer}>
-      <View contentContainerStyle={styles.container} scrollEnabled={false}>
+      <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <View style={styles.headerProfileInfo}>
-          {profilePicture ? (
-            <FastImage
-              style={styles.profilePictureSmall}
-              source={resolveImageSource(profilePicture, { priority: 'high' })}
-              resizeMode={FastImage.resizeMode.cover}
-            />
-          ) : (
-            <Avatar
-              size={44}
-              name={`${firstName || ''} ${lastName || ''}`.trim()}
-              variant="beam"
-              colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-              style={styles.profilePictureSmall}
-            />
-          )}
-          <View style={styles.profileDetails}>
-            <Text style={styles.nameSmall}>{firstName} {lastName}</Text>
-            <View style={styles.statsRow}>
-              <Text style={styles.statsItem}>Activities: {stats.activities}</Text>
-              <Text style={styles.statsItem}>Events: {stats.events}</Text>
-              <Text style={styles.statsItem}>Posts: {stats.posts}</Text>
-            </View>
-            {communityName ? (
-              <TouchableOpacity
-                style={styles.communityChipInline}
-                onPress={() =>
-                  navigation.navigate('Search', {
-                    initialQuery: communityName,
-                    initialQueryTs: Date.now(),
-                  })
-                }
-              >
-                <Text style={styles.communityChipText}>{communityName}</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
+        <ProfileHeroCard
+          name={profileName}
+          joinedLabel={joinedLabel}
+          stats={stats}
+          profilePicture={profilePicture}
+          avatarName={profileName}
+        />
       </View>
       {bio ? <Text style={styles.bio}>{bio}</Text> : null}
-      <View style={styles.badgesSection}>
-        <View style={styles.badgesHeadingRow}>
-          <View style={styles.badgesHeadingText}>
-            <Text style={styles.badgesLabel}>Badges</Text>
-            <Text style={styles.badgesSummary}>
-              {badgeCount > 0 ? `${badgeCount} earned` : 'No badges yet'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('PublicUserBadges', {
-                certifications: certData,
-                profileName: `${firstName || ''} ${lastName || ''}`.trim() || 'Member',
-              })
-            }
-            style={styles.seeAllButton}
-            accessibilityRole="button"
-            accessibilityLabel={`View ${firstName || 'member'} ${lastName || ''} badges`}
-            accessibilityHint="Opens the full badges screen for this user"
-          >
-            <Text style={styles.seeAllText}>View all</Text>
-            <Ionicons name="chevron-forward" size={16} color={themeVariables.primaryColor} />
-          </TouchableOpacity>
-        </View>
-        {badgeSummaryItems.length > 0 ? (
-          <View style={styles.badgesPreviewRow}>
-            {badgeSummaryItems.map(item => (
-              <View key={item.key} style={styles.badgePreviewItem}>
-                <View style={styles.badgePreviewCard}>
-                  <View style={[styles.badgePreviewIcon, { backgroundColor: item.color }]}>
-                    <Ionicons name={item.icon} size={18} color={themeVariables.whiteColor} />
-                  </View>
-                  <Text style={styles.badgePreviewText} numberOfLines={2}>
-                    {item.label}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.badgesContainer}>
-            <View style={styles.badgesEmptyState}>
-              <View style={styles.badgesEmptyIcon}>
-                <Ionicons name="ribbon-outline" size={18} color={themeVariables.primaryColor} />
-              </View>
-              <Text style={styles.badgesEmptyText}>Earn badges and they will show up here.</Text>
-            </View>
-          </View>
-        )}
-      </View>
+      <RecentBadgesSection
+        badges={recentBadges}
+        horizontalMargin={0}
+        onPressViewAll={() =>
+          navigation.navigate('PublicUserBadges', {
+            certifications: certData,
+            profileName,
+          })
+        }
+        viewAllAccessibilityLabel={`View ${profileName} badges`}
+      />
       {/* Social links */}
       {Object.entries(social).length > 0 && (
         <View style={styles.socialRow}>
