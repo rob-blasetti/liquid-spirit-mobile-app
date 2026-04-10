@@ -3,24 +3,7 @@ import {View, Text, StyleSheet} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {CommunityContext, UserContext} from '../contexts';
-import BaseModal from '../components/BaseModal';
-import UserBadgeCell from '../components/UserBadgeCell';
-
-const HORIZONTAL_PADDING = 6;
-
-const normalizeAssemblyMember = member => ({
-  id: member?.id || member?._id,
-  firstName: member?.firstName || '',
-  lastName: member?.lastName || '',
-  bahaiId: member?.bahaiId ?? null,
-  type: member?.type || 'Member',
-  profilePicture: member?.profilePicture || null,
-  certifications: member?.certifications || {
-    isLocalAssemblyMember: Boolean(member?.isLocalAssemblyMember),
-    isVerified: Boolean(member?.isVerified),
-    hasChildProtection: Boolean(member?.hasChildProtection),
-  },
-});
+import UserBodyModal from '../components/UserBodyModal';
 
 // LocalAssemblyModal now consumes assembly member data from CommunityContext
 const LocalAssemblyModal = ({ visible, onClose }) => {
@@ -31,10 +14,13 @@ const LocalAssemblyModal = ({ visible, onClose }) => {
     user?.community?.name?.trim?.() || homeOverview?.community?.name?.trim?.();
 
   return (
-    <BaseModal
+    <UserBodyModal
       visible={visible}
       onClose={onClose}
       title="Your Local Spiritual Assembly"
+      members={members}
+      emptyTitle="No assembly members available"
+      emptySubtitle="Assembly members will appear here when available."
       headerContent={
         communityName ? (
           <View style={styles.communityChip}>
@@ -49,36 +35,11 @@ const LocalAssemblyModal = ({ visible, onClose }) => {
           </View>
         ) : null
       }
-      contentContainerStyle={styles.contentContainer}
-    >
-      <View style={styles.grid}>
-        {members.map((member, index) => {
-          const normalizedMember = normalizeAssemblyMember(member);
-
-          return (
-            <UserBadgeCell
-              key={
-                normalizedMember.id ||
-                `${normalizedMember.firstName}-${normalizedMember.lastName}-${index}`
-              }
-              user={normalizedMember}
-              type={normalizedMember.type}
-              userCertifications={normalizedMember.certifications}
-              contained
-              containerStyle={styles.memberBadge}
-            />
-          );
-        })}
-      </View>
-    </BaseModal>
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  contentContainer: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 20,
-  },
   communityChip: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -99,15 +60,6 @@ const styles = StyleSheet.create({
     color: '#2F7A46',
     fontSize: 12,
     fontWeight: '600',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  memberBadge: {
-    width: '49%',
-    marginBottom: 12,
   },
 });
 
