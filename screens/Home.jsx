@@ -76,6 +76,11 @@ const formatGroupTime = timeStr => {
   });
 };
 
+const normalizeEntityId = value => {
+  if (value === undefined || value === null) return '';
+  return String(value).trim();
+};
+
 const FEATURE_TABS = ['Activities', 'Events', 'Assembly'];
 
 const Home = ({navigation, homeOverview, route}) => {
@@ -126,6 +131,22 @@ const Home = ({navigation, homeOverview, route}) => {
       ) || null
     );
   }, [homeOverview?.events]);
+  const userActivitiesById = useMemo(() => {
+    const nextMap = new Map();
+    if (!Array.isArray(userActivities)) return nextMap;
+
+    userActivities.forEach(activity => {
+      const identifiers = [activity?._id, activity?.id]
+        .map(normalizeEntityId)
+        .filter(Boolean);
+
+      identifiers.forEach(id => {
+        nextMap.set(id, activity);
+      });
+    });
+
+    return nextMap;
+  }, [userActivities]);
   const [activeTab, setActiveTab] = useState('Activities');
   const [homeLinks, setHomeLinks] = useState(DEFAULT_HOME_LINKS);
   const [assemblyModalVisible, setAssemblyModalVisible] = useState(false);
@@ -218,6 +239,38 @@ const Home = ({navigation, homeOverview, route}) => {
       });
     },
     [navigation, token, isTokenExpired],
+  );
+  const getPreferredActivity = useCallback(
+    activity => {
+      if (!activity || typeof activity !== 'object') return activity;
+
+      const matched = userActivitiesById.get(
+        normalizeEntityId(activity?._id || activity?.id),
+      );
+
+      if (!matched) return activity;
+
+      return {
+        ...activity,
+        ...matched,
+        activityType: matched.activityType ?? activity.activityType,
+        address: matched.address ?? activity.address,
+        groupDetails: matched.groupDetails ?? activity.groupDetails,
+        sessions: Array.isArray(matched.sessions)
+          ? matched.sessions
+          : activity.sessions,
+        venues: Array.isArray(matched.venues)
+          ? matched.venues
+          : activity.venues,
+        facilitators: Array.isArray(matched.facilitators)
+          ? matched.facilitators
+          : activity.facilitators,
+        participants: Array.isArray(matched.participants)
+          ? matched.participants
+          : activity.participants,
+      };
+    },
+    [userActivitiesById],
   );
   // handle tab switch: slide old panel left, then slide in new panel
   const handleTabPress = tab => {
@@ -572,20 +625,20 @@ const Home = ({navigation, homeOverview, route}) => {
                   <TouchableOpacity
                     key={tab}
                     style={styles.tabButton}
-	                    onPress={() => handleTabPress(tab)}
-	                    onLayout={({nativeEvent}) => {
-	                      const {x, width} = nativeEvent.layout;
-	                      setTabLayouts(prev => {
-	                        if (
-	                          prev[index]?.x === x &&
-	                          prev[index]?.width === width
-	                        ) {
-	                          return prev;
-	                        }
-	                        return {...prev, [index]: {x, width}};
-	                      });
-	                      if (
-	                        !tabLayoutReady &&
+                    onPress={() => handleTabPress(tab)}
+                    onLayout={({nativeEvent}) => {
+                      const {x, width} = nativeEvent.layout;
+                      setTabLayouts(prev => {
+                        if (
+                          prev[index]?.x === x &&
+                          prev[index]?.width === width
+                        ) {
+                          return prev;
+                        }
+                        return {...prev, [index]: {x, width}};
+                      });
+                      if (
+                        !tabLayoutReady &&
                         Object.keys(tabLayouts).length === 0
                       ) {
                         tabIndicatorX.setValue(x);
@@ -809,10 +862,16 @@ const Home = ({navigation, homeOverview, route}) => {
                     const now = new Date();
                     // Prepare activities with next dates (session or root date)
                     const upcomingWithDate = homeOverview.activities
-                      .map(a => ({
-                        activity: a,
-                        nextDate: getEffectiveNextDate(a),
-                      }))
+                      .map(activityFromOverview => {
+                        const preferredActivity =
+                          getPreferredActivity(activityFromOverview);
+                        return {
+                          activity: preferredActivity,
+                          nextDate:
+                            getEffectiveNextDate(preferredActivity) ||
+                            getEffectiveNextDate(activityFromOverview),
+                        };
+                      })
                       .filter(({nextDate}) => nextDate && nextDate >= now)
                       .sort((a, b) => a.nextDate - b.nextDate);
                     const upcoming = upcomingWithDate.map(
