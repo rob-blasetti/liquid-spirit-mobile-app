@@ -115,6 +115,9 @@ const styles = StyleSheet.create({
   mapTitle: {
     ...sectionBaseStyles.sectionTitle,
   },
+  upcomingSessionsTitle: {
+    marginBottom: 12,
+  },
   carouselContent: {
     paddingRight: 4,
   },
@@ -702,8 +705,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
   },
+  nextSessionValueEmpty: {
+    color: '#6B7280',
+  },
   nextSessionIcon: {
     color: themeVariables.primaryColor,
+  },
+  nextSessionCreateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: themeVariables.primaryColor,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  nextSessionCreateButtonText: {
+    marginLeft: 6,
+    color: themeVariables.whiteColor,
+    fontSize: 13,
+    fontWeight: '700',
   },
   guidelinesText: {
     fontSize: 14,

@@ -1,7 +1,8 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {View, Text, Dimensions} from 'react-native';
 import {CardTitle, CardContent} from '../../../components/Card';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
 
 import CardContainer from '../common/CardContainer';
 import CurriculumSection from './sections/CurriculumSection';
@@ -35,8 +36,10 @@ const ActivityCardBody = ({
   optimisticParticipantRequest,
   onPressNextSession,
   onSessionsLayout,
+  onOpenMapPreview,
 }) => {
-  const safeActivity = activity || {};
+  const navigation = useNavigation();
+  const safeActivity = useMemo(() => activity || {}, [activity]);
 
   const {
     imageUrl,
@@ -61,6 +64,9 @@ const ActivityCardBody = ({
   const frequency = groupDetails?.frequency || '';
   const communityName =
     (typeof community === 'string' ? community : community?.name) || '';
+  const communityId =
+    (typeof community === 'string' ? community : community?._id || community?.id) ||
+    '';
   const isAdmin = normalizeId(createdBy) === normalizeId(userId);
   const {
     isUserFacilitator,
@@ -136,6 +142,46 @@ const ActivityCardBody = ({
     onRequestParticipant?.(userId);
   }, [onRequestParticipant, userId]);
 
+  const handleExpandMap = useCallback(() => {
+    if (!location?.region) return;
+    const fullAddress = [location.mapDisplayName, location.mapDisplayAddress]
+      .filter(value => typeof value === 'string' && value.trim().length > 0)
+      .join(' - ');
+
+    onOpenMapPreview?.({
+      title: 'Host Address',
+      fullAddress: fullAddress || location.mapAddress || '',
+      region: location.region,
+    });
+  }, [
+    location?.mapAddress,
+    location?.mapDisplayAddress,
+    location?.mapDisplayName,
+    location?.region,
+    onOpenMapPreview,
+  ]);
+
+  const handleCreateNextSession = useCallback(() => {
+    const activityId = safeActivity?._id || safeActivity?.id;
+    if (!activityId) return;
+
+    navigation.navigate('CreateSession', {
+      activityId,
+      activityTitle: title,
+      activityType: safeActivityTypeName,
+      communityId,
+      activityPreload: safeActivity,
+      prefilledFacilitators: safeActivity?.facilitators || [],
+      prefilledParticipants: safeActivity?.participants || [],
+    });
+  }, [
+    communityId,
+    navigation,
+    safeActivity,
+    safeActivityTypeName,
+    title,
+  ]);
+
   const imageSource = imageUrl
     ? resolveImageSource(imageUrl, {
         priority: 'high',
@@ -192,6 +238,7 @@ const ActivityCardBody = ({
             frequency={frequency}
             nextSession={nextSession}
             onPressNextSession={onPressNextSession}
+            onCreateNextSession={isAdmin ? handleCreateNextSession : undefined}
           />
           <OverviewSection
             description={description}
@@ -246,6 +293,7 @@ const ActivityCardBody = ({
             region={location.region}
             hasRegion={location.hasRegion}
             openGoogleMaps={openGoogleMaps}
+            onExpandMap={handleExpandMap}
             resolvedOnlineLink={location.resolvedOnlineLink}
             styles={styles}
           />

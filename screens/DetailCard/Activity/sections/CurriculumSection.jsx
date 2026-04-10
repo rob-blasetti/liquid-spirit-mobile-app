@@ -1,16 +1,14 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import SectionTitle from '../../common/SectionTitle';
+import DetailSection from '../../common/DetailSection';
 
 const CurriculumSection = ({ curriculumDetails, styles }) => {
   if (!curriculumDetails) return null;
   return (
-    <>
-      <SectionTitle
-        title="Class Curriculum"
-        note="Curriculum details reflect the next upcoming session."
-        titleStyle={styles.mapTitle}
-      />
+    <DetailSection
+      title="Class Curriculum"
+      note="Curriculum details reflect the next upcoming session."
+      titleStyle={styles.mapTitle}>
       <View style={styles.curriculumBox}>
         <View style={styles.curriculumRowContainer}>
           <Text style={styles.curriculumLabel}>Grade</Text>
@@ -34,8 +32,7 @@ const CurriculumSection = ({ curriculumDetails, styles }) => {
           </View>
         ) : null}
       </View>
-      <View style={styles.divider} />
-    </>
+    </DetailSection>
   );
 };
 

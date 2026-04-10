@@ -120,6 +120,8 @@ const ActivityDetailCard = ({route}) => {
   } = useActivityDetail({route});
 
   const navigation = useNavigation();
+  const rootNavigation =
+    navigation.getParent?.()?.getParent?.() || navigation.getParent?.() || navigation;
   const safeAreaBottom = insets?.bottom || 0;
   const {initialSessionId} = route.params || {};
   const [redirected, setRedirected] = useState(false);
@@ -191,6 +193,18 @@ const ActivityDetailCard = ({route}) => {
     }
     navigation.navigate('Activities');
   }, [navigation]);
+
+  const handleOpenMapPreview = useCallback(
+    ({title = 'Host Address', fullAddress = '', region} = {}) => {
+      if (!region) return;
+      rootNavigation.navigate('MapPreviewScreen', {
+        title,
+        fullAddress,
+        region,
+      });
+    },
+    [rootNavigation],
+  );
 
   useEffect(() => {
     if (prefillParamsSetRef.current) return;
@@ -310,6 +324,7 @@ const ActivityDetailCard = ({route}) => {
           optimisticParticipantRequest={optimisticParticipantRequest}
           onPressNextSession={handleScrollToSessions}
           onSessionsLayout={handleSessionsLayout}
+          onOpenMapPreview={handleOpenMapPreview}
         />
       )}
     </ActivityLoader>

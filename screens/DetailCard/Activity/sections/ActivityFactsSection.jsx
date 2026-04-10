@@ -35,6 +35,7 @@ const ActivityFactsSection = ({
   frequency,
   nextSession,
   onPressNextSession,
+  onCreateNextSession,
 }) => {
   const values = {
     day: dayOfWeek || 'N/A',
@@ -43,6 +44,8 @@ const ActivityFactsSection = ({
   };
   const nextSessionDate = formatSessionDate(nextSession);
   const canJumpToSession = Boolean(nextSessionDate && onPressNextSession);
+  const canCreateNextSession = Boolean(!nextSessionDate && onCreateNextSession);
+  const nextSessionText = nextSessionDate || 'Not yet created';
 
   return (
     <>
@@ -70,23 +73,41 @@ const ActivityFactsSection = ({
             </React.Fragment>
           ))}
         </View>
-        {nextSessionDate ? (
-          <TouchableOpacity
-            style={styles.nextSessionRow}
-            activeOpacity={canJumpToSession ? 0.8 : 1}
-            onPress={canJumpToSession ? onPressNextSession : undefined}
-            disabled={!canJumpToSession}>
-            <View style={styles.nextSessionContent}>
-              <Text style={styles.nextSessionLabel}>Next Upcoming Session</Text>
-              <Text style={styles.nextSessionValue}>{nextSessionDate}</Text>
-            </View>
+        <TouchableOpacity
+          style={styles.nextSessionRow}
+          activeOpacity={canJumpToSession ? 0.8 : 1}
+          onPress={canJumpToSession ? onPressNextSession : undefined}
+          disabled={!canJumpToSession}>
+          <View style={styles.nextSessionContent}>
+            <Text style={styles.nextSessionLabel}>Next Upcoming Session</Text>
+            <Text
+              style={[
+                styles.nextSessionValue,
+                !nextSessionDate ? styles.nextSessionValueEmpty : null,
+              ]}>
+              {nextSessionText}
+            </Text>
+          </View>
+          {canJumpToSession ? (
             <Ionicons
               name="chevron-down-outline"
               size={18}
               style={styles.nextSessionIcon}
             />
-          </TouchableOpacity>
-        ) : null}
+          ) : canCreateNextSession ? (
+            <TouchableOpacity
+              style={styles.nextSessionCreateButton}
+              onPress={onCreateNextSession}
+              activeOpacity={0.8}>
+              <Ionicons
+                name="add-circle-outline"
+                size={16}
+                color="#fff"
+              />
+              <Text style={styles.nextSessionCreateButtonText}>Create it</Text>
+            </TouchableOpacity>
+          ) : null}
+        </TouchableOpacity>
       </View>
       <View style={styles.divider} />
     </>

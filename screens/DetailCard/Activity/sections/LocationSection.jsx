@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, Linking, Platform } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from 'react-native-maps';
-import SectionTitle from '../../common/SectionTitle';
+import DetailSection from '../../common/DetailSection';
 import themeVariables from '../../../../styles/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import LiquidGlassIconButton from '../../../../components/LiquidGlassIconButton';
 import { getMarkerCoordinate, normalizeMapRegion } from '../../common/mapRegion';
 import StaticMapPreview from '../../common/StaticMapPreview';
 import debugLog from '../../../../utils/debugLog';
@@ -19,6 +20,7 @@ const LocationSection = ({
   region,
   hasRegion,
   openGoogleMaps,
+  onExpandMap,
   resolvedOnlineLink,
   styles,
 }) => {
@@ -28,6 +30,7 @@ const LocationSection = ({
   const showLiveMap = hasRegion && normalizedRegion && markerCoordinate && canUseNativeMap;
   const showStaticMap = hasRegion && normalizedRegion && markerCoordinate && !canUseNativeMap;
   const provider = Platform.OS === 'android' ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+  const canExpandMap = Boolean(normalizedRegion && markerCoordinate);
 
   useEffect(() => {
     debugLog('[ActivityDetailMap] render state', {
@@ -82,12 +85,10 @@ const LocationSection = ({
   return (
     <>
       {showMapSection && (
-        <>
-          <SectionTitle
-            title="Host Address"
-            note="Address reflects the next upcoming session."
-            titleStyle={styles.mapTitle}
-          />
+        <DetailSection
+          title="Host Address"
+          note="Address reflects the next upcoming session."
+          titleStyle={styles.mapTitle}>
           <View style={styles.mapWrapper}>
             {showLiveMap ? (
               <MapView
@@ -129,6 +130,26 @@ const LocationSection = ({
                 ) : null}
               </View>
             )}
+            {canExpandMap ? (
+              <LiquidGlassIconButton
+                iconName="expand-outline"
+                iconColor={themeVariables.blackColor}
+                onPress={onExpandMap}
+                accessibilityLabel="Expand map"
+                forceFallback
+                glassStyle={{
+                  backgroundColor: 'rgba(236,237,242,0.96)',
+                  borderColor: 'rgba(0,0,0,0.08)',
+                  borderWidth: 1,
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 14,
+                  right: 14,
+                  zIndex: 5,
+                }}
+              />
+            ) : null}
           </View>
           {mapDisplayName || mapDisplayAddress ? (
             <TouchableOpacity
@@ -148,18 +169,15 @@ const LocationSection = ({
               Address unavailable
             </Text>
           )}
-          <View style={styles.divider} />
-        </>
+        </DetailSection>
       )}
 
       {showOnlineSection && (
-        <>
-          <SectionTitle
-            title="Join Online"
-            note="This session is available in person and online."
-            showTooltip={isHybridSession}
-            titleStyle={styles.mapTitle}
-          />
+        <DetailSection
+          title="Join Online"
+          note="This session is available in person and online."
+          showTooltip={isHybridSession}
+          titleStyle={styles.mapTitle}>
           <View style={styles.onlineRow}>
             <Ionicons
               name="videocam-outline"
@@ -177,18 +195,18 @@ const LocationSection = ({
               Tap to join the online session
             </Text>
           </View>
-          <View style={styles.divider} />
-        </>
+        </DetailSection>
       )}
 
       {!showMapSection && !showOnlineSection && (
-        <>
-          <Text style={styles.mapTitle}>Location</Text>
+        <DetailSection
+          title="Location"
+          showTooltip={false}
+          titleStyle={styles.mapTitle}>
           <Text style={[styles.headerInfoText, { marginVertical: 12, alignSelf: 'flex-start' }]}>
             Location details will be shared soon.
           </Text>
-          <View style={styles.divider} />
-        </>
+        </DetailSection>
       )}
     </>
   );

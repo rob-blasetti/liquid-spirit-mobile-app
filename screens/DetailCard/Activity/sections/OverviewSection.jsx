@@ -61,7 +61,9 @@ const OverviewSection = ({
           onLayout={event => {
             onSessionsLayout?.(event?.nativeEvent?.layout?.y ?? 0);
           }}>
-          <Text style={styles.mapTitle}>Upcoming Sessions</Text>
+          <Text style={[styles.mapTitle, styles.upcomingSessionsTitle]}>
+            Upcoming Sessions
+          </Text>
           <FlatList
             data={orderedUpcomingSessions}
             horizontal
