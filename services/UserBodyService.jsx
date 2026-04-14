@@ -148,14 +148,17 @@ export const fetchIsMemberOfLocalSpiritualAssembly = async (userId, communityId)
   );
 
 export const fetchUserBodyByEventType = async (eventType, token) => {
-  const type = (eventType || '').toLowerCase();
   try {
-    if (type.includes('feast')) {
-      return await fetchFeastCommittee(token);
-    } else if (type.includes('holy')) {
-      return await fetchHolyDaysCommittee(token);
+    switch (String(eventType || '').trim()) {
+      case 'Feast':
+        return await fetchFeastCommittee(token);
+      case 'Holy Day':
+        return await fetchHolyDaysCommittee(token);
+      case 'Admin':
+      case 'Community':
+      default:
+        return await fetchLocalSpiritualAssembly(token);
     }
-    return await fetchLocalSpiritualAssembly(token);
   } catch (error) {
     console.error('Error fetching user body for event type:', eventType, error);
     return [];

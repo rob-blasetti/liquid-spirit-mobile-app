@@ -137,6 +137,34 @@ const resolveAttendeeId = attendee => {
   );
 };
 
+const normalizePermissionKey = value =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+const getOversightConfig = eventType => {
+  switch (String(eventType || '').trim()) {
+    case 'Feast':
+      return {
+        name: 'Feast Committee',
+        membershipTokens: ['feastcommittee', 'feast'],
+      };
+    case 'Holy Day':
+      return {
+        name: 'Holy Days Committee',
+        membershipTokens: ['holydayscommittee', 'holydays', 'holyday', 'holy'],
+      };
+    case 'Admin':
+    case 'Community':
+    default:
+      return {
+        name: 'Local Spiritual Assembly',
+        membershipTokens: ['localspiritualassembly', 'assembly', 'lsa'],
+      };
+  }
+};
+
 const EventDetailCard = ({ route }) => {
   // Enable swipe-down to dismiss
   const navigation = useNavigation();
@@ -446,9 +474,16 @@ const EventCardBody = ({
   // Destructure raw attendees from event; we'll enrich with full user data below
   const { imageUrl, title, eventType, date, startTime, endTime, venue,
     attendees: rawAttendees = [], hosts = [], materials = [] } = event;
-  // Check if current user is admin in any oversight body membership
-  const userBodyMembership = event.userBodyMembership || {};
-  const isAdmin = Object.values(userBodyMembership).some(v => v === true);
+  // Use the event payload's body membership flags together with the resolved oversight body.
+  const userBodyMembership = useMemo(
+    () => event.userBodyMembership || {},
+    [event.userBodyMembership],
+  );
+  const oversightConfig = useMemo(
+    () => getOversightConfig(eventType),
+    [eventType],
+  );
+  const currentUserId = normalizeEntityId(user?.id || user?._id || userId);
   const dateObj = new Date(date);
   const dateMain = getDayName(dateObj);
   // Full month name, e.g. "30 July"
@@ -720,11 +755,7 @@ const EventCardBody = ({
   const [enrichedAttendees] = useState(null);
 
   // State for oversight body members; initialize name based on eventType to avoid empty jump
-  const defaultOversightName = (eventType || '').toLowerCase().includes('feast')
-    ? 'Feast Committee'
-    : (eventType || '').toLowerCase().includes('holy')
-      ? 'Holy Days Committee'
-      : 'Local Spiritual Assembly';
+  const defaultOversightName = oversightConfig.name;
   // Initialize with preloaded members if available to avoid loading jump
   const [oversightBody, setOversightBody] = useState({ name: defaultOversightName, members: oversightMembersPreload || [] });
   const [oversightLoading, setOversightLoading] = useState(!oversightMembersPreload);
@@ -775,6 +806,32 @@ const EventCardBody = ({
   const oversightModalTitle = isLocalSpiritualAssemblyOversight
     ? 'Your Local Spiritual Assembly'
     : oversightBodyDisplayName;
+  const activePermissionKeys = useMemo(
+    () =>
+      Object.entries(userBodyMembership)
+        .filter(([, value]) => value === true)
+        .map(([key]) => normalizePermissionKey(key)),
+    [userBodyMembership],
+  );
+  const hasExplicitAdminAccess = useMemo(
+    () => activePermissionKeys.some(key => key.includes('admin')),
+    [activePermissionKeys],
+  );
+  const hasMatchingBodyMembership = useMemo(
+    () =>
+      activePermissionKeys.some(key =>
+        oversightConfig.membershipTokens.some(token => key.includes(token))
+      ),
+    [activePermissionKeys, oversightConfig.membershipTokens],
+  );
+  const isCurrentUserInOversightBody = useMemo(
+    () =>
+      Boolean(currentUserId) &&
+      oversightModalMembers.some(member => resolveAttendeeId(member) === currentUserId),
+    [currentUserId, oversightModalMembers],
+  );
+  const canManageOversightEvent =
+    hasExplicitAdminAccess || hasMatchingBodyMembership || isCurrentUserInOversightBody;
   const oversightModalHeaderContent = communityName ? (
     <View style={styles.communityChip}>
       <Ionicons
@@ -802,20 +859,11 @@ const EventCardBody = ({
       return () => { isMounted = false; };
     }
     const loadBody = async () => {
-      const type = (eventType || '').toLowerCase();
-      let name;
-      if (type.includes('feast')) {
-        name = 'Feast Committee';
-      } else if (type.includes('holy')) {
-        name = 'Holy Days Committee';
-      } else {
-        name = 'Local Spiritual Assembly';
-      }
       try {
         setOversightLoading(true);
         const members = await fetchUserBodyByEventType(eventType, token);
         if (isMounted) {
-          setOversightBody({ name, members });
+          setOversightBody({ name: oversightConfig.name, members });
           setOversightLoading(false);
         }
       } catch (err) {
@@ -825,7 +873,7 @@ const EventCardBody = ({
     };
     loadBody();
     return () => { isMounted = false; };
-  }, [eventType, oversightMembersPreload, token]);
+  }, [eventType, oversightConfig.name, oversightMembersPreload, token]);
 
   // Material upload modal state
   const [materialModalVisible, setMaterialModalVisible] = useState(false);
@@ -885,8 +933,8 @@ const EventCardBody = ({
         {/* Host Section */}
         <HostsSection
           hosts={hosts}
-          isAdmin={isAdmin}
-          onAddHost={() => setAddHostModalVisible(true)}
+          isAdmin={canManageOversightEvent}
+          onAddHost={canManageOversightEvent ? () => setAddHostModalVisible(true) : undefined}
           onRemoveHost={handleRemoveHost}
           hostRequestSent={hostRequestSent}
           onRequestHost={handleRequestHost}
@@ -894,8 +942,8 @@ const EventCardBody = ({
         />
         <MaterialsSection
           materials={materials}
-          isAdmin={isAdmin}
-          onAddMaterial={false ? () => setMaterialModalVisible(true) : undefined}
+          isAdmin={canManageOversightEvent}
+          onAddMaterial={canManageOversightEvent ? () => setMaterialModalVisible(true) : undefined}
           styles={styles}
         />
         <DetailSection
