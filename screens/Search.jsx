@@ -19,6 +19,109 @@ import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 import debugLog from '../utils/debugLog';
 
 const placeholderImage = require('../assets/img/placeholder.png');
+const FULL_SEARCH_MIN_LENGTH = 3;
+const FULL_SEARCH_DEBOUNCE_MS = 700;
+const SEARCH_FILTERS = [
+  { label: 'All', value: '' },
+  { label: 'Users', value: 'users' },
+  { label: 'Members', value: 'members' },
+  { label: 'Events', value: 'events' },
+  { label: 'Activities', value: 'activities' },
+  { label: 'Posts', value: 'posts' },
+];
+const RESULT_SECTION_ORDER = ['users', 'members', 'relatedPosts', 'events', 'activities', 'posts', 'other'];
+const RESULT_SECTION_CONFIG = {
+  users: { title: 'Users', types: ['user'] },
+  members: { title: 'Members', types: ['member'] },
+  relatedPosts: { title: 'Related Posts', types: [] },
+  events: { title: 'Events', types: ['event'] },
+  activities: { title: 'Activities', types: ['activity', 'session'] },
+  posts: { title: 'Posts', types: ['post'] },
+  other: { title: 'Other Results', types: [] },
+};
+const VALID_SEARCH_TYPES = new Set(SEARCH_FILTERS.map(filter => filter.value).filter(Boolean));
+
+function normalizeSearchType(value) {
+  if (typeof value !== 'string') return '';
+  const normalized = value.trim().toLowerCase();
+  return VALID_SEARCH_TYPES.has(normalized) ? normalized : '';
+}
+
+function buildSearchCacheKey(communityId, query, type) {
+  const normalizedQuery = query?.trim?.().toLowerCase() ?? '';
+  const normalizedType = normalizeSearchType(type) || 'all';
+  return `${communityId || 'global'}::${normalizedType}::${normalizedQuery}`;
+}
+
+function normalizePersonLabel(...parts) {
+  return parts
+    .map(part => String(part || '').trim())
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function getResultSectionKey(resultType) {
+  const entry = RESULT_SECTION_ORDER.find(sectionKey => {
+    const config = RESULT_SECTION_CONFIG[sectionKey];
+    return config?.types?.includes(resultType);
+  });
+  return entry || 'other';
+}
+
+function buildResultSections(results) {
+  const matchedAuthorIds = new Set();
+  const matchedPersonNames = new Set();
+
+  for (const item of results) {
+    if (item?.type === 'user' && item.id != null) {
+      matchedAuthorIds.add(String(item.id));
+    }
+
+    if (item?.type === 'user' || item?.type === 'member') {
+      const personLabel = normalizePersonLabel(
+        item?.firstName,
+        item?.lastName,
+        item?.displayName,
+      );
+      if (personLabel) {
+        matchedPersonNames.add(personLabel);
+      }
+    }
+  }
+
+  const hasMatchedPeople = matchedAuthorIds.size > 0 || matchedPersonNames.size > 0;
+  const sectionMap = new Map();
+
+  for (const item of results) {
+    const authorId = item?.author?.id != null ? String(item.author.id) : '';
+    const authorLabel = normalizePersonLabel(item?.author?.firstName, item?.author?.lastName);
+    const isRelatedPost = item?.type === 'post'
+      && hasMatchedPeople
+      && (
+        (authorId && matchedAuthorIds.has(authorId))
+        || (authorLabel && matchedPersonNames.has(authorLabel))
+      );
+    const sectionKey = isRelatedPost ? 'relatedPosts' : getResultSectionKey(item?.type);
+    const existingSection = sectionMap.get(sectionKey);
+
+    if (existingSection) {
+      existingSection.items.push(item);
+      continue;
+    }
+
+    sectionMap.set(sectionKey, {
+      key: sectionKey,
+      title: RESULT_SECTION_CONFIG[sectionKey]?.title || 'Other Results',
+      items: [item],
+    });
+  }
+
+  return RESULT_SECTION_ORDER
+    .map(sectionKey => sectionMap.get(sectionKey))
+    .filter(Boolean);
+}
 
 function safeText(val) {
   if (val == null) return '';
@@ -110,7 +213,10 @@ const Search = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const [query, setQuery] = useState('');
+  const [searchType, setSearchType] = useState('');
   const [results, setResults] = useState([]);
+  const [resultsQuery, setResultsQuery] = useState('');
+  const [resultsType, setResultsType] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
@@ -206,7 +312,18 @@ const Search = () => {
   const getSuggestionLabel = useCallback((suggestion) => {
     if (!suggestion) return '';
     if (typeof suggestion === 'string') return suggestion;
-    return suggestion.label || suggestion.name || suggestion.title || suggestion.displayName || suggestion.query || '';
+    const personLabel = [safeText(suggestion.firstName), safeText(suggestion.lastName)]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return suggestion.label
+      || suggestion.name
+      || suggestion.title
+      || suggestion.displayName
+      || personLabel
+      || safeText(suggestion.bahaiId).trim()
+      || suggestion.query
+      || '';
   }, []);
 
   const getSuggestionType = useCallback((suggestion) => {
@@ -215,6 +332,55 @@ const Search = () => {
     if (!rawType || typeof rawType !== 'string') return '';
     return `${rawType.charAt(0).toUpperCase()}${rawType.slice(1)}`;
   }, []);
+
+  const getSuggestionContext = useCallback((suggestion) => {
+    if (!suggestion || typeof suggestion === 'string') return '';
+
+    const typeLabel = getSuggestionType(suggestion);
+    const communityLabel = safeText(suggestion.community)?.trim();
+
+    switch (suggestion.type) {
+      case 'event': {
+        const eventDate = formatDate(suggestion.date);
+        const eventDay = getDayName(suggestion.date);
+        const eventTime = formatEventTime(suggestion.startTime || suggestion.time)
+          || safeText(suggestion.startTime || suggestion.time).trim();
+        return [typeLabel, eventDay, eventDate, eventTime, communityLabel].filter(Boolean).join(' • ');
+      }
+      case 'activity':
+      case 'session': {
+        const activityType = safeText(suggestion.activityType).trim();
+        const nextSessionDate = formatDate(
+          suggestion.nextSessionDate || suggestion.nextSession?.date || suggestion.date,
+        );
+        const groupDay = safeText(suggestion.groupDetails?.day).trim();
+        const rawGroupTime = suggestion.groupDetails?.time;
+        const groupTime = formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
+        const scheduleLabel = nextSessionDate
+          ? `Next ${nextSessionDate}`
+          : [groupDay, groupTime].filter(Boolean).join(' • ');
+        return [typeLabel, activityType, scheduleLabel, communityLabel].filter(Boolean).join(' • ');
+      }
+      case 'post': {
+        const authorName = [safeText(suggestion.author?.firstName), safeText(suggestion.author?.lastName)]
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        const createdDate = formatDate(suggestion.createdAt);
+        return [
+          typeLabel,
+          authorName ? `By ${truncateText(authorName, 24)}` : '',
+          createdDate,
+          communityLabel,
+        ].filter(Boolean).join(' • ');
+      }
+      case 'user':
+      case 'member':
+        return [typeLabel, communityLabel].filter(Boolean).join(' • ');
+      default:
+        return [typeLabel, communityLabel].filter(Boolean).join(' • ');
+    }
+  }, [getSuggestionType]);
 
   const suggestionKeyExtractor = useCallback((item, index) => {
     const key = typeof item === 'string'
@@ -235,17 +401,22 @@ const Search = () => {
     });
   }, []);
 
-  const executeSearch = useCallback(async (text, { force = false } = {}) => {
+  const executeSearch = useCallback(async (text, { force = false, type } = {}) => {
     const normalizedQuery = (text ?? '').trim();
-    const cacheKey = `${communityId || 'global'}::${normalizedQuery.toLowerCase()}`;
+    const normalizedType = normalizeSearchType(type ?? searchType);
+    const cacheKey = buildSearchCacheKey(communityId, normalizedQuery, normalizedType);
 
     if (!force && lastExecutedQueryRef.current === cacheKey) {
+      setResultsQuery(normalizedQuery);
+      setResultsType(normalizedType);
       return searchCacheRef.current.get(cacheKey) ?? null;
     }
 
     if (!force && searchCacheRef.current.has(cacheKey)) {
       const cached = searchCacheRef.current.get(cacheKey) ?? [];
       lastExecutedQueryRef.current = cacheKey;
+      setResultsQuery(normalizedQuery);
+      setResultsType(normalizedType);
       setResults(Array.isArray(cached) ? cached : []);
       return cached;
     }
@@ -260,17 +431,20 @@ const Search = () => {
 
     const searchPromise = (async () => {
       try {
-        const data = await fetchSearchResults(normalizedQuery, token, communityId);
+        const data = await fetchSearchResults(
+          normalizedQuery,
+          token,
+          communityId,
+          normalizedType || undefined,
+        );
         debugLog('Search results for query', normalizedQuery, data);
         if (latestSearchIdRef.current !== requestId) return null;
         const nextResults = Array.isArray(data) ? data : [];
         searchCacheRef.current.set(cacheKey, nextResults);
         lastExecutedQueryRef.current = cacheKey;
+        setResultsQuery(normalizedQuery);
+        setResultsType(normalizedType);
         setResults(nextResults);
-        try {
-          await AsyncStorage.setItem('search_cache__query', normalizedQuery);
-          await AsyncStorage.setItem('search_cache__results', JSON.stringify(nextResults));
-        } catch (_) {}
         if (normalizedQuery.length > 0 && !isSearchFocused) {
           updateRecentSearches(normalizedQuery);
         }
@@ -278,6 +452,8 @@ const Search = () => {
       } catch (error) {
         console.error('Search failed:', error);
         if (latestSearchIdRef.current === requestId) {
+          setResultsQuery(normalizedQuery);
+          setResultsType(normalizedType);
           setResults([]);
         }
         return null;
@@ -291,12 +467,16 @@ const Search = () => {
 
     searchInFlightRef.current.set(cacheKey, searchPromise);
     return searchPromise;
-  }, [token, communityId, updateRecentSearches, isSearchFocused]);
+  }, [token, communityId, updateRecentSearches, isSearchFocused, searchType]);
 
   const executeSearchRef = useRef(executeSearch);
   const updateRecentSearchesRef = useRef(updateRecentSearches);
+  const committedResultsQueryRef = useRef(resultsQuery);
+  const committedResultsTypeRef = useRef(resultsType);
   executeSearchRef.current = executeSearch;
   updateRecentSearchesRef.current = updateRecentSearches;
+  committedResultsQueryRef.current = resultsQuery;
+  committedResultsTypeRef.current = resultsType;
 
   useMountEffect(() => {
     (async () => {
@@ -337,26 +517,10 @@ const Search = () => {
         return;
       }
 
-      try {
-        const [q, r] = await AsyncStorage.multiGet(['search_cache__query', 'search_cache__results']);
-        const cachedQuery = q?.[1] ?? '';
-        const cachedResults = r?.[1] ? JSON.parse(r[1]) : [];
-        if (Array.isArray(cachedResults)) {
-          const cacheKey = `${communityId || 'global'}::${cachedQuery.trim().toLowerCase()}`;
-          searchCacheRef.current.set(cacheKey, cachedResults);
-        }
-        if (Array.isArray(cachedResults) && cachedResults.length > 0) {
-          setQuery(cachedQuery);
-          setResults(cachedResults);
-          lastExecutedQueryRef.current = `${communityId || 'global'}::${cachedQuery.trim().toLowerCase()}`;
-        } else {
-          executeSearchRef.current('');
-        }
-      } catch (_) {
-        executeSearchRef.current('');
-      } finally {
-        didHydrateInitialStateRef.current = true;
-      }
+      setSearchType('');
+      setQuery('');
+      executeSearchRef.current('');
+      didHydrateInitialStateRef.current = true;
     })();
   });
 
@@ -386,13 +550,14 @@ const Search = () => {
     };
   });
 
-  const handleAutocomplete = useCallback((text) => {
+  const handleAutocomplete = useCallback((text, { type } = {}) => {
     if (autocompleteDebounceRef.current) {
       clearTimeout(autocompleteDebounceRef.current);
       autocompleteDebounceRef.current = null;
     }
     const trimmed = text?.trim?.() ?? '';
-    const cacheKey = `${communityId || 'global'}::${trimmed.toLowerCase()}`;
+    const normalizedType = normalizeSearchType(type ?? searchType);
+    const cacheKey = buildSearchCacheKey(communityId, trimmed, normalizedType);
     if (!trimmed) {
       latestAutocompleteIdRef.current += 1;
       setAutocompleteSuggestions([]);
@@ -413,7 +578,12 @@ const Search = () => {
       autocompleteDebounceRef.current = null;
       const existingRequest = autocompleteInFlightRef.current.get(cacheKey);
       try {
-        const suggestions = existingRequest || fetchSearchAutocomplete(trimmed, token, communityId);
+        const suggestions = existingRequest || fetchSearchAutocomplete(
+          trimmed,
+          token,
+          communityId,
+          normalizedType || undefined,
+        );
         if (!existingRequest) {
           autocompleteInFlightRef.current.set(cacheKey, suggestions);
         }
@@ -439,16 +609,63 @@ const Search = () => {
         }
       }
     }, 200);
-  }, [token, getSuggestionLabel, communityId]);
+  }, [token, getSuggestionLabel, communityId, searchType]);
+
+  const scheduleFullSearch = useCallback((text, options = {}) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = text?.trim?.() ?? '';
+
+    if (!trimmed) {
+      debounceRef.current = setTimeout(() => {
+        executeSearch('', options);
+      }, 250);
+      return;
+    }
+
+    if (trimmed.length < FULL_SEARCH_MIN_LENGTH) {
+      debounceRef.current = null;
+      return;
+    }
+
+    debounceRef.current = setTimeout(() => {
+      executeSearch(text, options);
+    }, FULL_SEARCH_DEBOUNCE_MS);
+  }, [executeSearch]);
 
   const handleSearch = useCallback((text) => {
     setQuery(text);
     handleAutocomplete(text);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      executeSearch(text);
-    }, 300);
-  }, [executeSearch, handleAutocomplete]);
+    scheduleFullSearch(text);
+  }, [handleAutocomplete, scheduleFullSearch]);
+
+  const handleFilterSelect = useCallback((nextType) => {
+    const normalizedNextType = normalizeSearchType(nextType);
+    if (normalizedNextType === searchType) return;
+
+    setSearchType(normalizedNextType);
+    latestAutocompleteIdRef.current += 1;
+    setAutocompleteSuggestions([]);
+    cancelAutocomplete();
+
+    if (query.trim().length > 0) {
+      handleAutocomplete(query, { type: normalizedNextType });
+    }
+
+    if (isSearchFocused) {
+      scheduleFullSearch(query, { type: normalizedNextType });
+      return;
+    }
+
+    executeSearch(query, { force: true, type: normalizedNextType });
+  }, [
+    searchType,
+    cancelAutocomplete,
+    executeSearch,
+    handleAutocomplete,
+    isSearchFocused,
+    query,
+    scheduleFullSearch,
+  ]);
 
   const handleSuggestionPress = useCallback((suggestion) => {
     if (debounceRef.current) {
@@ -493,7 +710,7 @@ const Search = () => {
   const renderSuggestionItem = ({ item }) => {
     const label = getSuggestionLabel(item);
     if (!label) return null;
-    const typeLabel = getSuggestionType(item);
+    const suggestionContext = getSuggestionContext(item);
     return (
       <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionPress(item)} activeOpacity={0.85}>
         <View style={styles.suggestionIconWrapper}>
@@ -503,9 +720,9 @@ const Search = () => {
           <Text style={styles.suggestionTitle} numberOfLines={1}>
             {label}
           </Text>
-          {typeLabel ? (
-            <Text style={styles.suggestionSubtitle} numberOfLines={1}>
-              {typeLabel}
+          {suggestionContext ? (
+            <Text style={styles.suggestionSubtitle} numberOfLines={2}>
+              {suggestionContext}
             </Text>
           ) : null}
         </View>
@@ -518,7 +735,11 @@ const Search = () => {
   const showResults = !showSuggestionPanel;
   const showSearchSpinner = isLoading || (isSearchFocused && isAutocompleteLoading);
   const trimmedQuery = query.trim();
-  const hasAnyResults = results.length > 0;
+  const trimmedResultsQuery = resultsQuery.trim();
+  const isShowingCommittedResults = trimmedQuery === trimmedResultsQuery && searchType === resultsType;
+  const hasAnyResults = isShowingCommittedResults && results.length > 0;
+  const resultSections = isShowingCommittedResults ? buildResultSections(results) : [];
+  const shouldShowSectionHeaders = resultSections.length > 1 || searchType === '';
 
   const handleTagPress = useCallback((value) => {
     const trimmed = safeText(value)?.trim();
@@ -679,22 +900,9 @@ const Search = () => {
       clearTimeout(debounceRef.current);
       debounceRef.current = null;
     }
-    (async () => {
-      try {
-        const [storedQuery, storedResults] = await AsyncStorage.multiGet([
-          'search_cache__query',
-          'search_cache__results',
-        ]);
-        const restoredQuery = storedQuery?.[1] ?? '';
-        const parsedResults = storedResults?.[1] ? JSON.parse(storedResults[1]) : [];
-        setQuery(restoredQuery);
-        setResults(Array.isArray(parsedResults) ? parsedResults : []);
-      } catch (_) {
-        setQuery('');
-        setResults([]);
-      }
-    })();
-  }, [cancelAutocomplete]);
+    setSearchType(resultsType);
+    setQuery(resultsQuery);
+  }, [cancelAutocomplete, resultsQuery, resultsType]);
 
   useEffect(() => {
     searchCacheRef.current.clear();
@@ -703,6 +911,12 @@ const Search = () => {
     autocompleteInFlightRef.current.clear();
     lastExecutedQueryRef.current = null;
     setAutocompleteSuggestions([]);
+    if (didHydrateInitialStateRef.current) {
+      executeSearchRef.current(committedResultsQueryRef.current, {
+        force: true,
+        type: committedResultsTypeRef.current,
+      });
+    }
   }, [communityId, token]);
 
   return (
@@ -723,6 +937,10 @@ const Search = () => {
           }
         }}
         onSubmitEditing={() => {
+          if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+            debounceRef.current = null;
+          }
           cancelAutocomplete();
           setAutocompleteSuggestions([]);
           inputRef.current?.blur?.();
@@ -738,6 +956,28 @@ const Search = () => {
         isFocused={isSearchFocused}
         returnKeyType="search"
       />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterScrollContent}
+        style={styles.filterScroll}
+      >
+        {SEARCH_FILTERS.map(filter => {
+          const isActive = searchType === filter.value;
+          return (
+            <TouchableOpacity
+              key={filter.value || 'all'}
+              style={[styles.filterChip, isActive && styles.filterChipActive]}
+              onPress={() => handleFilterSelect(filter.value)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
       {showSuggestionPanel ? (
         <View style={styles.autocompleteContainer}>
           <ScrollView
@@ -798,23 +1038,39 @@ const Search = () => {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.resultsList}>
-            {results.map((item, index) => {
-              const key = item.id || item._id || `result-${index}`;
-              const listItemProps = getListItemProps(item);
-              if (!listItemProps) return null;
-              return (
-                <View key={key} style={styles.resultItem}>
-                  <SearchItem {...listItemProps} />
-                </View>
-              );
-            })}
+            {resultSections.map(section => (
+              <View key={section.key} style={styles.resultSection}>
+                {shouldShowSectionHeaders ? (
+                  <View style={styles.resultSectionHeader}>
+                    <Text style={styles.resultSectionTitle}>{section.title}</Text>
+                    <Text style={styles.resultSectionCount}>{section.items.length}</Text>
+                  </View>
+                ) : null}
+                {section.items.map((item, index) => {
+                  const key = item.id || item._id || `${section.key}-${index}`;
+                  const listItemProps = getListItemProps(item);
+                  if (!listItemProps) return null;
+                  return (
+                    <View key={key} style={styles.resultItem}>
+                      <SearchItem {...listItemProps} />
+                    </View>
+                  );
+                })}
+              </View>
+            ))}
           </View>
 
-          {!hasAnyResults && trimmedQuery.length > 0 ? (
+          {!isShowingCommittedResults && trimmedQuery.length > 0 && !isLoading ? (
+            <Text style={styles.emptyTextOverall}>
+              Keep typing for suggestions, or press search to see full results.
+            </Text>
+          ) : null}
+
+          {isShowingCommittedResults && !hasAnyResults && trimmedQuery.length > 0 ? (
             <Text style={styles.emptyTextOverall}>No results match this search.</Text>
           ) : null}
 
-          {!hasAnyResults && trimmedQuery.length === 0 ? (
+          {isShowingCommittedResults && !hasAnyResults && trimmedQuery.length === 0 ? (
             <Text style={styles.emptyTextOverall}>
               Start typing to search for activities, events, members, or posts.
             </Text>
@@ -831,6 +1087,39 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 0,
     backgroundColor: themeVariables.screenBackgroundColor,
+  },
+  filterScroll: {
+    marginBottom: 12,
+    flexGrow: 0,
+  },
+  filterScrollContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignItems: 'center',
+  },
+  filterChip: {
+    minHeight: 42,
+    paddingVertical: 9,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: themeVariables.whiteColor,
+    borderWidth: 1,
+    borderColor: '#d7d7d7',
+    marginRight: 10,
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: themeVariables.primaryColor,
+    borderColor: themeVariables.primaryColor,
+  },
+  filterChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: themeVariables.blackColor,
+  },
+  filterChipTextActive: {
+    color: themeVariables.whiteColor,
   },
   autocompleteContainer: {
     marginHorizontal: 8,
@@ -878,8 +1167,9 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
   },
   suggestionSubtitle: {
-    marginTop: 2,
+    marginTop: 4,
     fontSize: 12,
+    lineHeight: 16,
     color: '#555',
   },
   suggestionSection: {
@@ -910,6 +1200,28 @@ const styles = StyleSheet.create({
   },
   resultsList: {
     paddingHorizontal: 0,
+  },
+  resultSection: {
+    marginBottom: 10,
+  },
+  resultSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  resultSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: themeVariables.blackColor,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  resultSectionCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
   },
   resultItem: {
     marginBottom: 8,

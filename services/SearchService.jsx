@@ -2,11 +2,14 @@ import { API_URL } from '../config';
 import { buildJsonHeaders, requestJson } from './http';
 import debugLog from '../utils/debugLog';
 
-export const fetchSearchResults = async (query, token, communityId) => {
+export const fetchSearchResults = async (query, token, communityId, type) => {
   try {
     let url = `${API_URL}/api/search?q=${encodeURIComponent(query)}`;
     if (communityId) {
       url += `&communityId=${encodeURIComponent(communityId)}`;
+    }
+    if (type) {
+      url += `&type=${encodeURIComponent(type)}`;
     }
 
     const { data: responseData } = await requestJson(
@@ -24,7 +27,7 @@ export const fetchSearchResults = async (query, token, communityId) => {
   }
 };
 
-export const fetchSearchAutocomplete = async (query, token, communityId) => {
+export const fetchSearchAutocomplete = async (query, token, communityId, type) => {
   const trimmedQuery = query?.trim?.() ?? '';
   if (!trimmedQuery) {
     return [];
@@ -34,6 +37,9 @@ export const fetchSearchAutocomplete = async (query, token, communityId) => {
     let url = `${API_URL}/api/search/autocomplete?q=${encodeURIComponent(trimmedQuery)}`;
     if (communityId) {
       url += `&communityId=${encodeURIComponent(communityId)}`;
+    }
+    if (type) {
+      url += `&type=${encodeURIComponent(type)}`;
     }
 
     const { data: responseData } = await requestJson(
