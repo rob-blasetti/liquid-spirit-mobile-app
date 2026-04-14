@@ -31,7 +31,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../../../styles/theme';
 import { fetchEventDetails, joinEvent, addEventMaterials, addEventHostRequest, addEventHost } from '../../../services/EventService';
 import { getMemberList } from '../../../services/UserService';
-import { DocumentPicker, types as documentTypes } from '@react-native-documents/picker';
+import {
+  pick,
+  types as documentTypes,
+  isErrorWithCode,
+  errorCodes,
+} from '@react-native-documents/picker';
 // Allowed document types for materials
 const allowedMaterialTypes = [
   documentTypes.pdf,
@@ -66,6 +71,7 @@ import { buildMapRegion } from '../common/mapRegion';
 import debugLog from '../../../utils/debugLog';
 const HEADER_OFFSET = 0;
 const TAB_BAR_HEIGHT = 80;
+const DEFAULT_MATERIAL_TITLE = 'Untitled Document';
 
 const { height: windowHeight } = Dimensions.get('window');
 
@@ -693,10 +699,9 @@ const EventCardBody = ({
     // clear previous error
     setMaterialError(null);
     try {
-      const results = await DocumentPicker.pick({
+      const results = await pick({
         type: allowedMaterialTypes,
         allowMultiSelection: false,
-        copyTo: 'cachesDirectory',
       });
       const res = Array.isArray(results) ? results[0] : results;
       if (!res) {
@@ -713,10 +718,13 @@ const EventCardBody = ({
       if (baseName.includes('.')) {
         baseName = baseName.substring(0, baseName.lastIndexOf('.'));
       }
-      setNewMaterialTitle(baseName);
+      setNewMaterialTitle(baseName || DEFAULT_MATERIAL_TITLE);
       setNewMaterialDoc({ ...res, uri });
     } catch (err) {
-      if (DocumentPicker.isCancel(err)) {
+      if (
+        isErrorWithCode(err) &&
+        err.code === errorCodes.OPERATION_CANCELED
+      ) {
         // user cancelled, do nothing
       } else {
         console.error('DocumentPicker error:', err);
@@ -738,7 +746,7 @@ const EventCardBody = ({
       setEvent(updated);
       // reset state and close modal
       setMaterialModalVisible(false);
-      setNewMaterialTitle('');
+      setNewMaterialTitle(DEFAULT_MATERIAL_TITLE);
       setNewMaterialDoc(null);
     } catch (err) {
       console.error('Upload failed:', err);
@@ -746,6 +754,12 @@ const EventCardBody = ({
     } finally {
       setUploadingMaterial(false);
     }
+  };
+  const closeMaterialModal = () => {
+    setMaterialModalVisible(false);
+    setMaterialError(null);
+    setNewMaterialTitle(DEFAULT_MATERIAL_TITLE);
+    setNewMaterialDoc(null);
   };
 
   const [attendeesModalVisible, setAttendeesModalVisible] = useState(false);
@@ -876,7 +890,7 @@ const EventCardBody = ({
 
   // Material upload modal state
   const [materialModalVisible, setMaterialModalVisible] = useState(false);
-  const [newMaterialTitle, setNewMaterialTitle] = useState('');
+  const [newMaterialTitle, setNewMaterialTitle] = useState(DEFAULT_MATERIAL_TITLE);
   const [newMaterialDoc, setNewMaterialDoc] = useState(null);
   const [uploadingMaterial, setUploadingMaterial] = useState(false);
   // Error message for material upload issues
@@ -1014,7 +1028,7 @@ const EventCardBody = ({
       {/* Add Material Modal */}
       <BaseModal
         visible={materialModalVisible}
-        onClose={() => setMaterialModalVisible(false)}
+        onClose={closeMaterialModal}
         title="Add Material"
         headerContent={
           <TextInput
@@ -1033,6 +1047,9 @@ const EventCardBody = ({
           <Ionicons name="document-outline" size={40} color={themeVariables.primaryColor} />
           <Text style={styles.uploadButtonText}>Upload file</Text>
         </TouchableOpacity>
+        <Text style={styles.acceptedFileTypesText}>
+          Accepted file types: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, CSV, TXT
+        </Text>
         {newMaterialDoc && !uploadingMaterial && (
           <Text style={styles.fileNameText}>
             {newMaterialDoc.name || newMaterialDoc.filename}
@@ -1688,7 +1705,7 @@ const styles = StyleSheet.create({
   },
   materialModalButtonsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-end',
     marginTop: 8,
   },
   materialModalButton: {
@@ -1757,6 +1774,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 8,
+  },
+  acceptedFileTypesText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: -8,
+    marginBottom: 12,
   },
   // Display selected file name in modal
   fileNameText: {
