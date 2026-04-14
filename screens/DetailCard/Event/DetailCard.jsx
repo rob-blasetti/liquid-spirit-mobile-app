@@ -4,11 +4,9 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  Modal,
   StatusBar,
   Platform,
   Alert,
@@ -47,6 +45,7 @@ const allowedMaterialTypes = [
   documentTypes.plainText,
 ];
 import resolveImageSource from '../../../utils/imageSource';
+import BaseModal from '../../../components/BaseModal';
 import UserBadgeCell from '../../../components/UserBadgeCell';
 import { fetchUserBodyByEventType } from '../../../services/UserBodyService';
 import { UserContext } from '../../../contexts/UserContext';
@@ -1013,113 +1012,95 @@ const EventCardBody = ({
         headerContent={oversightModalHeaderContent}
       />
       {/* Add Material Modal */}
-      <Modal
+      <BaseModal
         visible={materialModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setMaterialModalVisible(false)}
-      >
-        <View style={styles.modalCenterContainer}>
-          <View style={styles.modalCenterContent}>
-            <Text style={styles.modalTitle}>Add Material</Text>
-            <TextInput
-              style={styles.materialModalInput}
-              placeholder="Title"
-              value={newMaterialTitle}
-              onChangeText={setNewMaterialTitle}
-            />
-            <TouchableOpacity
-              style={[styles.uploadButton, uploadingMaterial && { opacity: 0.5 }]}
-              onPress={pickMaterial}
-              disabled={uploadingMaterial}
-            >
-              <Ionicons name="document-outline" size={40} color={themeVariables.primaryColor} />
-              <Text style={styles.uploadButtonText}>Upload file</Text>
-            </TouchableOpacity>
-            {newMaterialDoc && !uploadingMaterial && (
-              <Text style={styles.fileNameText}>
-                {newMaterialDoc.name || newMaterialDoc.filename}
-              </Text>
-            )}
-            {uploadingMaterial ? (
-              <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-            ) : (
-              <>
-                {materialError && (
-                  <Text style={styles.errorText}>{materialError}</Text>
-                )}
-                <View style={styles.materialModalButtonsRow}>
-                  <TouchableOpacity
-                    style={styles.materialModalButton}
-                    onPress={() => {
-                      setMaterialModalVisible(false);
-                      setMaterialError(null);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.materialModalButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.materialModalButton, !newMaterialDoc && { opacity: 0.5 }]}
-                    onPress={submitMaterial}
-                    activeOpacity={0.8}
-                    disabled={!newMaterialDoc}
-                  >
-                    <Text style={styles.materialModalButtonText}>Upload</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-      {/* Add Host Modal */}
-      <Modal
-        visible={addHostModalVisible}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setAddHostModalVisible(false)}
-      >
-        <View style={styles.modalCenterContainer}>
-          <View style={styles.modalCenterContent}>
-            <Text style={styles.modalTitle}>Select Host</Text>
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Search users..."
-              value={memberSearchQuery}
-              onChangeText={onMemberSearch}
-            />
-            {memberLoading ? (
-              <ActivityIndicator size="large" color={themeVariables.primaryColor} />
-            ) : (
-              <ScrollView style={styles.memberList}>
-                {filteredMembers.map(member => (
-                  <TouchableOpacity
-                    key={member._id}
-                    style={styles.memberItem}
-                    onPress={() => selectHostMember(member)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.memberName} numberOfLines={1}>
-                      {/* Display fullName if available, else fallback */}
-                      {member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.name || member.email}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-            <View style={styles.modalButtonsRow}>
+        onClose={() => setMaterialModalVisible(false)}
+        title="Add Material"
+        headerContent={
+          <TextInput
+            style={styles.materialModalInput}
+            placeholder="Title"
+            value={newMaterialTitle}
+            onChangeText={setNewMaterialTitle}
+          />
+        }
+        contentContainerStyle={styles.baseModalContent}>
+        <TouchableOpacity
+          style={[styles.uploadButton, uploadingMaterial && { opacity: 0.5 }]}
+          onPress={pickMaterial}
+          disabled={uploadingMaterial}
+        >
+          <Ionicons name="document-outline" size={40} color={themeVariables.primaryColor} />
+          <Text style={styles.uploadButtonText}>Upload file</Text>
+        </TouchableOpacity>
+        {newMaterialDoc && !uploadingMaterial && (
+          <Text style={styles.fileNameText}>
+            {newMaterialDoc.name || newMaterialDoc.filename}
+          </Text>
+        )}
+        {uploadingMaterial ? (
+          <ActivityIndicator
+            size="large"
+            color={themeVariables.primaryColor}
+            style={styles.modalLoading}
+          />
+        ) : (
+          <>
+            {materialError ? (
+              <Text style={styles.errorText}>{materialError}</Text>
+            ) : null}
+            <View style={styles.materialModalButtonsRow}>
               <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setAddHostModalVisible(false)}
+                style={[styles.materialModalButton, !newMaterialDoc && { opacity: 0.5 }]}
+                onPress={submitMaterial}
                 activeOpacity={0.8}
+                disabled={!newMaterialDoc}
               >
-                <Text style={styles.modalButtonText}>Cancel</Text>
+                <Text style={styles.materialModalButtonText}>Upload</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
+          </>
+        )}
+      </BaseModal>
+      {/* Add Host Modal */}
+      <BaseModal
+        visible={addHostModalVisible}
+        onClose={() => setAddHostModalVisible(false)}
+        title="Select Host"
+        headerContent={
+          <TextInput
+            style={styles.materialModalInput}
+            placeholder="Search users..."
+            value={memberSearchQuery}
+            onChangeText={onMemberSearch}
+          />
+        }
+        contentContainerStyle={styles.baseModalContent}>
+        {memberLoading ? (
+          <ActivityIndicator
+            size="large"
+            color={themeVariables.primaryColor}
+            style={styles.modalLoading}
+          />
+        ) : filteredMembers.length > 0 ? (
+          filteredMembers.map(member => (
+            <TouchableOpacity
+              key={member._id}
+              style={styles.memberItem}
+              onPress={() => selectHostMember(member)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.memberName} numberOfLines={1}>
+                {member.fullName || `${member.firstName || ''} ${member.lastName || ''}`.trim() || member.name || member.email}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={styles.memberEmptyState}>
+            No matching members found.
+          </Text>
+        )}
+      </BaseModal>
     </CardContainer>
     <FooterBrand containerStyle={styles.footerContainer} />
     </>
@@ -1127,57 +1108,27 @@ const EventCardBody = ({
 };
 
 const styles = StyleSheet.create({
-  // Modal for adding host
-  modalCenterContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  baseModalContent: {
+    paddingBottom: 8,
   },
-  modalCenterContent: {
-    width: '85%',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-    color: themeVariables.blackColor,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginBottom: 12,
-  },
-  memberList: {
-    maxHeight: 200,
-    marginBottom: 12,
+  modalLoading: {
+    marginVertical: 20,
   },
   memberItem: {
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#E8EBF0',
   },
   memberName: {
     fontSize: 16,
+    color: themeVariables.blackColor,
   },
-  modalButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-  },
-  modalButton: {
-    marginLeft: 12,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    color: themeVariables.primaryColor,
+  memberEmptyState: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#6B7280',
+    textAlign: 'center',
+    paddingVertical: 16,
   },
   safeArea: {
     flex: 1,
