@@ -41,6 +41,43 @@ const RESULT_SECTION_CONFIG = {
 };
 const VALID_SEARCH_TYPES = new Set(SEARCH_FILTERS.map(filter => filter.value).filter(Boolean));
 
+function getUi(result) {
+  return result?.ui || null;
+}
+
+function getCanonicalType(result) {
+  return getUi(result)?.type || result?.type || '';
+}
+
+function getCanonicalEntityId(result) {
+  return getUi(result)?.entityId || result?._id || result?.id || null;
+}
+
+function getCanonicalNavigation(result) {
+  return getUi(result)?.navigation || null;
+}
+
+function getCanonicalSectionKey(result) {
+  const section = getUi(result)?.section;
+  if (section === 'people') return 'users';
+  if (section === 'members') return 'members';
+  if (section === 'events') return 'events';
+  if (section === 'activities') return 'activities';
+  if (section === 'posts') return 'posts';
+  if (section === 'related_posts') return 'relatedPosts';
+  return getResultSectionKey(getCanonicalType(result));
+}
+
+function getCanonicalBadgeLabel(result, preferredKind) {
+  const badges = Array.isArray(getUi(result)?.badges) ? getUi(result).badges : [];
+  if (preferredKind) {
+    const match = badges.find((badge) => badge?.kind === preferredKind && badge?.label);
+    if (match) return safeText(match.label).trim();
+  }
+  const first = badges.find((badge) => badge?.label);
+  return first ? safeText(first.label).trim() : '';
+}
+
 function normalizeSearchType(value) {
   if (typeof value !== 'string') return '';
   const normalized = value.trim().toLowerCase();
@@ -75,11 +112,11 @@ function buildResultSections(results) {
   const matchedPersonNames = new Set();
 
   for (const item of results) {
-    if (item?.type === 'user' && item.id != null) {
-      matchedAuthorIds.add(String(item.id));
+    if (getCanonicalType(item) === 'user' && getCanonicalEntityId(item) != null) {
+      matchedAuthorIds.add(String(getCanonicalEntityId(item)));
     }
 
-    if (item?.type === 'user' || item?.type === 'member') {
+    if (getCanonicalType(item) === 'user' || getCanonicalType(item) === 'member') {
       const personLabel = normalizePersonLabel(
         item?.firstName,
         item?.lastName,
@@ -97,13 +134,13 @@ function buildResultSections(results) {
   for (const item of results) {
     const authorId = item?.author?.id != null ? String(item.author.id) : '';
     const authorLabel = normalizePersonLabel(item?.author?.firstName, item?.author?.lastName);
-    const isRelatedPost = item?.type === 'post'
+    const isRelatedPost = getCanonicalType(item) === 'post'
       && hasMatchedPeople
       && (
         (authorId && matchedAuthorIds.has(authorId))
         || (authorLabel && matchedPersonNames.has(authorLabel))
       );
-    const sectionKey = isRelatedPost ? 'relatedPosts' : getResultSectionKey(item?.type);
+    const sectionKey = isRelatedPost ? 'relatedPosts' : getCanonicalSectionKey(item);
     const existingSection = sectionMap.get(sectionKey);
 
     if (existingSection) {
@@ -247,14 +284,16 @@ const Search = () => {
   // Handler for card press navigation
   const handleCardPress = useCallback((selected) => {
     if (!selected) return;
-    const primaryId = selected._id || selected.id;
+    const navigationTarget = getCanonicalNavigation(selected);
+    const primaryId = navigationTarget?.entityId || getCanonicalEntityId(selected);
+    const canonicalType = navigationTarget?.kind || getCanonicalType(selected);
 
-    if (selected.type === 'member' || selected.type === 'user') {
+    if (canonicalType === 'member' || canonicalType === 'user') {
       navigation.navigate('PublicUserProfile', { userId: primaryId });
       return;
     }
 
-    if (selected.type === 'post') {
+    if (canonicalType === 'post') {
       navigateToPostDetail({
         navigation,
         post: selected,
@@ -265,7 +304,7 @@ const Search = () => {
       return;
     }
 
-    if (selected.type === 'event') {
+    if (canonicalType === 'event') {
       navigateToEventDetail({
         navigation,
         event: selected,
@@ -276,7 +315,7 @@ const Search = () => {
       return;
     }
 
-    if (selected.type === 'activity') {
+    if (canonicalType === 'activity') {
       navigateToActivityDetail({
         navigation,
         activity: selected,
@@ -287,14 +326,16 @@ const Search = () => {
       return;
     }
 
-    if (selected.type === 'session') {
-      const activityId = selected.activityId || primaryId;
+    if (canonicalType === 'session' || navigationTarget?.params?.initialSessionId) {
+      const activityId = navigationTarget?.kind === 'activity'
+        ? navigationTarget.entityId
+        : (selected.activityId || primaryId);
       navigateToActivityDetail({
         navigation,
         activityId,
         token,
         isTokenExpired,
-        params: { initialSessionId: primaryId },
+        params: { initialSessionId: navigationTarget?.params?.initialSessionId || primaryId },
       });
       return;
     }
@@ -316,7 +357,9 @@ const Search = () => {
       .filter(Boolean)
       .join(' ')
       .trim();
-    return suggestion.label
+    const uiTitle = safeText(suggestion?.ui?.title).trim();
+    return uiTitle
+      || suggestion.label
       || suggestion.name
       || suggestion.title
       || suggestion.displayName
@@ -328,7 +371,7 @@ const Search = () => {
 
   const getSuggestionType = useCallback((suggestion) => {
     if (!suggestion || typeof suggestion === 'string') return '';
-    const rawType = suggestion.type || suggestion.category || suggestion.group;
+    const rawType = suggestion?.ui?.type || suggestion.type || suggestion.category || suggestion.group;
     if (!rawType || typeof rawType !== 'string') return '';
     return `${rawType.charAt(0).toUpperCase()}${rawType.slice(1)}`;
   }, []);
@@ -337,21 +380,24 @@ const Search = () => {
     if (!suggestion || typeof suggestion === 'string') return '';
 
     const typeLabel = getSuggestionType(suggestion);
-    const communityLabel = safeText(suggestion.community)?.trim();
+    const communityLabel = safeText(suggestion?.ui?.community?.name || suggestion.community)?.trim();
+    const canonicalType = getCanonicalType(suggestion);
+    const uiDescription = safeText(suggestion?.ui?.description).trim();
+    const uiSubtitle = safeText(suggestion?.ui?.subtitle).trim();
 
-    switch (suggestion.type) {
+    switch (canonicalType) {
       case 'event': {
-        const eventDate = formatDate(suggestion.date);
-        const eventDay = getDayName(suggestion.date);
-        const eventTime = formatEventTime(suggestion.startTime || suggestion.time)
-          || safeText(suggestion.startTime || suggestion.time).trim();
-        return [typeLabel, eventDay, eventDate, eventTime, communityLabel].filter(Boolean).join(' • ');
+        const eventDate = formatDate(suggestion?.ui?.meta?.date || suggestion.date);
+        const eventDay = getDayName(suggestion?.ui?.meta?.date || suggestion.date);
+        const eventTime = formatEventTime(suggestion?.ui?.meta?.startTime || suggestion.startTime || suggestion.time)
+          || safeText(suggestion?.ui?.meta?.startTime || suggestion.startTime || suggestion.time).trim();
+        return [uiSubtitle || typeLabel, uiDescription, eventDay, eventDate, eventTime, communityLabel].filter(Boolean).join(' • ');
       }
       case 'activity':
       case 'session': {
-        const activityType = safeText(suggestion.activityType).trim();
+        const activityType = getCanonicalBadgeLabel(suggestion, 'type') || safeText(suggestion.activityType).trim();
         const nextSessionDate = formatDate(
-          suggestion.nextSessionDate || suggestion.nextSession?.date || suggestion.date,
+          suggestion?.ui?.meta?.nextSessionDate || suggestion.nextSessionDate || suggestion.nextSession?.date || suggestion.date,
         );
         const groupDay = safeText(suggestion.groupDetails?.day).trim();
         const rawGroupTime = suggestion.groupDetails?.time;
@@ -359,16 +405,16 @@ const Search = () => {
         const scheduleLabel = nextSessionDate
           ? `Next ${nextSessionDate}`
           : [groupDay, groupTime].filter(Boolean).join(' • ');
-        return [typeLabel, activityType, scheduleLabel, communityLabel].filter(Boolean).join(' • ');
+        return [uiSubtitle || typeLabel, activityType, uiDescription || scheduleLabel, communityLabel].filter(Boolean).join(' • ');
       }
       case 'post': {
         const authorName = [safeText(suggestion.author?.firstName), safeText(suggestion.author?.lastName)]
           .filter(Boolean)
           .join(' ')
           .trim();
-        const createdDate = formatDate(suggestion.createdAt);
+        const createdDate = formatDate(suggestion?.ui?.meta?.date || suggestion.createdAt);
         return [
-          typeLabel,
+          uiSubtitle || typeLabel,
           authorName ? `By ${truncateText(authorName, 24)}` : '',
           createdDate,
           communityLabel,
@@ -385,7 +431,7 @@ const Search = () => {
   const suggestionKeyExtractor = useCallback((item, index) => {
     const key = typeof item === 'string'
       ? item
-      : item.id || item._id || item.value || item.slug || getSuggestionLabel(item);
+      : getCanonicalEntityId(item) || item.value || item.slug || getSuggestionLabel(item);
     return key ? key.toString() : index.toString();
   }, [getSuggestionLabel]);
 
@@ -759,18 +805,20 @@ const Search = () => {
 
   const getListItemProps = useCallback((item) => {
     if (!item) return null;
-    const communityText = safeText(item.community);
+    const ui = getUi(item);
+    const canonicalType = getCanonicalType(item);
+    const communityText = safeText(ui?.community?.name || item.community);
     const normalizedDate = (value) => {
       const formatted = formatDate(value);
       return formatted ? formatted : undefined;
     };
     const onPress = () => handleCardPress(item);
-    switch (item.type) {
+    switch (canonicalType) {
       case 'activity':
       case 'session': {
-        const title = safeText(item.title || item.name);
-        const sessionStatus = safeText(item.sessionStatus || item.status).trim();
-        const nextSessionCandidate = item.nextSessionDate || item.nextSession?.date || item.date;
+        const title = safeText(ui?.title || item.title || item.name);
+        const sessionStatus = getCanonicalBadgeLabel(item, 'status') || safeText(item.sessionStatus || item.status).trim();
+        const nextSessionCandidate = ui?.meta?.nextSessionDate || item.nextSessionDate || item.nextSession?.date || item.date;
         const formattedNextSessionDate = normalizedDate(nextSessionCandidate);
         const hasNextSessionDate = Boolean(formattedNextSessionDate);
         const hasRawNextSessionValue = (() => {
@@ -793,11 +841,11 @@ const Search = () => {
           ? scheduleParts.join(' • ')
           : undefined;
         return {
-          imageSource: resolveImageSource(item.imageUrl),
+          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
           title: title || 'Activity',
-          subtitle,
+          subtitle: ui?.description || subtitle,
           secondarySubtitle,
-          tagText: safeText(item.activityType) || 'Activity',
+          tagText: getCanonicalBadgeLabel(item, 'type') || safeText(item.activityType) || safeText(ui?.subtitle) || 'Activity',
           sessionStatusTagText: sessionStatus || undefined,
           communityTagText: communityText || undefined,
           onPress,
@@ -805,22 +853,22 @@ const Search = () => {
         };
       }
       case 'event': {
-        const title = safeText(item.title);
+        const title = safeText(ui?.title || item.title);
         const subtitleParts = [safeText(item.location)];
-        const rawTime = item.startTime || item.time;
+        const rawTime = ui?.meta?.startTime || item.startTime || item.time;
         const timeField = formatEventTime(rawTime) || safeText(rawTime);
-        const dayOfWeek = getDayName(item.date);
-        const formattedDate = normalizedDate(item.date);
+        const dayOfWeek = getDayName(ui?.meta?.date || item.date);
+        const formattedDate = normalizedDate(ui?.meta?.date || item.date);
         const dateLabelParts = [];
         if (dayOfWeek) dateLabelParts.push(dayOfWeek);
         if (formattedDate) dateLabelParts.push(formattedDate);
         return {
-          imageSource: resolveImageSource(item.imageUrl),
+          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
           title: title || 'Event',
           date: dateLabelParts.join(' • ') || undefined,
           time: timeField || undefined,
-          subtitle: subtitleParts.filter(Boolean).join(' • ') || undefined,
-          tagText: safeText(item.eventType) || 'Event',
+          subtitle: ui?.description || subtitleParts.filter(Boolean).join(' • ') || undefined,
+          tagText: getCanonicalBadgeLabel(item, 'type') || safeText(item.eventType) || safeText(ui?.subtitle) || 'Event',
           communityTagText: communityText || undefined,
           isEvent: true,
           onPress,
@@ -831,21 +879,21 @@ const Search = () => {
         const thumbnails = Array.isArray(item.mediaThumbnails) ? item.mediaThumbnails : [];
         const mediaArray = Array.isArray(item.media) ? item.media : [];
         const previewUri = extractMediaUrl(thumbnails[0]) || extractMediaUrl(mediaArray[0]);
-        const rawContent = safeText(item.content || item.title);
+        const rawContent = safeText(ui?.title || item.content || item.title);
         const content = truncateText(rawContent, 80) || 'View post details';
         const authorName = [safeText(item.author?.firstName), safeText(item.author?.lastName)]
           .filter(Boolean)
           .join(' ');
         const truncatedAuthorName = truncateText(authorName, 24);
         return {
-          imageSource: resolveImageSource(previewUri),
+          imageSource: resolveImageSource(ui?.image?.url || previewUri),
           title: content,
           subtitle: undefined,
-          date: normalizedDate(item.createdAt),
+          date: normalizedDate(ui?.meta?.date || item.createdAt),
           metaText: typeof item.commentCount === 'number'
             ? `Comments: ${item.commentCount}`
             : undefined,
-          tagText: safeText(item.category) || 'Post',
+          tagText: getCanonicalBadgeLabel(item, 'tag') || safeText(item.category) || 'Post',
           communityTagText: communityText || undefined,
           secondaryFooterText: truncatedAuthorName ? `By ${truncatedAuthorName}` : undefined,
           onPress,
@@ -854,10 +902,10 @@ const Search = () => {
       }
       case 'member':
       case 'user': {
-        const title = [safeText(item.firstName), safeText(item.lastName)].filter(Boolean).join(' ').trim();
+        const title = safeText(ui?.title || [safeText(item.firstName), safeText(item.lastName)].filter(Boolean).join(' ').trim());
         const communityName = communityText ? `Member of ${communityText}` : '';
         const subtitleParts = [];
-        const hasProfilePicture = Boolean(item.profilePicture);
+        const hasProfilePicture = Boolean(ui?.image?.url || item.profilePicture);
         const leadingComponent = hasProfilePicture ? null : (
           <Avatar
             size={60}
@@ -867,7 +915,7 @@ const Search = () => {
           />
         );
         return {
-          imageSource: hasProfilePicture ? resolveImageSource(item.profilePicture) : null,
+          imageSource: hasProfilePicture ? resolveImageSource(ui?.image?.url || item.profilePicture) : null,
           leadingComponent,
           title: title || safeText(item.displayName) || 'Member',
           subtitle: communityName || subtitleParts.filter(Boolean).join(' • ') || undefined,
@@ -877,11 +925,11 @@ const Search = () => {
         };
       }
       default: {
-        const fallbackTitle = safeText(item.title || item.name || item.displayName || item.id);
+        const fallbackTitle = safeText(ui?.title || item.title || item.name || item.displayName || item.id);
         return {
-          imageSource: resolveImageSource(item.imageUrl),
+          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
           title: fallbackTitle || 'Result',
-          subtitle: undefined,
+          subtitle: safeText(ui?.description) || undefined,
           communityTagText: communityText || undefined,
           onPress,
         };
@@ -1047,7 +1095,7 @@ const Search = () => {
                   </View>
                 ) : null}
                 {section.items.map((item, index) => {
-                  const key = item.id || item._id || `${section.key}-${index}`;
+                  const key = getCanonicalEntityId(item) || `${section.key}-${index}`;
                   const listItemProps = getListItemProps(item);
                   if (!listItemProps) return null;
                   return (
