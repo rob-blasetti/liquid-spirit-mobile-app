@@ -20,7 +20,13 @@ export const fetchSearchResults = async (query, token, communityId, type) => {
       'Failed to fetch search results',
     );
     debugLog('Fetched search results:', responseData);
-    return responseData;
+    if (Array.isArray(responseData)) {
+      return responseData;
+    }
+    if (responseData && Array.isArray(responseData.results)) {
+      return responseData.results;
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching search results:', error);
     throw new Error(`Fetch search results error: ${error.message}`);
@@ -50,7 +56,13 @@ export const fetchSearchAutocomplete = async (query, token, communityId, type) =
       'Failed to fetch autocomplete suggestions',
     );
     debugLog('Fetched autocomplete suggestions:', responseData);
-    return responseData;
+    if (Array.isArray(responseData)) {
+      return responseData;
+    }
+    if (responseData && Array.isArray(responseData.results)) {
+      return responseData.results;
+    }
+    return [];
   } catch (error) {
     console.error('Error fetching search autocomplete:', error);
     return [];
