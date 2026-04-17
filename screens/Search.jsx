@@ -90,15 +90,6 @@ function buildSearchCacheKey(communityId, query, type) {
   return `${communityId || 'global'}::${normalizedType}::${normalizedQuery}`;
 }
 
-function normalizePersonLabel(...parts) {
-  return parts
-    .map(part => String(part || '').trim())
-    .filter(Boolean)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .toLowerCase();
-}
-
 function getResultSectionKey(resultType) {
   const entry = RESULT_SECTION_ORDER.find(sectionKey => {
     const config = RESULT_SECTION_CONFIG[sectionKey];
@@ -108,39 +99,10 @@ function getResultSectionKey(resultType) {
 }
 
 function buildResultSections(results) {
-  const matchedAuthorIds = new Set();
-  const matchedPersonNames = new Set();
-
-  for (const item of results) {
-    if (getCanonicalType(item) === 'user' && getCanonicalEntityId(item) != null) {
-      matchedAuthorIds.add(String(getCanonicalEntityId(item)));
-    }
-
-    if (getCanonicalType(item) === 'user' || getCanonicalType(item) === 'member') {
-      const personLabel = normalizePersonLabel(
-        item?.firstName,
-        item?.lastName,
-        item?.displayName,
-      );
-      if (personLabel) {
-        matchedPersonNames.add(personLabel);
-      }
-    }
-  }
-
-  const hasMatchedPeople = matchedAuthorIds.size > 0 || matchedPersonNames.size > 0;
   const sectionMap = new Map();
 
   for (const item of results) {
-    const authorId = item?.author?.id != null ? String(item.author.id) : '';
-    const authorLabel = normalizePersonLabel(item?.author?.firstName, item?.author?.lastName);
-    const isRelatedPost = getCanonicalType(item) === 'post'
-      && hasMatchedPeople
-      && (
-        (authorId && matchedAuthorIds.has(authorId))
-        || (authorLabel && matchedPersonNames.has(authorLabel))
-      );
-    const sectionKey = isRelatedPost ? 'relatedPosts' : getCanonicalSectionKey(item);
+    const sectionKey = getCanonicalSectionKey(item);
     const existingSection = sectionMap.get(sectionKey);
 
     if (existingSection) {
