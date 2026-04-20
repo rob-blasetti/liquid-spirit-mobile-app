@@ -1,45 +1,69 @@
-import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import themeVariables from '../styles/theme';
-import { UserContext } from '../contexts/UserContext';
-import { fetchSearchResults, fetchSearchAutocomplete } from '../services/SearchService';
+import {UserContext} from '../contexts/UserContext';
+import {
+  fetchSearchResults,
+  fetchSearchAutocomplete,
+} from '../services/SearchService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config';
+import {API_URL} from '../config';
 import useMountEffect from '../hooks/useMountEffect';
 import localImages from '../utils/localImages';
 import SearchItem from '../components/SearchItem';
 import SearchBar from '../components/SearchBar';
-import { CommunityContext } from '../contexts/CommunityContext';
-import Avatar from '@liquidspirit/react-native-boring-avatars';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { navigateToPostDetail } from '../utils/navigateToPostDetail';
-import { navigateToEventDetail } from '../utils/navigateToEventDetail';
-import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import {CommunityContext} from '../contexts/CommunityContext';
+import {navigateToPostDetail} from '../utils/navigateToPostDetail';
+import {navigateToEventDetail} from '../utils/navigateToEventDetail';
+import {navigateToActivityDetail} from '../utils/navigateToActivityDetail';
 import debugLog from '../utils/debugLog';
 
 const placeholderImage = require('../assets/img/placeholder.png');
 const FULL_SEARCH_MIN_LENGTH = 3;
 const FULL_SEARCH_DEBOUNCE_MS = 700;
 const SEARCH_FILTERS = [
-  { label: 'All', value: '' },
-  { label: 'Users', value: 'users' },
-  { label: 'Members', value: 'members' },
-  { label: 'Events', value: 'events' },
-  { label: 'Activities', value: 'activities' },
-  { label: 'Posts', value: 'posts' },
+  {label: 'All', value: ''},
+  {label: 'Users', value: 'users'},
+  {label: 'Members', value: 'members'},
+  {label: 'Events', value: 'events'},
+  {label: 'Activities', value: 'activities'},
+  {label: 'Posts', value: 'posts'},
 ];
-const RESULT_SECTION_ORDER = ['users', 'members', 'relatedPosts', 'events', 'activities', 'posts', 'other'];
+const RESULT_SECTION_ORDER = [
+  'users',
+  'members',
+  'relatedPosts',
+  'events',
+  'activities',
+  'posts',
+  'other',
+];
 const RESULT_SECTION_CONFIG = {
-  users: { title: 'Users', types: ['user'] },
-  members: { title: 'Members', types: ['member'] },
-  relatedPosts: { title: 'Related Posts', types: [] },
-  events: { title: 'Events', types: ['event'] },
-  activities: { title: 'Activities', types: ['activity', 'session'] },
-  posts: { title: 'Posts', types: ['post'] },
-  other: { title: 'Other Results', types: [] },
+  users: {title: 'Users', types: ['user']},
+  members: {title: 'Members', types: ['member']},
+  relatedPosts: {title: 'Related Posts', types: []},
+  events: {title: 'Events', types: ['event']},
+  activities: {title: 'Activities', types: ['activity', 'session']},
+  posts: {title: 'Posts', types: ['post']},
+  other: {title: 'Other Results', types: []},
 };
-const VALID_SEARCH_TYPES = new Set(SEARCH_FILTERS.map(filter => filter.value).filter(Boolean));
+const VALID_SEARCH_TYPES = new Set(
+  SEARCH_FILTERS.map(filter => filter.value).filter(Boolean),
+);
 
 function getUi(result) {
   return result?.ui || null;
@@ -69,13 +93,27 @@ function getCanonicalSectionKey(result) {
 }
 
 function getCanonicalBadgeLabel(result, preferredKind) {
-  const badges = Array.isArray(getUi(result)?.badges) ? getUi(result).badges : [];
-  if (preferredKind) {
-    const match = badges.find((badge) => badge?.kind === preferredKind && badge?.label);
-    if (match) return safeText(match.label).trim();
-  }
-  const first = badges.find((badge) => badge?.label);
-  return first ? safeText(first.label).trim() : '';
+  const labels = getCanonicalBadgeLabels(result, preferredKind);
+  return labels[0] || '';
+}
+
+function getCanonicalBadgeLabels(result, preferredKind) {
+  const badges = Array.isArray(getUi(result)?.badges)
+    ? getUi(result).badges
+    : [];
+  const filtered = preferredKind
+    ? badges.filter(badge => badge?.kind === preferredKind)
+    : badges;
+
+  return filtered.map(badge => safeText(badge?.label).trim()).filter(Boolean);
+}
+
+function getCanonicalMeta(result) {
+  return getUi(result)?.meta || {};
+}
+
+function getCanonicalSearchState(result) {
+  return getUi(result)?.search || result?.search || {};
 }
 
 function normalizeSearchType(value) {
@@ -117,9 +155,9 @@ function buildResultSections(results) {
     });
   }
 
-  return RESULT_SECTION_ORDER
-    .map(sectionKey => sectionMap.get(sectionKey))
-    .filter(Boolean);
+  return RESULT_SECTION_ORDER.map(sectionKey =>
+    sectionMap.get(sectionKey),
+  ).filter(Boolean);
 }
 
 function safeText(val) {
@@ -131,6 +169,45 @@ function safeText(val) {
   } catch (_) {
     return '';
   }
+}
+
+function joinTextParts(parts, separator = ' • ') {
+  return parts
+    .map(part => safeText(part).trim())
+    .filter(Boolean)
+    .join(separator);
+}
+
+function textIncludes(source, fragment) {
+  const normalizedSource = safeText(source).trim().toLowerCase();
+  const normalizedFragment = safeText(fragment).trim().toLowerCase();
+  if (!normalizedSource || !normalizedFragment) return false;
+  return normalizedSource.includes(normalizedFragment);
+}
+
+function buildCountLabel(count, singular, plural = `${singular}s`) {
+  if (typeof count !== 'number') return '';
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function getSearchSnippet(result) {
+  return safeText(getUi(result)?.snippet).trim();
+}
+
+function getSearchMatchReason(result) {
+  const search = getCanonicalSearchState(result);
+  const matchedOn = Array.isArray(search?.matchedOn) ? search.matchedOn : [];
+
+  if (search?.relation === 'author_match') return 'Matched author';
+  if (matchedOn.includes('bahaiId')) return 'Matched Bahá’í ID';
+  if (matchedOn.includes('tags')) return 'Matched tag';
+  if (matchedOn.includes('activityType') || matchedOn.includes('eventType')) {
+    return 'Matched type';
+  }
+  if (matchedOn.includes('community')) return 'Matched community';
+  if (matchedOn.includes('content')) return 'Matched text';
+
+  return '';
 }
 
 function truncateText(text, limit) {
@@ -145,7 +222,20 @@ function formatDate(dateString) {
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return String(dateString);
   const day = d.getDate();
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   const month = monthNames[d.getMonth()];
   const year = d.getFullYear().toString().slice(-2);
   const j = day % 10;
@@ -161,7 +251,15 @@ function getDayName(dateString) {
   if (!dateString) return '';
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return '';
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNames = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
   return dayNames[d.getDay()] || '';
 }
 
@@ -173,14 +271,20 @@ function formatGroupTime(timeStr) {
   if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return '';
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
-  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function formatEventTime(timeValue) {
   if (!timeValue) return '';
   const date = new Date(timeValue);
   if (!Number.isFinite(date.getTime())) return '';
-  const formatted = date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  const formatted = date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
   return typeof formatted === 'string'
     ? formatted.replace(/(am|pm)/gi, match => match.toUpperCase())
     : '';
@@ -193,10 +297,19 @@ function resolveImageSource(uri) {
   const stringUri = typeof uri === 'string' ? uri : null;
   if (!stringUri) return placeholderImage;
   if (/^https?:/i.test(stringUri) || /^data:/i.test(stringUri)) {
-    return { uri: stringUri };
+    return {uri: stringUri};
   }
   const normalized = stringUri.startsWith('/') ? stringUri.slice(1) : stringUri;
-  return { uri: `${API_URL}/${normalized}` };
+  return {uri: `${API_URL}/${normalized}`};
+}
+
+function resolveOptionalImageSource(uri) {
+  if (!uri) return null;
+  return resolveImageSource(uri);
+}
+
+function resolveEventImageSource(uri) {
+  return resolveImageSource(uri || '/img/events/Event_Placeholder.png');
 }
 
 function extractMediaUrl(media) {
@@ -219,8 +332,8 @@ const Search = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [autocompleteSuggestions, setAutocompleteSuggestions] = useState([]);
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
-  const { token, isTokenExpired } = useContext(UserContext);
-  const { communityId } = useContext(CommunityContext);
+  const {token, isTokenExpired} = useContext(UserContext);
+  const {communityId} = useContext(CommunityContext);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const debounceRef = useRef(null);
@@ -244,238 +357,404 @@ const Search = () => {
     setIsAutocompleteLoading(false);
   }, []);
   // Handler for card press navigation
-  const handleCardPress = useCallback((selected) => {
-    if (!selected) return;
-    const navigationTarget = getCanonicalNavigation(selected);
-    const primaryId = navigationTarget?.entityId || getCanonicalEntityId(selected);
-    const canonicalType = navigationTarget?.kind || getCanonicalType(selected);
+  const handleCardPress = useCallback(
+    selected => {
+      if (!selected) return;
+      const navigationTarget = getCanonicalNavigation(selected);
+      const primaryId =
+        navigationTarget?.entityId || getCanonicalEntityId(selected);
+      const canonicalType =
+        navigationTarget?.kind || getCanonicalType(selected);
 
-    if (canonicalType === 'member' || canonicalType === 'user') {
-      navigation.navigate('PublicUserProfile', { userId: primaryId });
-      return;
-    }
+      if (canonicalType === 'member' || canonicalType === 'user') {
+        navigation.navigate('PublicUserProfile', {userId: primaryId});
+        return;
+      }
 
-    if (canonicalType === 'post') {
-      navigateToPostDetail({
-        navigation,
-        post: selected,
-        postId: primaryId,
-        token,
-        isTokenExpired,
-      });
-      return;
-    }
+      if (canonicalType === 'post') {
+        navigateToPostDetail({
+          navigation,
+          post: selected,
+          postId: primaryId,
+          token,
+          isTokenExpired,
+        });
+        return;
+      }
 
-    if (canonicalType === 'event') {
-      navigateToEventDetail({
-        navigation,
-        event: selected,
-        eventId: primaryId,
-        token,
-        isTokenExpired,
-      });
-      return;
-    }
+      if (canonicalType === 'event') {
+        navigateToEventDetail({
+          navigation,
+          event: selected,
+          eventId: primaryId,
+          token,
+          isTokenExpired,
+        });
+        return;
+      }
 
-    if (canonicalType === 'activity') {
-      navigateToActivityDetail({
-        navigation,
-        activity: selected,
-        activityId: primaryId,
-        token,
-        isTokenExpired,
-      });
-      return;
-    }
+      if (canonicalType === 'activity') {
+        navigateToActivityDetail({
+          navigation,
+          activity: selected,
+          activityId: primaryId,
+          token,
+          isTokenExpired,
+        });
+        return;
+      }
 
-    if (canonicalType === 'session' || navigationTarget?.params?.initialSessionId) {
-      const activityId = navigationTarget?.kind === 'activity'
-        ? navigationTarget.entityId
-        : (selected.activityId || primaryId);
-      navigateToActivityDetail({
-        navigation,
-        activityId,
-        token,
-        isTokenExpired,
-        params: { initialSessionId: navigationTarget?.params?.initialSessionId || primaryId },
-      });
-      return;
-    }
+      if (
+        canonicalType === 'session' ||
+        navigationTarget?.params?.initialSessionId
+      ) {
+        const activityId =
+          navigationTarget?.kind === 'activity'
+            ? navigationTarget.entityId
+            : selected.activityId || primaryId;
+        navigateToActivityDetail({
+          navigation,
+          activityId,
+          token,
+          isTokenExpired,
+          params: {
+            initialSessionId:
+              navigationTarget?.params?.initialSessionId || primaryId,
+          },
+        });
+        return;
+      }
 
-    if (primaryId) {
-      navigateToActivityDetail({
-        navigation,
-        activityId: primaryId,
-        token,
-        isTokenExpired,
-      });
-    }
-  }, [navigation, token, isTokenExpired]);
+      if (primaryId) {
+        navigateToActivityDetail({
+          navigation,
+          activityId: primaryId,
+          token,
+          isTokenExpired,
+        });
+      }
+    },
+    [navigation, token, isTokenExpired],
+  );
   // Partition results by type for grouped sections
-  const getSuggestionLabel = useCallback((suggestion) => {
+  const getSuggestionLabel = useCallback(suggestion => {
     if (!suggestion) return '';
     if (typeof suggestion === 'string') return suggestion;
-    const personLabel = [safeText(suggestion.firstName), safeText(suggestion.lastName)]
+    const canonicalType = getCanonicalType(suggestion);
+    const personLabel = [
+      safeText(suggestion.firstName),
+      safeText(suggestion.lastName),
+    ]
       .filter(Boolean)
       .join(' ')
       .trim();
     const uiTitle = safeText(suggestion?.ui?.title).trim();
-    return uiTitle
-      || suggestion.label
-      || suggestion.name
-      || suggestion.title
-      || suggestion.displayName
-      || personLabel
-      || safeText(suggestion.bahaiId).trim()
-      || suggestion.query
-      || '';
+    const snippet = getSearchSnippet(suggestion);
+
+    if (canonicalType === 'post') {
+      return truncateText(
+        snippet || safeText(suggestion.content).trim() || uiTitle,
+        90,
+      );
+    }
+
+    return (
+      uiTitle ||
+      suggestion.label ||
+      suggestion.name ||
+      suggestion.title ||
+      suggestion.displayName ||
+      personLabel ||
+      safeText(suggestion.bahaiId).trim() ||
+      suggestion.query ||
+      ''
+    );
   }, []);
 
-  const getSuggestionType = useCallback((suggestion) => {
+  const getSuggestionPrimaryContext = useCallback(suggestion => {
     if (!suggestion || typeof suggestion === 'string') return '';
-    const rawType = suggestion?.ui?.type || suggestion.type || suggestion.category || suggestion.group;
-    if (!rawType || typeof rawType !== 'string') return '';
-    return `${rawType.charAt(0).toUpperCase()}${rawType.slice(1)}`;
-  }, []);
-
-  const getSuggestionContext = useCallback((suggestion) => {
-    if (!suggestion || typeof suggestion === 'string') return '';
-
-    const typeLabel = getSuggestionType(suggestion);
-    const communityLabel = safeText(suggestion?.ui?.community?.name || suggestion.community)?.trim();
+    const ui = getUi(suggestion);
     const canonicalType = getCanonicalType(suggestion);
-    const uiDescription = safeText(suggestion?.ui?.description).trim();
-    const uiSubtitle = safeText(suggestion?.ui?.subtitle).trim();
+    const meta = getCanonicalMeta(suggestion);
+    const communityLabel = safeText(
+      ui?.community?.name || suggestion.community,
+    ).trim();
+    const typeLabel =
+      getCanonicalBadgeLabel(suggestion, 'type') ||
+      safeText(ui?.subtitle).trim() ||
+      (canonicalType === 'member'
+        ? 'Member'
+        : canonicalType === 'user'
+        ? 'Person'
+        : '');
+    const searchDescription = safeText(ui?.description).trim();
 
     switch (canonicalType) {
       case 'event': {
-        const eventDate = formatDate(suggestion?.ui?.meta?.date || suggestion.date);
-        const eventDay = getDayName(suggestion?.ui?.meta?.date || suggestion.date);
-        const eventTime = formatEventTime(suggestion?.ui?.meta?.startTime || suggestion.startTime || suggestion.time)
-          || safeText(suggestion?.ui?.meta?.startTime || suggestion.startTime || suggestion.time).trim();
-        return [uiSubtitle || typeLabel, uiDescription, eventDay, eventDate, eventTime, communityLabel].filter(Boolean).join(' • ');
+        const eventDateValue = meta.date || suggestion.date;
+        const eventTimeValue =
+          meta.startTime || suggestion.startTime || suggestion.time;
+        const locationLabel = safeText(meta.locationLabel).trim();
+        return joinTextParts([
+          typeLabel || 'Event',
+          formatDate(eventDateValue),
+          formatEventTime(eventTimeValue) || safeText(eventTimeValue).trim(),
+          locationLabel,
+          textIncludes(locationLabel, communityLabel) ? '' : communityLabel,
+        ]);
       }
       case 'activity':
       case 'session': {
-        const activityType = getCanonicalBadgeLabel(suggestion, 'type') || safeText(suggestion.activityType).trim();
         const nextSessionDate = formatDate(
-          suggestion?.ui?.meta?.nextSessionDate || suggestion.nextSessionDate || suggestion.nextSession?.date || suggestion.date,
+          meta.nextSessionDate ||
+            suggestion.nextSessionDate ||
+            suggestion.nextSession?.date ||
+            suggestion.date,
         );
         const groupDay = safeText(suggestion.groupDetails?.day).trim();
         const rawGroupTime = suggestion.groupDetails?.time;
-        const groupTime = formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
+        const groupTime =
+          formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
         const scheduleLabel = nextSessionDate
           ? `Next ${nextSessionDate}`
           : [groupDay, groupTime].filter(Boolean).join(' • ');
-        return [uiSubtitle || typeLabel, activityType, uiDescription || scheduleLabel, communityLabel].filter(Boolean).join(' • ');
+        const activityDescription = searchDescription || scheduleLabel;
+        return joinTextParts([
+          typeLabel || 'Activity',
+          activityDescription,
+          textIncludes(activityDescription, communityLabel)
+            ? ''
+            : communityLabel,
+        ]);
       }
       case 'post': {
-        const authorName = [safeText(suggestion.author?.firstName), safeText(suggestion.author?.lastName)]
-          .filter(Boolean)
-          .join(' ')
-          .trim();
-        const createdDate = formatDate(suggestion?.ui?.meta?.date || suggestion.createdAt);
-        return [
-          uiSubtitle || typeLabel,
-          authorName ? `By ${truncateText(authorName, 24)}` : '',
-          createdDate,
+        const authorName =
+          safeText(meta.author?.name).trim() ||
+          [
+            safeText(suggestion.author?.firstName),
+            safeText(suggestion.author?.lastName),
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .trim();
+        return joinTextParts([
+          authorName ? `By ${truncateText(authorName, 28)}` : 'Post',
+          formatDate(meta.date || suggestion.createdAt),
           communityLabel,
-        ].filter(Boolean).join(' • ');
+        ]);
       }
       case 'user':
       case 'member':
-        return [typeLabel, communityLabel].filter(Boolean).join(' • ');
+        return joinTextParts([typeLabel, searchDescription]);
       default:
-        return [typeLabel, communityLabel].filter(Boolean).join(' • ');
+        return joinTextParts([typeLabel, searchDescription, communityLabel]);
     }
-  }, [getSuggestionType]);
+  }, []);
 
-  const suggestionKeyExtractor = useCallback((item, index) => {
-    const key = typeof item === 'string'
-      ? item
-      : getCanonicalEntityId(item) || item.value || item.slug || getSuggestionLabel(item);
-    return key ? key.toString() : index.toString();
-  }, [getSuggestionLabel]);
+  const getSuggestionSecondaryContext = useCallback(suggestion => {
+    if (!suggestion || typeof suggestion === 'string') return '';
 
-  const updateRecentSearches = useCallback((rawText) => {
+    if (getCanonicalType(suggestion) === 'post') {
+      return joinTextParts(getCanonicalBadgeLabels(suggestion, 'tag'));
+    }
+
+    const snippet = getSearchSnippet(suggestion);
+    return snippet;
+  }, []);
+
+  const getSuggestionIconName = useCallback(suggestion => {
+    switch (getCanonicalType(suggestion)) {
+      case 'event':
+        return 'calendar-outline';
+      case 'activity':
+      case 'session':
+        return 'layers-outline';
+      case 'post':
+        return 'chatbubble-ellipses-outline';
+      case 'user':
+      case 'member':
+        return 'person-outline';
+      default:
+        return 'search';
+    }
+  }, []);
+
+  const getSuggestionVisualProps = useCallback(
+    suggestion => {
+      if (!suggestion || typeof suggestion === 'string') {
+        return {type: 'icon'};
+      }
+
+      const ui = getUi(suggestion);
+      const canonicalType = getCanonicalType(suggestion);
+      const meta = getCanonicalMeta(suggestion);
+      const thumbnails = Array.isArray(suggestion.mediaThumbnails)
+        ? suggestion.mediaThumbnails
+        : [];
+      const mediaArray = Array.isArray(suggestion.media)
+        ? suggestion.media
+        : [];
+      const previewUri =
+        extractMediaUrl(thumbnails[0]) || extractMediaUrl(mediaArray[0]);
+      const canonicalImageUri =
+        extractMediaUrl(ui?.image) || safeText(ui?.image?.url).trim();
+      const imageUri =
+        canonicalType === 'post'
+          ? previewUri || canonicalImageUri
+          : previewUri ||
+            canonicalImageUri ||
+            extractMediaUrl(suggestion.image) ||
+            safeText(suggestion.imageUrl).trim() ||
+            safeText(suggestion.profilePicture).trim() ||
+            safeText(suggestion.thumbnail).trim() ||
+            safeText(suggestion.photo).trim() ||
+            safeText(suggestion.banner).trim() ||
+            safeText(suggestion.bannerUrl).trim();
+
+      if (imageUri || canonicalType === 'event') {
+        return {
+          type: 'image',
+          kind:
+            ui?.image?.kind ||
+            (canonicalType === 'user' || canonicalType === 'member'
+              ? 'avatar'
+              : 'cover'),
+          source:
+            canonicalType === 'event'
+              ? resolveEventImageSource(imageUri)
+              : resolveOptionalImageSource(imageUri),
+        };
+      }
+
+      if (canonicalType === 'user' || canonicalType === 'member') {
+        return {
+          type: 'avatar',
+          name: getSuggestionLabel(suggestion) || 'Person',
+        };
+      }
+
+      if (canonicalType === 'post') {
+        return {
+          type: 'avatar',
+          name:
+            safeText(meta.author?.name).trim() ||
+            getSuggestionLabel(suggestion) ||
+            'Post',
+        };
+      }
+
+      return {type: 'icon'};
+    },
+    [getSuggestionLabel],
+  );
+
+  const suggestionKeyExtractor = useCallback(
+    (item, index) => {
+      const key =
+        typeof item === 'string'
+          ? item
+          : getCanonicalEntityId(item) ||
+            item.value ||
+            item.slug ||
+            getSuggestionLabel(item);
+      return key ? key.toString() : index.toString();
+    },
+    [getSuggestionLabel],
+  );
+
+  const updateRecentSearches = useCallback(rawText => {
     const trimmed = rawText?.trim?.();
     if (!trimmed) return;
     setRecentSearches(prev => {
       const normalizedTrimmed = trimmed.toLowerCase();
-      const filtered = prev.filter(item => item.toLowerCase() !== normalizedTrimmed);
+      const filtered = prev.filter(
+        item => item.toLowerCase() !== normalizedTrimmed,
+      );
       const next = [trimmed, ...filtered].slice(0, 5);
-      AsyncStorage.setItem('search_cache__recent_queries', JSON.stringify(next)).catch(() => {});
+      AsyncStorage.setItem(
+        'search_cache__recent_queries',
+        JSON.stringify(next),
+      ).catch(() => {});
       return next;
     });
   }, []);
 
-  const executeSearch = useCallback(async (text, { force = false, type } = {}) => {
-    const normalizedQuery = (text ?? '').trim();
-    const normalizedType = normalizeSearchType(type ?? searchType);
-    const cacheKey = buildSearchCacheKey(communityId, normalizedQuery, normalizedType);
+  const executeSearch = useCallback(
+    async (text, {force = false, type} = {}) => {
+      const normalizedQuery = (text ?? '').trim();
+      const normalizedType = normalizeSearchType(type ?? searchType);
+      const cacheKey = buildSearchCacheKey(
+        communityId,
+        normalizedQuery,
+        normalizedType,
+      );
 
-    if (!force && lastExecutedQueryRef.current === cacheKey) {
-      setResultsQuery(normalizedQuery);
-      setResultsType(normalizedType);
-      return searchCacheRef.current.get(cacheKey) ?? null;
-    }
+      if (!force && lastExecutedQueryRef.current === cacheKey) {
+        setResultsQuery(normalizedQuery);
+        setResultsType(normalizedType);
+        return searchCacheRef.current.get(cacheKey) ?? null;
+      }
 
-    if (!force && searchCacheRef.current.has(cacheKey)) {
-      const cached = searchCacheRef.current.get(cacheKey) ?? [];
-      lastExecutedQueryRef.current = cacheKey;
-      setResultsQuery(normalizedQuery);
-      setResultsType(normalizedType);
-      setResults(Array.isArray(cached) ? cached : []);
-      return cached;
-    }
-
-    const existingRequest = !force ? searchInFlightRef.current.get(cacheKey) : null;
-    if (existingRequest) {
-      return existingRequest;
-    }
-
-    const requestId = ++latestSearchIdRef.current;
-    setIsLoading(true);
-
-    const searchPromise = (async () => {
-      try {
-        const data = await fetchSearchResults(
-          normalizedQuery,
-          token,
-          communityId,
-          normalizedType || undefined,
-        );
-        debugLog('Search results for query', normalizedQuery, data);
-        if (latestSearchIdRef.current !== requestId) return null;
-        const nextResults = Array.isArray(data) ? data : [];
-        searchCacheRef.current.set(cacheKey, nextResults);
+      if (!force && searchCacheRef.current.has(cacheKey)) {
+        const cached = searchCacheRef.current.get(cacheKey) ?? [];
         lastExecutedQueryRef.current = cacheKey;
         setResultsQuery(normalizedQuery);
         setResultsType(normalizedType);
-        setResults(nextResults);
-        if (normalizedQuery.length > 0 && !isSearchFocused) {
-          updateRecentSearches(normalizedQuery);
-        }
-        return nextResults;
-      } catch (error) {
-        console.error('Search failed:', error);
-        if (latestSearchIdRef.current === requestId) {
+        setResults(Array.isArray(cached) ? cached : []);
+        return cached;
+      }
+
+      const existingRequest = !force
+        ? searchInFlightRef.current.get(cacheKey)
+        : null;
+      if (existingRequest) {
+        return existingRequest;
+      }
+
+      const requestId = ++latestSearchIdRef.current;
+      setIsLoading(true);
+
+      const searchPromise = (async () => {
+        try {
+          const data = await fetchSearchResults(
+            normalizedQuery,
+            token,
+            communityId,
+            normalizedType || undefined,
+          );
+          debugLog('Search results for query', normalizedQuery, data);
+          if (latestSearchIdRef.current !== requestId) return null;
+          const nextResults = Array.isArray(data) ? data : [];
+          searchCacheRef.current.set(cacheKey, nextResults);
+          lastExecutedQueryRef.current = cacheKey;
           setResultsQuery(normalizedQuery);
           setResultsType(normalizedType);
-          setResults([]);
+          setResults(nextResults);
+          if (normalizedQuery.length > 0 && !isSearchFocused) {
+            updateRecentSearches(normalizedQuery);
+          }
+          return nextResults;
+        } catch (error) {
+          console.error('Search failed:', error);
+          if (latestSearchIdRef.current === requestId) {
+            setResultsQuery(normalizedQuery);
+            setResultsType(normalizedType);
+            setResults([]);
+          }
+          return null;
+        } finally {
+          searchInFlightRef.current.delete(cacheKey);
+          if (latestSearchIdRef.current === requestId) {
+            setIsLoading(false);
+          }
         }
-        return null;
-      } finally {
-        searchInFlightRef.current.delete(cacheKey);
-        if (latestSearchIdRef.current === requestId) {
-          setIsLoading(false);
-        }
-      }
-    })();
+      })();
 
-    searchInFlightRef.current.set(cacheKey, searchPromise);
-    return searchPromise;
-  }, [token, communityId, updateRecentSearches, isSearchFocused, searchType]);
+      searchInFlightRef.current.set(cacheKey, searchPromise);
+      return searchPromise;
+    },
+    [token, communityId, updateRecentSearches, isSearchFocused, searchType],
+  );
 
   const executeSearchRef = useRef(executeSearch);
   const updateRecentSearchesRef = useRef(updateRecentSearches);
@@ -489,7 +768,9 @@ const Search = () => {
   useMountEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem('search_cache__recent_queries');
+        const stored = await AsyncStorage.getItem(
+          'search_cache__recent_queries',
+        );
         if (!stored) return;
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
@@ -511,7 +792,8 @@ const Search = () => {
   useMountEffect(() => {
     const initialQuery = route.params?.initialQuery;
     const initialQueryTs = route.params?.initialQueryTs;
-    const normalizedInitialQuery = typeof initialQuery === 'string' ? initialQuery.trim() : '';
+    const normalizedInitialQuery =
+      typeof initialQuery === 'string' ? initialQuery.trim() : '';
 
     (async () => {
       if (normalizedInitialQuery) {
@@ -520,7 +802,10 @@ const Search = () => {
         setQuery(normalizedInitialQuery);
         updateRecentSearchesRef.current(normalizedInitialQuery);
         executeSearchRef.current(normalizedInitialQuery);
-        navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
+        navigation.setParams({
+          initialQuery: undefined,
+          initialQueryTs: undefined,
+        });
         didHydrateInitialStateRef.current = true;
         return;
       }
@@ -537,7 +822,8 @@ const Search = () => {
 
     const initialQuery = route.params?.initialQuery;
     const initialQueryTs = route.params?.initialQueryTs;
-    const normalizedInitialQuery = typeof initialQuery === 'string' ? initialQuery.trim() : '';
+    const normalizedInitialQuery =
+      typeof initialQuery === 'string' ? initialQuery.trim() : '';
 
     if (!normalizedInitialQuery) return;
 
@@ -548,356 +834,522 @@ const Search = () => {
     setQuery(normalizedInitialQuery);
     updateRecentSearches(normalizedInitialQuery);
     executeSearch(normalizedInitialQuery);
-    navigation.setParams({ initialQuery: undefined, initialQueryTs: undefined });
-  }, [route.params?.initialQuery, route.params?.initialQueryTs, navigation, executeSearch, updateRecentSearches]);
+    navigation.setParams({initialQuery: undefined, initialQueryTs: undefined});
+  }, [
+    route.params?.initialQuery,
+    route.params?.initialQueryTs,
+    navigation,
+    executeSearch,
+    updateRecentSearches,
+  ]);
 
   useMountEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (autocompleteDebounceRef.current) clearTimeout(autocompleteDebounceRef.current);
+      if (autocompleteDebounceRef.current) {
+        clearTimeout(autocompleteDebounceRef.current);
+      }
     };
   });
 
-  const handleAutocomplete = useCallback((text, { type } = {}) => {
-    if (autocompleteDebounceRef.current) {
-      clearTimeout(autocompleteDebounceRef.current);
-      autocompleteDebounceRef.current = null;
-    }
-    const trimmed = text?.trim?.() ?? '';
-    const normalizedType = normalizeSearchType(type ?? searchType);
-    const cacheKey = buildSearchCacheKey(communityId, trimmed, normalizedType);
-    if (!trimmed) {
+  const handleAutocomplete = useCallback(
+    (text, {type} = {}) => {
+      if (autocompleteDebounceRef.current) {
+        clearTimeout(autocompleteDebounceRef.current);
+        autocompleteDebounceRef.current = null;
+      }
+      const trimmed = text?.trim?.() ?? '';
+      const normalizedType = normalizeSearchType(type ?? searchType);
+      const cacheKey = buildSearchCacheKey(
+        communityId,
+        trimmed,
+        normalizedType,
+      );
+      if (!trimmed) {
+        latestAutocompleteIdRef.current += 1;
+        setAutocompleteSuggestions([]);
+        setIsAutocompleteLoading(false);
+        autocompleteDebounceRef.current = null;
+        return;
+      }
+
+      if (autocompleteCacheRef.current.has(cacheKey)) {
+        setAutocompleteSuggestions(
+          autocompleteCacheRef.current.get(cacheKey) || [],
+        );
+        setIsAutocompleteLoading(false);
+        return;
+      }
+
+      setIsAutocompleteLoading(true);
+      autocompleteDebounceRef.current = setTimeout(async () => {
+        const requestId = ++latestAutocompleteIdRef.current;
+        autocompleteDebounceRef.current = null;
+        const existingRequest = autocompleteInFlightRef.current.get(cacheKey);
+        try {
+          const suggestions =
+            existingRequest ||
+            fetchSearchAutocomplete(
+              trimmed,
+              token,
+              communityId,
+              normalizedType || undefined,
+            );
+          if (!existingRequest) {
+            autocompleteInFlightRef.current.set(cacheKey, suggestions);
+          }
+          const resolvedSuggestions = await suggestions;
+          debugLog(
+            'Autocomplete suggestions for query',
+            trimmed,
+            resolvedSuggestions,
+          );
+          if (latestAutocompleteIdRef.current !== requestId) return;
+          const sanitized = Array.isArray(resolvedSuggestions)
+            ? resolvedSuggestions.filter(item => {
+                const label = getSuggestionLabel(item);
+                return typeof label === 'string' && label.trim().length > 0;
+              })
+            : [];
+          autocompleteCacheRef.current.set(cacheKey, sanitized);
+          setAutocompleteSuggestions(sanitized);
+        } catch (error) {
+          if (latestAutocompleteIdRef.current !== requestId) return;
+          console.error('Autocomplete failed:', error);
+          setAutocompleteSuggestions([]);
+        } finally {
+          autocompleteInFlightRef.current.delete(cacheKey);
+          if (latestAutocompleteIdRef.current === requestId) {
+            setIsAutocompleteLoading(false);
+          }
+        }
+      }, 200);
+    },
+    [token, getSuggestionLabel, communityId, searchType],
+  );
+
+  const scheduleFullSearch = useCallback(
+    (text, options = {}) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      const trimmed = text?.trim?.() ?? '';
+
+      if (!trimmed) {
+        debounceRef.current = setTimeout(() => {
+          executeSearch('', options);
+        }, 250);
+        return;
+      }
+
+      if (trimmed.length < FULL_SEARCH_MIN_LENGTH) {
+        debounceRef.current = null;
+        return;
+      }
+
+      debounceRef.current = setTimeout(() => {
+        executeSearch(text, options);
+      }, FULL_SEARCH_DEBOUNCE_MS);
+    },
+    [executeSearch],
+  );
+
+  const handleSearch = useCallback(
+    text => {
+      setQuery(text);
+      handleAutocomplete(text);
+      scheduleFullSearch(text);
+    },
+    [handleAutocomplete, scheduleFullSearch],
+  );
+
+  const handleFilterSelect = useCallback(
+    nextType => {
+      const normalizedNextType = normalizeSearchType(nextType);
+      if (normalizedNextType === searchType) return;
+
+      setSearchType(normalizedNextType);
       latestAutocompleteIdRef.current += 1;
       setAutocompleteSuggestions([]);
-      setIsAutocompleteLoading(false);
-      autocompleteDebounceRef.current = null;
-      return;
-    }
+      cancelAutocomplete();
 
-    if (autocompleteCacheRef.current.has(cacheKey)) {
-      setAutocompleteSuggestions(autocompleteCacheRef.current.get(cacheKey) || []);
-      setIsAutocompleteLoading(false);
-      return;
-    }
-
-    setIsAutocompleteLoading(true);
-    autocompleteDebounceRef.current = setTimeout(async () => {
-      const requestId = ++latestAutocompleteIdRef.current;
-      autocompleteDebounceRef.current = null;
-      const existingRequest = autocompleteInFlightRef.current.get(cacheKey);
-      try {
-        const suggestions = existingRequest || fetchSearchAutocomplete(
-          trimmed,
-          token,
-          communityId,
-          normalizedType || undefined,
-        );
-        if (!existingRequest) {
-          autocompleteInFlightRef.current.set(cacheKey, suggestions);
-        }
-        const resolvedSuggestions = await suggestions;
-        debugLog('Autocomplete suggestions for query', trimmed, resolvedSuggestions);
-        if (latestAutocompleteIdRef.current !== requestId) return;
-        const sanitized = Array.isArray(resolvedSuggestions)
-          ? resolvedSuggestions.filter(item => {
-              const label = getSuggestionLabel(item);
-              return typeof label === 'string' && label.trim().length > 0;
-            })
-          : [];
-        autocompleteCacheRef.current.set(cacheKey, sanitized);
-        setAutocompleteSuggestions(sanitized);
-      } catch (error) {
-        if (latestAutocompleteIdRef.current !== requestId) return;
-        console.error('Autocomplete failed:', error);
-        setAutocompleteSuggestions([]);
-      } finally {
-        autocompleteInFlightRef.current.delete(cacheKey);
-        if (latestAutocompleteIdRef.current === requestId) {
-          setIsAutocompleteLoading(false);
-        }
+      if (query.trim().length > 0) {
+        handleAutocomplete(query, {type: normalizedNextType});
       }
-    }, 200);
-  }, [token, getSuggestionLabel, communityId, searchType]);
 
-  const scheduleFullSearch = useCallback((text, options = {}) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    const trimmed = text?.trim?.() ?? '';
+      if (isSearchFocused) {
+        scheduleFullSearch(query, {type: normalizedNextType});
+        return;
+      }
 
-    if (!trimmed) {
-      debounceRef.current = setTimeout(() => {
-        executeSearch('', options);
-      }, 250);
-      return;
-    }
+      executeSearch(query, {force: true, type: normalizedNextType});
+    },
+    [
+      searchType,
+      cancelAutocomplete,
+      executeSearch,
+      handleAutocomplete,
+      isSearchFocused,
+      query,
+      scheduleFullSearch,
+    ],
+  );
 
-    if (trimmed.length < FULL_SEARCH_MIN_LENGTH) {
-      debounceRef.current = null;
-      return;
-    }
+  const handleSuggestionPress = useCallback(
+    suggestion => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      const label = getSuggestionLabel(suggestion);
+      cancelAutocomplete();
+      setAutocompleteSuggestions([]);
+      setQuery(label);
+      updateRecentSearches(label);
+      inputRef.current?.blur?.();
+      setIsSearchFocused(false);
+      if (
+        suggestion &&
+        typeof suggestion === 'object' &&
+        getCanonicalNavigation(suggestion)
+      ) {
+        handleCardPress(suggestion);
+        return;
+      }
+      executeSearch(label);
+    },
+    [
+      executeSearch,
+      getSuggestionLabel,
+      updateRecentSearches,
+      cancelAutocomplete,
+      handleCardPress,
+    ],
+  );
 
-    debounceRef.current = setTimeout(() => {
-      executeSearch(text, options);
-    }, FULL_SEARCH_DEBOUNCE_MS);
-  }, [executeSearch]);
+  const handleRecentSearchPress = useCallback(
+    value => {
+      if (!value) return;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      cancelAutocomplete();
+      setAutocompleteSuggestions([]);
+      setQuery(value);
+      updateRecentSearches(value);
+      inputRef.current?.blur?.();
+      setIsSearchFocused(false);
+      executeSearch(value);
+    },
+    [executeSearch, updateRecentSearches, cancelAutocomplete],
+  );
 
-  const handleSearch = useCallback((text) => {
-    setQuery(text);
-    handleAutocomplete(text);
-    scheduleFullSearch(text);
-  }, [handleAutocomplete, scheduleFullSearch]);
-
-  const handleFilterSelect = useCallback((nextType) => {
-    const normalizedNextType = normalizeSearchType(nextType);
-    if (normalizedNextType === searchType) return;
-
-    setSearchType(normalizedNextType);
-    latestAutocompleteIdRef.current += 1;
-    setAutocompleteSuggestions([]);
-    cancelAutocomplete();
-
-    if (query.trim().length > 0) {
-      handleAutocomplete(query, { type: normalizedNextType });
-    }
-
-    if (isSearchFocused) {
-      scheduleFullSearch(query, { type: normalizedNextType });
-      return;
-    }
-
-    executeSearch(query, { force: true, type: normalizedNextType });
-  }, [
-    searchType,
-    cancelAutocomplete,
-    executeSearch,
-    handleAutocomplete,
-    isSearchFocused,
-    query,
-    scheduleFullSearch,
-  ]);
-
-  const handleSuggestionPress = useCallback((suggestion) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    const label = getSuggestionLabel(suggestion);
-    cancelAutocomplete();
-    setAutocompleteSuggestions([]);
-    setQuery(label);
-    updateRecentSearches(label);
-    inputRef.current?.blur?.();
-    setIsSearchFocused(false);
-    executeSearch(label);
-  }, [executeSearch, getSuggestionLabel, updateRecentSearches, cancelAutocomplete]);
-
-  const handleRecentSearchPress = useCallback((value) => {
-    if (!value) return;
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    cancelAutocomplete();
-    setAutocompleteSuggestions([]);
-    setQuery(value);
-    updateRecentSearches(value);
-    inputRef.current?.blur?.();
-    setIsSearchFocused(false);
-    executeSearch(value);
-  }, [executeSearch, updateRecentSearches, cancelAutocomplete]);
-
-  const handleRecentSearchRemove = useCallback((value) => {
+  const handleRecentSearchRemove = useCallback(value => {
     if (!value) return;
     const target = value.toLowerCase();
     setRecentSearches(prev => {
       const next = prev.filter(entry => entry.toLowerCase() !== target);
-      AsyncStorage.setItem('search_cache__recent_queries', JSON.stringify(next)).catch(() => {});
+      AsyncStorage.setItem(
+        'search_cache__recent_queries',
+        JSON.stringify(next),
+      ).catch(() => {});
       return next;
     });
   }, []);
 
-  const renderSuggestionItem = ({ item }) => {
+  const renderSuggestionItem = ({item}) => {
     const label = getSuggestionLabel(item);
     if (!label) return null;
-    const suggestionContext = getSuggestionContext(item);
+    const canonicalType = getCanonicalType(item);
+    const suggestionPrimaryContext = getSuggestionPrimaryContext(item);
+    const suggestionMatchReason = getSearchMatchReason(item);
+    const suggestionSecondaryContext = getSuggestionSecondaryContext(item);
+    const iconName = getSuggestionIconName(item);
+    const suggestionVisual = getSuggestionVisualProps(item);
     return (
-      <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionPress(item)} activeOpacity={0.85}>
-        <View style={styles.suggestionIconWrapper}>
-          <Ionicons name="search" size={20} color={themeVariables.blackColor} />
-        </View>
-        <View style={styles.suggestionContent}>
-          <Text style={styles.suggestionTitle} numberOfLines={1}>
-            {label}
-          </Text>
-          {suggestionContext ? (
-            <Text style={styles.suggestionSubtitle} numberOfLines={2}>
-              {suggestionContext}
-            </Text>
-          ) : null}
-        </View>
-      </TouchableOpacity>
+      <SearchItem
+        variant="suggestion"
+        title={label}
+        secondarySubtitle={suggestionPrimaryContext || undefined}
+        badgeText={suggestionMatchReason || undefined}
+        secondaryFooterText={suggestionSecondaryContext || undefined}
+        containerRadius={
+          canonicalType === 'user' || canonicalType === 'member' ? 999 : 18
+        }
+        startVisualType={suggestionVisual.type}
+        startImageSource={suggestionVisual.source}
+        startVisualName={suggestionVisual.name}
+        startIconName={iconName}
+        startVisualKind={suggestionVisual.kind}
+        bleedStartVisual={
+          suggestionVisual.type === 'image' || suggestionVisual.type === 'avatar'
+        }
+        onPress={() => handleSuggestionPress(item)}
+      />
     );
   };
 
   const shouldShowAutocomplete = autocompleteSuggestions.length > 0;
   const showSuggestionPanel = isSearchFocused;
   const showResults = !showSuggestionPanel;
-  const showSearchSpinner = isLoading || (isSearchFocused && isAutocompleteLoading);
+  const showSearchSpinner =
+    isLoading || (isSearchFocused && isAutocompleteLoading);
   const trimmedQuery = query.trim();
   const trimmedResultsQuery = resultsQuery.trim();
-  const isShowingCommittedResults = trimmedQuery === trimmedResultsQuery && searchType === resultsType;
+  const isShowingCommittedResults =
+    trimmedQuery === trimmedResultsQuery && searchType === resultsType;
   const hasAnyResults = isShowingCommittedResults && results.length > 0;
-  const resultSections = isShowingCommittedResults ? buildResultSections(results) : [];
-  const shouldShowSectionHeaders = resultSections.length > 1 || searchType === '';
+  const resultSections = isShowingCommittedResults
+    ? buildResultSections(results)
+    : [];
+  const shouldShowSectionHeaders =
+    resultSections.length > 1 || searchType === '';
 
-  const handleTagPress = useCallback((value) => {
-    const trimmed = safeText(value)?.trim();
-    if (!trimmed) return;
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    cancelAutocomplete();
-    setAutocompleteSuggestions([]);
-    setQuery(trimmed);
-    updateRecentSearches(trimmed);
-    inputRef.current?.blur?.();
-    setIsSearchFocused(false);
-    executeSearch(trimmed);
-  }, [executeSearch, updateRecentSearches, cancelAutocomplete]);
+  const handleTagPress = useCallback(
+    value => {
+      const trimmed = safeText(value)?.trim();
+      if (!trimmed) return;
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+      }
+      cancelAutocomplete();
+      setAutocompleteSuggestions([]);
+      setQuery(trimmed);
+      updateRecentSearches(trimmed);
+      inputRef.current?.blur?.();
+      setIsSearchFocused(false);
+      executeSearch(trimmed);
+    },
+    [executeSearch, updateRecentSearches, cancelAutocomplete],
+  );
 
-  const getListItemProps = useCallback((item) => {
-    if (!item) return null;
-    const ui = getUi(item);
-    const canonicalType = getCanonicalType(item);
-    const communityText = safeText(ui?.community?.name || item.community);
-    const normalizedDate = (value) => {
-      const formatted = formatDate(value);
-      return formatted ? formatted : undefined;
-    };
-    const onPress = () => handleCardPress(item);
-    switch (canonicalType) {
-      case 'activity':
-      case 'session': {
-        const title = safeText(ui?.title || item.title || item.name);
-        const sessionStatus = getCanonicalBadgeLabel(item, 'status') || safeText(item.sessionStatus || item.status).trim();
-        const nextSessionCandidate = ui?.meta?.nextSessionDate || item.nextSessionDate || item.nextSession?.date || item.date;
-        const formattedNextSessionDate = normalizedDate(nextSessionCandidate);
-        const hasNextSessionDate = Boolean(formattedNextSessionDate);
-        const hasRawNextSessionValue = (() => {
-          if (nextSessionCandidate == null) return false;
-          if (typeof nextSessionCandidate === 'string') return nextSessionCandidate.trim().length > 0;
-          return true;
-        })();
-        const groupDay = safeText(item.groupDetails?.day).trim();
-        const rawGroupTime = item.groupDetails?.time;
-        const formattedGroupTime = formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
-        const scheduleParts = [groupDay, formattedGroupTime].filter(Boolean);
-        const subtitle = hasNextSessionDate
-          ? `Next Session: ${formattedNextSessionDate}`
-          : !hasRawNextSessionValue
+  const getListItemProps = useCallback(
+    item => {
+      if (!item) return null;
+      const ui = getUi(item);
+      const canonicalType = getCanonicalType(item);
+      const meta = getCanonicalMeta(item);
+      const snippet = getSearchSnippet(item);
+      const matchReason = getSearchMatchReason(item);
+      const communityText = safeText(ui?.community?.name || item.community);
+      const typeBadges = getCanonicalBadgeLabels(item, 'type');
+      const tagBadges = getCanonicalBadgeLabels(item, 'tag');
+      const normalizedDate = value => {
+        const formatted = formatDate(value);
+        return formatted ? formatted : undefined;
+      };
+      const supportText = snippet || matchReason || undefined;
+      const onPress = () => handleCardPress(item);
+      switch (canonicalType) {
+        case 'activity':
+        case 'session': {
+          const title = safeText(ui?.title || item.title || item.name);
+          const imageSource = resolveImageSource(ui?.image?.url || item.imageUrl);
+          const sessionStatus =
+            getCanonicalBadgeLabel(item, 'status') ||
+            safeText(item.sessionStatus || item.status).trim();
+          const nextSessionCandidate =
+            ui?.meta?.nextSessionDate ||
+            item.nextSessionDate ||
+            item.nextSession?.date ||
+            item.date;
+          const formattedNextSessionDate = normalizedDate(nextSessionCandidate);
+          const hasNextSessionDate = Boolean(formattedNextSessionDate);
+          const hasRawNextSessionValue = (() => {
+            if (nextSessionCandidate == null) return false;
+            if (typeof nextSessionCandidate === 'string') {
+              return nextSessionCandidate.trim().length > 0;
+            }
+            return true;
+          })();
+          const groupDay = safeText(item.groupDetails?.day).trim();
+          const rawGroupTime = item.groupDetails?.time;
+          const formattedGroupTime =
+            formatGroupTime(rawGroupTime) || safeText(rawGroupTime).trim();
+          const scheduleParts = [groupDay, formattedGroupTime].filter(Boolean);
+          const subtitle = hasNextSessionDate
+            ? `Next Session: ${formattedNextSessionDate}`
+            : !hasRawNextSessionValue
             ? 'Next Session: TBA'
             : scheduleParts.length
-              ? 'Next Session:'
-              : undefined;
-        const secondarySubtitle = scheduleParts.length
-          ? scheduleParts.join(' • ')
-          : undefined;
-        return {
-          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
-          title: title || 'Activity',
-          subtitle: ui?.description || subtitle,
-          secondarySubtitle,
-          tagText: getCanonicalBadgeLabel(item, 'type') || safeText(item.activityType) || safeText(ui?.subtitle) || 'Activity',
-          sessionStatusTagText: sessionStatus || undefined,
-          communityTagText: communityText || undefined,
-          onPress,
-          onTagPress: handleTagPress,
-        };
+            ? 'Next Session:'
+            : undefined;
+          return {
+            startVisualType: 'image',
+            startImageSource: imageSource,
+            startVisualSize: 'result',
+            bleedStartVisual: Boolean(imageSource),
+            title: title || 'Activity',
+            subtitle: safeText(ui?.description).trim() || subtitle,
+            secondarySubtitle: undefined,
+            secondaryFooterText: supportText,
+            tagText:
+              typeBadges[0] ||
+              safeText(item.activityType) ||
+              safeText(ui?.subtitle) ||
+              'Activity',
+            sessionStatusTagText: sessionStatus || undefined,
+            communityTagText: communityText || undefined,
+            onPress,
+            onTagPress: handleTagPress,
+          };
+        }
+        case 'event': {
+          const title = safeText(ui?.title || item.title);
+          const imageSource = resolveEventImageSource(
+            ui?.image?.url || item.imageUrl,
+          );
+          const rawTime = meta.startTime || item.startTime || item.time;
+          const timeField = formatEventTime(rawTime) || safeText(rawTime);
+          const eventDateValue = meta.date || item.date;
+          const dateLabel = joinTextParts([
+            getDayName(eventDateValue),
+            normalizedDate(eventDateValue),
+          ]);
+          const locationLabel = safeText(
+            meta.locationLabel || item.location || item.venue,
+          ).trim();
+          const subtitle =
+            locationLabel && !textIncludes(locationLabel, communityText)
+              ? locationLabel
+              : !dateLabel && !timeField
+              ? safeText(ui?.description).trim()
+              : '';
+          return {
+            startVisualType: 'image',
+            startImageSource: imageSource,
+            startVisualSize: 'result',
+            bleedStartVisual: Boolean(imageSource),
+            title: title || 'Event',
+            subtitle: subtitle || undefined,
+            date: dateLabel || undefined,
+            time: timeField || undefined,
+            secondaryFooterText: supportText,
+            tagText:
+              typeBadges[0] ||
+              safeText(item.eventType) ||
+              safeText(ui?.subtitle) ||
+              'Event',
+            communityTagText: communityText || undefined,
+            isEvent: true,
+            onPress,
+            onTagPress: handleTagPress,
+          };
+        }
+        case 'post': {
+          const thumbnails = Array.isArray(item.mediaThumbnails)
+            ? item.mediaThumbnails
+            : [];
+          const mediaArray = Array.isArray(item.media) ? item.media : [];
+          const previewUri =
+            extractMediaUrl(thumbnails[0]) || extractMediaUrl(mediaArray[0]);
+          const authorName =
+            safeText(meta.author?.name).trim() ||
+            [safeText(item.author?.firstName), safeText(item.author?.lastName)]
+              .filter(Boolean)
+              .join(' ')
+              .trim();
+          const content =
+            truncateText(
+              snippet ||
+                safeText(item.content).trim() ||
+                safeText(ui?.title).trim(),
+              120,
+            ) || 'View post details';
+          const likeLabel = buildCountLabel(
+            meta.likeCount ?? item.likeCount,
+            'like',
+          );
+          const commentLabel = buildCountLabel(
+            meta.commentCount ?? item.commentCount,
+            'comment',
+          );
+          return {
+            startVisualType:
+              previewUri || ui?.image?.url
+                ? 'image'
+                : authorName
+                ? 'avatar'
+                : undefined,
+            startImageSource: previewUri
+              ? resolveImageSource(previewUri)
+              : ui?.image?.url
+              ? resolveImageSource(ui?.image?.url)
+              : null,
+            startVisualName: authorName || undefined,
+            startVisualSize: 'result',
+            bleedStartVisual: Boolean(previewUri || ui?.image?.url),
+            title: content,
+            titleNumberOfLines: 1,
+            secondarySubtitle: authorName
+              ? `Post by ${truncateText(authorName, 40)}`
+              : safeText(ui?.subtitle).trim() || undefined,
+            badgeText: matchReason || undefined,
+            badgeTagText: communityText || undefined,
+            date: normalizedDate(meta.date || item.createdAt),
+            metaText: likeLabel || undefined,
+            rightLabelText: commentLabel || undefined,
+            tagText: tagBadges[0] || undefined,
+            extraTagTexts: tagBadges.slice(1),
+            onPress,
+            onTagPress: handleTagPress,
+          };
+        }
+        case 'member':
+        case 'user': {
+          const title = safeText(
+            ui?.title ||
+              [safeText(item.firstName), safeText(item.lastName)]
+                .filter(Boolean)
+                .join(' ')
+                .trim(),
+          );
+          const primaryContext = getSuggestionPrimaryContext(item);
+          const hasProfilePicture = Boolean(
+            ui?.image?.url || item.profilePicture,
+          );
+          return {
+            startVisualType: hasProfilePicture ? 'image' : 'avatar',
+            startImageSource: hasProfilePicture
+              ? resolveImageSource(ui?.image?.url || item.profilePicture)
+              : null,
+            startVisualName:
+              title ||
+              safeText(item.displayName) ||
+              safeText(item.email) ||
+              'Member',
+            startVisualKind: hasProfilePicture ? 'avatar' : 'cover',
+            startVisualSize: 'result',
+            title: title || safeText(item.displayName) || 'Member',
+            secondarySubtitle: primaryContext || undefined,
+            secondaryFooterText:
+              supportText && !textIncludes(primaryContext, supportText)
+                ? supportText
+                : undefined,
+            onPress,
+          };
+        }
+        default: {
+          const fallbackTitle = safeText(
+            ui?.title || item.title || item.name || item.displayName || item.id,
+          );
+          const imageSource = resolveImageSource(ui?.image?.url || item.imageUrl);
+          return {
+            startVisualType: 'image',
+            startImageSource: imageSource,
+            startVisualSize: 'result',
+            bleedStartVisual: Boolean(imageSource),
+            title: fallbackTitle || 'Result',
+            subtitle: safeText(ui?.description) || undefined,
+            secondaryFooterText: supportText,
+            communityTagText: communityText || undefined,
+            onPress,
+          };
+        }
       }
-      case 'event': {
-        const title = safeText(ui?.title || item.title);
-        const subtitleParts = [safeText(item.location)];
-        const rawTime = ui?.meta?.startTime || item.startTime || item.time;
-        const timeField = formatEventTime(rawTime) || safeText(rawTime);
-        const dayOfWeek = getDayName(ui?.meta?.date || item.date);
-        const formattedDate = normalizedDate(ui?.meta?.date || item.date);
-        const dateLabelParts = [];
-        if (dayOfWeek) dateLabelParts.push(dayOfWeek);
-        if (formattedDate) dateLabelParts.push(formattedDate);
-        return {
-          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
-          title: title || 'Event',
-          date: dateLabelParts.join(' • ') || undefined,
-          time: timeField || undefined,
-          subtitle: ui?.description || subtitleParts.filter(Boolean).join(' • ') || undefined,
-          tagText: getCanonicalBadgeLabel(item, 'type') || safeText(item.eventType) || safeText(ui?.subtitle) || 'Event',
-          communityTagText: communityText || undefined,
-          isEvent: true,
-          onPress,
-          onTagPress: handleTagPress,
-        };
-      }
-      case 'post': {
-        const thumbnails = Array.isArray(item.mediaThumbnails) ? item.mediaThumbnails : [];
-        const mediaArray = Array.isArray(item.media) ? item.media : [];
-        const previewUri = extractMediaUrl(thumbnails[0]) || extractMediaUrl(mediaArray[0]);
-        const rawContent = safeText(ui?.title || item.content || item.title);
-        const content = truncateText(rawContent, 80) || 'View post details';
-        const authorName = [safeText(item.author?.firstName), safeText(item.author?.lastName)]
-          .filter(Boolean)
-          .join(' ');
-        const truncatedAuthorName = truncateText(authorName, 24);
-        return {
-          imageSource: resolveImageSource(ui?.image?.url || previewUri),
-          title: content,
-          subtitle: undefined,
-          date: normalizedDate(ui?.meta?.date || item.createdAt),
-          metaText: typeof item.commentCount === 'number'
-            ? `Comments: ${item.commentCount}`
-            : undefined,
-          tagText: getCanonicalBadgeLabel(item, 'tag') || safeText(item.category) || 'Post',
-          communityTagText: communityText || undefined,
-          secondaryFooterText: truncatedAuthorName ? `By ${truncatedAuthorName}` : undefined,
-          onPress,
-          onTagPress: handleTagPress,
-        };
-      }
-      case 'member':
-      case 'user': {
-        const title = safeText(ui?.title || [safeText(item.firstName), safeText(item.lastName)].filter(Boolean).join(' ').trim());
-        const communityName = communityText ? `Member of ${communityText}` : '';
-        const subtitleParts = [];
-        const hasProfilePicture = Boolean(ui?.image?.url || item.profilePicture);
-        const leadingComponent = hasProfilePicture ? null : (
-          <Avatar
-            size={60}
-            name={title || safeText(item.displayName) || safeText(item.email) || 'Member'}
-            variant="beam"
-            colors={['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C']}
-          />
-        );
-        return {
-          imageSource: hasProfilePicture ? resolveImageSource(ui?.image?.url || item.profilePicture) : null,
-          leadingComponent,
-          title: title || safeText(item.displayName) || 'Member',
-          subtitle: communityName || subtitleParts.filter(Boolean).join(' • ') || undefined,
-          tagText: undefined,
-          communityTagText: undefined,
-          onPress,
-        };
-      }
-      default: {
-        const fallbackTitle = safeText(ui?.title || item.title || item.name || item.displayName || item.id);
-        return {
-          imageSource: resolveImageSource(ui?.image?.url || item.imageUrl),
-          title: fallbackTitle || 'Result',
-          subtitle: safeText(ui?.description) || undefined,
-          communityTagText: communityText || undefined,
-          onPress,
-        };
-      }
-    }
-  }, [handleCardPress, handleTagPress]);
+    },
+    [getSuggestionPrimaryContext, handleCardPress, handleTagPress],
+  );
 
   const handleCancel = useCallback(() => {
     inputRef.current?.clear?.();
@@ -970,8 +1422,7 @@ const Search = () => {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterScrollContent}
-        style={styles.filterScroll}
-      >
+        style={styles.filterScroll}>
         {SEARCH_FILTERS.map(filter => {
           const isActive = searchType === filter.value;
           return (
@@ -979,9 +1430,12 @@ const Search = () => {
               key={filter.value || 'all'}
               style={[styles.filterChip, isActive && styles.filterChipActive]}
               onPress={() => handleFilterSelect(filter.value)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+              activeOpacity={0.8}>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  isActive && styles.filterChipTextActive,
+                ]}>
                 {filter.label}
               </Text>
             </TouchableOpacity>
@@ -993,48 +1447,34 @@ const Search = () => {
           <ScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.suggestionContentContainer}
-            showsVerticalScrollIndicator={false}
-          >
+            showsVerticalScrollIndicator={false}>
             {shouldShowAutocomplete ? (
               <View style={styles.suggestionSection}>
-                <Text style={styles.suggestionSectionTitle}>Suggested Searches</Text>
+                <Text style={styles.suggestionSectionTitle}>Quick Results</Text>
                 {autocompleteSuggestions.map((item, index) => (
                   <View key={suggestionKeyExtractor(item, index)}>
-                    {renderSuggestionItem({ item })}
+                    {renderSuggestionItem({item})}
                   </View>
                 ))}
               </View>
             ) : null}
             {recentSearches.length > 0 ? (
               <View style={styles.suggestionSection}>
-                <Text style={styles.suggestionSectionTitle}>Recent Searches</Text>
+                <Text style={styles.suggestionSectionTitle}>
+                  Recent Searches
+                </Text>
                 {recentSearches.map(value => (
-                  <TouchableOpacity
+                  <SearchItem
+                    variant="recent"
                     key={value}
-                    style={[styles.suggestionItem, styles.recentSuggestionItem]}
+                    title={value}
+                    startVisualType="icon"
+                    startIconName="time-outline"
+                    startVisualTone="plain"
+                    accessoryIconName="close"
+                    accessoryOnPress={() => handleRecentSearchRemove(value)}
                     onPress={() => handleRecentSearchPress(value)}
-                    activeOpacity={0.85}
-                  >
-                    <View style={[styles.suggestionIconWrapper, styles.recentIconWrapper]}>
-                      <Ionicons name="time-outline" size={20} color={themeVariables.blackColor} />
-                    </View>
-                    <View style={styles.suggestionContent}>
-                      <Text style={styles.suggestionTitle} numberOfLines={1}>
-                        {value}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.recentRemoveButton}
-                      onPress={(event) => {
-                        event.stopPropagation?.();
-                        handleRecentSearchRemove(value);
-                      }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      activeOpacity={0.6}
-                    >
-                      <Ionicons name="close" size={18} color={themeVariables.blackColor} />
-                    </TouchableOpacity>
-                  </TouchableOpacity>
+                  />
                 ))}
               </View>
             ) : null}
@@ -1045,19 +1485,23 @@ const Search = () => {
         <ScrollView
           contentContainerStyle={styles.resultsContent}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
+          showsVerticalScrollIndicator={false}>
           <View style={styles.resultsList}>
             {resultSections.map(section => (
               <View key={section.key} style={styles.resultSection}>
                 {shouldShowSectionHeaders ? (
                   <View style={styles.resultSectionHeader}>
-                    <Text style={styles.resultSectionTitle}>{section.title}</Text>
-                    <Text style={styles.resultSectionCount}>{section.items.length}</Text>
+                    <Text style={styles.resultSectionTitle}>
+                      {section.title}
+                    </Text>
+                    <Text style={styles.resultSectionCount}>
+                      {section.items.length}
+                    </Text>
                   </View>
                 ) : null}
                 {section.items.map((item, index) => {
-                  const key = getCanonicalEntityId(item) || `${section.key}-${index}`;
+                  const key =
+                    getCanonicalEntityId(item) || `${section.key}-${index}`;
                   const listItemProps = getListItemProps(item);
                   if (!listItemProps) return null;
                   return (
@@ -1070,17 +1514,25 @@ const Search = () => {
             ))}
           </View>
 
-          {!isShowingCommittedResults && trimmedQuery.length > 0 && !isLoading ? (
+          {!isShowingCommittedResults &&
+          trimmedQuery.length > 0 &&
+          !isLoading ? (
             <Text style={styles.emptyTextOverall}>
               Keep typing for suggestions, or press search to see full results.
             </Text>
           ) : null}
 
-          {isShowingCommittedResults && !hasAnyResults && trimmedQuery.length > 0 ? (
-            <Text style={styles.emptyTextOverall}>No results match this search.</Text>
+          {isShowingCommittedResults &&
+          !hasAnyResults &&
+          trimmedQuery.length > 0 ? (
+            <Text style={styles.emptyTextOverall}>
+              No results match this search.
+            </Text>
           ) : null}
 
-          {isShowingCommittedResults && !hasAnyResults && trimmedQuery.length === 0 ? (
+          {isShowingCommittedResults &&
+          !hasAnyResults &&
+          trimmedQuery.length === 0 ? (
             <Text style={styles.emptyTextOverall}>
               Start typing to search for activities, events, members, or posts.
             </Text>
@@ -1101,10 +1553,12 @@ const styles = StyleSheet.create({
   filterScroll: {
     marginBottom: 12,
     flexGrow: 0,
+    minHeight: 54,
+    overflow: 'visible',
   },
   filterScrollContent: {
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 6,
     alignItems: 'center',
   },
   filterChip: {
@@ -1139,49 +1593,6 @@ const styles = StyleSheet.create({
   suggestionContentContainer: {
     paddingVertical: 8,
   },
-  suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginHorizontal: 8,
-    marginVertical: 6,
-    backgroundColor: 'transparent',
-    borderRadius: 0,
-    shadowColor: 'transparent',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: themeVariables.lightGreyColor,
-  },
-  recentSuggestionItem: {
-    marginHorizontal: 8,
-  },
-  suggestionIconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: themeVariables.lightGreyColor,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  suggestionContent: {
-    flex: 1,
-  },
-  suggestionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: themeVariables.blackColor,
-  },
-  suggestionSubtitle: {
-    marginTop: 4,
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#555',
-  },
   suggestionSection: {
     marginBottom: 12,
   },
@@ -1191,13 +1602,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
-  },
-  recentIconWrapper: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-  recentRemoveButton: {
-    marginLeft: 12,
   },
   emptyTextOverall: {
     textAlign: 'center',
@@ -1234,7 +1638,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   resultItem: {
-    marginBottom: 8,
+    marginBottom: 0,
   },
 });
 
