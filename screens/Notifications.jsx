@@ -4,15 +4,18 @@ import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { ChatContext } from '../contexts';
 import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
+import { navigateWithinMainTabs } from '../utils/navigateWithTabs';
 import { fetchPostDetails } from '../services/PostService';
 import { fetchEventDetails } from '../services/EventService';
 import { fetchActivityDetails } from '../services/ActivityService';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { prefetchImageSources } from '../utils/imageSource';
+import { extractChatNavigationParams, isChatNotificationType } from '../utils/chatNotificationPayload';
 // Removed preloading imports for notifications
 // import { fetchPostDetails } from '../services/PostService';
 // import { fetchActivityDetails } from '../services/ActivityService';
@@ -59,7 +62,7 @@ const extractActivityAndSessionIds = (notification) => {
 
   const additional = notification.additionalData || {};
   const target = notification.target || {};
-  const typeName = (notification.type?.typeName || '').toLowerCase();
+  const typeName = (notification.type?.typeName || notification.type || '').toLowerCase();
 
   const pickFirst = (...values) => values.map(normalizeIdValue).find(Boolean) || null;
 
@@ -105,6 +108,8 @@ const extractActivityAndSessionIds = (notification) => {
 const TYPE_CATEGORY_MAP = {
   post_media: 'post',
   post_created: 'post',
+  chat_direct_message: 'chat',
+  chat_group_message: 'chat',
   new_activity: 'activity',
   join_activity: 'activity',
   activity_updated: 'activity',
@@ -124,6 +129,7 @@ const TYPE_CATEGORY_MAP = {
 const mapNotificationType = (typeName = '') => {
   const key = typeName.toLowerCase();
   if (TYPE_CATEGORY_MAP[key]) return TYPE_CATEGORY_MAP[key];
+  if (isChatNotificationType(key)) return 'chat';
   if (key.includes('session')) return 'activity';
   if (key.includes('activity')) return 'activity';
   if (key.includes('event')) return 'event';
@@ -141,7 +147,9 @@ export default function Notifications() {
     setUserNotifications,
     user,
     refreshSession,
+    clearChatUnread,
   } = useContext(UserContext);
+  const { getChatById, getChatMessages, prefetchChatMessages } = useContext(ChatContext);
   const tabIndicatorX = useRef(new Animated.Value(0)).current;
   const tabIndicatorWidth = useRef(new Animated.Value(0)).current;
   const [tabLayouts, setTabLayouts] = useState({});
@@ -335,11 +343,12 @@ export default function Notifications() {
     setLoading(false);
     // Format raw notifications
     const formatted = userNotifications.map((n) => {
-      const rawType = n.type?.typeName || '';
+      const rawType = n.type?.typeName || n.type || '';
       const typeKey = rawType.toLowerCase();
       const type = mapNotificationType(typeKey);
       const { activityId, sessionId } = extractActivityAndSessionIds(n);
       const targetId = normalizeIdValue(n.target?._id) || normalizeIdValue(n.target?.id) || normalizeIdValue(n.targetId);
+      const chatParams = type === 'chat' ? extractChatNavigationParams(n, { fallbackTypeName: rawType }) : null;
       const resolvedActivityId = type === 'activity' ? (activityId || targetId) : null;
       const resolvedSessionId = sessionId || (type === 'activity' && typeKey.includes('session') ? targetId : null);
       const actorId =
@@ -358,6 +367,7 @@ export default function Notifications() {
         activityId: resolvedActivityId,
         sessionId: resolvedSessionId,
         actorId,
+        chatId: chatParams?.chatId || '',
         title: caption || 'Notification',
         message: caption || '',
         time: formatTime(n.createdAt),
@@ -552,6 +562,30 @@ export default function Notifications() {
             eventId,
             token,
             isTokenExpired,
+          });
+          break;
+        }
+        case 'chat': {
+          const chatId = item.chatId;
+          if (!chatId) {
+            console.warn('Chat notification missing chatId', item);
+            showContentUnavailableAlert();
+            return;
+          }
+          clearChatUnread?.(chatId);
+          prefetchChatMessages?.(chatId, { silent: true }).catch(() => {});
+          const cachedMessages = getChatMessages?.(chatId)?.messages;
+          const cachedChat = getChatById?.(chatId);
+          const params = {
+            chatId,
+            ...(cachedChat ? { chatRecord: cachedChat } : {}),
+            ...(cachedMessages?.length ? { chatMessages: cachedMessages } : {}),
+          };
+          navigateWithinMainTabs({
+            navigation,
+            tab: 'Chat',
+            screen: 'ChatDetail',
+            params,
           });
           break;
         }

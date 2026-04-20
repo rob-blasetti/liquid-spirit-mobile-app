@@ -3,6 +3,7 @@ import { API_URL } from '../config';
 import { navigateWhenReady } from '../navigation/RootNavigation';
 import NotificationService from './NotificationService.jsx';
 import debugLog from '../utils/debugLog';
+import { extractChatNavigationParams, isChatNotificationType } from '../utils/chatNotificationPayload';
 
 const log = (...args) => debugLog('[PushService]', ...args);
 
@@ -133,7 +134,10 @@ export function initPushNotifications(authToken) {
         case 'activity':
           navigateWhenReady('Main', {
             screen: 'Home',
-            params: { screen: 'ActivityDetailCard', params: { activityId: p.id } },
+            params: {
+              screen: 'ActivityDetailCard',
+              params: { activityId: p.id, ...(p.params || {}) },
+            },
           });
           break;
         case 'post':
@@ -141,6 +145,18 @@ export function initPushNotifications(authToken) {
             screen: 'Feed',
             params: { screen: 'PostDetailCard', params: { postId: p.id } },
           });
+          break;
+        case 'chat':
+          navigateWhenReady('Main', {
+            screen: 'Chat',
+            params: {
+              screen: 'ChatDetail',
+              params: p.params || { chatId: p.id },
+            },
+          });
+          break;
+        case 'notifications':
+          navigateWhenReady('Notifications');
           break;
         default:
           // no-op
@@ -254,8 +270,11 @@ export async function getApnsHealth(authToken, { connectivity = false } = {}) {
 export function normalizePayload(userInfo) {
   if (!userInfo || typeof userInfo !== 'object') return null;
   const data = userInfo.data || userInfo.custom || userInfo;
+  const deeplink = data.deeplink && typeof data.deeplink === 'object' ? data.deeplink : null;
+  const deeplinkParams = deeplink?.params && typeof deeplink.params === 'object' ? deeplink.params : {};
   const typeName = (data.type || data.typeName || data.targetType || '').toString();
   const typeKey = typeName.replace(/[^a-zA-Z]/g, '').toLowerCase();
+  const chatParams = extractChatNavigationParams(userInfo, { fallbackTypeName: typeName });
   const targetId =
     data.targetId ||
     data.id ||
@@ -263,6 +282,38 @@ export function normalizePayload(userInfo) {
     data.postId ||
     data.activityId ||
     data.activity_id;
+
+  if (deeplink?.screen === 'ChatDetail') {
+    const chatId = chatParams?.chatId || deeplinkParams.chatId || data.chatId;
+    if (!chatId) return null;
+    return { type: 'chat', id: String(chatId), params: { chatId: String(chatId) } };
+  }
+
+  if (deeplink?.screen === 'Notifications') {
+    return { type: 'notifications', id: null };
+  }
+
+  if (deeplink?.screen === 'PostDetail') {
+    const postId = deeplinkParams.postId || targetId || data.threadId;
+    if (!postId) return null;
+    return { type: 'post', id: String(postId) };
+  }
+
+  if (deeplink?.screen === 'EventDetail') {
+    const eventId = deeplinkParams.eventId || targetId || data.threadId;
+    if (!eventId) return null;
+    return { type: 'event', id: String(eventId) };
+  }
+
+  if (deeplink?.screen === 'ActivityDetail') {
+    const activityId = deeplinkParams.activityId || data.activityId || data.activity_id || targetId;
+    if (!activityId) return null;
+    const params = {};
+    if (deeplinkParams.sessionId) {
+      params.initialSessionId = String(deeplinkParams.sessionId);
+    }
+    return { type: 'activity', id: String(activityId), params };
+  }
 
   // Map backend type names to categories used by navigation
   const typeCategoryMap = {
@@ -288,7 +339,9 @@ export function normalizePayload(userInfo) {
   let category = typeCategoryMap[typeName.toLowerCase()];
   if (!category) {
     // Heuristic fallbacks by type keywords
-    if (typeKey.includes('session')) {
+    if (isChatNotificationType(typeName) || (!typeName && chatParams?.chatId)) {
+      category = 'chat';
+    } else if (typeKey.includes('session')) {
       category = 'activity';
     } else if (typeKey.includes('event')) {
       category = 'event';
@@ -307,6 +360,10 @@ export function normalizePayload(userInfo) {
   }
 
   if (!category) return null;
+  if (category === 'chat') {
+    if (!chatParams?.chatId) return null;
+    return { type: 'chat', id: chatParams.chatId, params: chatParams };
+  }
 
   // Prefer the correct parent ID when dealing with session payloads
   // Many session notifications include the parent activity id alongside the session id
