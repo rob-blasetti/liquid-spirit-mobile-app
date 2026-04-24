@@ -5,7 +5,7 @@ import jwtDecode from 'jwt-decode';
 import { Passkey } from './passkeyCompat';
 
 import { API_URL, AUTH_API_URL } from '../config';
-import { isJwtExpired, resolveAccessToken } from '../utils/authTokens';
+import { isJwtExpired, resolveAccessToken, resolveRefreshToken } from '../utils/authTokens';
 import debugLog from '../utils/debugLog';
 
 const decodeToken = (token) => {
@@ -26,6 +26,8 @@ const extractUserId = (decodedToken) => {
 const AUTH_BASE = String(AUTH_API_URL || API_URL || '').replace(/\/$/, '');
 
 const resolveTokenFromResult = payload => resolveAccessToken(payload);
+const resolveUserFromResult = payload =>
+  payload?.user || payload?.me || payload?.data?.user || payload?.data?.me || null;
 
 const redactSensitiveValue = (key, value) => {
   const normalizedKey = String(key || '').toLowerCase();
@@ -64,7 +66,7 @@ const resolveUserIdFromToken = (tokenValue) => {
 };
 
 export const useAuthService = () => {
-  const { token, setToken } = useContext(UserContext);
+  const { token, setToken, login } = useContext(UserContext);
 
   const jsonHeaders = (withAuth = false) => ({
     'Content-Type': 'application/json',
@@ -162,7 +164,7 @@ export const useAuthService = () => {
     }
   };
 
-  const verify = async (bahaiId, verificationCode, password) => {
+  const verify = async (bahaiId, verificationCode, password, email = null) => {
     try {
       const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/verify`, {
         method: 'POST',
@@ -173,7 +175,12 @@ export const useAuthService = () => {
 
       if (response.ok) {
         const resolvedToken = resolveAccessToken(data);
-        if (resolvedToken) {
+        const resolvedRefreshToken = resolveRefreshToken(data);
+        const resolvedUser = resolveUserFromResult(data);
+
+        if (resolvedToken && resolvedUser) {
+          await login(resolvedUser, resolvedToken, resolvedRefreshToken, email, password);
+        } else if (resolvedToken) {
           setToken(resolvedToken);
         }
       }

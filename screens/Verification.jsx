@@ -41,7 +41,7 @@ const Verification = ({ route }) => {
 
     try {
       // Call `verify` from the hook instead of using fetch
-      const { ok, data } = await verify(bahaiId, verificationCode, password);
+      const { ok, data } = await verify(bahaiId, verificationCode, password, email);
 
       if (!ok) {
         // If the server responded with an error
