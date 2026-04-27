@@ -154,7 +154,7 @@ const findNextEvent = events => {
 };
 
 export const syncNextEventWidget = async ({ isLoggedIn, events }) => {
-  if (Platform.OS !== 'ios' || !widgetBridge) return;
+  if (!['ios', 'android'].includes(Platform.OS) || !widgetBridge) return;
 
   if (!isLoggedIn) {
     await widgetBridge.clear();

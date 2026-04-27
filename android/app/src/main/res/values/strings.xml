@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Liquid Spirit</string>
+    <string name="widget_date_name">Liquid Spirit Date</string>
+    <string name="widget_date_description">Shows today\'s Gregorian and Badi dates.</string>
+    <string name="widget_event_name">Liquid Spirit Event</string>
+    <string name="widget_event_description">Shows today\'s dates and your next community event.</string>
 </resources>

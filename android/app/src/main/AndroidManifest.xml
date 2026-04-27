@@ -25,6 +25,27 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+      <receiver
+        android:name=".widget.LiquidSpiritDateWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_date_name">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/liquid_spirit_date_widget_info" />
+      </receiver>
+      <receiver
+        android:name=".widget.LiquidSpiritEventWidgetProvider"
+        android:exported="true"
+        android:label="@string/widget_event_name">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/liquid_spirit_event_widget_info" />
+      </receiver>
     </application>
 </manifest>
-
