@@ -9,17 +9,55 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		777895697C5DB1CC1AF6D69E /* LiquidSpiritCalendarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42BAA1A5204C8F7D2B27D2E4 /* LiquidSpiritCalendarWidget.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		9E26C17399FEDB621A1A358C /* BadiDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BBE1CC523B89D903E906826 /* BadiDate.swift */; };
+		A6ED8095845B3598C1F6D29D /* LiquidSpiritWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 089D3C3315FE54AC6B952A76 /* LiquidSpiritWidget.swift */; };
 		A9DBF01A49C7FEB7DAE28EFC /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		B9EC315397CE5AAD2C888F24 /* LiquidSpiritLogo.png in Resources */ = {isa = PBXBuildFile; fileRef = 0C00635FCB1BC097C12F9499 /* LiquidSpiritLogo.png */; };
+		BCF0FEB0C7256C895D2E03D9 /* LiquidSpiritWidget.m in Sources */ = {isa = PBXBuildFile; fileRef = 159E211C17828BECA5E0A606 /* LiquidSpiritWidget.m */; };
 		DAB6073FF8C54AFA94277795 /* libPods-liquid_spirit_mobile_app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B045227FC1CA6E6CCADD8381 /* libPods-liquid_spirit_mobile_app.a */; };
 		E1F5A0012D5A7C9B00ABCDEF /* APNsBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = E1F5A0002D5A7C9B00ABCDEF /* APNsBridge.m */; };
+		FB0AB5ED9C33A5B0421245E2 /* LiquidSpiritCalendarWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 758C3D5880ABAA45CE1768C2 /* LiquidSpiritCalendarWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		9AB65ED81E60D8C4C93CBEE3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 89EACFF437796862F60BD2FF;
+			remoteInfo = LiquidSpiritCalendarWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4422DA0B4025DF479FACAA40 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FB0AB5ED9C33A5B0421245E2 /* LiquidSpiritCalendarWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		089D3C3315FE54AC6B952A76 /* LiquidSpiritWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LiquidSpiritWidget.swift; path = liquid_spirit_mobile_app/LiquidSpiritWidget.swift; sourceTree = "<group>"; };
+		0C00635FCB1BC097C12F9499 /* LiquidSpiritLogo.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = LiquidSpiritLogo.png; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* liquid_spirit_mobile_app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = liquid_spirit_mobile_app.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = liquid_spirit_mobile_app/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = liquid_spirit_mobile_app/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = liquid_spirit_mobile_app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		159E211C17828BECA5E0A606 /* LiquidSpiritWidget.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = LiquidSpiritWidget.m; path = liquid_spirit_mobile_app/LiquidSpiritWidget.m; sourceTree = "<group>"; };
+		182FDEB265DDB14E007AAAB0 /* LiquidSpiritCalendarWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = LiquidSpiritCalendarWidget.entitlements; sourceTree = "<group>"; };
+		1BBE1CC523B89D903E906826 /* BadiDate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BadiDate.swift; sourceTree = "<group>"; };
+		42BAA1A5204C8F7D2B27D2E4 /* LiquidSpiritCalendarWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LiquidSpiritCalendarWidget.swift; sourceTree = "<group>"; };
+		672159D6DCC79AEC55B43E88 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		758C3D5880ABAA45CE1768C2 /* LiquidSpiritCalendarWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LiquidSpiritCalendarWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = liquid_spirit_mobile_app/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = liquid_spirit_mobile_app/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B045227FC1CA6E6CCADD8381 /* libPods-liquid_spirit_mobile_app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-liquid_spirit_mobile_app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -38,6 +76,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AEFB04A780EE405D00756534 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -50,8 +95,23 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				089D3C3315FE54AC6B952A76 /* LiquidSpiritWidget.swift */,
+				159E211C17828BECA5E0A606 /* LiquidSpiritWidget.m */,
 			);
 			name = liquid_spirit_mobile_app;
+			sourceTree = "<group>";
+		};
+		29BB6CEEE93010F9A822A7E7 /* LiquidSpiritCalendarWidget */ = {
+			isa = PBXGroup;
+			children = (
+				42BAA1A5204C8F7D2B27D2E4 /* LiquidSpiritCalendarWidget.swift */,
+				1BBE1CC523B89D903E906826 /* BadiDate.swift */,
+				672159D6DCC79AEC55B43E88 /* Info.plist */,
+				0C00635FCB1BC097C12F9499 /* LiquidSpiritLogo.png */,
+				182FDEB265DDB14E007AAAB0 /* LiquidSpiritCalendarWidget.entitlements */,
+			);
+			name = LiquidSpiritCalendarWidget;
+			path = LiquidSpiritCalendarWidget;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -78,6 +138,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				29BB6CEEE93010F9A822A7E7 /* LiquidSpiritCalendarWidget */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -88,6 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* liquid_spirit_mobile_app.app */,
+				758C3D5880ABAA45CE1768C2 /* LiquidSpiritCalendarWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -115,15 +177,34 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				79668C214E183B7E9C24B5E8 /* [CP] Embed Pods Frameworks */,
 				0EAE63A5D7F47152D7A12197 /* [CP] Copy Pods Resources */,
+				4422DA0B4025DF479FACAA40 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				576B3FC415CCF7F949F6E690 /* PBXTargetDependency */,
 			);
 			name = liquid_spirit_mobile_app;
 			productName = liquid_spirit_mobile_app;
 			productReference = 13B07F961A680F5B00A75B9A /* liquid_spirit_mobile_app.app */;
 			productType = "com.apple.product-type.application";
+		};
+		89EACFF437796862F60BD2FF /* LiquidSpiritCalendarWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CFC37FA5BBF19A039FE127FF /* Build configuration list for PBXNativeTarget "LiquidSpiritCalendarWidget" */;
+			buildPhases = (
+				99D7AC88ABF698AF939E81FE /* Sources */,
+				AEFB04A780EE405D00756534 /* Frameworks */,
+				4E3B8C345AEC7F6AC8D520F9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LiquidSpiritCalendarWidget;
+			productName = LiquidSpiritCalendarWidget;
+			productReference = 758C3D5880ABAA45CE1768C2 /* LiquidSpiritCalendarWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -136,6 +217,10 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					89EACFF437796862F60BD2FF = {
+						CreatedOnToolsVersion = 16.1;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -153,6 +238,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* liquid_spirit_mobile_app */,
+				89EACFF437796862F60BD2FF /* LiquidSpiritCalendarWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +251,14 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				A9DBF01A49C7FEB7DAE28EFC /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4E3B8C345AEC7F6AC8D520F9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9EC315397CE5AAD2C888F24 /* LiquidSpiritLogo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,10 +346,30 @@
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				E1F5A0012D5A7C9B00ABCDEF /* APNsBridge.m in Sources */,
+				A6ED8095845B3598C1F6D29D /* LiquidSpiritWidget.swift in Sources */,
+				BCF0FEB0C7256C895D2E03D9 /* LiquidSpiritWidget.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		99D7AC88ABF698AF939E81FE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				777895697C5DB1CC1AF6D69E /* LiquidSpiritCalendarWidget.swift in Sources */,
+				9E26C17399FEDB621A1A358C /* BadiDate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		576B3FC415CCF7F949F6E690 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LiquidSpiritCalendarWidget;
+			target = 89EACFF437796862F60BD2FF /* LiquidSpiritCalendarWidget */;
+			targetProxy = 9AB65ED81E60D8C4C93CBEE3 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -318,6 +432,34 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = liquid_spirit_mobile_app;
 				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		3F92C8C2472102CA3DCA1651 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = LiquidSpiritCalendarWidget/LiquidSpiritCalendarWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 168;
+				DEVELOPMENT_TEAM = 7MGG8ZRN25;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiquidSpiritCalendarWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app.LiquidSpiritCalendarWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
@@ -483,6 +625,33 @@
 			};
 			name = Release;
 		};
+		F0FCCF6E3E2B144DCAF32F5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = LiquidSpiritCalendarWidget/LiquidSpiritCalendarWidget.entitlements;
+				CURRENT_PROJECT_VERSION = 168;
+				DEVELOPMENT_TEAM = 7MGG8ZRN25;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LiquidSpiritCalendarWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 2.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app.LiquidSpiritCalendarWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -500,6 +669,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CFC37FA5BBF19A039FE127FF /* Build configuration list for PBXNativeTarget "LiquidSpiritCalendarWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3F92C8C2472102CA3DCA1651 /* Release */,
+				F0FCCF6E3E2B144DCAF32F5C /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

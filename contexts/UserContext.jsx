@@ -20,6 +20,7 @@ import { CommunityContext } from './CommunityContext';
 import { AppState } from 'react-native';
 import { initializeSocket } from '../services/SocketService';
 import { fetchChats } from '../services/ChatService';
+import { syncNextEventWidget } from '../services/WidgetService';
 import useMountEffect from '../hooks/useMountEffect';
 
 const CHAT_BADGE_POLL_INTERVAL = 15000;
@@ -325,6 +326,13 @@ export const UserProvider = ({ children }) => {
 
     loadUserData();
   }, [isTokenExpired, refreshSession, token]);
+
+  useEffect(() => {
+    // Synchronizes the native WidgetKit extension with the current auth/event cache.
+    syncNextEventWidget({ isLoggedIn: Boolean(token), events: userEvents }).catch(error => {
+      console.error('Failed to sync next event widget:', error);
+    });
+  }, [token, userEvents]);
 
   // Fetch full user details (including certifications) and sync profile picture on startup
   useEffect(() => {
