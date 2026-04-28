@@ -3,6 +3,88 @@ default_platform(:ios)
 require 'dotenv' # ✅ Require the dotenv gem
 require 'fileutils'
 Dotenv.load(File.expand_path('.env.beta', __dir__))
+ENV['FASTLANE_SKIP_UPDATE_CHECK'] ||= '1'
+
+IOS_ROOT = File.expand_path('..', __dir__)
+APPLE_ID = "rblasett@gmail.com"
+TEAM_ID = "7MGG8ZRN25"
+APP_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app"
+WIDGET_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app.LiquidSpiritCalendarWidget"
+APP_GROUP_IDENTIFIER = "group.org.reactjs.native.example.liquid-spirit-mobile-app"
+APP_GROUP_NAME = "Liquid Spirit App Group"
+SIGNING_REPO_URL = "git@github.com:rob-blasetti/signing-repo.git"
+APP_IDENTIFIERS = [
+  APP_IDENTIFIER,
+  WIDGET_IDENTIFIER
+]
+APPSTORE_PROFILES = {
+  APP_IDENTIFIER => "match AppStore #{APP_IDENTIFIER}",
+  WIDGET_IDENTIFIER => "match AppStore #{WIDGET_IDENTIFIER}"
+}
+
+def env_enabled?(name)
+  %w[1 true yes on].include?(ENV[name].to_s.downcase)
+end
+
+def ensure_portal_session!
+  require 'spaceship'
+
+  return if @portal_session_ready
+
+  begin
+    Spaceship.login(ENV['FASTLANE_USER'] || APPLE_ID, nil)
+  rescue StandardError => error
+    UI.user_error!(<<~ERROR)
+      Apple Developer Portal login failed, so App Group associations could not be repaired.
+
+      Refresh the session, update FASTLANE_SESSION in fastlane/.env.beta, then rerun:
+        FASTLANE_SKIP_UPDATE_CHECK=1 fastlane spaceauth -u #{APPLE_ID}
+        FASTLANE_SKIP_UPDATE_CHECK=1 fastlane repair_signing
+
+      Original error: #{error.message}
+    ERROR
+  end
+
+  Spaceship.select_team(team_id: TEAM_ID)
+  @portal_session_ready = true
+end
+
+def ensure_app_group_association!(bundle_identifier, repair_capability: false)
+  ensure_portal_session!
+
+  group = Spaceship.app_group.find(APP_GROUP_IDENTIFIER)
+  group ||= Spaceship.app_group.create!(
+    group_id: APP_GROUP_IDENTIFIER,
+    name: APP_GROUP_NAME
+  )
+
+  app = Spaceship.app.find(bundle_identifier)
+  UI.user_error!("Could not find App ID #{bundle_identifier} in the Apple Developer Portal") unless app
+
+  details = app.details
+  existing_groups = Array(details.associated_groups)
+
+  if existing_groups.any? { |existing_group| existing_group.group_id == APP_GROUP_IDENTIFIER }
+    app.update_service(Spaceship::Portal.app_service.app_group.on) if repair_capability
+    UI.message("#{bundle_identifier} already has #{APP_GROUP_IDENTIFIER}")
+    return repair_capability
+  end
+
+  app = app.update_service(Spaceship::Portal.app_service.app_group.on)
+  app.associate_groups(existing_groups + [group])
+  UI.success("Associated #{APP_GROUP_IDENTIFIER} with #{bundle_identifier}")
+  true
+end
+
+def ensure_app_group_associations!(repair_capabilities: false)
+  UI.message "Ensuring App Group is associated with app and widget App IDs"
+  APP_IDENTIFIERS.map do |bundle_identifier|
+    ensure_app_group_association!(
+      bundle_identifier,
+      repair_capability: repair_capabilities
+    )
+  end.any?
+end
 
 platform :ios do
   desc "Push a new beta build to TestFlight"
@@ -16,18 +98,22 @@ platform :ios do
     )
 
     FileUtils.mkdir_p('ios')
+
+    app_group_changed = ensure_app_group_associations!
+    match_force = env_enabled?('MATCH_FORCE') || app_group_changed
     
     # 1. Pull down/update provisioning profiles & certificates from your signing repo
     match(
       type: "appstore",
-      git_url: "git@github.com:rob-blasetti/signing-repo.git",
-      app_identifier: "org.reactjs.native.example.liquid-spirit-mobile-app",
-      api_key: asc_api_key
+      git_url: SIGNING_REPO_URL,
+      app_identifier: APP_IDENTIFIERS,
+      api_key: asc_api_key,
+      force: match_force
     )
 
     # 2. Increment build number
     increment_build_number(
-      xcodeproj: "liquid_spirit_mobile_app.xcodeproj"
+      xcodeproj: File.join(IOS_ROOT, "liquid_spirit_mobile_app.xcodeproj")
     )
 
     # 3. Inject Environment Variables into Xcode
@@ -37,27 +123,44 @@ platform :ios do
       AWS_SECRET_ACCESS_KEY=#{ENV['AWS_SECRET_ACCESS_KEY']}
       AWS_REGION=#{ENV['AWS_REGION']}
     CONFIG
-    File.write('ios/Config.xcconfig', config_xcconfig)
+    File.write(File.join(IOS_ROOT, 'Config.xcconfig'), config_xcconfig)
 
     # 4. Build the app
     build_app(
-      workspace: "liquid_spirit_mobile_app.xcworkspace",
+      workspace: File.join(IOS_ROOT, "liquid_spirit_mobile_app.xcworkspace"),
       scheme: "liquid_spirit_mobile_app",
       export_method: "app-store",
       export_options: {
         signingStyle: "manual",
         signingCertificate: "Apple Distribution",
-        provisioningProfiles: {
-          "org.reactjs.native.example.liquid-spirit-mobile-app" => "match AppStore org.reactjs.native.example.liquid-spirit-mobile-app"
-        }
+        provisioningProfiles: APPSTORE_PROFILES
       },
       # Force manual signing during the archive step too (prevents Xcode from trying automatic dev signing).
-      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=7MGG8ZRN25 PROVISIONING_PROFILE_SPECIFIER='match AppStore org.reactjs.native.example.liquid-spirit-mobile-app' CODE_SIGN_IDENTITY='Apple Distribution'"
+      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=#{TEAM_ID} CODE_SIGN_IDENTITY='Apple Distribution'"
     )
 
     # 5. Upload to TestFlight
     upload_to_testflight(
       api_key: asc_api_key
+    )
+  end
+
+  desc "Repair App Group signing and regenerate App Store provisioning profiles"
+  lane :repair_signing do
+    ensure_app_group_associations!(repair_capabilities: true)
+
+    asc_api_key = app_store_connect_api_key(
+      key_id: ENV['ASC_KEY_ID'],
+      issuer_id: ENV['ASC_ISSUER_ID'],
+      key_filepath: ENV['ASC_KEY_FILE']
+    )
+
+    match(
+      type: "appstore",
+      git_url: SIGNING_REPO_URL,
+      app_identifier: APP_IDENTIFIERS,
+      api_key: asc_api_key,
+      force: true
     )
   end
 end

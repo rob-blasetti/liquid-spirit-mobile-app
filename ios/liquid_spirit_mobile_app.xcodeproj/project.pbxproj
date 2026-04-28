@@ -379,7 +379,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.entitlements;
-				CURRENT_PROJECT_VERSION = 169;
+				CURRENT_PROJECT_VERSION = 174;
 				ENABLE_BITCODE = NO;
 				ENABLE_TESTING_SEARCH_PATHS = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -412,7 +412,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = liquid_spirit_mobile_app/liquid_spirit_mobile_app.release.entitlements;
-				CURRENT_PROJECT_VERSION = 169;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 174;
 				ENABLE_TESTING_SEARCH_PATHS = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = liquid_spirit_mobile_app/Info.plist;
@@ -431,6 +432,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = liquid_spirit_mobile_app;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore org.reactjs.native.example.liquid-spirit-mobile-app";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
@@ -443,7 +445,8 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = LiquidSpiritCalendarWidget/LiquidSpiritCalendarWidget.entitlements;
-				CURRENT_PROJECT_VERSION = 169;
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 174;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiquidSpiritCalendarWidget/Info.plist;
@@ -456,6 +459,7 @@
 				MARKETING_VERSION = 2.2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app.LiquidSpiritCalendarWidget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore org.reactjs.native.example.liquid-spirit-mobile-app.LiquidSpiritCalendarWidget";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -632,7 +636,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_ENTITLEMENTS = LiquidSpiritCalendarWidget/LiquidSpiritCalendarWidget.entitlements;
-				CURRENT_PROJECT_VERSION = 169;
+				CURRENT_PROJECT_VERSION = 174;
 				DEVELOPMENT_TEAM = 7MGG8ZRN25;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = LiquidSpiritCalendarWidget/Info.plist;

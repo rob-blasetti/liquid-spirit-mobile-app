@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Push a new beta build to TestFlight
 
+### ios repair_signing
+
+```sh
+[bundle exec] fastlane ios repair_signing
+```
+
+Repair App Group signing and regenerate App Store provisioning profiles
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
