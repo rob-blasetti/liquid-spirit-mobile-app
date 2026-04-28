@@ -561,6 +561,10 @@ export const UserProvider = ({ children }) => {
   const refreshNotificationsFromServerRef = useRef(null);
   ensureValidSessionRef.current = ensureValidSession;
   refreshChatBadgeFromServerRef.current = refreshChatBadgeFromServer;
+  const syncWidgetRef = useRef(token);
+  const syncWidgetEventsRef = useRef(userEvents);
+  syncWidgetRef.current = token;
+  syncWidgetEventsRef.current = userEvents;
 
   const appStateRef = useRef(AppState?.currentState || 'active');
 
@@ -578,6 +582,12 @@ export const UserProvider = ({ children }) => {
         ensureValidSessionRef.current();
         refreshChatBadgeFromServerRef.current({ force: true });
         refreshNotificationsFromServerRef.current?.({ force: true });
+        syncNextEventWidget({
+          isLoggedIn: Boolean(syncWidgetRef.current),
+          events: syncWidgetEventsRef.current,
+        }).catch(error => {
+          console.error('Failed to refresh widget on app foreground:', error);
+        });
 
         if (token && !chatPollingRef.current) {
           chatPollingRef.current = setInterval(() => {

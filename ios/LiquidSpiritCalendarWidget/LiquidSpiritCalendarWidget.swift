@@ -19,8 +19,8 @@ struct CalendarProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<CalendarEntry>) -> Void) {
         let now = Date()
         let event = WidgetEventStore.shared.nextEvent()
-        let nextDay = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: now)) ?? now.addingTimeInterval(60 * 60 * 24)
-        let nextUpdate = event?.nextRefreshDate(after: now) ?? nextDay
+        let fallbackRefresh = WidgetEvent.nextCheckpoint(after: now)
+        let nextUpdate = event?.nextRefreshDate(after: now) ?? fallbackRefresh
         let timeline = Timeline(entries: [CalendarEntry(date: now, event: event)], policy: .after(nextUpdate))
         completion(timeline)
     }
@@ -51,17 +51,40 @@ struct WidgetEvent: Codable {
         !(isPlaceholder ?? false)
     }
 
+    static func nextCheckpoint(after date: Date) -> Date {
+        let calendar = Calendar.current
+
+        let nextNoon = calendar.nextDate(
+            after: date,
+            matching: DateComponents(hour: 12, minute: 0, second: 0),
+            matchingPolicy: .nextTime,
+            direction: .forward
+        ) ?? date.addingTimeInterval(60 * 60 * 12)
+
+        let nextMidnight = calendar.nextDate(
+            after: date,
+            matching: DateComponents(hour: 0, minute: 0, second: 0),
+            matchingPolicy: .nextTime,
+            direction: .forward
+        ) ?? calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date)) ?? date.addingTimeInterval(60 * 60 * 24)
+
+        return min(nextNoon, nextMidnight)
+    }
+
     func nextRefreshDate(after date: Date) -> Date {
-        guard hasEventDetails else {
-            return Calendar.current.date(byAdding: .hour, value: 6, to: date) ?? date.addingTimeInterval(60 * 60 * 6)
-        }
-
+        let calendar = Calendar.current
+        let nextRefreshCandidate = Self.nextCheckpoint(after: date)
         let eventDate = Date(timeIntervalSince1970: startTimestamp / 1000)
-        if eventDate > date {
-            return min(eventDate, Calendar.current.date(byAdding: .day, value: 1, to: date) ?? eventDate)
+
+        guard hasEventDetails else {
+            return nextRefreshCandidate
         }
 
-        return Calendar.current.date(byAdding: .hour, value: 1, to: date) ?? date.addingTimeInterval(60 * 60)
+        if eventDate > date {
+            return min(eventDate, nextRefreshCandidate)
+        }
+
+        return calendar.date(byAdding: .hour, value: 1, to: date) ?? date.addingTimeInterval(60 * 60)
     }
 }
 
@@ -72,19 +95,45 @@ final class WidgetEventStore {
     private let eventKey = "nextEvent"
 
     func nextEvent() -> WidgetEvent? {
-        guard
-            let json = UserDefaults(suiteName: suiteName)?.string(forKey: eventKey),
-            let data = json.data(using: .utf8),
-            let event = try? JSONDecoder().decode(WidgetEvent.self, from: data)
+        guard let defaults = UserDefaults(suiteName: suiteName),
+              let json = defaults.string(forKey: eventKey),
+              !json.isEmpty,
+              let data = json.data(using: .utf8)
         else {
             return nil
         }
 
-        if event.hasEventDetails {
-            let eventDate = Date(timeIntervalSince1970: event.startTimestamp / 1000)
-            if eventDate < Date() {
-                return nil
-            }
+        guard var event = try? JSONDecoder().decode(WidgetEvent.self, from: data) else {
+            defaults.removeObject(forKey: eventKey)
+            defaults.synchronize()
+            return nil
+        }
+
+        guard event.startTimestamp.isFinite,
+              event.startTimestamp >= 0 else {
+            defaults.removeObject(forKey: eventKey)
+            defaults.synchronize()
+            return nil
+        }
+
+        let eventDate = Date(timeIntervalSince1970: event.startTimestamp / 1000)
+        if event.hasEventDetails && (event.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || eventDate < Date()) {
+            defaults.removeObject(forKey: eventKey)
+            defaults.synchronize()
+            return nil
+        }
+
+        if !event.hasEventDetails {
+            event = WidgetEvent(
+                title: event.title.isEmpty ? "No upcoming events" : event.title,
+                dateText: event.dateText,
+                dayText: event.dayText,
+                timeText: event.timeText,
+                locationText: event.locationText.isEmpty ? "Check back soon" : event.locationText,
+                startTimestamp: event.startTimestamp,
+                updatedAt: event.updatedAt,
+                isPlaceholder: true
+            )
         }
 
         return event
