@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, Animated, StyleSheet, Easing } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
+import { useTheme } from '../contexts';
 
 const ACTIVE_TAB_BACKGROUND = themeVariables.greyColor;
-const NAV_TINT_COLOR = 'rgba(18,18,18,0.2)';
 
 const getLiquidGlassModule = () => {
   try {
@@ -24,9 +24,11 @@ const getLiquidGlassModule = () => {
 const { LiquidGlassView, isLiquidGlassSupported } = getLiquidGlassModule();
 
 const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chatBadgeCount = 0 }) => {
+  const { isDarkMode } = useTheme();
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorWidth = useRef(new Animated.Value(0)).current;
   const [tabLayouts, setTabLayouts] = useState({});
+  const navTintColor = isDarkMode ? 'rgba(255,255,255,0.12)' : 'rgba(18,18,18,0.2)';
 
   const layoutReady = useMemo(
     () => Object.keys(tabLayouts).length === state.routes.length && state.routes.length > 0,
@@ -86,7 +88,7 @@ const LiquidBottomNav = ({ state, descriptors, navigation, insetBottom = 0, chat
       <LiquidGlassView
         interactive
         effect="regular"
-        tintColor={NAV_TINT_COLOR}
+        tintColor={navTintColor}
         style={[styles.bar, !isLiquidGlassSupported && styles.barFallback]}
       >
         <Animated.View

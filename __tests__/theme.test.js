@@ -6,9 +6,9 @@ describe('theme support', () => {
     const theme = getThemeVariables('dark');
     const colors = getColors('dark');
 
-    expect(theme.screenBackgroundColor).toBe('#0b1220');
-    expect(theme.whiteColor).toBe('#0b1220');
-    expect(theme.blackColor).toBe('#f8fafc');
+    expect(theme.screenBackgroundColor).toBe('#121212');
+    expect(theme.whiteColor).toBe('#1f1f1f');
+    expect(theme.blackColor).toBe('#f1f4ff');
     expect(colors.background).toBe('#0b1220');
     expect(colors.text).toBe('#f8fafc');
   });

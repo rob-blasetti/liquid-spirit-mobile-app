@@ -2,8 +2,7 @@ import React, { useContext } from 'react';
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { navigationRef, flushPendingNavigation } from './RootNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useColorScheme } from 'react-native';
-import { getThemeVariables } from '../styles/theme';
+import themeVariables from '../styles/theme';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 
 const linking = {
@@ -30,7 +29,7 @@ const linking = {
   },
 };
 
-import { UserContext } from '../contexts';
+import { UserContext, useTheme } from '../contexts';
 import {
   Welcome,
   Login,
@@ -57,15 +56,25 @@ const Stack = createNativeStackNavigator();
 
 const AppNavigator = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn, ensureValidSession } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
-  const scheme = useColorScheme();
-  const themeVariables = getThemeVariables(scheme);
-  const navigationTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...(isDarkMode ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+      primary: themeVariables.primaryColor,
+      background: themeVariables.screenBackgroundColor,
+      card: themeVariables.whiteColor,
+      text: themeVariables.blackColor,
+      border: themeVariables.borderLightColor,
+      notification: themeVariables.alertErrorBg,
+    },
+  };
 
   return (
     <NavigationContainer
-      theme={navigationTheme}
       linking={linking}
+      theme={navigationTheme}
       ref={navigationRef}
       onReady={flushPendingNavigation}
       onStateChange={() => {

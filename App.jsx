@@ -1,11 +1,11 @@
 // no direct React hooks needed; initialization logic moved to useAppInitialization hook
 import React, { useEffect, useContext } from 'react';
-import { StatusBar, StyleSheet, View, Linking, useColorScheme } from 'react-native';
+import { StatusBar, StyleSheet, View, Linking } from 'react-native';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { getThemeVariables } from './styles/theme';
+import themeVariables from './styles/theme';
 
-import { UserProvider, CommunityProvider, ChatProvider, VenuesProvider } from './contexts';
+import { UserProvider, CommunityProvider, ChatProvider, VenuesProvider, ThemeProvider, useTheme } from './contexts';
 import { useAppInitialization } from './hooks/useAppInitialization';
 import useMountEffect from './hooks/useMountEffect';
 
@@ -18,8 +18,7 @@ import debugLog from './utils/debugLog';
 const MainApp = () => {
   const { initialPosts, homeOverview, showSplash } = useAppInitialization();
   const { token } = useContext(UserContext);
-  const scheme = useColorScheme();
-  const themeVariables = getThemeVariables(scheme);
+  const { isDarkMode } = useTheme();
 
   useMountEffect(() => {
     Linking.getInitialURL().then(url => {
@@ -53,8 +52,8 @@ const MainApp = () => {
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <View style={styles.root}>
         <StatusBar
-          barStyle={showSplash ? 'light-content' : scheme === 'dark' ? 'light-content' : 'dark-content'}
-          backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.whiteColor}
+          barStyle={showSplash || isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={showSplash ? themeVariables.primaryColor : themeVariables.screenBackgroundColor}
         />
         {showSplash ? (
           <View style={styles.splashContainer}>
@@ -70,15 +69,17 @@ const MainApp = () => {
 
 const App = () => (
   <GestureHandlerRootView style={{ flex: 1 }}>
-    <CommunityProvider>
-      <UserProvider>
-        <VenuesProvider>
-          <ChatProvider>
-            <MainApp />
-          </ChatProvider>
-        </VenuesProvider>
-      </UserProvider>
-    </CommunityProvider>
+    <ThemeProvider>
+      <CommunityProvider>
+        <UserProvider>
+          <VenuesProvider>
+            <ChatProvider>
+              <MainApp />
+            </ChatProvider>
+          </VenuesProvider>
+        </UserProvider>
+      </CommunityProvider>
+    </ThemeProvider>
   </GestureHandlerRootView>
 );
 
