@@ -1,43 +1,61 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
-// no-op
+import { useTheme } from '../contexts';
 
 const Settings = ({ navigation }) => {
-  return (
-      <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+  const { isDarkMode, setDarkMode } = useTheme();
 
-      <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
-          <Ionicons name="person-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>My Account</Text>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-        </TouchableOpacity>
+  return (
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('EditProfile')}>
+            <Ionicons name="person-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>My Account</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          </TouchableOpacity>
 
         {/* <View style={styles.item}>
           <Ionicons name="notifications-outline" size={20} color="#312783" />
           <Text style={styles.itemText}>Notifications</Text>
           <Switch value={true} />
         </View> */}
-      </View>
+        </View>
 
-      <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
-          <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Notifications</Text>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Security')}>
-          <Ionicons name="shield-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Security</Text>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.section}>
+          <View style={styles.item}>
+            <Ionicons name={isDarkMode ? 'moon' : 'moon-outline'} size={20} color={themeVariables.blackColor} />
+            <View style={styles.itemTextBlock}>
+              <Text style={styles.itemTitle}>Dark Mode</Text>
+              <Text style={styles.itemDescription}>Use the darker Liquid Spirit theme throughout the app.</Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={setDarkMode}
+              trackColor={{
+                false: themeVariables.borderMutedColor,
+                true: themeVariables.primaryLightColor,
+              }}
+              thumbColor={isDarkMode ? themeVariables.primaryColor : themeVariables.whiteColor}
+              ios_backgroundColor={themeVariables.borderMutedColor}
+            />
+          </View>
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
+            <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>Notifications</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Security')}>
+            <Ionicons name="shield-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>Security</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.sectionDivider} />
+        <View style={styles.sectionDivider} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -86,6 +104,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
     color: themeVariables.blackColor,
+  },
+  itemTitle: {
+    color: themeVariables.blackColor,
+    fontSize: 16,
+  },
+  itemTextBlock: {
+    flex: 1,
+    marginLeft: 15,
+    marginRight: 12,
+  },
+  itemDescription: {
+    color: themeVariables.textMutedStrongColor,
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 3,
   },
 });
 
