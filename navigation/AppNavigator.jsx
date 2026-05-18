@@ -1,8 +1,9 @@
 import React, { useContext } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { navigationRef, flushPendingNavigation } from './RootNavigation';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import themeVariables from '../styles/theme';
+import { useColorScheme } from 'react-native';
+import { getThemeVariables } from '../styles/theme';
 import LiquidGlassIconButton from '../components/LiquidGlassIconButton';
 
 const linking = {
@@ -57,9 +58,13 @@ const Stack = createNativeStackNavigator();
 const AppNavigator = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn, ensureValidSession } = useContext(UserContext);
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
+  const scheme = useColorScheme();
+  const themeVariables = getThemeVariables(scheme);
+  const navigationTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
 
   return (
     <NavigationContainer
+      theme={navigationTheme}
       linking={linking}
       ref={navigationRef}
       onReady={flushPendingNavigation}
