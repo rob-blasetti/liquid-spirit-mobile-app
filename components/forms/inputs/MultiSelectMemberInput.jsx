@@ -36,7 +36,10 @@ const MultiSelectMemberInput = ({
   const [isFocused, setIsFocused] = useState(false);
   const selfId = useRef(`member-dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const blurCloseTimeoutRef = useRef(null);
+  const focusRecoveryTimeoutRef = useRef(null);
   const inputRef = useRef(null);
+  const lastFocusAtRef = useRef(0);
+  const skipNextBlurRecoveryRef = useRef(false);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const optionLabelById = useMemo(() => {
@@ -100,6 +103,15 @@ const MultiSelectMemberInput = ({
   useEffect(() => {
     const handler = id => {
       if (id !== selfId.current) {
+        skipNextBlurRecoveryRef.current = true;
+        if (blurCloseTimeoutRef.current) {
+          clearTimeout(blurCloseTimeoutRef.current);
+          blurCloseTimeoutRef.current = null;
+        }
+        if (focusRecoveryTimeoutRef.current) {
+          clearTimeout(focusRecoveryTimeoutRef.current);
+          focusRecoveryTimeoutRef.current = null;
+        }
         setDropdownVisible(false);
       }
     };
@@ -108,6 +120,9 @@ const MultiSelectMemberInput = ({
       memberDropdownListeners.delete(handler);
       if (blurCloseTimeoutRef.current) {
         clearTimeout(blurCloseTimeoutRef.current);
+      }
+      if (focusRecoveryTimeoutRef.current) {
+        clearTimeout(focusRecoveryTimeoutRef.current);
       }
     };
   }, []);
@@ -185,6 +200,8 @@ const MultiSelectMemberInput = ({
           placeholderTextColor={restTextInputProps.placeholderTextColor || '#667085'}
           {...restTextInputProps}
           onFocus={event => {
+            lastFocusAtRef.current = Date.now();
+            skipNextBlurRecoveryRef.current = false;
             if (blurCloseTimeoutRef.current) {
               clearTimeout(blurCloseTimeoutRef.current);
               blurCloseTimeoutRef.current = null;
@@ -195,6 +212,26 @@ const MultiSelectMemberInput = ({
             restTextInputProps.onFocus?.(event);
           }}
           onBlur={event => {
+            const focusedForMs = Date.now() - lastFocusAtRef.current;
+            if (skipNextBlurRecoveryRef.current) {
+              skipNextBlurRecoveryRef.current = false;
+              setIsFocused(false);
+              setDropdownVisible(false);
+              restTextInputProps.onBlur?.(event);
+              return;
+            }
+
+            if (focusedForMs < 300) {
+              focusRecoveryTimeoutRef.current = setTimeout(() => {
+                inputRef.current?.focus?.();
+                setIsFocused(true);
+                setDropdownVisible(true);
+                focusRecoveryTimeoutRef.current = null;
+              }, 0);
+              restTextInputProps.onBlur?.(event);
+              return;
+            }
+
             setIsFocused(false);
             blurCloseTimeoutRef.current = setTimeout(() => {
               setDropdownVisible(false);
@@ -245,6 +282,11 @@ const MultiSelectMemberInput = ({
                         clearTimeout(blurCloseTimeoutRef.current);
                         blurCloseTimeoutRef.current = null;
                       }
+                      if (focusRecoveryTimeoutRef.current) {
+                        clearTimeout(focusRecoveryTimeoutRef.current);
+                        focusRecoveryTimeoutRef.current = null;
+                      }
+                      skipNextBlurRecoveryRef.current = true;
                       onSelectOption?.(option);
                       setDropdownVisible(false);
                       inputRef.current?.blur?.();
