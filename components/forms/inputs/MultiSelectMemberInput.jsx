@@ -1,9 +1,18 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput as RNTextInput, ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../../../styles/theme';
 import FormHelperText from './FormHelperText';
+
+const memberDropdownListeners = new Set();
+const notifyCloseOtherMemberDropdowns = id => {
+  memberDropdownListeners.forEach(listener => {
+    try {
+      listener(id);
+    } catch (_) {}
+  });
+};
 
 const MultiSelectMemberInput = ({
   label,
@@ -25,6 +34,7 @@ const MultiSelectMemberInput = ({
 }) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const selfId = useRef(`member-dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const optionLabelById = useMemo(() => {
@@ -85,8 +95,20 @@ const MultiSelectMemberInput = ({
     }
   }
 
+  useEffect(() => {
+    const handler = id => {
+      if (id !== selfId.current) {
+        setDropdownVisible(false);
+      }
+    };
+    memberDropdownListeners.add(handler);
+    return () => {
+      memberDropdownListeners.delete(handler);
+    };
+  }, []);
+
   return (
-    <View style={[styles.wrapper, style]}>
+    <View style={[styles.wrapper, dropdownVisible && styles.wrapperOpen, style]}>
       <Text style={styles.sectionLabel}>{label}</Text>
       <View
         style={[
@@ -159,13 +181,11 @@ const MultiSelectMemberInput = ({
           onFocus={event => {
             setIsFocused(true);
             setDropdownVisible(true);
+            notifyCloseOtherMemberDropdowns(selfId.current);
             restTextInputProps.onFocus?.(event);
           }}
           onBlur={event => {
             setIsFocused(false);
-            if (!searchValue) {
-              setDropdownVisible(false);
-            }
             restTextInputProps.onBlur?.(event);
           }}
           selectionColor={themeVariables.primaryColor}
@@ -226,6 +246,11 @@ const MultiSelectMemberInput = ({
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: 16,
+    position: 'relative',
+  },
+  wrapperOpen: {
+    zIndex: 1000,
+    elevation: 20,
   },
   sectionLabel: {
     fontWeight: '600',
@@ -302,7 +327,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+    zIndex: 1000,
+    elevation: 20,
   },
   dropdownScroll: {
     maxHeight: 220,
