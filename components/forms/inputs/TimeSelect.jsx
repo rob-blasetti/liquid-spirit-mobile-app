@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import DropdownInput from './DropdownInput';
 import themeVariables from '../../../styles/theme';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MINUTES = ['00', '15', '30', '45'];
 
 const TimeSelect = ({ value, onChange, style, inputProps }) => {
+  const { isDarkMode } = useTheme();
   const parts = useMemo(() => {
     if (!(value instanceof Date)) return { hour: '', minute: '', meridiem: 'AM' };
     let hours = value.getHours();
@@ -52,10 +54,11 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
             textInputProps={inputProps}
           />
         </View>
-        <View style={styles.meridiemWrap}>
+        <View style={[styles.meridiemWrap, isDarkMode && styles.meridiemWrapDark]}>
           <TouchableOpacity
             style={[
               styles.meridiemToggle,
+              isDarkMode && styles.meridiemToggleDark,
               parts.meridiem === 'AM' && styles.meridiemToggleActive,
             ]}
             onPress={() => updateTime(null, null, 'AM')}
@@ -64,12 +67,14 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
           >
             <Text style={[
               styles.meridiemText,
+              isDarkMode && styles.meridiemTextDark,
               parts.meridiem === 'AM' && styles.meridiemTextActive,
             ]}>AM</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.meridiemToggle,
+              isDarkMode && styles.meridiemToggleDark,
               parts.meridiem === 'PM' && styles.meridiemToggleActive,
             ]}
             onPress={() => updateTime(null, null, 'PM')}
@@ -78,6 +83,7 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
           >
             <Text style={[
               styles.meridiemText,
+              isDarkMode && styles.meridiemTextDark,
               parts.meridiem === 'PM' && styles.meridiemTextActive,
             ]}>PM</Text>
           </TouchableOpacity>
@@ -114,11 +120,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     backgroundColor: themeVariables.formInputBg || '#ffffff',
   },
+  meridiemWrapDark: {
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    backgroundColor: '#262626',
+  },
   meridiemToggle: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: themeVariables.formInputBg || '#ffffff',
+  },
+  meridiemToggleDark: {
+    backgroundColor: '#262626',
   },
   meridiemToggleActive: {
     backgroundColor: '#312783',
@@ -126,6 +139,9 @@ const styles = StyleSheet.create({
   meridiemText: {
     color: '#222',
     fontWeight: '600',
+  },
+  meridiemTextDark: {
+    color: '#f1f4ff',
   },
   meridiemTextActive: {
     color: '#fff',

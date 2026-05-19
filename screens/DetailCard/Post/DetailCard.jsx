@@ -31,6 +31,7 @@ import AuthorSection from './sections/AuthorSection';
 
 import themeVariables from '../../../styles/theme';
 import { UserContext } from '../../../contexts/UserContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { fetchPostDetails, likePost, commentOnPost, fetchRecentCommunityPosts } from '../../../services/PostService';
 import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
@@ -54,6 +55,7 @@ const { height: windowHeight } = Dimensions.get('window');
 const PostDetailCard = ({ route }) => {
   const navigation = useNavigation();
   const { token, user, storageLoaded, isTokenExpired, refreshSession } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const { bottom: safeAreaBottom } = useSafeAreaInsets();
   // Extract post parameters, including preloaded data and image aspect ratio
   const {
@@ -552,7 +554,10 @@ const PostDetailCard = ({ route }) => {
               {post.tags.map((tag, idx) => (
                 <TouchableOpacity
                   key={idx}
-                  style={styles.tagChipDetail}
+                  style={[
+                    styles.tagChipDetail,
+                    isDarkMode && styles.tagChipDetailDark,
+                  ]}
                   onPress={() =>
                     navigation.navigate('Search', {
                       initialQuery: tag,
@@ -560,7 +565,13 @@ const PostDetailCard = ({ route }) => {
                     })
                   }
                 >
-                  <Text style={styles.tagTextDetail}>{tag}</Text>
+                  <Text
+                    style={[
+                      styles.tagTextDetail,
+                      isDarkMode && styles.tagTextDetailDark,
+                    ]}>
+                    {tag}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -741,11 +752,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     flexShrink: 0,
   },
+  tagChipDetailDark: {
+    backgroundColor: '#44b628',
+  },
   tagTextDetail: {
     fontSize: 14,
     color: themeVariables.blackColor,
     textAlign: 'center',
     flexShrink: 0,
+  },
+  tagTextDetailDark: {
+    color: 'rgb(0, 0, 0)',
   },
   tagsSection: {
     marginTop: 16,

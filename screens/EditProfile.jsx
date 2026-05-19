@@ -19,11 +19,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import themeVariables from '../styles/theme';
 import { colors } from '../styles/colours';
 import { UserContext } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useAuthService } from '../services/AuthService';
 import resolveImageSource from '../utils/imageSource';
 
+const BUTTON_TEXT_COLOR = '#ffffff';
+
 const EditProfile = ({ navigation }) => {
   const { user, userDetails, setUserDetails, setUser } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const { updateMe } = useAuthService();
 
   const [firstName, setFirstName] = useState(user.firstName || '');
@@ -318,16 +322,24 @@ const EditProfile = ({ navigation }) => {
 
     return (
       <View key={field.key} style={styles.fieldBlock}>
-        <View style={[styles.inputShell, hasError && styles.inputShellError]}>
-          <View style={styles.inputIconWrap}>
+        <View
+          style={[
+            styles.inputShell,
+            isDarkMode && styles.inputShellDark,
+            hasError && styles.inputShellError,
+            hasError && isDarkMode && styles.inputShellErrorDark,
+          ]}>
+          <View style={[styles.inputIconWrap, isDarkMode && styles.inputIconWrapDark]}>
             <Ionicons name={field.icon} size={18} color={colors.primary} />
           </View>
           <View style={styles.inputContent}>
-            <Text style={styles.inputLabel}>{field.label}</Text>
+            <Text style={[styles.inputLabel, isDarkMode && styles.inputLabelDark]}>
+              {field.label}
+            </Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDarkMode && styles.inputDark]}
               placeholder={field.placeholder || field.label}
-              placeholderTextColor="#8B94A7"
+              placeholderTextColor={isDarkMode ? 'rgba(241, 244, 255, 0.48)' : '#8B94A7'}
               value={field.value}
               onChangeText={handleChange(field.key, field.onChange)}
               keyboardType={field.keyboardType}
@@ -336,7 +348,11 @@ const EditProfile = ({ navigation }) => {
             />
           </View>
         </View>
-        {field.helperText ? <Text style={styles.helperText}>{field.helperText}</Text> : null}
+        {field.helperText ? (
+          <Text style={[styles.helperText, isDarkMode && styles.helperTextDark]}>
+            {field.helperText}
+          </Text>
+        ) : null}
         {hasError ? <Text style={styles.errorText}>{errors[field.key]}</Text> : null}
       </View>
     );
@@ -348,16 +364,26 @@ const EditProfile = ({ navigation }) => {
     return (
       <View key={field.key} style={styles.fieldBlock}>
         <TouchableOpacity
-          style={[styles.inputShell, styles.dateShell, hasError && styles.inputShellError]}
+          style={[
+            styles.inputShell,
+            styles.dateShell,
+            isDarkMode && styles.inputShellDark,
+            hasError && styles.inputShellError,
+            hasError && isDarkMode && styles.inputShellErrorDark,
+          ]}
           activeOpacity={0.85}
           onPress={() => setShowDatePicker(true)}
         >
-          <View style={styles.inputIconWrap}>
+          <View style={[styles.inputIconWrap, isDarkMode && styles.inputIconWrapDark]}>
             <Ionicons name={field.icon} size={18} color={colors.primary} />
           </View>
           <View style={styles.inputContent}>
-            <Text style={styles.inputLabel}>{field.label}</Text>
-            <Text style={styles.dateValue}>{field.value}</Text>
+            <Text style={[styles.inputLabel, isDarkMode && styles.inputLabelDark]}>
+              {field.label}
+            </Text>
+            <Text style={[styles.dateValue, isDarkMode && styles.inputDark]}>
+              {field.value}
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#8B94A7" />
         </TouchableOpacity>
@@ -367,9 +393,11 @@ const EditProfile = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, isDarkMode && styles.containerDark]}
+      edges={['left', 'right', 'bottom']}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, isDarkMode && styles.heroCardDark]}>
           <View style={styles.avatarCircle}>
             {profilePicture ? (
               <FastImage
@@ -382,16 +410,20 @@ const EditProfile = ({ navigation }) => {
           </View>
           <View style={styles.heroTextWrap}>
             <Text style={styles.heroTitle}>{fullName}</Text>
-            <Text style={styles.heroSubtitle}>
+            <Text style={[styles.heroSubtitle, isDarkMode && styles.heroSubtitleDark]}>
               Keep your details accurate so your profile is easier to trust and use.
             </Text>
           </View>
         </View>
 
         {sections.map(section => (
-          <View key={section.title} style={styles.sectionCard}>
+          <View
+            key={section.title}
+            style={[styles.sectionCard, isDarkMode && styles.sectionCardDark]}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Text style={styles.sectionSubtitle}>{section.subtitle}</Text>
+            <Text style={[styles.sectionSubtitle, isDarkMode && styles.sectionSubtitleDark]}>
+              {section.subtitle}
+            </Text>
             <View style={styles.sectionFields}>
               {section.fields.map(field => (field.isDate ? renderDateField(field) : renderInputField(field)))}
             </View>
@@ -405,10 +437,10 @@ const EditProfile = ({ navigation }) => {
           disabled={saving}
         >
           {saving ? (
-            <ActivityIndicator color={themeVariables.whiteColor} size="small" />
+            <ActivityIndicator color={BUTTON_TEXT_COLOR} size="small" />
           ) : (
             <>
-              <Ionicons name="checkmark-circle-outline" size={18} color={themeVariables.whiteColor} />
+              <Ionicons name="checkmark-circle-outline" size={18} color={BUTTON_TEXT_COLOR} />
               <Text style={styles.saveButtonText}>Save changes</Text>
             </>
           )}
@@ -424,7 +456,7 @@ const EditProfile = ({ navigation }) => {
         >
           <View style={styles.pickerOverlay}>
             <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowDatePicker(false)} />
-            <View style={styles.pickerSheet}>
+            <View style={[styles.pickerSheet, isDarkMode && styles.pickerSheetDark]}>
               <View style={styles.pickerHeader}>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                   <Text style={styles.pickerAction}>Cancel</Text>
@@ -453,6 +485,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F6F8FC',
   },
+  containerDark: {
+    backgroundColor: themeVariables.screenBackgroundColor,
+  },
   scrollView: {
     flex: 1,
   },
@@ -470,6 +505,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#EAF0FF',
     borderWidth: 1,
     borderColor: '#D6E0FF',
+  },
+  heroCardDark: {
+    backgroundColor: '#262a34',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
   },
   avatarCircle: {
     width: 60,
@@ -499,6 +538,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#5E6980',
   },
+  heroSubtitleDark: {
+    color: 'rgba(241, 244, 255, 0.68)',
+  },
   sectionCard: {
     backgroundColor: themeVariables.whiteColor,
     borderRadius: 24,
@@ -506,6 +548,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#E6EBF5',
+  },
+  sectionCardDark: {
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    elevation: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -517,6 +567,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#6F7890',
     marginTop: 4,
+  },
+  sectionSubtitleDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
   },
   sectionFields: {
     marginTop: 16,
@@ -534,12 +587,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     minHeight: 68,
   },
+  inputShellDark: {
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: '#2b2f3a',
+  },
   dateShell: {
     justifyContent: 'space-between',
   },
   inputShellError: {
     borderColor: themeVariables.redColor,
     backgroundColor: '#FFF7F7',
+  },
+  inputShellErrorDark: {
+    backgroundColor: 'rgba(229, 47, 47, 0.12)',
   },
   inputIconWrap: {
     width: 36,
@@ -549,6 +609,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#EEF2FF',
     marginRight: 12,
+  },
+  inputIconWrapDark: {
+    backgroundColor: 'rgba(141, 156, 255, 0.16)',
   },
   inputContent: {
     flex: 1,
@@ -560,10 +623,16 @@ const styles = StyleSheet.create({
     color: '#6A738B',
     marginBottom: 2,
   },
+  inputLabelDark: {
+    color: 'rgba(241, 244, 255, 0.66)',
+  },
   input: {
     fontSize: 16,
     color: '#162033',
     paddingVertical: 0,
+  },
+  inputDark: {
+    color: themeVariables.textSoftInverseColor,
   },
   dateValue: {
     fontSize: 16,
@@ -574,6 +643,9 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 12,
     color: '#7A849B',
+  },
+  helperTextDark: {
+    color: 'rgba(241, 244, 255, 0.58)',
   },
   errorText: {
     marginTop: 6,
@@ -595,7 +667,7 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   saveButtonText: {
-    color: themeVariables.whiteColor,
+    color: BUTTON_TEXT_COLOR,
     fontSize: 16,
     fontWeight: '700',
     marginLeft: 10,
@@ -611,6 +683,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     overflow: 'hidden',
+  },
+  pickerSheetDark: {
+    backgroundColor: '#262a34',
   },
   pickerHeader: {
     flexDirection: 'row',

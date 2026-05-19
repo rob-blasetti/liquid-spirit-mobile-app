@@ -10,6 +10,8 @@ import StaticMapPreview from '../../common/StaticMapPreview';
 import debugLog from '../../../../utils/debugLog';
 import { HAS_NATIVE_GOOGLE_MAPS } from '../../../../config';
 
+const MAP_EXPAND_ICON_COLOR = 'rgb(0, 0, 0)';
+
 const LocationSection = ({
   showMapSection,
   showOnlineSection,
@@ -133,7 +135,7 @@ const LocationSection = ({
             {canExpandMap ? (
               <LiquidGlassIconButton
                 iconName="expand-outline"
-                iconColor={themeVariables.blackColor}
+                iconColor={MAP_EXPAND_ICON_COLOR}
                 onPress={onExpandMap}
                 accessibilityLabel="Expand map"
                 forceFallback

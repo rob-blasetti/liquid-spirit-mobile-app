@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { ChatContext } from '../contexts';
+import { useTheme } from '../contexts/ThemeContext';
 import { sendChatMessage, markMessagesRead } from '../services/ChatService';
 import { initializeSocket, joinChatRoom } from '../services/SocketService';
 import { API_URL } from '../config';
@@ -413,6 +414,7 @@ const HERO_BASE_HEIGHT = 260;
 const ChatDetail = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { isDarkMode } = useTheme();
   const {
     token,
     user,
@@ -875,12 +877,20 @@ const ChatDetail = () => {
   );
 const participantsSection = chatParticipants.length ? (
   <View style={styles.contentWrapper}>
-    <View style={styles.participantsContainer}>
+    <View
+      style={[
+        styles.participantsContainer,
+        isDarkMode && styles.participantsContainerDark,
+      ]}>
         <View style={styles.participantsHeader}>
           <View style={styles.participantsPreviewText}>
-            <Text style={styles.participantsLabel}>Participants</Text>
+            <Text style={[styles.participantsLabel, isDarkMode && styles.participantsLabelDark]}>
+              Participants
+            </Text>
             {!participantsExpanded ? (
-              <Text style={styles.participantsNames} numberOfLines={2}>
+              <Text
+                style={[styles.participantsNames, isDarkMode && styles.participantsNamesDark]}
+                numberOfLines={2}>
                 {participantNamesSummary}
               </Text>
             ) : null}
@@ -918,7 +928,13 @@ const participantsSection = chatParticipants.length ? (
                     </View>
                   )}
                   <View style={styles.participantInfo}>
-                    <Text style={styles.participantName}>{participant.name}</Text>
+                    <Text
+                      style={[
+                        styles.participantName,
+                        isDarkMode && styles.participantNameDark,
+                      ]}>
+                      {participant.name}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -932,7 +948,9 @@ const participantsSection = chatParticipants.length ? (
           </>
         ) : (
           <View style={styles.participantsPreview}>
-            <Text style={styles.participantsLabel}>{chatParticipants.length} total</Text>
+            <Text style={[styles.participantsLabel, isDarkMode && styles.participantsLabelDark]}>
+              {chatParticipants.length} total
+            </Text>
           </View>
         )}
       </View>
@@ -1175,6 +1193,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 12,
   },
+  participantsContainerDark: {
+    backgroundColor: '#252933',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+  },
   participantsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1196,9 +1220,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     color: '#666',
   },
+  participantsLabelDark: {
+    color: 'rgba(241, 244, 255, 0.64)',
+  },
   participantsNames: {
     fontSize: 14,
     color: themeVariables.blackColor,
+  },
+  participantsNamesDark: {
+    color: themeVariables.textSoftInverseColor,
   },
   participantsToggleButton: {
     paddingHorizontal: 8,
@@ -1235,6 +1265,9 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: 15,
     color: themeVariables.blackColor,
+  },
+  participantNameDark: {
+    color: themeVariables.textSoftInverseColor,
   },
   participantInfo: {
     flex: 1,

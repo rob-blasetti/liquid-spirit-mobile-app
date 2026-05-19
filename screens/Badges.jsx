@@ -3,8 +3,11 @@ import { SafeAreaView, StyleSheet, View, Text, ScrollView, Pressable } from 'rea
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useRoute } from '@react-navigation/native';
 import { UserContext } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import themeVariables from '../styles/theme';
 import { STUDY_CIRCLE_BOOKS } from './CreateActivity/constants';
+
+const BADGE_ICON_COLOR = '#ffffff';
 
 const normalizeRuhiBadges = (value) => {
   if (!Array.isArray(value)) return [];
@@ -55,6 +58,7 @@ const FILTERS = [
 const Badges = () => {
   const route = useRoute();
   const { userDetails } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const [activeFilter, setActiveFilter] = useState('all');
   const routeCertifications = route.params?.certifications;
   const profileName = route.params?.profileName || 'My';
@@ -118,34 +122,78 @@ const Badges = () => {
             style={[
               styles.badgeIconWrap,
               { backgroundColor: badge.earned ? color : '#EEF2F7' },
+              !badge.earned && isDarkMode && styles.badgeIconWrapLockedDark,
             ]}
           >
             <Ionicons
               name={badge.icon}
               size={badge.badgeNumber ? 20 : 22}
-              color={themeVariables.whiteColor}
+              color={BADGE_ICON_COLOR}
             />
             {badge.badgeNumber ? (
-              <View style={styles.badgeNumberBubble}>
-                <Text style={styles.badgeNumberText}>{badge.badgeNumber}</Text>
+              <View
+                style={[
+                  styles.badgeNumberBubble,
+                  isDarkMode && styles.badgeNumberBubbleDark,
+                ]}>
+                <Text
+                  style={[
+                    styles.badgeNumberText,
+                    isDarkMode && styles.badgeNumberTextDark,
+                  ]}>
+                  {badge.badgeNumber}
+                </Text>
               </View>
             ) : null}
           </View>
           <View style={styles.badgeTextContainer}>
             <View style={styles.badgeTitleRow}>
-              <Text style={[styles.badgeTitle, { color: badge.earned ? '#172033' : '#667085' }]}>
+              <Text
+                style={[
+                  styles.badgeTitle,
+                  { color: badge.earned ? '#172033' : '#667085' },
+                  isDarkMode && (
+                    badge.earned
+                      ? styles.badgeTitleEarnedDark
+                      : styles.badgeTitleLockedDark
+                  ),
+                ]}>
                 {badge.label}
               </Text>
-              <View style={[styles.statusChip, badge.earned ? styles.statusChipEarned : styles.statusChipLocked]}>
-                <Text style={[styles.statusChipText, badge.earned ? styles.statusChipTextEarned : styles.statusChipTextLocked]}>
+              <View
+                style={[
+                  styles.statusChip,
+                  badge.earned ? styles.statusChipEarned : styles.statusChipLocked,
+                  isDarkMode && (
+                    badge.earned
+                      ? styles.statusChipEarnedDark
+                      : styles.statusChipLockedDark
+                  ),
+                ]}>
+                <Text
+                  style={[
+                    styles.statusChipText,
+                    badge.earned
+                      ? styles.statusChipTextEarned
+                      : styles.statusChipTextLocked,
+                    isDarkMode && (
+                      badge.earned
+                        ? styles.statusChipTextEarnedDark
+                        : styles.statusChipTextLockedDark
+                    ),
+                  ]}>
                   {badge.earned ? 'Earned' : 'Locked'}
                 </Text>
               </View>
             </View>
-            <Text style={styles.badgeDescription}>{badge.description}</Text>
+            <Text style={[styles.badgeDescription, isDarkMode && styles.badgeDescriptionDark]}>
+              {badge.description}
+            </Text>
           </View>
         </View>
-        {idx < list.length - 1 && <View style={styles.divider} />}
+        {idx < list.length - 1 && (
+          <View style={[styles.divider, isDarkMode && styles.dividerDark]} />
+        )}
       </View>
     );
   };
@@ -155,8 +203,14 @@ const Badges = () => {
       <ScrollView contentContainerStyle={styles.content}>
         {routeCertifications ? (
           <View style={styles.profileHeading}>
-            <Text style={styles.profileHeadingTitle}>{profileName} Badges</Text>
-            <Text style={styles.profileHeadingSubtitle}>
+            <Text style={[styles.profileHeadingTitle, isDarkMode && styles.profileHeadingTitleDark]}>
+              {profileName} Badges
+            </Text>
+            <Text
+              style={[
+                styles.profileHeadingSubtitle,
+                isDarkMode && styles.profileHeadingSubtitleDark,
+              ]}>
               Community recognition and Ruhi study milestones visible on this profile.
             </Text>
           </View>
@@ -173,10 +227,16 @@ const Badges = () => {
                 style={[
                   styles.filterPill,
                   !isLast && styles.filterPillSpacing,
+                  isDarkMode && styles.filterPillDark,
                   isActive && styles.filterPillActive,
                 ]}
               >
-                <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    isDarkMode && styles.filterPillTextDark,
+                    isActive && styles.filterPillTextActive,
+                  ]}>
                   {filter.label}
                 </Text>
               </Pressable>
@@ -187,11 +247,15 @@ const Badges = () => {
         {showCommunity && (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Community Badges</Text>
-              <Text style={styles.sectionCaption}>Recognition for verification, safety, and service.</Text>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.sectionTitleDark]}>
+                Community Badges
+              </Text>
+              <Text style={[styles.sectionCaption, isDarkMode && styles.sectionCaptionDark]}>
+                Recognition for verification, safety, and service.
+              </Text>
             </View>
 
-            <View style={styles.badgesCard}>
+            <View style={[styles.badgesCard, isDarkMode && styles.badgesCardDark]}>
               {badgeItems.map((badge, idx, list) => renderBadgeRow(badge, idx, list))}
             </View>
           </>
@@ -200,11 +264,15 @@ const Badges = () => {
         {showRuhi && (
           <>
             <View style={showCommunity ? styles.sectionHeaderSecondary : styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Ruhi Sequence</Text>
-              <Text style={styles.sectionCaption}>Study milestones completed through the Ruhi institute books.</Text>
+              <Text style={[styles.sectionTitle, isDarkMode && styles.sectionTitleDark]}>
+                Ruhi Sequence
+              </Text>
+              <Text style={[styles.sectionCaption, isDarkMode && styles.sectionCaptionDark]}>
+                Study milestones completed through the Ruhi institute books.
+              </Text>
             </View>
 
-            <View style={styles.badgesCard}>
+            <View style={[styles.badgesCard, isDarkMode && styles.badgesCardDark]}>
               {ruhiList.map((badge, idx, list) => renderBadgeRow(badge, idx, list))}
             </View>
           </>
@@ -232,11 +300,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#172033',
   },
+  profileHeadingTitleDark: {
+    color: themeVariables.textSoftInverseColor,
+  },
   profileHeadingSubtitle: {
     marginTop: 4,
     fontSize: 14,
     lineHeight: 20,
     color: '#667085',
+  },
+  profileHeadingSubtitleDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
   },
   filterRow: {
     flexDirection: 'row',
@@ -247,6 +321,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
     backgroundColor: '#EEF2F7',
+  },
+  filterPillDark: {
+    backgroundColor: '#2b2f3a',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterPillSpacing: {
     marginRight: 10,
@@ -259,8 +338,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#475467',
   },
+  filterPillTextDark: {
+    color: 'rgba(241, 244, 255, 0.76)',
+  },
   filterPillTextActive: {
-    color: themeVariables.whiteColor,
+    color: BADGE_ICON_COLOR,
   },
   sectionHeader: {
     marginBottom: 10,
@@ -275,15 +357,30 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
   },
+  badgesCardDark: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.35,
+    shadowRadius: 22,
+    elevation: 10,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#172033',
   },
+  sectionTitleDark: {
+    color: themeVariables.textSoftInverseColor,
+  },
   sectionCaption: {
     marginTop: 4,
     fontSize: 13,
     color: '#667085',
+  },
+  sectionCaptionDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -298,6 +395,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
     alignSelf: 'center',
+  },
+  badgeIconWrapLockedDark: {
+    backgroundColor: '#343946',
   },
   badgeTextContainer: {
     flex: 1,
@@ -321,10 +421,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  badgeNumberBubbleDark: {
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
   badgeNumberText: {
     fontSize: 10,
     fontWeight: '800',
     color: '#4A148C',
+  },
+  badgeNumberTextDark: {
+    color: BADGE_ICON_COLOR,
   },
   badgeTitleRow: {
     flexDirection: 'row',
@@ -338,10 +445,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     paddingRight: 8,
   },
+  badgeTitleEarnedDark: {
+    color: themeVariables.textSoftInverseColor,
+  },
+  badgeTitleLockedDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
+  },
   badgeDescription: {
     fontSize: 13,
     lineHeight: 18,
     color: '#667085',
+  },
+  badgeDescriptionDark: {
+    color: 'rgba(241, 244, 255, 0.58)',
   },
   statusChip: {
     borderRadius: 999,
@@ -354,6 +470,12 @@ const styles = StyleSheet.create({
   statusChipLocked: {
     backgroundColor: '#EEF2F7',
   },
+  statusChipEarnedDark: {
+    backgroundColor: 'rgba(34, 122, 58, 0.2)',
+  },
+  statusChipLockedDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  },
   statusChipText: {
     fontSize: 11,
     fontWeight: '700',
@@ -364,9 +486,18 @@ const styles = StyleSheet.create({
   statusChipTextLocked: {
     color: '#667085',
   },
+  statusChipTextEarnedDark: {
+    color: '#8ee0a3',
+  },
+  statusChipTextLockedDark: {
+    color: 'rgba(241, 244, 255, 0.68)',
+  },
   divider: {
     height: 1,
     backgroundColor: '#E9EDF5',
+  },
+  dividerDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
 });
 

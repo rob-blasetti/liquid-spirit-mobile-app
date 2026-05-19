@@ -610,7 +610,11 @@ const Home = ({navigation, homeOverview, route}) => {
                   color={themeVariables.primaryColor}
                 />
                 <Text style={styles.loadingTitle}>Loading your home feed</Text>
-                <Text style={styles.loadingSubtitle}>
+                <Text
+                  style={[
+                    styles.loadingSubtitle,
+                    isDarkMode && styles.loadingSubtitleDark,
+                  ]}>
                   Just a moment while we bring everything in.
                 </Text>
               </View>
@@ -1225,6 +1229,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: 'rgba(0,0,0,0.58)',
     textAlign: 'center',
+  },
+  loadingSubtitleDark: {
+    color: 'rgba(241, 244, 255, 0.82)',
   },
   glassOverlay: {
     backgroundColor: 'rgba(255,255,255,0.04)',

@@ -17,6 +17,8 @@ import { getMarkerCoordinate, normalizeMapRegion } from './DetailCard/common/map
 import themeVariables from '../styles/theme';
 import { HAS_NATIVE_GOOGLE_MAPS } from '../config';
 
+const MAP_CLOSE_ICON_COLOR = 'rgb(0, 0, 0)';
+
 const MapPreviewScreen = ({ navigation, route }) => {
   const { bottom } = useSafeAreaInsets();
   const { title = 'Host Address', fullAddress = '', region } = route?.params || {};
@@ -67,7 +69,7 @@ const MapPreviewScreen = ({ navigation, route }) => {
           <View style={styles.topBarSpacer} />
           <LiquidGlassIconButton
             iconName="close"
-            iconColor={themeVariables.blackColor}
+            iconColor={MAP_CLOSE_ICON_COLOR}
             onPress={() => navigation.goBack()}
             accessibilityLabel="Close map"
             forceFallback

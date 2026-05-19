@@ -46,16 +46,20 @@ const AttendanceSection = ({
         </TouchableOpacity>
       ) : null
     }
-    bodyStyle={styles.attendeesCard}>
-      <Text style={styles.attendeesSummaryText}>
-        {hasJoined
-          ? attendees.length > 1
-            ? `You and ${attendees.length - 1} other${attendees.length - 1 === 1 ? '' : 's'} are attending.`
-            : 'You are the first attendee so far.'
-          : attendees.length > 0
-            ? `${attendees.length} ${attendees.length === 1 ? 'person is' : 'people are'} attending so far.`
-            : 'No attendees yet. Be the first to join this event.'}
-      </Text>
+    bodyStyle={
+      attendees.length > 0
+        ? styles.attendeesCard
+        : styles.attendeesEmptyCard || styles.attendeesCard
+    }>
+      {hasJoined || attendees.length > 0 ? (
+        <Text style={styles.attendeesSummaryText}>
+          {hasJoined
+            ? attendees.length > 1
+              ? `You and ${attendees.length - 1} other${attendees.length - 1 === 1 ? '' : 's'} are attending.`
+              : 'You are the first attendee so far.'
+            : `${attendees.length} ${attendees.length === 1 ? 'person is' : 'people are'} attending so far.`}
+        </Text>
+      ) : null}
       <View style={styles.attendeeList}>
         {Array.isArray(attendees) && attendees.length > 0 ? (
           attendees.slice(0, ATTENDEE_PREVIEW_LIMIT).map((a, idx) => (

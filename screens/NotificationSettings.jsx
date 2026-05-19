@@ -4,10 +4,12 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { getPushPreferences, updatePushPreferences } from '../services/PushPreferencesService.jsx';
 
 const NotificationSettings = () => {
   const { user, token } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [pushPrefs, setPushPrefs] = useState(null);
@@ -117,7 +119,11 @@ const NotificationSettings = () => {
           <View key={group.title} style={styles.section}>
             <Text style={styles.sectionTitle}>{group.title}</Text>
             <Text style={styles.sectionHint}>{group.hint}</Text>
-            <View style={styles.groupContainer}>
+            <View
+              style={[
+                styles.groupContainer,
+                isDarkMode && styles.groupContainerDark,
+              ]}>
               {group.items.map((item, idx) => (
                 <View key={item.key}>
                   <View style={styles.groupRow}>
@@ -129,7 +135,14 @@ const NotificationSettings = () => {
                       disabled={loadingPrefs || savingKey === item.key}
                     />
                   </View>
-                  {idx < group.items.length - 1 && <View style={styles.groupSeparator} />}
+                  {idx < group.items.length - 1 && (
+                    <View
+                      style={[
+                        styles.groupSeparator,
+                        isDarkMode && styles.groupSeparatorDark,
+                      ]}
+                    />
+                  )}
                 </View>
               ))}
             </View>
@@ -175,6 +188,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  groupContainerDark: {
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
   groupRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -185,6 +201,9 @@ const styles = StyleSheet.create({
   groupSeparator: {
     height: 1,
     backgroundColor: themeVariables.blackColor,
+  },
+  groupSeparatorDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   itemText: {
     flex: 1,

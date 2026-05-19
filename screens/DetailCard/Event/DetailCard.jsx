@@ -55,6 +55,7 @@ import UserBadgeCell from '../../../components/UserBadgeCell';
 import { fetchUserBodyByEventType } from '../../../services/UserBodyService';
 import { UserContext } from '../../../contexts/UserContext';
 import { CommunityContext } from '../../../contexts/CommunityContext';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { shareContent } from '../../../utils/shareContent';
 import FooterBrand from '../common/FooterBrand';
 import useGoogleMaps from '../../../hooks/useGoogleMaps';
@@ -408,6 +409,7 @@ const EventCardBody = ({
   // Access current user and community from context for joining
   const { user } = useContext(UserContext);
   const { communityId, homeOverview } = useContext(CommunityContext);
+  const { isDarkMode } = useTheme();
   // Local state to track if a host request has been sent
   const hostRequestSent = useMemo(() => {
     if (!userId || !Array.isArray(event.hostRequests)) return false;
@@ -902,6 +904,33 @@ const EventCardBody = ({
     priority: 'high',
     fallback: '/img/events/Event_Placeholder.png',
   });
+  const eventDetailStyles = useMemo(() => {
+    if (!isDarkMode) return styles;
+
+    return {
+      ...styles,
+      emptyStateCard: [styles.emptyStateCard, styles.emptyStateCardDark],
+      emptyStateIconWrap: [
+        styles.emptyStateIconWrap,
+        styles.emptyStateIconWrapDark,
+      ],
+      emptyStateTitle: [styles.emptyStateTitle, styles.emptyStateTitleDark],
+      emptyStateSubtitle: [
+        styles.emptyStateSubtitle,
+        styles.emptyStateSubtitleDark,
+      ],
+      attendeesCard: [styles.attendeesCard, styles.attendeesCardDark],
+      attendeesEmptyCard: [
+        styles.attendeesCard,
+        styles.attendeesCardDark,
+        styles.attendeesEmptyCardDark,
+      ],
+      attendeesSummaryText: [
+        styles.attendeesSummaryText,
+        styles.attendeesSummaryTextDark,
+      ],
+    };
+  }, [isDarkMode]);
 
   return (
     <>
@@ -951,13 +980,13 @@ const EventCardBody = ({
           onRemoveHost={handleRemoveHost}
           hostRequestSent={hostRequestSent}
           onRequestHost={handleRequestHost}
-          styles={styles}
+          styles={eventDetailStyles}
         />
         <MaterialsSection
           materials={materials}
           isAdmin={canManageOversightEvent}
           onAddMaterial={canManageOversightEvent ? () => setMaterialModalVisible(true) : undefined}
-          styles={styles}
+          styles={eventDetailStyles}
         />
         <DetailSection
           title="Oversight Body"
@@ -1007,7 +1036,7 @@ const EventCardBody = ({
         </DetailSection>
         <AttendanceSection
           attendees={attendees}
-          styles={styles}
+          styles={eventDetailStyles}
           hasJoined={hasJoined}
           onJoin={handleJoin}
           onShowAll={() => setAttendeesModalVisible(true)}
@@ -1262,6 +1291,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E6E7EE',
   },
+  emptyStateCardDark: {
+    backgroundColor: '#1f1f1f',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+  },
   emptyStateIconWrap: {
     width: 44,
     height: 44,
@@ -1271,11 +1304,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF0FF',
     marginBottom: 10,
   },
+  emptyStateIconWrapDark: {
+    backgroundColor: 'rgba(141, 156, 255, 0.16)',
+  },
   emptyStateTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'center',
+  },
+  emptyStateTitleDark: {
+    color: '#f1f4ff',
   },
   emptyStateSubtitle: {
     marginTop: 4,
@@ -1283,6 +1322,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#6B7280',
     textAlign: 'center',
+  },
+  emptyStateSubtitleDark: {
+    color: 'rgba(241, 244, 255, 0.72)',
   },
   mapFallback: {
     flexDirection: 'column',
@@ -1418,6 +1460,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     marginTop: 8,
   },
+  attendeesCardDark: {
+    backgroundColor: '#1f1f1f',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  attendeesEmptyCardDark: {
+    borderWidth: 0,
+  },
   attendeesHeaderBadge: {
     alignSelf: 'flex-start',
     borderRadius: 999,
@@ -1445,6 +1494,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: themeVariables.textColor || '#444',
     marginBottom: 14,
+  },
+  attendeesSummaryTextDark: {
+    color: 'rgba(241, 244, 255, 0.86)',
   },
   attendeeList: {
     flexDirection: 'row',
