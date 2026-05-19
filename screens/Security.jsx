@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import { CommonActions, useFocusEffect } from '@react-navigation/native';
 
 import { UserContext } from '../contexts/UserContext';
@@ -19,8 +20,16 @@ import { useAuthService } from '../services/AuthService';
 import { PASSKEY_WEBSITE_PATH, WEB_APP_URL } from '../config';
 import themeVariables from '../styles/theme';
 
+const SOCIAL_ACCOUNT_CONFIG = [
+  { key: 'facebook', label: 'Facebook', icon: 'logo-facebook' },
+  { key: 'instagram', label: 'Instagram', icon: 'logo-instagram' },
+  { key: 'x', label: 'X', icon: 'x-twitter', iconSet: 'fontawesome6' },
+  { key: 'linkedin', label: 'LinkedIn', icon: 'logo-linkedin' },
+  { key: 'tiktok', label: 'TikTok', icon: 'musical-notes-outline' },
+];
+
 const Security = ({ navigation }) => {
-  const { user, token, logout } = useContext(UserContext);
+  const { user, userDetails, token, logout } = useContext(UserContext);
   const { deleteAccount, createPasskey, isPasskeySupported, fetchPasskeyCredentials } =
     useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -117,6 +126,22 @@ const Security = ({ navigation }) => {
 
   const hasPasskeys = passkeys.length > 0;
   const primaryPasskey = hasPasskeys ? passkeys[0] : null;
+  const connectedSocialAccounts = useMemo(() => {
+    const social = userDetails?.socialMedia || user?.socialMedia || userDetails?.social || user?.social || {};
+
+    return SOCIAL_ACCOUNT_CONFIG.map(account => {
+      const rawValue = typeof social?.[account.key] === 'string'
+        ? social[account.key].trim()
+        : '';
+
+      return rawValue
+        ? {
+          ...account,
+          value: rawValue,
+        }
+        : null;
+    }).filter(Boolean);
+  }, [user, userDetails]);
 
   useFocusEffect(useCallback(() => {
     loadPasskeys();
@@ -215,6 +240,32 @@ const Security = ({ navigation }) => {
     navigation.navigate('PasskeyDetails', { passkey: primaryPasskey });
   }, [navigation, primaryPasskey]);
 
+  const handleOpenSocialAccount = useCallback(async value => {
+    if (!value || !/^https?:\/\//i.test(value)) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(value);
+    } catch (error) {
+      console.error('Error opening social account:', error);
+    }
+  }, []);
+
+  const renderSocialAccountIcon = account => {
+    if (account.iconSet === 'fontawesome6') {
+      return (
+        <FontAwesome6
+          name={account.icon}
+          size={18}
+          color={themeVariables.blackColor}
+        />
+      );
+    }
+
+    return <Ionicons name={account.icon} size={20} color={themeVariables.blackColor} />;
+  };
+
   const handleLogout = async () => {
     await logout();
     const rootNav = getRootNavigation();
@@ -259,19 +310,14 @@ const Security = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <View style={styles.section}>
-        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
-          <Ionicons name="lock-closed-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>Update Password</Text>
-          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-        </TouchableOpacity>
-
+        <Text style={styles.sectionHeading}>Login</Text>
         <TouchableOpacity
           style={styles.item}
           onPress={hasPasskeys ? handleViewPasskey : handleCreatePasskey}
           disabled={passkeyLoading || passkeysLoading}
         >
           <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
-          <Text style={styles.itemText}>{hasPasskeys ? 'View Passkey' : 'Create Passkey'}</Text>
+          <Text style={styles.itemText}>Passkeys</Text>
           {passkeyLoading || passkeysLoading ? (
             <ActivityIndicator color={themeVariables.blackColor} size="small" />
           ) : (
@@ -279,6 +325,58 @@ const Security = ({ navigation }) => {
           )}
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChangePassword')}>
+          <Ionicons name="lock-closed-outline" size={20} color={themeVariables.blackColor} />
+          <Text style={styles.itemText}>Update Password</Text>
+          <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionHeading}>Social Accounts</Text>
+        {connectedSocialAccounts.length > 0 ? (
+          connectedSocialAccounts.map(account => {
+            const isLink = /^https?:\/\//i.test(account.value);
+            const content = (
+              <>
+                {renderSocialAccountIcon(account)}
+                <View style={styles.socialTextBlock}>
+                  <Text style={styles.socialAccountLabel}>{account.label}</Text>
+                  <Text style={styles.socialAccountValue} numberOfLines={1}>
+                    {account.value}
+                  </Text>
+                </View>
+                {isLink ? (
+                  <Ionicons name="open-outline" size={18} color={themeVariables.blackColor} />
+                ) : null}
+              </>
+            );
+
+            return isLink ? (
+              <TouchableOpacity
+                key={account.key}
+                style={styles.item}
+                onPress={() => handleOpenSocialAccount(account.value)}
+                activeOpacity={0.75}
+              >
+                {content}
+              </TouchableOpacity>
+            ) : (
+              <View key={account.key} style={styles.item}>
+                {content}
+              </View>
+            );
+          })
+        ) : (
+          <View style={styles.item}>
+            <Ionicons name="share-social-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>No social accounts connected</Text>
+          </View>
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionHeading}>Account</Text>
         <TouchableOpacity style={styles.item} onPress={handleLogout}>
           <Ionicons name="log-out-outline" size={20} color={themeVariables.blackColor} />
           <Text style={styles.itemText}>Logout</Text>
@@ -334,6 +432,15 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: themeVariables.whiteColor,
+    marginBottom: 18,
+  },
+  sectionHeading: {
+    color: themeVariables.blackColor,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   item: {
     flexDirection: 'row',
@@ -348,6 +455,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 15,
     color: themeVariables.blackColor,
+  },
+  socialTextBlock: {
+    flex: 1,
+    marginLeft: 15,
+    marginRight: 12,
+  },
+  socialAccountLabel: {
+    color: themeVariables.blackColor,
+    fontSize: 16,
+  },
+  socialAccountValue: {
+    marginTop: 3,
+    color: themeVariables.textMutedStrongColor || '#666',
+    fontSize: 13,
   },
   destructiveItemText: {
     color: themeVariables.redColor,
