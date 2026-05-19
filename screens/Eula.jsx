@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
+    color: '#333',
     marginBottom: 16,
   },
   scrollView: {
