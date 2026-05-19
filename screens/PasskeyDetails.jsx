@@ -12,8 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
+import { useTheme } from '../contexts/ThemeContext';
 import { useAuthService } from '../services/AuthService';
 import themeVariables from '../styles/theme';
+
+const WHITE_ICON_COLOR = '#FFFFFF';
 
 const formatPasskeyId = (value) => {
   const trimmed = String(value || '').trim();
@@ -34,6 +37,7 @@ const formatCreatedAt = (value) => {
 
 const PasskeyDetails = ({ navigation, route }) => {
   const { deletePasskeyCredential } = useAuthService();
+  const { isDarkMode } = useTheme();
   const [deleting, setDeleting] = useState(false);
   const tabBarHeight = useBottomTabBarHeight();
 
@@ -94,20 +98,32 @@ const PasskeyDetails = ({ navigation, route }) => {
         contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 24 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
-          <View style={styles.iconWrap}>
-            <Ionicons name="key-outline" size={30} color={themeVariables.primaryColor} />
+        <View style={[styles.heroCard, isDarkMode && styles.heroCardDark]}>
+          <View style={[styles.iconWrap, isDarkMode && styles.iconWrapDark]}>
+            <Ionicons
+              name="key-outline"
+              size={30}
+              color={isDarkMode ? WHITE_ICON_COLOR : themeVariables.primaryColor}
+            />
           </View>
 
-          <Text style={styles.title}>Passkey Details</Text>
-          <Text style={styles.subtitle}>Use this passkey to sign in securely on this device.</Text>
+          <Text style={[styles.title, isDarkMode && styles.titleDark]}>Passkey Details</Text>
+          <Text style={[styles.subtitle, isDarkMode && styles.subtitleDark]}>
+            Use this passkey to sign in securely on this device.
+          </Text>
 
-          <View style={styles.credentialCard}>
-            <Text style={styles.cardLabel}>Credential ID</Text>
-            <Text style={styles.cardValue} selectable>
+          <View style={[styles.credentialCard, isDarkMode && styles.credentialCardDark]}>
+            <Text style={[styles.cardLabel, isDarkMode && styles.cardLabelDark]}>
+              Credential ID
+            </Text>
+            <Text style={[styles.cardValue, isDarkMode && styles.cardValueDark]} selectable>
               {formattedPasskeyId}
             </Text>
-            {createdAtLabel ? <Text style={styles.cardMeta}>Created {createdAtLabel}</Text> : null}
+            {createdAtLabel ? (
+              <Text style={[styles.cardMeta, isDarkMode && styles.cardMetaDark]}>
+                Created {createdAtLabel}
+              </Text>
+            ) : null}
           </View>
         </View>
 
@@ -118,10 +134,10 @@ const PasskeyDetails = ({ navigation, route }) => {
           activeOpacity={0.88}
         >
           {deleting ? (
-            <ActivityIndicator color={themeVariables.whiteColor} size="small" />
+            <ActivityIndicator color={WHITE_ICON_COLOR} size="small" />
           ) : (
             <>
-              <Ionicons name="trash-outline" size={18} color={themeVariables.whiteColor} />
+              <Ionicons name="trash-outline" size={18} color={WHITE_ICON_COLOR} />
               <Text style={styles.deleteButtonText}>Delete Passkey</Text>
             </>
           )}
@@ -157,6 +173,13 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 24,
   },
+  heroCardDark: {
+    backgroundColor: themeVariables.surfaceDark2Color,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   iconWrap: {
     width: 76,
     height: 76,
@@ -172,12 +195,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
   },
+  iconWrapDark: {
+    backgroundColor: 'rgba(141, 156, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    shadowOpacity: 0,
+  },
   title: {
     fontSize: 26,
     fontWeight: '700',
     color: themeVariables.blackColor,
     textAlign: 'center',
     marginBottom: 8,
+  },
+  titleDark: {
+    color: themeVariables.textSoftInverseColor,
   },
   subtitle: {
     fontSize: 14,
@@ -186,6 +217,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 320,
     marginBottom: 24,
+  },
+  subtitleDark: {
+    color: 'rgba(241, 244, 255, 0.72)',
   },
   credentialCard: {
     width: '100%',
@@ -197,11 +231,18 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     alignItems: 'center',
   },
+  credentialCardDark: {
+    backgroundColor: themeVariables.surfaceDark3Color,
+    borderColor: 'rgba(255, 255, 255, 0.24)',
+  },
   cardLabel: {
     fontSize: 20,
     fontWeight: 'bold',
     color: themeVariables.blackColor,
     marginBottom: 10,
+  },
+  cardLabelDark: {
+    color: themeVariables.textSoftInverseColor,
   },
   cardValue: {
     fontSize: 18,
@@ -210,11 +251,17 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
     letterSpacing: 1.1,
   },
+  cardValueDark: {
+    color: themeVariables.textSoftInverseColor,
+  },
   cardMeta: {
     fontSize: 14,
     color: '#6C7690',
     marginTop: 16,
     textAlign: 'center',
+  },
+  cardMetaDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
   },
   deleteButton: {
     minHeight: 52,
@@ -236,7 +283,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   deleteButtonText: {
-    color: themeVariables.whiteColor,
+    color: WHITE_ICON_COLOR,
     fontSize: 16,
     fontWeight: '700',
     marginLeft: 8,

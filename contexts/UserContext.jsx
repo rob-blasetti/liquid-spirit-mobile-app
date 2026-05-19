@@ -22,12 +22,14 @@ import { initializeSocket } from '../services/SocketService';
 import { fetchChats } from '../services/ChatService';
 import { syncNextEventWidget } from '../services/WidgetService';
 import { fetchHouseholdByMemberId } from '../services/HouseholdService';
+import { fetchPasskeyCredentialsWithToken } from '../services/PasskeyService';
 import useMountEffect from '../hooks/useMountEffect';
 import { setAuthExpiredHandler } from '../utils/authSessionEvents';
 import { navigateWhenReady } from '../navigation/RootNavigation';
 
 const CHAT_BADGE_POLL_INTERVAL = 15000;
 const REFRESH_DEDUP_WINDOW_MS = 5000;
+const PASSKEY_CREDENTIALS_STORAGE_KEY = 'passkeyCredentials';
 
 const normalizeChatPayload = (payload) => {
   if (!payload) return [];
@@ -171,6 +173,30 @@ const computeUnreadSummary = (payload) => {
   return { chats };
 };
 
+const extractPasskeyCredentials = payload => {
+  const candidates = [
+    payload,
+    payload?.data,
+    payload?.result,
+    payload?.credentials,
+    payload?.passkeys,
+    payload?.data?.credentials,
+    payload?.data?.passkeys,
+    payload?.result?.credentials,
+    payload?.result?.passkeys,
+    payload?.user?.credentials,
+    payload?.user?.passkeys,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+  }
+
+  return [];
+};
+
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
@@ -183,6 +209,9 @@ export const UserProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [userNotifications, setUserNotifications] = useState(null);
   const [householdSettings, setHouseholdSettings] = useState(null);
+  const [passkeyCredentials, setPasskeyCredentials] = useState([]);
+  const [passkeyCredentialsLoaded, setPasskeyCredentialsLoaded] = useState(false);
+  const [passkeyCredentialsLoading, setPasskeyCredentialsLoading] = useState(false);
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [chatNotificationCount, setChatNotificationCount] = useState(0);
@@ -197,6 +226,8 @@ export const UserProvider = ({ children }) => {
   const chatPollingRef = useRef(null);
   const chatBadgeRefreshInFlightRef = useRef(null);
   const notificationRefreshInFlightRef = useRef(null);
+  const passkeyRefreshInFlightRef = useRef(null);
+  const passkeyCredentialsRef = useRef([]);
   const lastChatBadgeRefreshAtRef = useRef(0);
   const lastNotificationRefreshAtRef = useRef(0);
   const chatServerUnreadRef = useRef({});
@@ -277,6 +308,7 @@ export const UserProvider = ({ children }) => {
           storedUserPosts,
           storedUserDetails,
           storedHouseholdSettings,
+          storedPasskeyCredentials,
         ] = await Promise.all([
           loadSessionTokens(),
           AsyncStorage.getItem('user'),
@@ -285,6 +317,7 @@ export const UserProvider = ({ children }) => {
           AsyncStorage.getItem('userPosts'),
           AsyncStorage.getItem('userDetails'),
           AsyncStorage.getItem('householdSettings'),
+          AsyncStorage.getItem(PASSKEY_CREDENTIALS_STORAGE_KEY),
         ]);
 
         if (accessToken) {
@@ -298,6 +331,12 @@ export const UserProvider = ({ children }) => {
         if (storedUserPosts) setUserPosts(JSON.parse(storedUserPosts));
         if (storedUserDetails) setUserDetails(JSON.parse(storedUserDetails));
         if (storedHouseholdSettings) setHouseholdSettings(JSON.parse(storedHouseholdSettings));
+        if (storedPasskeyCredentials) {
+          const cachedPasskeyCredentials = JSON.parse(storedPasskeyCredentials);
+          passkeyCredentialsRef.current = cachedPasskeyCredentials;
+          setPasskeyCredentials(cachedPasskeyCredentials);
+          setPasskeyCredentialsLoaded(true);
+        }
       } catch (error) {
         console.error('Error loading cached data:', error);
       }
@@ -382,6 +421,71 @@ export const UserProvider = ({ children }) => {
     refreshHouseholdSettings().catch(() => {});
   }, [refreshHouseholdSettings, token, user?.id]);
 
+  const refreshPasskeyCredentials = useCallback(async ({ tokenOverride = null, force = false } = {}) => {
+    const activeToken = tokenOverride || token;
+    if (!activeToken) {
+      setPasskeyCredentials([]);
+      passkeyCredentialsRef.current = [];
+      setPasskeyCredentialsLoaded(true);
+      await AsyncStorage.removeItem(PASSKEY_CREDENTIALS_STORAGE_KEY);
+      return [];
+    }
+
+    if (!force && passkeyRefreshInFlightRef.current) {
+      return passkeyRefreshInFlightRef.current;
+    }
+
+    setPasskeyCredentialsLoading(true);
+    const refreshPromise = (async () => {
+      try {
+        const result = await fetchPasskeyCredentialsWithToken(activeToken);
+        if (!result?.ok) {
+          const errorMessage =
+            result?.data?.error?.message || result?.data?.message || 'Failed to fetch passkeys.';
+          const isRateLimited = result?.status === 429 || /too many requests/i.test(errorMessage);
+
+          if (isRateLimited) {
+            console.warn('Passkey fetch rate limited. Keeping current list.');
+            setPasskeyCredentialsLoaded(true);
+            return passkeyCredentialsRef.current;
+          }
+
+          console.warn('Failed to fetch passkeys:', result?.data);
+          passkeyCredentialsRef.current = [];
+          setPasskeyCredentials([]);
+          setPasskeyCredentialsLoaded(true);
+          await AsyncStorage.removeItem(PASSKEY_CREDENTIALS_STORAGE_KEY);
+          return [];
+        }
+
+        const credentials = extractPasskeyCredentials(result.data);
+        passkeyCredentialsRef.current = credentials;
+        setPasskeyCredentials(credentials);
+        setPasskeyCredentialsLoaded(true);
+        await AsyncStorage.setItem(PASSKEY_CREDENTIALS_STORAGE_KEY, JSON.stringify(credentials));
+        return credentials;
+      } catch (error) {
+        console.error('Error fetching passkeys:', error);
+        passkeyCredentialsRef.current = [];
+        setPasskeyCredentials([]);
+        setPasskeyCredentialsLoaded(true);
+        await AsyncStorage.removeItem(PASSKEY_CREDENTIALS_STORAGE_KEY);
+        return [];
+      } finally {
+        setPasskeyCredentialsLoading(false);
+        passkeyRefreshInFlightRef.current = null;
+      }
+    })();
+
+    passkeyRefreshInFlightRef.current = refreshPromise;
+    return refreshPromise;
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !user?.id || passkeyCredentialsLoaded) return;
+    refreshPasskeyCredentials().catch(() => {});
+  }, [passkeyCredentialsLoaded, refreshPasskeyCredentials, token, user?.id]);
+
   // Fetch full user details (including certifications) and sync profile picture on startup
   useEffect(() => {
     if (!token || !user?.id) return;
@@ -418,6 +522,8 @@ export const UserProvider = ({ children }) => {
         refreshToken: typeof newRefreshToken === 'string' && newRefreshToken.length > 0 ? newRefreshToken : null,
       });
 
+      await refreshPasskeyCredentials({ tokenOverride: authToken, force: true });
+
       if (email && password) {
         // Store credentials securely without prompting biometric on save (will prompt on retrieval)
         await Keychain.setGenericPassword(email, password, {
@@ -439,6 +545,10 @@ export const UserProvider = ({ children }) => {
       setUserEvents(null);
       setUserPosts(null);
       setHouseholdSettings(null);
+      passkeyCredentialsRef.current = [];
+      setPasskeyCredentials([]);
+      setPasskeyCredentialsLoaded(false);
+      setPasskeyCredentialsLoading(false);
       setHasNewChatMessages(false);
       setChatNotificationCount(0);
       setIsChatTabActive(false);
@@ -457,6 +567,7 @@ export const UserProvider = ({ children }) => {
         'userPosts',
         'userDetails',
         'householdSettings',
+        PASSKEY_CREDENTIALS_STORAGE_KEY,
       ]);
       await clearSessionTokens();
     } catch (error) {
@@ -858,6 +969,10 @@ export const UserProvider = ({ children }) => {
         householdSettings,
         setHouseholdSettings,
         refreshHouseholdSettings,
+        passkeyCredentials,
+        passkeyCredentialsLoaded,
+        passkeyCredentialsLoading,
+        refreshPasskeyCredentials,
         login,
         logout,
         isLoggedIn: !!token,

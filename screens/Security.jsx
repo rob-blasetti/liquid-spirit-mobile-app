@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -29,48 +29,24 @@ const SOCIAL_ACCOUNT_CONFIG = [
 ];
 
 const Security = ({ navigation }) => {
-  const { user, userDetails, token, logout } = useContext(UserContext);
-  const { deleteAccount, createPasskey, isPasskeySupported, fetchPasskeyCredentials } =
-    useAuthService();
+  const {
+    user,
+    userDetails,
+    token,
+    logout,
+    passkeyCredentials,
+    passkeyCredentialsLoaded,
+    refreshPasskeyCredentials,
+  } = useContext(UserContext);
+  const { deleteAccount, createPasskey, isPasskeySupported } = useAuthService();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteText, setDeleteText] = useState('');
   const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [passkeys, setPasskeys] = useState([]);
-  const [passkeysLoading, setPasskeysLoading] = useState(false);
-  const fetchPasskeyCredentialsRef = useRef(fetchPasskeyCredentials);
 
   const baseWebSettingsUrl = `${WEB_APP_URL}${PASSKEY_WEBSITE_PATH}`;
   const userFirstName = typeof user?.firstName === 'string' && user.firstName.trim().length > 0
     ? user.firstName.trim()
     : 'My';
-
-  useEffect(() => {
-    fetchPasskeyCredentialsRef.current = fetchPasskeyCredentials;
-  }, [fetchPasskeyCredentials]);
-
-  const extractPasskeyCredentials = useCallback((payload) => {
-    const candidates = [
-      payload,
-      payload?.data,
-      payload?.result,
-      payload?.credentials,
-      payload?.passkeys,
-      payload?.data?.credentials,
-      payload?.data?.passkeys,
-      payload?.result?.credentials,
-      payload?.result?.passkeys,
-      payload?.user?.credentials,
-      payload?.user?.passkeys,
-    ];
-
-    for (const candidate of candidates) {
-      if (Array.isArray(candidate)) {
-        return candidate;
-      }
-    }
-
-    return [];
-  }, []);
 
   const normalizePasskey = useCallback((passkey, index) => {
     const id =
@@ -90,42 +66,13 @@ const Security = ({ navigation }) => {
     };
   }, [userFirstName]);
 
-  const loadPasskeys = useCallback(async () => {
-    if (!token) {
-      setPasskeys([]);
-      return;
-    }
-
-    setPasskeysLoading(true);
-    try {
-      const result = await fetchPasskeyCredentialsRef.current();
-      if (!result?.ok) {
-        const errorMessage =
-          result?.data?.error?.message || result?.data?.message || 'Failed to fetch passkeys.';
-        const isRateLimited = result?.status === 429 || /too many requests/i.test(errorMessage);
-
-        if (isRateLimited) {
-          console.warn('Passkey fetch rate limited. Keeping current list.');
-          return;
-        }
-
-        console.warn('Failed to fetch passkeys:', result?.data);
-        setPasskeys([]);
-        return;
-      }
-
-      const credentials = extractPasskeyCredentials(result.data);
-      setPasskeys(credentials.map(normalizePasskey).filter(passkey => Boolean(passkey.id)));
-    } catch (error) {
-      console.error('Error fetching passkeys:', error);
-      setPasskeys([]);
-    } finally {
-      setPasskeysLoading(false);
-    }
-  }, [extractPasskeyCredentials, normalizePasskey, token]);
-
+  const passkeys = useMemo(
+    () => passkeyCredentials.map(normalizePasskey).filter(passkey => Boolean(passkey.id)),
+    [normalizePasskey, passkeyCredentials],
+  );
   const hasPasskeys = passkeys.length > 0;
   const primaryPasskey = hasPasskeys ? passkeys[0] : null;
+  const passkeysInitialLoading = !passkeyCredentialsLoaded;
   const connectedSocialAccounts = useMemo(() => {
     const social = userDetails?.socialMedia || user?.socialMedia || userDetails?.social || user?.social || {};
 
@@ -144,8 +91,10 @@ const Security = ({ navigation }) => {
   }, [user, userDetails]);
 
   useFocusEffect(useCallback(() => {
-    loadPasskeys();
-  }, [loadPasskeys]));
+    if (!token) return undefined;
+    refreshPasskeyCredentials({ force: passkeyCredentialsLoaded }).catch(() => {});
+    return undefined;
+  }, [passkeyCredentialsLoaded, refreshPasskeyCredentials, token]));
 
   const getRootNavigation = () => {
     let currentNav = navigation;
@@ -195,7 +144,7 @@ const Security = ({ navigation }) => {
 
       const result = await createPasskey();
       if (result?.ok) {
-        await loadPasskeys();
+        await refreshPasskeyCredentials({ force: true });
         Alert.alert('Passkey Created', 'Your passkey was set up successfully.');
       } else {
         const stage = result?.data?.stage ? ` (${result.data.stage})` : '';
@@ -314,11 +263,11 @@ const Security = ({ navigation }) => {
         <TouchableOpacity
           style={styles.item}
           onPress={hasPasskeys ? handleViewPasskey : handleCreatePasskey}
-          disabled={passkeyLoading || passkeysLoading}
+          disabled={passkeyLoading || passkeysInitialLoading}
         >
           <Ionicons name="key-outline" size={20} color={themeVariables.blackColor} />
           <Text style={styles.itemText}>Passkeys</Text>
-          {passkeyLoading || passkeysLoading ? (
+          {passkeyLoading || passkeysInitialLoading ? (
             <ActivityIndicator color={themeVariables.blackColor} size="small" />
           ) : (
             <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />

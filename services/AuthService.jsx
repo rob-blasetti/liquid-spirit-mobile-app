@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { UserContext } from '../contexts/UserContext';
 import jwtDecode from 'jwt-decode';
 import { Passkey } from './passkeyCompat';
+import { fetchPasskeyCredentialsWithToken } from './PasskeyService';
 
 import { API_URL, AUTH_API_URL } from '../config';
 import { isJwtExpired, resolveAccessToken, resolveRefreshToken } from '../utils/authTokens';
@@ -276,11 +277,7 @@ export const useAuthService = () => {
 
   const fetchPasskeyCredentials = async () => {
     try {
-      const { response, data } = await fetchJson(`${AUTH_BASE}/api/auth/passkey/credentials`, {
-        method: 'GET',
-        headers: jsonHeaders(true),
-      });
-      return { ok: response.ok, status: response.status, data };
+      return await fetchPasskeyCredentialsWithToken(token);
     } catch (error) {
       throw new Error(`Fetch passkeys error: ${error.message}`);
     }
