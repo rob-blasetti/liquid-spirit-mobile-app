@@ -22,6 +22,8 @@ import { initializeSocket } from '../services/SocketService';
 import { fetchChats } from '../services/ChatService';
 import { syncNextEventWidget } from '../services/WidgetService';
 import useMountEffect from '../hooks/useMountEffect';
+import { setAuthExpiredHandler } from '../utils/authSessionEvents';
+import { navigateWhenReady } from '../navigation/RootNavigation';
 
 const CHAT_BADGE_POLL_INTERVAL = 15000;
 const REFRESH_DEDUP_WINDOW_MS = 5000;
@@ -502,6 +504,19 @@ export const UserProvider = ({ children }) => {
       return null;
     }
   }, [isTokenExpired, token, refreshSession]);
+
+  useEffect(() => {
+    setAuthExpiredHandler(async () => {
+      const refreshed = await refreshSession();
+      if (refreshed) return;
+
+      navigateWhenReady('Login', {
+        bannerMessage: 'Your session has expired. Please log in again.',
+      });
+    });
+
+    return () => setAuthExpiredHandler(null);
+  }, [refreshSession]);
 
   const refreshChatBadgeFromServer = useCallback(async ({ force = false } = {}) => {
     if (!token) return null;

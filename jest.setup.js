@@ -8,6 +8,18 @@ jest.mock('react-native-config', () => ({
   AWS_REGION: 'ap-southeast-2',
 }));
 
+jest.mock('./navigation/RootNavigation', () => ({
+  navigationRef: {
+    isReady: jest.fn(() => true),
+    navigate: jest.fn(),
+    dispatch: jest.fn(),
+  },
+  navigate: jest.fn(),
+  navigateWhenReady: jest.fn(),
+  flushPendingNavigation: jest.fn(),
+  replace: jest.fn(),
+}));
+
 jest.mock('react-native-fast-image', () => {
   const React = require('react');
   const { Image } = require('react-native');
