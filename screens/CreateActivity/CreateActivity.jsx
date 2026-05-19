@@ -729,6 +729,8 @@ const styles = StyleSheet.create({
   formCard: {
     backgroundColor: 'transparent',
     padding: 0,
+    overflow: 'visible',
+    zIndex: 2,
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0,
@@ -740,6 +742,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 24,
     paddingHorizontal: 4,
+    zIndex: 1,
   },
   actionButton: {
     flex: 1,

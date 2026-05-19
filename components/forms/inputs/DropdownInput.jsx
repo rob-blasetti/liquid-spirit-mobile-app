@@ -97,7 +97,7 @@ const DropdownInput = ({
   }, [closeSiblings]);
 
   return (
-    <View style={[styles.wrapper, style]}>
+    <View style={[styles.wrapper, open && styles.wrapperOpen, style]}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TouchableOpacity
         style={[styles.touchWrapper, mergedStyle]}
@@ -166,6 +166,10 @@ const styles = StyleSheet.create({
     marginTop: 12,
     position: 'relative',
   },
+  wrapperOpen: {
+    zIndex: 1000,
+    elevation: 20,
+  },
   label: {
     marginBottom: 6,
     color: themeVariables.blackColor,
@@ -228,8 +232,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: themeVariables.whiteColor,
     overflow: 'hidden',
-    zIndex: 10,
-    elevation: 4,
+    zIndex: 1000,
+    elevation: 20,
     shadowColor: '#0F172A',
     shadowOpacity: 0.1,
     shadowRadius: 12,
