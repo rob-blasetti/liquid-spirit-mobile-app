@@ -1,10 +1,11 @@
 import React, { useContext } from 'react';
-import { Platform, View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
+import { Platform, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { useTheme } from '../contexts';
 import { UserContext } from '../contexts/UserContext';
+import Toggle from '../components/Toggle';
 import packageJson from '../package.json';
 
 const BUILD_NUMBER = Platform.select({
@@ -64,15 +65,10 @@ const Settings = ({ navigation }) => {
             <View style={styles.itemTextBlock}>
               <Text style={styles.itemTitle}>Dark Mode</Text>
             </View>
-            <Switch
+            <Toggle
               value={isDarkMode}
               onValueChange={setDarkMode}
-              trackColor={{
-                false: themeVariables.borderMutedColor,
-                true: themeVariables.primaryLightColor,
-              }}
-              thumbColor={isDarkMode ? themeVariables.primaryColor : themeVariables.whiteColor}
-              ios_backgroundColor={themeVariables.borderMutedColor}
+              accessibilityLabel="Dark Mode"
             />
           </View>
         </View>

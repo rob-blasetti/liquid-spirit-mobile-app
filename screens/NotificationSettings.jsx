@@ -1,11 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getPushPreferences, updatePushPreferences } from '../services/PushPreferencesService.jsx';
+import Toggle from '../components/Toggle';
 
 const NotificationSettings = () => {
   const { user, token } = useContext(UserContext);
@@ -129,10 +130,11 @@ const NotificationSettings = () => {
                   <View style={styles.groupRow}>
                     <Ionicons name={item.icon || 'notifications-outline'} size={20} color="#312783" />
                     <Text style={styles.itemText}>{item.label}</Text>
-                    <Switch
+                    <Toggle
                       value={pushPrefs ? !!pushPrefs[item.key] : true}
                       onValueChange={(val) => togglePref(item.key, val)}
                       disabled={loadingPrefs || savingKey === item.key}
+                      accessibilityLabel={item.label}
                     />
                   </View>
                   {idx < group.items.length - 1 && (

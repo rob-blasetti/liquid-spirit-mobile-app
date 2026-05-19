@@ -4,7 +4,6 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -15,6 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { UserContext } from '../contexts/UserContext';
 import { updateHouseholdSelfSettings } from '../services/HouseholdService';
 import themeVariables from '../styles/theme';
+import Toggle from '../components/Toggle';
 
 const getEntityId = value => {
   if (!value) return '';
@@ -159,18 +159,11 @@ const HouseholdSettings = ({ route }) => {
               {savingResidence ? (
                 <ActivityIndicator color={themeVariables.blackColor} size="small" />
               ) : (
-                <Switch
+                <Toggle
                   value={residenceSelectable}
                   onValueChange={handleResidenceSelectableChange}
                   disabled={!canManageResidence}
-                  trackColor={{
-                    false: themeVariables.borderMutedColor,
-                    true: themeVariables.primaryLightColor,
-                  }}
-                  thumbColor={
-                    residenceSelectable ? themeVariables.primaryColor : themeVariables.whiteColor
-                  }
-                  ios_backgroundColor={themeVariables.borderMutedColor}
+                  accessibilityLabel="Residence Venue Requests"
                 />
               )}
             </View>
