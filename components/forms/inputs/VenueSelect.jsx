@@ -8,6 +8,7 @@ import { resolveEntryId } from '../../../screens/DetailCard/Activity/utils/membe
 import { VenuesContext } from '../../../contexts/VenuesContext';
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
+const EMPTY_IDS = Object.freeze([]);
 
 const normalizeVenue = (entry) => {
   const venue = entry?.venue || entry;
@@ -68,8 +69,8 @@ const VenueSelect = ({
   inputProps,
   style,
   helperSpacing: _helperSpacing = 0,
-  facilitatorIds = [],
-  participantIds = [],
+  facilitatorIds = EMPTY_IDS,
+  participantIds = EMPTY_IDS,
   userId,
 }) => {
   const { venues: cachedVenues = [], loading: cachedVenuesLoading, error: cachedVenuesError } = useContext(VenuesContext);
