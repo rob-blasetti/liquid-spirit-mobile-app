@@ -78,4 +78,21 @@ describe('normalizePayload session mapping', () => {
       params: { initialSessionId: 'session-123' },
     });
   });
+
+  test('venue request decision maps to activity when backend includes activityId', () => {
+    const payload = {
+      data: {
+        type: 'venue_request_decided',
+        targetId: 'venue-request-1',
+        activityId: 'activity-abc',
+        sessionId: 'session-123',
+      },
+    };
+    const res = normalizePayload(payload);
+    expect(res).toEqual({
+      type: 'activity',
+      id: 'activity-abc',
+      params: { initialSessionId: 'session-123' },
+    });
+  });
 });

@@ -379,7 +379,20 @@ export function normalizePayload(userInfo) {
       data.parentId ||
       targetId;
   }
+  if (category === 'activity' && !isSessionType) {
+    resolvedId =
+      data.activityId ||
+      data.activity_id ||
+      (data.activity && (data.activity._id || data.activity.id)) ||
+      resolvedId;
+  }
 
   if (!resolvedId) return null;
-  return { type: category, id: resolvedId };
+
+  const result = { type: category, id: String(resolvedId) };
+  const sessionId = data.sessionId || data.session_id;
+  if (category === 'activity' && sessionId) {
+    result.params = { initialSessionId: String(sessionId) };
+  }
+  return result;
 }

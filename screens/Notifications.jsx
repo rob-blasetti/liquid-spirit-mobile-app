@@ -345,8 +345,11 @@ export default function Notifications() {
     const formatted = userNotifications.map((n) => {
       const rawType = n.type?.typeName || n.type || '';
       const typeKey = rawType.toLowerCase();
-      const type = mapNotificationType(typeKey);
+      let type = mapNotificationType(typeKey);
       const { activityId, sessionId } = extractActivityAndSessionIds(n);
+      if (typeKey === 'venue_request_decided' && activityId) {
+        type = 'activity';
+      }
       const targetId = normalizeIdValue(n.target?._id) || normalizeIdValue(n.target?.id) || normalizeIdValue(n.targetId);
       const chatParams = type === 'chat' ? extractChatNavigationParams(n, { fallbackTypeName: rawType }) : null;
       const resolvedActivityId = type === 'activity' ? (activityId || targetId) : null;
