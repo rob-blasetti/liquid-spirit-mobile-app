@@ -1,5 +1,6 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   View,
   Text,
   StyleSheet,
@@ -9,10 +10,13 @@ import {
   TextInput,
   TouchableOpacity,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   StatusBar,
+  Easing,
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +30,8 @@ import { API_URL } from '../config';
 import FastImage from 'react-native-fast-image';
 
 const TAB_BAR_HEIGHT = 80;
+const PARTICIPANT_ROW_ANIMATED_HEIGHT = 44;
+const PARTICIPANT_LIST_ANIMATION_MS = 260;
 
 const getMessageText = (message) => {
   if (!message) return '';
@@ -478,8 +484,11 @@ const ChatDetail = () => {
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [participantsExpanded, setParticipantsExpanded] = useState(false);
+  const participantsAnimation = useRef(new Animated.Value(0)).current;
   const [chatImageUrl, setChatImageUrl] = useState(initialChatImage);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const heroTopInset = useMemo(() => Math.max(insets.top, 0), [insets.top]);
   const heroBannerStyle = useMemo(
     () => ({
@@ -509,16 +518,16 @@ const ChatDetail = () => {
     [],
   );
   const composerSpacing = useMemo(
-    () => Math.max(insets.bottom, 12) + TAB_BAR_HEIGHT,
-    [insets.bottom],
+    () => Math.max(tabBarHeight, TAB_BAR_HEIGHT),
+    [tabBarHeight],
   );
   const composerInsetsStyle = useMemo(
     () => ({
-      paddingBottom: Math.max(insets.bottom, 12),
+      paddingBottom: 10,
       paddingTop: 12,
-      marginBottom: Math.max(insets.bottom, 10) + 22,
+      marginBottom: 0,
     }),
-    [insets.bottom],
+    [],
   );
   const listInsetStyle = useMemo(
     () => ({
@@ -677,6 +686,27 @@ const ChatDetail = () => {
       setParticipantsExpanded(false);
     }
   }, [chatParticipants, participantsExpanded]);
+
+  useEffect(() => {
+    Animated.timing(participantsAnimation, {
+      toValue: participantsExpanded ? 1 : 0,
+      duration: PARTICIPANT_LIST_ANIMATION_MS,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [participantsAnimation, participantsExpanded]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSubscription = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const loadMessages = useCallback(
     async ({ silent = false } = {}) => {
@@ -846,6 +876,7 @@ const ChatDetail = () => {
         { token },
       );
       setMessageText('');
+      Keyboard.dismiss();
       await loadMessages({ silent: true });
     } catch (err) {
       const message = err?.message || 'Unable to send message.';
@@ -859,6 +890,20 @@ const ChatDetail = () => {
   const participantNamesSummary = useMemo(
     () => chatParticipants.map((participant) => participant.name).join(', '),
     [chatParticipants],
+  );
+  const participantsListHeight = useMemo(
+    () => chatParticipants.length * PARTICIPANT_ROW_ANIMATED_HEIGHT,
+    [chatParticipants.length],
+  );
+  const participantsListAnimatedStyle = useMemo(
+    () => ({
+      maxHeight: participantsAnimation.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, participantsListHeight],
+      }),
+      opacity: participantsAnimation,
+    }),
+    [participantsAnimation, participantsListHeight],
   );
   const handleOpenParticipant = useCallback(
     (participant) => {
@@ -887,25 +932,26 @@ const participantsSection = chatParticipants.length ? (
             <Text style={[styles.participantsLabel, isDarkMode && styles.participantsLabelDark]}>
               Participants
             </Text>
-            {!participantsExpanded ? (
-              <Text
-                style={[styles.participantsNames, isDarkMode && styles.participantsNamesDark]}
-                numberOfLines={2}>
-                {participantNamesSummary}
-              </Text>
-            ) : null}
+            <Text
+              style={[styles.participantsNames, isDarkMode && styles.participantsNamesDark]}
+              numberOfLines={participantsExpanded ? 1 : 2}>
+              {participantsExpanded ? `${chatParticipants.length} total` : participantNamesSummary}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={() => setParticipantsExpanded((prev) => !prev)}
             style={styles.participantsToggleButton}
+            activeOpacity={0.75}
           >
-            {!participantsExpanded ? (
-              <Text style={styles.participantsToggleText}>View all</Text>
-            ) : null}
+            <Text style={styles.participantsToggleText}>
+              {participantsExpanded ? 'Hide' : 'View all'}
+            </Text>
           </TouchableOpacity>
         </View>
-        {participantsExpanded ? (
-          <>
+        <Animated.View
+          pointerEvents={participantsExpanded ? 'auto' : 'none'}
+          style={[styles.participantsListAnimated, participantsListAnimatedStyle]}
+        >
             {chatParticipants.map((participant, index) => {
               const avatarUri = normalizeImageUrl(participant.avatar);
               const avatarSource = avatarUri
@@ -939,20 +985,7 @@ const participantsSection = chatParticipants.length ? (
                 </TouchableOpacity>
               );
             })}
-            <TouchableOpacity
-              style={styles.participantsHideButton}
-              onPress={() => setParticipantsExpanded(false)}
-            >
-              <Text style={styles.participantsHideButtonText}>Hide participants</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.participantsPreview}>
-            <Text style={[styles.participantsLabel, isDarkMode && styles.participantsLabelDark]}>
-              {chatParticipants.length} total
-            </Text>
-          </View>
-        )}
+        </Animated.View>
       </View>
     </View>
   ) : null;
@@ -978,6 +1011,12 @@ const participantsSection = chatParticipants.length ? (
           data={messages}
           keyExtractor={keyExtractor}
           renderItem={renderMessage}
+          onTouchStart={() => {
+            if (keyboardVisible) {
+              Keyboard.dismiss();
+            }
+          }}
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
           ListHeaderComponentStyle={styles.listHeaderComponent}
           contentContainerStyle={
@@ -1059,6 +1098,7 @@ const participantsSection = chatParticipants.length ? (
             multiline
             editable={!sending}
             returnKeyType="send"
+            blurOnSubmit
             onSubmitEditing={handleSendMessage}
           />
           <TouchableOpacity
@@ -1203,7 +1243,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   participantsPreview: {
     flexDirection: 'row',
@@ -1238,9 +1277,13 @@ const styles = StyleSheet.create({
     color: themeVariables.primaryColor,
     fontWeight: '600',
   },
+  participantsListAnimated: {
+    overflow: 'hidden',
+  },
   participantRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 36,
     marginBottom: 8,
   },
   participantAvatar: {
@@ -1271,15 +1314,6 @@ const styles = StyleSheet.create({
   },
   participantInfo: {
     flex: 1,
-  },
-  participantsHideButton: {
-    marginTop: 8,
-    paddingVertical: 6,
-    alignItems: 'center',
-  },
-  participantsHideButtonText: {
-    color: themeVariables.primaryColor,
-    fontWeight: '600',
   },
   loadingText: {
     marginTop: 12,
