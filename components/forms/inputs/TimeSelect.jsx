@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   flexItem: {
     flex: 1,
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
     height: 52,
     width: 92,
     marginLeft: 4,
+    marginTop: 37,
     backgroundColor: themeVariables.formInputBg || '#ffffff',
   },
   meridiemWrapDark: {
