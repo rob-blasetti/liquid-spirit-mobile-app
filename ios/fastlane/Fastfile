@@ -2,10 +2,13 @@ default_platform(:ios)
 
 require 'dotenv' # ✅ Require the dotenv gem
 require 'fileutils'
+require 'json'
 Dotenv.load(File.expand_path('.env.beta', __dir__))
 ENV['FASTLANE_SKIP_UPDATE_CHECK'] ||= '1'
 
 IOS_ROOT = File.expand_path('..', __dir__)
+REPO_ROOT = File.expand_path('..', IOS_ROOT)
+APP_VERSION = JSON.parse(File.read(File.join(REPO_ROOT, 'package.json'))).fetch('version')
 APPLE_ID = "rblasett@gmail.com"
 TEAM_ID = "7MGG8ZRN25"
 APP_IDENTIFIER = "org.reactjs.native.example.liquid-spirit-mobile-app"
@@ -111,16 +114,18 @@ platform :ios do
       force: match_force
     )
 
-    # 2. Bump marketing version first, then build number
+    # 2. Keep the iOS marketing version pinned to the repo release version, then bump only the build number.
     increment_version_number(
       xcodeproj: File.join(IOS_ROOT, "liquid_spirit_mobile_app.xcodeproj"),
-      bump_type: 'patch'
+      version_number: APP_VERSION
     )
 
-    # 3. Increment build number
-    increment_build_number(
+    # 3. Set an explicit build number when supplied; otherwise continue the normal local increment.
+    build_number_options = {
       xcodeproj: File.join(IOS_ROOT, "liquid_spirit_mobile_app.xcodeproj")
-    )
+    }
+    build_number_options[:build_number] = ENV['BUILD_NUMBER'] if ENV['BUILD_NUMBER'].to_s.length.positive?
+    increment_build_number(build_number_options)
 
     # 4. Inject Environment Variables into Xcode
     config_xcconfig = <<~CONFIG
