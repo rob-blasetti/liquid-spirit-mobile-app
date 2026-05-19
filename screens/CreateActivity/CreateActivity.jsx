@@ -520,7 +520,9 @@ export default function CreateActivity({ navigation, route }) {
       style={{ flex: 1 }}
       behavior={Platform.select({ ios: 'padding', android: null })}
     >
-      <ScrollView contentContainerStyle={scrollContentStyle}>
+      <ScrollView
+        contentContainerStyle={scrollContentStyle}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.progressHeader}>
           <Text style={styles.title}>Create Activity</Text>
           <Text style={styles.stepIndicator}>Step {step} of {TOTAL_STEPS}</Text>

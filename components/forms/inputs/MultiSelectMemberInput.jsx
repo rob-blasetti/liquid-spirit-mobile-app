@@ -35,6 +35,7 @@ const MultiSelectMemberInput = ({
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const selfId = useRef(`member-dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const blurCloseTimeoutRef = useRef(null);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const optionLabelById = useMemo(() => {
@@ -104,6 +105,9 @@ const MultiSelectMemberInput = ({
     memberDropdownListeners.add(handler);
     return () => {
       memberDropdownListeners.delete(handler);
+      if (blurCloseTimeoutRef.current) {
+        clearTimeout(blurCloseTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -179,6 +183,10 @@ const MultiSelectMemberInput = ({
           placeholderTextColor={restTextInputProps.placeholderTextColor || '#667085'}
           {...restTextInputProps}
           onFocus={event => {
+            if (blurCloseTimeoutRef.current) {
+              clearTimeout(blurCloseTimeoutRef.current);
+              blurCloseTimeoutRef.current = null;
+            }
             setIsFocused(true);
             setDropdownVisible(true);
             notifyCloseOtherMemberDropdowns(selfId.current);
@@ -186,6 +194,10 @@ const MultiSelectMemberInput = ({
           }}
           onBlur={event => {
             setIsFocused(false);
+            blurCloseTimeoutRef.current = setTimeout(() => {
+              setDropdownVisible(false);
+              blurCloseTimeoutRef.current = null;
+            }, 120);
             restTextInputProps.onBlur?.(event);
           }}
           selectionColor={themeVariables.primaryColor}
@@ -227,6 +239,10 @@ const MultiSelectMemberInput = ({
                     key={key}
                     style={styles.dropdownOption}
                     onPress={() => {
+                      if (blurCloseTimeoutRef.current) {
+                        clearTimeout(blurCloseTimeoutRef.current);
+                        blurCloseTimeoutRef.current = null;
+                      }
                       onSelectOption?.(option);
                       setDropdownVisible(true);
                     }}
@@ -317,6 +333,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dropdownList: {
+    position: 'absolute',
+    top: 86,
+    left: 0,
+    right: 0,
     borderWidth: 1,
     borderColor: themeVariables.formInputBorder || '#CBD5E1',
     borderRadius: 12,
