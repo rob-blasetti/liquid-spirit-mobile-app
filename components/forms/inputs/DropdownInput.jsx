@@ -15,6 +15,10 @@ const notifyCloseOthers = (id) => {
   });
 };
 
+export const closeDropdownInputs = () => {
+  notifyCloseOthers(null);
+};
+
 const normalizeOption = option => {
   if (option && typeof option === 'object') {
     return {

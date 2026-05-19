@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import DropdownInput from './DropdownInput';
+import DropdownInput, { closeDropdownInputs } from './DropdownInput';
 import themeVariables from '../../../styles/theme';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -29,6 +29,11 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
     if (meridiem === 'AM' && hourNum === 12) hourNum = 0;
     date.setHours(hourNum, parseInt(minute, 10) || 0, 0, 0);
     onChange?.(date);
+  };
+
+  const handleSelectMeridiem = meridiem => {
+    closeDropdownInputs();
+    updateTime(null, null, meridiem);
   };
 
   return (
@@ -61,7 +66,7 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
               isDarkMode && styles.meridiemToggleDark,
               parts.meridiem === 'AM' && styles.meridiemToggleActive,
             ]}
-            onPress={() => updateTime(null, null, 'AM')}
+            onPress={() => handleSelectMeridiem('AM')}
             accessibilityRole="button"
             accessibilityLabel="Set time to AM"
           >
@@ -77,7 +82,7 @@ const TimeSelect = ({ value, onChange, style, inputProps }) => {
               isDarkMode && styles.meridiemToggleDark,
               parts.meridiem === 'PM' && styles.meridiemToggleActive,
             ]}
-            onPress={() => updateTime(null, null, 'PM')}
+            onPress={() => handleSelectMeridiem('PM')}
             accessibilityRole="button"
             accessibilityLabel="Set time to PM"
           >
