@@ -1,12 +1,26 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
+import React, { useContext } from 'react';
+import { Platform, View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { useTheme } from '../contexts';
+import { UserContext } from '../contexts/UserContext';
+import packageJson from '../package.json';
+
+const BUILD_NUMBER = Platform.select({
+  ios: '178',
+  android: '25',
+  default: '178',
+});
 
 const Settings = ({ navigation }) => {
   const { isDarkMode, setDarkMode } = useTheme();
+  const { householdSettings } = useContext(UserContext);
+  const versionLabel = `${packageJson.version} (${BUILD_NUMBER})`;
+  const dividerStyle = {
+    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.42)' : 'rgba(0, 0, 0, 0.24)',
+  };
+  const showHouseholdSettings = Boolean(householdSettings?.primaryContact);
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -18,12 +32,31 @@ const Settings = ({ navigation }) => {
             <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
           </TouchableOpacity>
 
-        {/* <View style={styles.item}>
-          <Ionicons name="notifications-outline" size={20} color="#312783" />
-          <Text style={styles.itemText}>Notifications</Text>
-          <Switch value={true} />
-        </View> */}
+          {showHouseholdSettings ? (
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => navigation.navigate('HouseholdSettings', { household: householdSettings })}
+            >
+              <Ionicons name="home-outline" size={20} color={themeVariables.blackColor} />
+              <Text style={styles.itemText}>Household</Text>
+              <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+            </TouchableOpacity>
+          ) : null}
+
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
+            <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>Notifications</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Security')}>
+            <Ionicons name="shield-outline" size={20} color={themeVariables.blackColor} />
+            <Text style={styles.itemText}>Login & Security</Text>
+            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
+          </TouchableOpacity>
         </View>
+
+        <View style={[styles.sectionDivider, dividerStyle]} />
 
         <View style={styles.section}>
           <View style={styles.item}>
@@ -42,19 +75,13 @@ const Settings = ({ navigation }) => {
               ios_backgroundColor={themeVariables.borderMutedColor}
             />
           </View>
-          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotificationSettings')}>
-            <Ionicons name="notifications-outline" size={20} color={themeVariables.blackColor} />
-            <Text style={styles.itemText}>Notifications</Text>
-            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Security')}>
-            <Ionicons name="shield-outline" size={20} color={themeVariables.blackColor} />
-            <Text style={styles.itemText}>Security</Text>
-            <Ionicons name="chevron-forward" size={18} color={themeVariables.blackColor} />
-          </TouchableOpacity>
         </View>
 
-        <View style={styles.sectionDivider} />
+        <View style={[styles.sectionDivider, dividerStyle]} />
+
+        <View style={styles.versionRow}>
+          <Text style={styles.versionText}>Version {versionLabel}</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -94,8 +121,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   sectionDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: themeVariables.borderLightColor,
+    height: 1,
     marginVertical: 12,
   },
   itemText: {
@@ -112,6 +138,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 15,
     marginRight: 12,
+  },
+  versionRow: {
+    paddingVertical: 15,
+  },
+  versionText: {
+    color: themeVariables.textMutedStrongColor || '#666',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

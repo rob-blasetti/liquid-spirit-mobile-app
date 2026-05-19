@@ -21,6 +21,7 @@ import { AppState } from 'react-native';
 import { initializeSocket } from '../services/SocketService';
 import { fetchChats } from '../services/ChatService';
 import { syncNextEventWidget } from '../services/WidgetService';
+import { fetchHouseholdByMemberId } from '../services/HouseholdService';
 import useMountEffect from '../hooks/useMountEffect';
 import { setAuthExpiredHandler } from '../utils/authSessionEvents';
 import { navigateWhenReady } from '../navigation/RootNavigation';
@@ -181,6 +182,7 @@ export const UserProvider = ({ children }) => {
   const [userPosts, setUserPosts] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userNotifications, setUserNotifications] = useState(null);
+  const [householdSettings, setHouseholdSettings] = useState(null);
   const [storageLoaded, setStorageLoaded] = useState(false);
   const [hasNewChatMessages, setHasNewChatMessages] = useState(false);
   const [chatNotificationCount, setChatNotificationCount] = useState(0);
@@ -267,13 +269,22 @@ export const UserProvider = ({ children }) => {
   useMountEffect(() => {
     const loadCachedData = async () => {
       try {
-        const [{ accessToken }, storedUser, storedUserActivities, storedUserEvents, storedUserPosts, storedUserDetails] = await Promise.all([
+        const [
+          { accessToken },
+          storedUser,
+          storedUserActivities,
+          storedUserEvents,
+          storedUserPosts,
+          storedUserDetails,
+          storedHouseholdSettings,
+        ] = await Promise.all([
           loadSessionTokens(),
           AsyncStorage.getItem('user'),
           AsyncStorage.getItem('userActivities'),
           AsyncStorage.getItem('userEvents'),
           AsyncStorage.getItem('userPosts'),
           AsyncStorage.getItem('userDetails'),
+          AsyncStorage.getItem('householdSettings'),
         ]);
 
         if (accessToken) {
@@ -286,6 +297,7 @@ export const UserProvider = ({ children }) => {
         if (storedUserEvents) setUserEvents(JSON.parse(storedUserEvents));
         if (storedUserPosts) setUserPosts(JSON.parse(storedUserPosts));
         if (storedUserDetails) setUserDetails(JSON.parse(storedUserDetails));
+        if (storedHouseholdSettings) setHouseholdSettings(JSON.parse(storedHouseholdSettings));
       } catch (error) {
         console.error('Error loading cached data:', error);
       }
@@ -335,6 +347,40 @@ export const UserProvider = ({ children }) => {
       console.error('Failed to sync next event widget:', error);
     });
   }, [token, userEvents]);
+
+  const refreshHouseholdSettings = useCallback(async () => {
+    if (!token || !user?.id) {
+      setHouseholdSettings(null);
+      await AsyncStorage.removeItem('householdSettings');
+      return null;
+    }
+
+    try {
+      const household = await fetchHouseholdByMemberId(user.id, token);
+      const nextHouseholdSettings = household?.primaryContact ? household : null;
+      setHouseholdSettings(nextHouseholdSettings);
+
+      if (nextHouseholdSettings) {
+        await AsyncStorage.setItem('householdSettings', JSON.stringify(nextHouseholdSettings));
+      } else {
+        await AsyncStorage.removeItem('householdSettings');
+      }
+
+      return nextHouseholdSettings;
+    } catch (error) {
+      if (error?.status === 404) {
+        setHouseholdSettings(null);
+        await AsyncStorage.removeItem('householdSettings');
+        return null;
+      }
+      throw error;
+    }
+  }, [token, user?.id]);
+
+  useEffect(() => {
+    if (!token || !user?.id) return;
+    refreshHouseholdSettings().catch(() => {});
+  }, [refreshHouseholdSettings, token, user?.id]);
 
   // Fetch full user details (including certifications) and sync profile picture on startup
   useEffect(() => {
@@ -392,6 +438,7 @@ export const UserProvider = ({ children }) => {
       setUserActivities(null);
       setUserEvents(null);
       setUserPosts(null);
+      setHouseholdSettings(null);
       setHasNewChatMessages(false);
       setChatNotificationCount(0);
       setIsChatTabActive(false);
@@ -409,6 +456,7 @@ export const UserProvider = ({ children }) => {
         'userEvents',
         'userPosts',
         'userDetails',
+        'householdSettings',
       ]);
       await clearSessionTokens();
     } catch (error) {
@@ -807,6 +855,9 @@ export const UserProvider = ({ children }) => {
         clearChatUnread,
         userNotifications,
         setUserNotifications,
+        householdSettings,
+        setHouseholdSettings,
+        refreshHouseholdSettings,
         login,
         logout,
         isLoggedIn: !!token,

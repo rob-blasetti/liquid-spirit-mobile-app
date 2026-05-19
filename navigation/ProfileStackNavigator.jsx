@@ -5,6 +5,7 @@ import ProfileScreen from '../screens/Profile';
 import PublicUserProfile from '../screens/PublicUserProfile';
 import Settings from '../screens/Settings';
 import NotificationSettings from '../screens/NotificationSettings';
+import HouseholdSettings from '../screens/HouseholdSettings';
 import EventsScreen from '../screens/Events/Events';
 import ActivitiesScreen from '../screens/Activities/Activities';
 import EditProfileScreen from '../screens/EditProfile';
@@ -132,6 +133,32 @@ const ProfileStackNavigator = () => {
                 forceFallback
               />
           ) : null,
+        })}
+      />
+      <Stack.Screen
+        name="HouseholdSettings"
+        component={HouseholdSettings}
+        options={({ navigation }) => ({
+          title: 'Household',
+          headerShown: true,
+          headerShadowVisible: true,
+          headerStyle: { backgroundColor: themeVariables.whiteColor },
+          headerTintColor: themeVariables.blackColor,
+          headerTitleStyle: { color: themeVariables.blackColor, fontWeight: 'bold' },
+          headerBackVisible: false,
+          headerBackTitleVisible: false,
+          headerLeftContainerStyle: { paddingLeft: 16 },
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <LiquidGlassIconButton
+                iconName="chevron-back"
+                iconColor={themeVariables.blackColor}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+                hasShadow={false}
+                forceFallback
+              />
+            ) : null,
         })}
       />
       <Stack.Screen
