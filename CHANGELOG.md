@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.2
+
+Changes since `2.2.1` (`c4239d9`).
+
+### Highlights
+
+- Improved iOS and Android widget reliability.
+- Added dark mode support across the app.
+- Improved login, security, passkey, and household settings flows.
+- Fixed activity creation dropdowns and attendee/facilitator search.
+- Fixed venue approval notifications opening the correct activity detail.
+- Improved chat detail participant lists and message input behavior.
+
 ## 2.2.0
 
 Changes since `2.1.1` (`a0b1e6a`).
