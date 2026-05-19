@@ -36,9 +36,7 @@ const MultiSelectMemberInput = ({
   const [isFocused, setIsFocused] = useState(false);
   const selfId = useRef(`member-dropdown-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const blurCloseTimeoutRef = useRef(null);
-  const focusRecoveryTimeoutRef = useRef(null);
   const inputRef = useRef(null);
-  const lastFocusAtRef = useRef(0);
   const { style: inputStyle, ...restTextInputProps } = textInputProps || {};
 
   const optionLabelById = useMemo(() => {
@@ -110,9 +108,6 @@ const MultiSelectMemberInput = ({
       memberDropdownListeners.delete(handler);
       if (blurCloseTimeoutRef.current) {
         clearTimeout(blurCloseTimeoutRef.current);
-      }
-      if (focusRecoveryTimeoutRef.current) {
-        clearTimeout(focusRecoveryTimeoutRef.current);
       }
     };
   }, []);
@@ -190,7 +185,6 @@ const MultiSelectMemberInput = ({
           placeholderTextColor={restTextInputProps.placeholderTextColor || '#667085'}
           {...restTextInputProps}
           onFocus={event => {
-            lastFocusAtRef.current = Date.now();
             if (blurCloseTimeoutRef.current) {
               clearTimeout(blurCloseTimeoutRef.current);
               blurCloseTimeoutRef.current = null;
@@ -201,18 +195,6 @@ const MultiSelectMemberInput = ({
             restTextInputProps.onFocus?.(event);
           }}
           onBlur={event => {
-            const focusedForMs = Date.now() - lastFocusAtRef.current;
-            if (focusedForMs < 250) {
-              focusRecoveryTimeoutRef.current = setTimeout(() => {
-                inputRef.current?.focus?.();
-                setIsFocused(true);
-                setDropdownVisible(true);
-                focusRecoveryTimeoutRef.current = null;
-              }, 0);
-              restTextInputProps.onBlur?.(event);
-              return;
-            }
-
             setIsFocused(false);
             blurCloseTimeoutRef.current = setTimeout(() => {
               setDropdownVisible(false);
@@ -264,7 +246,8 @@ const MultiSelectMemberInput = ({
                         blurCloseTimeoutRef.current = null;
                       }
                       onSelectOption?.(option);
-                      setDropdownVisible(true);
+                      setDropdownVisible(false);
+                      inputRef.current?.blur?.();
                     }}
                   >
                     <Text style={styles.dropdownOptionText}>{optionLabel}</Text>
