@@ -27,6 +27,7 @@ import localImages from '../utils/localImages';
 import SearchItem from '../components/SearchItem';
 import SearchBar from '../components/SearchBar';
 import {CommunityContext} from '../contexts/CommunityContext';
+import {useTheme} from '../contexts/ThemeContext';
 import {navigateToPostDetail} from '../utils/navigateToPostDetail';
 import {navigateToEventDetail} from '../utils/navigateToEventDetail';
 import {navigateToActivityDetail} from '../utils/navigateToActivityDetail';
@@ -334,6 +335,7 @@ const Search = () => {
   const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
   const {token, isTokenExpired} = useContext(UserContext);
   const {communityId} = useContext(CommunityContext);
+  const {isDarkMode} = useTheme();
   const [recentSearches, setRecentSearches] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const debounceRef = useRef(null);
@@ -1382,7 +1384,7 @@ const Search = () => {
   }, [communityId, token]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
       <SearchBar
         ref={inputRef}
         placeholder="Search..."
@@ -1428,13 +1430,20 @@ const Search = () => {
           return (
             <TouchableOpacity
               key={filter.value || 'all'}
-              style={[styles.filterChip, isActive && styles.filterChipActive]}
+              style={[
+                styles.filterChip,
+                isDarkMode && styles.filterChipDark,
+                isActive && styles.filterChipActive,
+                isActive && isDarkMode && styles.filterChipActiveDark,
+              ]}
               onPress={() => handleFilterSelect(filter.value)}
               activeOpacity={0.8}>
               <Text
                 style={[
                   styles.filterChipText,
+                  isDarkMode && styles.filterChipTextDark,
                   isActive && styles.filterChipTextActive,
+                  isActive && isDarkMode && styles.filterChipTextActiveDark,
                 ]}>
                 {filter.label}
               </Text>
@@ -1443,14 +1452,24 @@ const Search = () => {
         })}
       </ScrollView>
       {showSuggestionPanel ? (
-        <View style={styles.autocompleteContainer}>
+        <View
+          style={[
+            styles.autocompleteContainer,
+            isDarkMode && styles.autocompleteContainerDark,
+          ]}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.suggestionContentContainer}
             showsVerticalScrollIndicator={false}>
             {shouldShowAutocomplete ? (
               <View style={styles.suggestionSection}>
-                <Text style={styles.suggestionSectionTitle}>Quick Results</Text>
+                <Text
+                  style={[
+                    styles.suggestionSectionTitle,
+                    isDarkMode && styles.suggestionSectionTitleDark,
+                  ]}>
+                  Quick Results
+                </Text>
                 {autocompleteSuggestions.map((item, index) => (
                   <View key={suggestionKeyExtractor(item, index)}>
                     {renderSuggestionItem({item})}
@@ -1460,7 +1479,11 @@ const Search = () => {
             ) : null}
             {recentSearches.length > 0 ? (
               <View style={styles.suggestionSection}>
-                <Text style={styles.suggestionSectionTitle}>
+                <Text
+                  style={[
+                    styles.suggestionSectionTitle,
+                    isDarkMode && styles.suggestionSectionTitleDark,
+                  ]}>
                   Recent Searches
                 </Text>
                 {recentSearches.map(value => (
@@ -1491,10 +1514,18 @@ const Search = () => {
               <View key={section.key} style={styles.resultSection}>
                 {shouldShowSectionHeaders ? (
                   <View style={styles.resultSectionHeader}>
-                    <Text style={styles.resultSectionTitle}>
+                    <Text
+                      style={[
+                        styles.resultSectionTitle,
+                        isDarkMode && styles.resultSectionTitleDark,
+                      ]}>
                       {section.title}
                     </Text>
-                    <Text style={styles.resultSectionCount}>
+                    <Text
+                      style={[
+                        styles.resultSectionCount,
+                        isDarkMode && styles.resultSectionCountDark,
+                      ]}>
                       {section.items.length}
                     </Text>
                   </View>
@@ -1517,7 +1548,11 @@ const Search = () => {
           {!isShowingCommittedResults &&
           trimmedQuery.length > 0 &&
           !isLoading ? (
-            <Text style={styles.emptyTextOverall}>
+            <Text
+              style={[
+                styles.emptyTextOverall,
+                isDarkMode && styles.emptyTextOverallDark,
+              ]}>
               Keep typing for suggestions, or press search to see full results.
             </Text>
           ) : null}
@@ -1525,7 +1560,11 @@ const Search = () => {
           {isShowingCommittedResults &&
           !hasAnyResults &&
           trimmedQuery.length > 0 ? (
-            <Text style={styles.emptyTextOverall}>
+            <Text
+              style={[
+                styles.emptyTextOverall,
+                isDarkMode && styles.emptyTextOverallDark,
+              ]}>
               No results match this search.
             </Text>
           ) : null}
@@ -1533,7 +1572,11 @@ const Search = () => {
           {isShowingCommittedResults &&
           !hasAnyResults &&
           trimmedQuery.length === 0 ? (
-            <Text style={styles.emptyTextOverall}>
+            <Text
+              style={[
+                styles.emptyTextOverall,
+                isDarkMode && styles.emptyTextOverallDark,
+              ]}>
               Start typing to search for activities, events, members, or posts.
             </Text>
           ) : null}
@@ -1549,6 +1592,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 0,
     backgroundColor: themeVariables.screenBackgroundColor,
+  },
+  containerDark: {
+    backgroundColor: '#121212',
   },
   filterScroll: {
     marginBottom: 12,
@@ -1573,22 +1619,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'center',
   },
+  filterChipDark: {
+    backgroundColor: '#1f1f1f',
+    borderColor: 'rgba(255, 255, 255, 0.24)',
+  },
   filterChipActive: {
     backgroundColor: themeVariables.primaryColor,
     borderColor: themeVariables.primaryColor,
+  },
+  filterChipActiveDark: {
+    backgroundColor: '#8d9cff',
+    borderColor: '#8d9cff',
   },
   filterChipText: {
     fontSize: 14,
     fontWeight: '600',
     color: themeVariables.blackColor,
   },
+  filterChipTextDark: {
+    color: '#f1f4ff',
+  },
   filterChipTextActive: {
     color: themeVariables.whiteColor,
+  },
+  filterChipTextActiveDark: {
+    color: 'rgb(0, 0, 0)',
   },
   autocompleteContainer: {
     marginHorizontal: 8,
     marginBottom: 12,
     borderRadius: 0,
+  },
+  autocompleteContainerDark: {
+    backgroundColor: '#121212',
   },
   suggestionContentContainer: {
     paddingVertical: 8,
@@ -1603,11 +1666,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: themeVariables.blackColor,
   },
+  suggestionSectionTitleDark: {
+    color: '#f1f4ff',
+  },
   emptyTextOverall: {
     textAlign: 'center',
     marginTop: 24,
     color: themeVariables.blackColor,
     paddingHorizontal: 16,
+  },
+  emptyTextOverallDark: {
+    color: 'rgba(241, 244, 255, 0.72)',
   },
   resultsContent: {
     paddingBottom: 0,
@@ -1632,10 +1701,16 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
+  resultSectionTitleDark: {
+    color: '#f1f4ff',
+  },
   resultSectionCount: {
     fontSize: 12,
     fontWeight: '600',
     color: '#6b7280',
+  },
+  resultSectionCountDark: {
+    color: 'rgba(241, 244, 255, 0.62)',
   },
   resultItem: {
     marginBottom: 0,

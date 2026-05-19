@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Text } from 'react-native';
 import themeVariables from '../styles/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const SearchBar = forwardRef(
   (
@@ -27,6 +28,8 @@ const SearchBar = forwardRef(
     },
     ref,
   ) => {
+    const { isDarkMode } = useTheme();
+
     return (
       <View style={[styles.searchBarRow, containerStyle]}>
         <View
@@ -38,7 +41,11 @@ const SearchBar = forwardRef(
         >
           <TextInput
             ref={ref}
-            style={[styles.searchInput, inputStyle]}
+            style={[
+              styles.searchInput,
+              isDarkMode && styles.searchInputDark,
+              inputStyle,
+            ]}
             placeholder={placeholder}
             value={value}
             onChangeText={onChangeText}
@@ -48,7 +55,9 @@ const SearchBar = forwardRef(
             returnKeyType={returnKeyType}
             autoCapitalize={autoCapitalize}
             autoCorrect={autoCorrect}
-            placeholderTextColor={placeholderTextColor}
+            placeholderTextColor={
+              isDarkMode ? 'rgba(241, 244, 255, 0.56)' : placeholderTextColor
+            }
             testID={testID}
             accessibilityLabel={accessibilityLabel || placeholder}
             accessibilityRole="search"
@@ -70,7 +79,13 @@ const SearchBar = forwardRef(
             accessibilityRole="button"
             accessibilityLabel="Cancel search"
           >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text
+              style={[
+                styles.cancelButtonText,
+                isDarkMode && styles.cancelButtonTextDark,
+              ]}>
+              Cancel
+            </Text>
           </TouchableOpacity>
         ) : null}
       </View>
@@ -108,6 +123,11 @@ const styles = StyleSheet.create({
     width: '100%',
     color: '#4a4a4a',
   },
+  searchInputDark: {
+    backgroundColor: '#1f1f1f',
+    borderColor: 'rgba(255, 255, 255, 0.28)',
+    color: '#f1f4ff',
+  },
   searchSpinner: {
     position: 'absolute',
     right: 24,
@@ -121,5 +141,8 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: themeVariables.primaryColor,
     fontSize: 16,
+  },
+  cancelButtonTextDark: {
+    color: '#aeb8ff',
   },
 });

@@ -5,6 +5,7 @@ import Avatar from '@liquidspirit/react-native-boring-avatars';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import {colors} from '../styles/colours';
+import {useTheme} from '../contexts/ThemeContext';
 
 const AVATAR_COLORS = ['#1B263B', '#0A74DA', '#6C7A89', '#F8F9FA', '#0C0C0C'];
 const SEARCH_ITEM_MIN_HEIGHT = 80;
@@ -160,6 +161,7 @@ const SearchItem = ({
   onPress,
   onTagPress,
 }) => {
+  const {isDarkMode} = useTheme();
   const tagValues = [
     tagText,
     ...(Array.isArray(extraTagTexts) ? extraTagTexts : []),
@@ -177,6 +179,7 @@ const SearchItem = ({
       : secondaryFooterText;
   const titleStyle = [
     styles.title,
+    isDarkMode && styles.titleDark,
     variant === 'recent' && styles.compactTitle,
   ];
   const supportingTextStyle = [
@@ -184,16 +187,19 @@ const SearchItem = ({
     variant === 'result'
       ? styles.resultSupportingText
       : styles.compactSupportingText,
+    isDarkMode && styles.supportingTextDark,
   ];
   const subtitleStyle = [
     styles.subtitle,
     variant === 'result' ? styles.resultSubtitle : styles.compactSubtitle,
+    isDarkMode && styles.subtitleDark,
   ];
   const footerTextStyle = [
     styles.secondaryFooterText,
     variant === 'result'
       ? styles.resultFooterText
       : styles.compactFooterText,
+    isDarkMode && styles.secondaryFooterTextDark,
   ];
 
   const handleAccessoryPress = event => {
@@ -211,13 +217,22 @@ const SearchItem = ({
   };
 
   return (
-    <View style={[styles.containerShadow, {borderRadius: containerRadius}]}>
+    <View
+      style={[
+        styles.containerShadow,
+        isDarkMode && styles.containerShadowDark,
+        {borderRadius: containerRadius},
+      ]}>
       <TouchableOpacity
-        style={[styles.containerSurface, {borderRadius: containerRadius}]}
+        style={[
+          styles.containerSurface,
+          isDarkMode && styles.containerSurfaceDark,
+          {borderRadius: containerRadius},
+        ]}
         onPress={onPress}
         activeOpacity={onPress ? 0.8 : 1}
         disabled={!onPress}>
-        <View style={styles.divider} />
+        <View style={[styles.divider, isDarkMode && styles.dividerDark]} />
         {renderVisual({
           type: startVisualType,
           source: startImageSource,
@@ -268,13 +283,23 @@ const SearchItem = ({
               {isEvent ? (
                 <>
                   {date ? (
-                    <Text style={styles.dateText} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.dateText,
+                        isDarkMode && styles.mutedTextDark,
+                      ]}
+                      numberOfLines={1}>
                       {date}
                     </Text>
                   ) : null}
                   {date && time ? <Text style={styles.delimiter}>•</Text> : null}
                   {time ? (
-                    <Text style={styles.timeText} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.timeText,
+                        isDarkMode && styles.mutedTextDark,
+                      ]}
+                      numberOfLines={1}>
                       {time}
                     </Text>
                   ) : null}
@@ -282,13 +307,23 @@ const SearchItem = ({
               ) : (
                 <>
                   {time ? (
-                    <Text style={styles.timeText} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.timeText,
+                        isDarkMode && styles.mutedTextDark,
+                      ]}
+                      numberOfLines={1}>
                       {time}
                     </Text>
                   ) : null}
                   {time && date ? <Text style={styles.delimiter}>•</Text> : null}
                   {date ? (
-                    <Text style={styles.dateText} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.dateText,
+                        isDarkMode && styles.mutedTextDark,
+                      ]}
+                      numberOfLines={1}>
                       {date}
                     </Text>
                   ) : null}
@@ -298,7 +333,9 @@ const SearchItem = ({
                 <Text style={styles.delimiter}>•</Text>
               ) : null}
               {metaText ? (
-                <Text style={styles.metaText} numberOfLines={1}>
+                <Text
+                  style={[styles.metaText, isDarkMode && styles.mutedTextDark]}
+                  numberOfLines={1}>
                   {metaText}
                 </Text>
               ) : null}
@@ -306,7 +343,12 @@ const SearchItem = ({
                 <Text style={styles.delimiter}>•</Text>
               ) : null}
               {rightLabelText ? (
-                <Text style={styles.rightLabelText} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.rightLabelText,
+                    isDarkMode && styles.mutedTextDark,
+                  ]}
+                  numberOfLines={1}>
                   {rightLabelText}
                 </Text>
               ) : null}
@@ -315,9 +357,12 @@ const SearchItem = ({
           {resolvedBadgeText || badgeTagText ? (
             <View style={styles.badgeRow}>
               {resolvedBadgeText ? (
-                <View style={styles.badge}>
+                <View style={[styles.badge, isDarkMode && styles.badgeDark]}>
                   <Text
-                    style={styles.badgeText}
+                    style={[
+                      styles.badgeText,
+                      isDarkMode && styles.badgeTextDark,
+                    ]}
                     numberOfLines={badgeTextNumberOfLines}>
                     {resolvedBadgeText}
                   </Text>
@@ -358,10 +403,19 @@ const SearchItem = ({
               {tagValues.map(value => (
                 <TouchableOpacity
                   key={value}
-                  style={[styles.tag, styles.typeTag]}
+                  style={[
+                    styles.tag,
+                    styles.typeTag,
+                    isDarkMode && styles.typeTagDark,
+                  ]}
                   activeOpacity={0.7}
                   onPress={() => handleTagPress(value)}>
-                  <Text style={styles.tagText} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.tagText,
+                      isDarkMode && styles.typeTagTextDark,
+                    ]}
+                    numberOfLines={1}>
                     {value}
                   </Text>
                 </TouchableOpacity>
@@ -377,7 +431,12 @@ const SearchItem = ({
               ) : null}
               {statusTagText ? (
                 <View style={[styles.tag, styles.statusTag]}>
-                  <Text style={styles.tagText} numberOfLines={1}>
+                  <Text
+                    style={[
+                      styles.tagText,
+                      isDarkMode && styles.statusTagTextDark,
+                    ]}
+                    numberOfLines={1}>
                     {statusTagText}
                   </Text>
                 </View>
@@ -394,7 +453,7 @@ const SearchItem = ({
             <Ionicons
               name={accessoryIconName}
               size={18}
-              color={themeVariables.blackColor}
+              color={isDarkMode ? '#f1f4ff' : themeVariables.blackColor}
             />
           </TouchableOpacity>
         ) : null}
@@ -424,15 +483,27 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
+  containerShadowDark: {
+    shadowColor: '#000000',
+    shadowOpacity: 0.28,
+    shadowRadius: 8,
+    elevation: 5,
+  },
   containerSurface: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: themeVariables.whiteColor,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
     minHeight: SEARCH_ITEM_MIN_HEIGHT,
     paddingVertical: SEARCH_ITEM_VERTICAL_PADDING,
     paddingLeft: SEARCH_ITEM_HORIZONTAL_PADDING,
     paddingRight: SEARCH_ITEM_HORIZONTAL_PADDING,
     overflow: 'hidden',
+  },
+  containerSurfaceDark: {
+    backgroundColor: '#1f1f1f',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   divider: {
     position: 'absolute',
@@ -441,6 +512,9 @@ const styles = StyleSheet.create({
     right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: '#EEF1F5',
+  },
+  dividerDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   visualSlot: {
     alignItems: 'center',
@@ -565,11 +639,17 @@ const styles = StyleSheet.create({
     color: themeVariables.blackColor,
     marginRight: 8,
   },
+  titleDark: {
+    color: '#f1f4ff',
+  },
   compactTitle: {
     marginRight: 0,
   },
   supportingText: {
     color: '#4B5563',
+  },
+  supportingTextDark: {
+    color: 'rgba(241, 244, 255, 0.72)',
   },
   resultSupportingText: {
     fontSize: 13,
@@ -596,6 +676,9 @@ const styles = StyleSheet.create({
   resultSubtitle: {
     fontSize: 14,
     color: themeVariables.blackColor,
+  },
+  subtitleDark: {
+    color: 'rgba(241, 244, 255, 0.86)',
   },
   compactSubtitle: {
     fontSize: 12,
@@ -644,6 +727,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 2,
   },
+  mutedTextDark: {
+    color: 'rgba(241, 244, 255, 0.66)',
+  },
   badge: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
@@ -651,6 +737,11 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 10,
     backgroundColor: '#F3F4F6',
+  },
+  badgeDark: {
+    backgroundColor: '#2a2a2a',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -664,9 +755,15 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     fontWeight: '500',
   },
+  badgeTextDark: {
+    color: 'rgba(241, 244, 255, 0.78)',
+  },
   secondaryFooterText: {
     fontSize: 12,
     color: '#555',
+  },
+  secondaryFooterTextDark: {
+    color: 'rgba(241, 244, 255, 0.66)',
   },
   resultFooterText: {
     marginTop: 4,
@@ -728,6 +825,15 @@ const styles = StyleSheet.create({
   },
   typeTag: {
     marginLeft: 6,
+  },
+  typeTagDark: {
+    backgroundColor: '#44b628',
+  },
+  typeTagTextDark: {
+    color: 'rgb(0, 0, 0)',
+  },
+  statusTagTextDark: {
+    color: '#f1f4ff',
   },
 });
 
