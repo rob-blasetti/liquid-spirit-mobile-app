@@ -3,6 +3,10 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import themeVariables from '../styles/theme';
+import {useTheme} from '../contexts/ThemeContext';
+
+const BADGE_ICON_COLOR = '#ffffff';
+const DASHBOARD_DARK_BORDER_COLOR = 'rgba(255, 255, 255, 0.35)';
 
 const RecentBadgesSection = ({
   badges = [],
@@ -12,6 +16,7 @@ const RecentBadgesSection = ({
   viewAllAccessibilityLabel,
   horizontalMargin = 20,
 }) => {
+  const {isDarkMode} = useTheme();
   const recentBadges = Array.isArray(badges) ? badges.slice(0, 4) : [];
 
   return (
@@ -35,7 +40,12 @@ const RecentBadgesSection = ({
           </TouchableOpacity>
         ) : null}
       </View>
-      <View style={[styles.badgesContainer, {marginHorizontal: horizontalMargin}]}>
+      <View
+        style={[
+          styles.badgesContainer,
+          isDarkMode && styles.badgesContainerDark,
+          {marginHorizontal: horizontalMargin},
+        ]}>
         {recentBadges.length > 0 ? (
           <View style={styles.badgesPreviewRow}>
             {recentBadges.map((badge, index) => (
@@ -51,7 +61,7 @@ const RecentBadgesSection = ({
                     <Ionicons
                       name={badge?.icon || 'ribbon-outline'}
                       size={18}
-                      color={themeVariables.whiteColor}
+                      color={BADGE_ICON_COLOR}
                     />
                   </View>
                   <Text
@@ -120,7 +130,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E6EBF5',
     shadowColor: '#000',
@@ -128,6 +138,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+  },
+  badgesContainerDark: {
+    borderColor: DASHBOARD_DARK_BORDER_COLOR,
   },
   badgesPreviewRow: {
     flexDirection: 'row',

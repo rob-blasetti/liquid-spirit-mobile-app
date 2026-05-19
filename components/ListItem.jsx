@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
+import { useTheme } from '../contexts/ThemeContext';
 
 const ListItem = ({
   imageSource,
@@ -17,6 +18,7 @@ const ListItem = ({
   accessibilityLabel,
   accessibilityHint,
 }) => {
+  const { isDarkMode } = useTheme();
   const hasLeading = Boolean(imageSource) || Boolean(leadingComponent);
   const itemAccessibilityLabel =
     accessibilityLabel ||
@@ -27,7 +29,7 @@ const ListItem = ({
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[styles.container, isDarkMode && styles.containerDark]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={itemAccessibilityLabel}
@@ -85,14 +87,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     backgroundColor: '#fff',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(49, 39, 131, 0.08)',
     padding: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 20,
     marginVertical: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
+  },
+  containerDark: {
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    elevation: 14,
   },
   image: {
     width: 60,

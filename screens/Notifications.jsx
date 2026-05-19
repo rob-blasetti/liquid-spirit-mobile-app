@@ -5,6 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
 import { UserContext } from '../contexts/UserContext';
 import { ChatContext } from '../contexts';
+import { useTheme } from '../contexts/ThemeContext';
 import NotificationService, { filterOutSelfAuthoredPostNotifications } from '../services/NotificationService';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToEventDetail } from '../utils/navigateToEventDetail';
@@ -139,6 +140,7 @@ const mapNotificationType = (typeName = '') => {
 
 export default function Notifications() {
   const navigation = useNavigation();
+  const { isDarkMode } = useTheme();
   const {
     token,
     isTokenExpired,
@@ -749,7 +751,15 @@ export default function Notifications() {
             <Pressable
               onPress={() => handleNotificationPress(item)}
               disabled={Boolean(openingNotificationId)}
-              style={[styles.notification, { backgroundColor: item.read ? '#f5f5f5' : '#dbeafe' }]}
+              style={[
+                styles.notification,
+                item.read ? styles.notificationRead : styles.notificationUnread,
+                isDarkMode && (
+                  item.read
+                    ? styles.notificationReadDark
+                    : styles.notificationUnreadDark
+                ),
+              ]}
             >
               <NotificationIcon type={item.type} />
               <View style={styles.textContainer}>
@@ -804,6 +814,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 3,                  // Android shadow
+  },
+  notificationRead: {
+    backgroundColor: '#f5f5f5',
+  },
+  notificationUnread: {
+    backgroundColor: '#dbeafe',
+  },
+  notificationReadDark: {
+    backgroundColor: '#2b2b31',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+  },
+  notificationUnreadDark: {
+    backgroundColor: '#2d3554',
+    borderColor: 'rgba(141, 156, 255, 0.5)',
   },
   textContainer: {
     flex: 1,

@@ -67,7 +67,7 @@ export const ThemeProvider = ({ children }) => {
 
   return (
     <ThemeContext.Provider value={value}>
-      <View key={mode} style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         {children}
       </View>
     </ThemeContext.Provider>

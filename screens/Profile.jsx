@@ -29,6 +29,8 @@ import { navigateToEventDetail } from '../utils/navigateToEventDetail';
 import { navigateToPostDetail } from '../utils/navigateToPostDetail';
 import { navigateToActivityDetail } from '../utils/navigateToActivityDetail';
 
+const PROFILE_HEADER_ICON_COLOR = 'rgb(0, 0, 0)';
+
 const normalizeRuhiBadges = (value) => {
   if (!Array.isArray(value)) return [];
 
@@ -262,6 +264,7 @@ const renderList = (data, type) => {
     return (
       <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
         <SectionStateCard
+          dashboardCard
           loading
           title="Loading your dashboard"
           message="Pulling together your posts, activities, and events."
@@ -292,6 +295,7 @@ const renderList = (data, type) => {
     return (
       <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}>
         <SectionStateCard
+          dashboardCard
           icon={icon || 'sparkles-outline'}
           title={message}
           message="New activity will show up here once you join in or create something."
@@ -377,6 +381,7 @@ const renderRequests = () => {
     return (
       <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
         <SectionStateCard
+          dashboardCard
           loading
           title="Loading requests"
           message="Checking if anyone needs your approval."
@@ -388,6 +393,7 @@ const renderRequests = () => {
     return (
       <View style={[styles.stateWrap, { paddingBottom: contentPaddingBottom }]}> 
         <SectionStateCard
+          dashboardCard
           icon="person-add-outline"
           title="No requests right now"
           message="Approvals and join requests will appear here when they come in."
@@ -523,14 +529,14 @@ const renderScene = ({ route }) => {
         <View style={styles.headerActions}>
           <LiquidGlassIconButton
             iconName="share-social-outline"
-            iconColor={themeVariables.blackColor}
+            iconColor={PROFILE_HEADER_ICON_COLOR}
             onPress={() => handleShareProfile(user)}
             hasShadow={false}
             glassStyle={styles.topIconGlass}
           />
           <LiquidGlassIconButton
             iconName="settings-outline"
-            iconColor={themeVariables.blackColor}
+            iconColor={PROFILE_HEADER_ICON_COLOR}
             onPress={() => navigation.navigate('Settings')}
             hasShadow={false}
             glassStyle={styles.topIconGlass}
@@ -647,7 +653,7 @@ const styles = StyleSheet.create({
   stateWrap: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingTop: 24,
   },
   placeholderText: { textAlign: 'center', padding: 20, fontSize: 16, color: '#999' },
@@ -711,7 +717,7 @@ const styles = StyleSheet.create({
   profileHeroCard: {
     width: '100%',
     backgroundColor: themeVariables.whiteColor,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E6EBF5',
     paddingHorizontal: 14,

@@ -4,7 +4,10 @@ import FastImage from 'react-native-fast-image';
 import Avatar from '@liquidspirit/react-native-boring-avatars';
 
 import themeVariables from '../styles/theme';
+import {useTheme} from '../contexts/ThemeContext';
 import resolveImageSource from '../utils/imageSource';
+
+const DASHBOARD_DARK_BORDER_COLOR = 'rgba(255, 255, 255, 0.35)';
 
 const PROFILE_STAT_CARDS = [
   {key: 'activities', label: 'Current Activities'},
@@ -22,6 +25,7 @@ const ProfileHeroCard = ({
   avatarSize = 68,
   containerStyle,
 }) => {
+  const {isDarkMode} = useTheme();
   const avatar =
     typeof renderAvatar === 'function' ? (
       renderAvatar({
@@ -46,7 +50,12 @@ const ProfileHeroCard = ({
     );
 
   return (
-    <View style={[styles.profileHeroCard, containerStyle]}>
+    <View
+      style={[
+        styles.profileHeroCard,
+        isDarkMode && styles.profileHeroCardDark,
+        containerStyle,
+      ]}>
       <View style={styles.profileHeroColumns}>
         <View style={styles.profileIdentityColumn}>
           {avatar}
@@ -86,7 +95,7 @@ const styles = StyleSheet.create({
   profileHeroCard: {
     width: '100%',
     backgroundColor: themeVariables.whiteColor,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E6EBF5',
     paddingHorizontal: 14,
@@ -96,6 +105,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 4,
+  },
+  profileHeroCardDark: {
+    borderColor: DASHBOARD_DARK_BORDER_COLOR,
   },
   profileHeroColumns: {
     flexDirection: 'row',

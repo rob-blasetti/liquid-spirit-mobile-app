@@ -25,6 +25,7 @@ import FastImage from 'react-native-fast-image';
 import themeVariables from '../styles/theme';
 import Carousel from '../components/Carousel';
 import {UserContext} from '../contexts/UserContext';
+import {useTheme} from '../contexts/ThemeContext';
 import {useIsFocused} from '@react-navigation/native';
 import {getBadiDate} from '../utils/badiDate';
 import SquareTile from '../components/SquareTile';
@@ -61,6 +62,7 @@ const BANNER_PULL_EXPANSION = 120;
 const RECENT_CARD_WIDTH = SCREEN_WIDTH * 0.72;
 const RECENT_CARD_GAP = 12;
 const RECENT_CARD_HEIGHT = 180;
+const BANNER_TEXT_COLOR = '#ffffff';
 
 const formatGroupTime = timeStr => {
   if (typeof timeStr !== 'string' || !timeStr.includes(':')) return null;
@@ -85,6 +87,7 @@ const FEATURE_TABS = ['Activities', 'Events', 'Assembly'];
 
 const Home = ({navigation, homeOverview, route}) => {
   const insets = useSafeAreaInsets();
+  const {isDarkMode} = useTheme();
   // Compute status bar offset: on Android use StatusBar.currentHeight, on iOS use safe-area inset
   const statusBarHeight =
     Platform.OS === 'android' ? StatusBar.currentHeight || 0 : insets.top;
@@ -184,6 +187,12 @@ const Home = ({navigation, homeOverview, route}) => {
   );
   const [isBannerLocked, setIsBannerLocked] = useState(false);
   const hasLockedBannerRef = useRef(false);
+  const inactiveFeatureTabTextColor = isDarkMode
+    ? themeVariables.textSoftInverseColor
+    : 'rgba(0,0,0,0.65)';
+  const activeFeatureTabTextColor = isDarkMode
+    ? themeVariables.surfaceDarkBaseColor
+    : themeVariables.whiteColor;
   const bannerHeight = useMemo(
     () =>
       isBannerLocked
@@ -609,7 +618,11 @@ const Home = ({navigation, homeOverview, route}) => {
           ) : (
             <Animated.View style={{opacity: contentOpacity}}>
               <Text style={styles.heading}>{'Featured'}</Text>
-              <View style={styles.tabContainer}>
+              <View
+                style={[
+                  styles.tabContainer,
+                  isDarkMode && styles.tabContainerDark,
+                ]}>
                 <Animated.View
                   pointerEvents="none"
                   style={[
@@ -653,9 +666,9 @@ const Home = ({navigation, homeOverview, route}) => {
                           color: activeTabPosition.interpolate({
                             inputRange: [index - 1, index, index + 1],
                             outputRange: [
-                              'rgba(0,0,0,0.65)',
-                              themeVariables.whiteColor,
-                              'rgba(0,0,0,0.65)',
+                              inactiveFeatureTabTextColor,
+                              activeFeatureTabTextColor,
+                              inactiveFeatureTabTextColor,
                             ],
                             extrapolate: 'clamp',
                           }),
@@ -996,7 +1009,11 @@ const Home = ({navigation, homeOverview, route}) => {
                   })()}
               </Animated.View>
               <Text style={styles.heading}>{'Your Liquid Spirit'}</Text>
-              <View style={styles.createContainer}>
+              <View
+                style={[
+                  styles.createContainer,
+                  isDarkMode && styles.createContainerDark,
+                ]}>
                 {homeLinks.map((link, idx) => {
                   const key = link?.id || `home-link-${idx}`;
                   const iconName = link?.icon || 'link-outline';
@@ -1038,7 +1055,12 @@ const Home = ({navigation, homeOverview, route}) => {
                         />
                       </TouchableOpacity>
                       {idx < homeLinks.length - 1 ? (
-                        <View style={styles.separator} />
+                        <View
+                          style={[
+                            styles.separator,
+                            isDarkMode && styles.separatorDark,
+                          ]}
+                        />
                       ) : null}
                     </React.Fragment>
                   );
@@ -1254,11 +1276,11 @@ const styles = StyleSheet.create({
   communityBannerName: {
     fontSize: 46,
     fontWeight: 'bold',
-    color: themeVariables.whiteColor,
+    color: BANNER_TEXT_COLOR,
   },
   communityBannerMembers: {
     fontSize: 16,
-    color: themeVariables.whiteColor,
+    color: BANNER_TEXT_COLOR,
     marginTop: 4,
   },
   statsSection: {
@@ -1295,7 +1317,7 @@ const styles = StyleSheet.create({
     left: 22,
     bottom: 10,
     fontSize: 14,
-    color: themeVariables.whiteColor,
+    color: BANNER_TEXT_COLOR,
   },
   // Bottom two large squares
   bottomSquaresContainer: {
@@ -1495,6 +1517,9 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 14,
   },
+  tabContainerDark: {
+    borderColor: themeVariables.textSoftInverseColor,
+  },
   tabButton: {
     flex: 1,
     flexBasis: 0,
@@ -1551,6 +1576,9 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 12,
   },
+  createContainerDark: {
+    borderColor: 'rgba(255, 255, 255, 0.9)',
+  },
   createRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1558,6 +1586,9 @@ const styles = StyleSheet.create({
   separator: {
     height: 1,
     backgroundColor: themeVariables.blackColor,
+  },
+  separatorDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   createIcon: {
     marginRight: 8,

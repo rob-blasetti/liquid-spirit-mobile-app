@@ -2,15 +2,26 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import themeVariables from '../styles/theme';
+import {useTheme} from '../contexts/ThemeContext';
+
+const CARD_DARK_BORDER_COLOR = 'rgba(255, 255, 255, 0.35)';
 
 const SectionStateCard = ({
   title,
   message,
   icon = 'sparkles-outline',
   loading = false,
+  dashboardCard = false,
 }) => {
+  const {isDarkMode} = useTheme();
+
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        dashboardCard && styles.dashboardCard,
+        dashboardCard && isDarkMode && styles.dashboardCardDark,
+      ]}>
       <View style={styles.iconWrap}>
         {loading ? (
           <ActivityIndicator size="small" color={themeVariables.primaryColor} />
@@ -40,6 +51,17 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 2,
+  },
+  dashboardCard: {
+    borderRadius: 8,
+  },
+  dashboardCardDark: {
+    borderColor: CARD_DARK_BORDER_COLOR,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    elevation: 14,
   },
   iconWrap: {
     width: 40,

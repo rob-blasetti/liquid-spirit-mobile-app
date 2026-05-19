@@ -53,10 +53,11 @@ import BottomBar from './BottomBar';
 import PostModal from '../modal/PostModal';
 
 const Stack = createNativeStackNavigator();
+let preservedNavigationState;
 
 const AppNavigator = ({ initialPosts, homeOverview }) => {
   const { isLoggedIn, ensureValidSession } = useContext(UserContext);
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, mode } = useTheme();
   const initialRoute = isLoggedIn ? 'Main' : 'Welcome';
   const navigationTheme = {
     ...(isDarkMode ? DarkTheme : DefaultTheme),
@@ -73,11 +74,17 @@ const AppNavigator = ({ initialPosts, homeOverview }) => {
 
   return (
     <NavigationContainer
+      key={mode}
       linking={linking}
       theme={navigationTheme}
+      initialState={preservedNavigationState}
       ref={navigationRef}
-      onReady={flushPendingNavigation}
-      onStateChange={() => {
+      onReady={() => {
+        preservedNavigationState = navigationRef.getRootState?.();
+        flushPendingNavigation();
+      }}
+      onStateChange={(state) => {
+        preservedNavigationState = state;
         ensureValidSession?.();
       }}
     >

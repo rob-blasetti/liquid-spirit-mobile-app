@@ -14,8 +14,11 @@ import FastImage from 'react-native-fast-image';
 
 import themeVariables from '../styles/theme';
 import { UserContext, ChatContext } from '../contexts';
+import { useTheme } from '../contexts/ThemeContext';
 import { API_URL } from '../config';
 import { prefetchImageSources } from '../utils/imageSource';
+
+const CHAT_AVATAR_BACKGROUND_DARK = '#2f3442';
 
 const getLastMessagePreview = (chat) => {
   const message =
@@ -279,6 +282,7 @@ const formatRelativeTime = (input) => {
 };
 
 const ChatRow = memo(({ chat, onOpen }) => {
+  const { isDarkMode } = useTheme();
   const title =
     chat?.title ||
     chat?.name ||
@@ -308,7 +312,7 @@ const ChatRow = memo(({ chat, onOpen }) => {
         {avatarSource ? (
           <FastImage
             source={avatarSource}
-            style={styles.chatAvatarImage}
+            style={[styles.chatAvatarImage, isDarkMode && styles.chatAvatarImageDark]}
             resizeMode={FastImage.resizeMode.cover}
           />
         ) : (
@@ -580,6 +584,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+  },
+  chatAvatarImageDark: {
+    backgroundColor: CHAT_AVATAR_BACKGROUND_DARK,
   },
   chatAvatarText: {
     color: themeVariables.whiteColor,

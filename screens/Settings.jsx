@@ -30,7 +30,6 @@ const Settings = ({ navigation }) => {
             <Ionicons name={isDarkMode ? 'moon' : 'moon-outline'} size={20} color={themeVariables.blackColor} />
             <View style={styles.itemTextBlock}>
               <Text style={styles.itemTitle}>Dark Mode</Text>
-              <Text style={styles.itemDescription}>Use the darker Liquid Spirit theme throughout the app.</Text>
             </View>
             <Switch
               value={isDarkMode}
@@ -113,12 +112,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 15,
     marginRight: 12,
-  },
-  itemDescription: {
-    color: themeVariables.textMutedStrongColor,
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 3,
   },
 });
 

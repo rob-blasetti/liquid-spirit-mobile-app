@@ -18,6 +18,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ZoomableImage from './ZoomableImage';
 import { resolveMediaUrl } from '../utils/resolveMediaUrl';
 import { UserContext } from '../contexts/UserContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { navigateToPostDetail, cachePostImageAspect, getPostImageAspect } from '../utils/navigateToPostDetail';
 import WelcomeModal from '../modal/WelcomeModal';
 import DropdownMenu from './DropdownMenu';
@@ -33,6 +34,7 @@ const DOUBLE_TAP_DELAY = 300;
 
 const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setScrollEnabled }) => {
   const { token, user, isTokenExpired } = useContext(UserContext);
+  const { isDarkMode } = useTheme();
   const navigation = useNavigation();
   const mediaUrl = resolveMediaUrl(post) || 'https://via.placeholder.com/200';
   const cachedAspect = getPostImageAspect(post._id, mediaUrl) || post.imageAspect || null;
@@ -270,7 +272,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
 
   return (
     <TouchableOpacity
-      style={styles.postContainer}
+      style={[styles.postContainer, isDarkMode && styles.postContainerDark]}
       activeOpacity={1}
       onPress={handlePostPress}
     >
@@ -430,7 +432,7 @@ const Post = ({ post, onLike, onComment, onFlag, onBlock, onMute, onDelete, setS
         </View>
       </View>
 
-      <View style={styles.postFooter}>
+      <View style={[styles.postFooter, isDarkMode && styles.postFooterDark]}>
         <TouchableOpacity style={styles.postFooterIcon} onPress={toggleLike}>
             <Ionicons
               name={isLiked ? solidHeart : heartOutline}
@@ -485,6 +487,15 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 14,
     position: 'relative',
+  },
+  postContainerDark: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.5,
+    shadowRadius: 22,
+    elevation: 16,
   },
   userInfoContainer: {
     flexDirection: 'row',
@@ -664,6 +675,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     // If you want spacing between buttons:
     justifyContent: 'flex-start',
+  },
+  postFooterDark: {
+    borderTopColor: 'rgba(255, 255, 255, 0.28)',
   },
   postFooterIcon: {
     flexDirection: 'row',
